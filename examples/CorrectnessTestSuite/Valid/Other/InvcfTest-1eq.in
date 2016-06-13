@@ -1,0 +1,10 @@
+#define CA 3
+CLOCKS :{x1, x2}
+CONTROL :{p1(1)}
+PREDICATE: {X}
+START: X
+EQUATIONS: {
+1: nu X = (\forall time((x1 < 8)))
+	}
+INVARIANT:
+	p1 == 0 -> x2 <= 3

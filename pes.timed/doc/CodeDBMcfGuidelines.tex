@@ -1,0 +1,106 @@
+\documentclass[11pt]{article}
+
+\usepackage{pfFormV8}
+\usepackage{pfResV6}
+\usepackage{pfColor}
+\usepackage{pfArticleV3}
+\usepackage{pfHyperrefV2}
+
+\titlepf{Code Writing: DBM \texttt{cf()} Guidelines}
+\author{Peter Fontana}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+
+\section{Overview}
+
+	This document describes the use of the Difference Bound Matrix (DBM) within the code and how/when the conversions to its canonical form (\texttt{cf()}) are applied.  The reader is assumed to have some understand of DBMs when reading this document.  This explains the pruned use of \texttt{cf()} for efficiency of performance while still preserving correctness.
+	
+	There are two ideologies of converting to canonical form.  They are:
+	\begin{descriptionpf}
+		\item[Baseline:] This version converts to \texttt{cf()} immediately after a method alters a DBM to make it not in canonical form.  Slight optimizations are made to avoid unnecessary calls to \texttt{cf()} to improve performance without sacrificing correctness.
+		\item[On-The-Fly:] This waits to convert to \texttt{cf()} until right before the canonical form is needed.  Optimizations are made, as well as some preemptive conversions when overall performance will be improved without sacrificing correctness. 
+	\end{descriptionpf}
+
+\section{Operations and their Relations to \texttt{cf()}}
+
+	For any operator not specified, it is likely not used in the code.  Thus, unless you are willing to further investigate, you should assume \textbf{all input DBMs must be in \texttt{cf()} before calling the method and cannot be assumed to be in canonical form \texttt{cf()} when finished}.
+	\par Here is a list of some of the operators:
+	
+\begin{descriptionpf}
+	\item[DBM Successor Zone (\texttt{succ()}):]  Requires input DBMS to be in canonical form.  \\ Returns a DBM in canonical form (without calling \texttt{cf()}).
+	\item[DBM Intersection (\texttt{\&}):]  Does not require input DBMS to be in canonical form.  \\ Returns a DBM (likely) not in canonical form.
+	\item[DBM Subset Checks ($\mathtt{\leq, \subseteq}$):]  Requires left input DBM to be in canonical form.  The right input DBM is not required to be in canonical form.  \\ Returns a DBM in canonical form (without calling \texttt{cf()}).
+	\item[DBM Emptiness Checks (\texttt{isEmpty()}):]  Requires input DBMS to be in canonical form.  \\ Returns a DBM in canonical form (without calling \texttt{cf()}).
+	\item[DBM Clock Reset (\texttt{reset(x)}):]  Requires input DBMS to be in canonical form.  \\ Returns a DBM in canonical form (without calling \texttt{cf()}).  The Algorithm performs a bit extra work to preserve canonical form.
+	
+	A special note on reset:  Many resets can be performed at once before calling \texttt{cf()} if the parameters are different clocks (such as resetting a sequence of clocks).  If resetting a set of clocks, one can wait until resetting all of the clocks, and then calling \texttt{cf()} at the end.
+
+	\item[DBM Clock Assignments (\texttt{reset(x,y)}):]  Requires input DBMS to be in canonical form.  \\ Returns a DBM (likely) not in canonical form.
+	
+	A special note on Assignments:  Many resets can be performed at once before calling \texttt{cf()} if the parameters are different clocks (such as resetting a sequence of clocks).  If resetting a set of clocks, one can wait until resetting all of the clocks, and then calling \texttt{cf()} at the end.
+	\item[DBM Normalization (\texttt{bound()}):]  Requires input DBMS to be in canonical form.  \\ Returns a DBM (likely) not in canonical form.
+	\item[DBM Internal Proof Method (\texttt{sucCheck()}):]  Requires input DBMS to be in canonical form.  \\ Returns a DBM in canonical form (without calling \texttt{cf()}).  This is because the DBM uses \texttt{cf()} to help choose a minimal (not nec. minimum) of constraints.
+\end{descriptionpf}
+	
+\section{Current \texttt{cf()} Conventions used in Code}
+
+	Here this discusses some of the implementation.
+	
+\subsection{Common to All Versions}
+
+\begin{enumeratepf}
+	\item \textbf{Use of 1-bit \texttt{isCf}}.  This 1-bit variable stores whether the DBM is in canonical form or not.  When \texttt{cf()} is called, it first checks this variable and does nothing if it is set to true.  The program (inside the DBM class) sets this bit to false at the end of any method that modifies the DBM so it may not be in canonical form.
+	\item \textbf{Use of \texttt{cf()} Outside DBM Methods}.  The code is implemented so that the programmer calling the DBM methods must call \texttt{cf()} and appropriately use it so DBMs are in canonical form when needed.  While \texttt{cf()} can be used solely within the methods and would provide good programming simplicity and abstraction of the code, using the methods outside of the program allows performance to be fine-tuned.
+	
+	This includes the methods like \texttt{succCheck()}, \texttt{incorporateDifferences()} as well as the ones involving placeholders.  One must use \texttt{cf()} either before or after the method, respectively.
+	\item \textbf{Notes on \texttt{inv\_chk()}}.  Here, \texttt{cf()} is required before the method is invoked but the returned DBM is not in canonical form.  
+	%This is because the \texttt{inv\_chk()} method performs a series of DBM intersections.  
+	However, given the structure  of the method, \texttt{cf()} need not be called within the method.
+	\item \textbf{Notes on DBMs in Caches}.  For Performance reasons, all DBMs input into a sequent cache are in canonical form.  This prevents us from having to keep calling \texttt{cf()} every time a sequent is examined in the cache.  Thus, for the \texttt{tabled\_sequent()} method, all DBMs are assumed to be in canonical form before calling the method.
+\end{enumeratepf}
+
+\subsection{Specific to Base Implementation}
+
+	Here, the common convention is to convert a returned DBM to \texttt{cf()} as soon as it leaves a method that is not in canonical form.  However, there are some deviations from this and some assumptions that are used:
+	
+	\begin{enumeratepf}
+		\item Due to the nature of DBM Intersect, we only have to convert to \texttt{cf()} after all the intersections are applied.
+		\item As a result, \texttt{retPlaceDBM} (output of function) can be assumed to be in canonical form
+		\item At the beginning of the method, \texttt{lhs} and \texttt{place} (input parameter(s)) can be assumed to be in canonical form.
+	\end{enumeratepf}
+
+\subsection{Specific to ``On-The-Fly'' Implementation}
+	The key to the On-The-Fly Savings is by waiting until necessary to convert to canonical form, some DBMs at some stages do not need to be converted to canonical form.  One instance is when they are only used to be intersected with another DBM.  In this case, the new intersected DBM, but not the other DBM may need to be converted to \texttt{cf()} later. \parspc
+	
+	Here, the convention is to wait until absolutely necessary to convert to \texttt{cf()} before doing so.  However, there are some exceptions and certain assumptions that are made as  a result of doing this:
+	
+	\begin{enumeratepf}
+		\item Before calling a copy constructor, \texttt{cf()} is called so that it will only do its work once instead of doing the same conversion twice (once for each DBM after the copy constructor).
+		\item As a result, \texttt{retPlaceDBM} cannot be assumed to be in canonical form.
+		\item At the beginning of the method, \texttt{lhs} and \texttt{place} (input parameter(s)) cannot be assumed to be in canonical form.
+	\end{enumeratepf}
+
+\begin{examppf}[Reasoning for Using \texttt{cf()} before Copy Constructors]
+
+To Illustrate the Copy Constructor methodology, consider the following code:
+
+\parspc
+\begin{algorithmic}[1]
+\STATEtt{DBM ph(*lhs);}
+\STATEtt{ph.pre()}
+\IFtt{(lhs->emptiness())}
+\STATEtt{\ldots}
+\ENDIF
+\end{algorithmic}
+\parspc
+
+Here, for different reasons, $ph$ and $lhs$ require to be converted into canonical form.  Calling \texttt{cf()} before the copy constructor allows you to convert them both to canonical form at the same time, instead of having to do the same work twice for each copy of the DBM.
+
+\end{examppf}
+
+\end{document}

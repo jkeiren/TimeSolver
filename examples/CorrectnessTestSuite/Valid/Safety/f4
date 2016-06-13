@@ -1,0 +1,44 @@
+#define CPD 2
+CLOCKS :{x1,x2,x3,x4}
+CONTROL :{p1,q1,p2,q2,p3,q3,p4,q4,p,q}
+PREDICATE: {X}
+START: X
+EQUATIONS: {
+1: nu X = (q1 < 1)
+	&&(q2 < 2)
+	&&(q3 < 3)
+	&&(q4 < 4)
+	&&(\forall time((x1<=CPD && p1==0 && p==0 && q1==0 && x2<=CPD && p2==0 && q==0 && q2==0)->X[p1=1, p=1, p2=2, q=2][x1, x2]))
+	&&(\forall time((x1<=CPD && p1==0 && p==0 && q1==0 && x3<=CPD && p3==0 && q==0 && q3==0)->X[p1=1, p=1, p3=2, q=3][x1, x3]))
+	&&(\forall time((x1<=CPD && p1==0 && p==0 && q1==0 && x4<=CPD && p4==0 && q==0 && q4==0)->X[p1=1, p=1, p4=2, q=4][x1, x4]))
+	&&(\forall time((p1==1 && q<1)->X[p1=3,q=0][q1=q]))
+	&&(\forall time((p1==1 && q>1)->X[p1=0,q=0]))
+	&&(\forall time((p1==2 && p<1)->X[p1=3,p=0][q1=p]))
+	&&(\forall time((p1==2 && p>1)->X[p1=0,p=0]))
+	&&(\forall time((x2<=CPD && p2==0 && p==0 && q2==0 && x1<=CPD && p1==0 && q==0 && q1==0)->X[p2=1, p=2, p1=2, q=1][x2, x1]))
+	&&(\forall time((x2<=CPD && p2==0 && p==0 && q2==0 && x3<=CPD && p3==0 && q==0 && q3==0)->X[p2=1, p=2, p3=2, q=3][x2, x3]))
+	&&(\forall time((x2<=CPD && p2==0 && p==0 && q2==0 && x4<=CPD && p4==0 && q==0 && q4==0)->X[p2=1, p=2, p4=2, q=4][x2, x4]))
+	&&(\forall time((p2==1 && q<2)->X[p2=3,q=0][q2=q]))
+	&&(\forall time((p2==1 && q>2)->X[p2=0,q=0]))
+	&&(\forall time((p2==2 && p<2)->X[p2=3,p=0][q2=p]))
+	&&(\forall time((p2==2 && p>2)->X[p2=0,p=0]))
+	&&(\forall time((x3<=CPD && p3==0 && p==0 && q3==0 && x1<=CPD && p1==0 && q==0 && q1==0)->X[p3=1, p=3, p1=2, q=1][x3, x1]))
+	&&(\forall time((x3<=CPD && p3==0 && p==0 && q3==0 && x2<=CPD && p2==0 && q==0 && q2==0)->X[p3=1, p=3, p2=2, q=2][x3, x2]))
+	&&(\forall time((x3<=CPD && p3==0 && p==0 && q3==0 && x4<=CPD && p4==0 && q==0 && q4==0)->X[p3=1, p=3, p4=2, q=4][x3, x4]))
+	&&(\forall time((p3==1 && q<3)->X[p3=3,q=0][q3=q]))
+	&&(\forall time((p3==1 && q>3)->X[p3=0,q=0]))
+	&&(\forall time((p3==2 && p<3)->X[p3=3,p=0][q3=p]))
+	&&(\forall time((p3==2 && p>3)->X[p3=0,p=0]))
+	&&(\forall time((x4<=CPD && p4==0 && p==0 && q4==0 && x1<=CPD && p1==0 && q==0 && q1==0)->X[p4=1, p=4, p1=2, q=1][x4, x1]))
+	&&(\forall time((x4<=CPD && p4==0 && p==0 && q4==0 && x2<=CPD && p2==0 && q==0 && q2==0)->X[p4=1, p=4, p2=2, q=2][x4, x2]))
+	&&(\forall time((x4<=CPD && p4==0 && p==0 && q4==0 && x3<=CPD && p3==0 && q==0 && q3==0)->X[p4=1, p=4, p3=2, q=3][x4, x3]))
+	&&(\forall time((p4==1 && q<4)->X[p4=3,q=0][q4=q]))
+	&&(\forall time((p4==1 && q>4)->X[p4=0,q=0]))
+	&&(\forall time((p4==2 && p<4)->X[p4=3,p=0][q4=p]))
+	&&(\forall time((p4==2 && p>4)->X[p4=0,p=0]))
+}
+INVARIANT:
+	p1 == 0 -> x1 <= CPD
+	p2 == 0 -> x2 <= CPD
+	p3 == 0 -> x3 <= CPD
+	p4 == 0 -> x4 <= CPD

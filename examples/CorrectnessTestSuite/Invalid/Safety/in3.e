@@ -1,0 +1,41 @@
+#define CA 19
+#define CB 10
+CLOCKS :{x1,x2,x3}
+CONTROL :{p1,p2,p3,p}
+PREDICATE: {X}
+START: X
+EQUATIONS: {
+1: nu X = ((p1 != 3) || (p2 != 3))
+	 && ((p1 != 3) || (p3 != 3))
+	 && ((p2 != 3) || (p3 != 3))
+	&&(\forall time((p1==0 && p==0)->X[p1=1, p=0][x1]))
+	&&(\forall time((p1==1 && p==0 && x1 < CA)->X[p1=2, p=1][x1]))
+	&&(\forall time((p1==1 && p==1 && x1 < CA)->X[p1=2, p=1][x1]))
+	&&(\forall time((p1==1 && p==2 && x1 < CA)->X[p1=2, p=1][x1]))
+	&&(\forall time((p1==1 && p==3 && x1 < CA)->X[p1=2, p=1][x1]))
+	&&(\forall time((p1==2 && x1 > CB && p==1)->X[p1=3, p=1]))
+	&&(\forall time((p1==3 && p==0)->X[p1=0, p=0]))
+	&&(\forall time((p1==3 && p==1)->X[p1=0, p=0]))
+	&&(\forall time((p1==3 && p==2)->X[p1=0, p=0]))
+	&&(\forall time((p1==3 && p==3)->X[p1=0, p=0]))
+	&&(\forall time((p2==0 && p==0)->X[p2=1, p=0][x2]))
+	&&(\forall time((p2==1 && p==0 && x2 < CA)->X[p2=2, p=2][x2]))
+	&&(\forall time((p2==1 && p==1 && x2 < CA)->X[p2=2, p=2][x2]))
+	&&(\forall time((p2==1 && p==2 && x2 < CA)->X[p2=2, p=2][x2]))
+	&&(\forall time((p2==1 && p==3 && x2 < CA)->X[p2=2, p=2][x2]))
+	&&(\forall time((p2==2 && x2 > CB && p==2)->X[p2=3, p=2]))
+	&&(\forall time((p2==3 && p==0)->X[p2=0, p=0]))
+	&&(\forall time((p2==3 && p==1)->X[p2=0, p=0]))
+	&&(\forall time((p2==3 && p==2)->X[p2=0, p=0]))
+	&&(\forall time((p2==3 && p==3)->X[p2=0, p=0]))
+	&&(\forall time((p3==0 && p==0)->X[p3=1, p=0][x3]))
+	&&(\forall time((p3==1 && p==0 && x3 < CA)->X[p3=2, p=3][x3]))
+	&&(\forall time((p3==1 && p==1 && x3 < CA)->X[p3=2, p=3][x3]))
+	&&(\forall time((p3==1 && p==2 && x3 < CA)->X[p3=2, p=3][x3]))
+	&&(\forall time((p3==1 && p==3 && x3 < CA)->X[p3=2, p=3][x3]))
+	&&(\forall time((p3==2 && x3 > CB && p==3)->X[p3=3, p=3]))
+	&&(\forall time((p3==3 && p==0)->X[p3=0, p=0]))
+	&&(\forall time((p3==3 && p==1)->X[p3=0, p=0]))
+	&&(\forall time((p3==3 && p==2)->X[p3=0, p=0]))
+	&&(\forall time((p3==3 && p==3)->X[p3=0, p=0]))
+}

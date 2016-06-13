@@ -1,0 +1,43 @@
+CC = g++
+CFLAGS = -g3
+FLEX = flex
+
+INCL_PATH = -I.
+
+all: demo testdbm testdbmlist
+
+demo: pes.lex.c pes.tab.c demo.cc DBM.hh DBMList.hh ExprNode.hh
+	$(CC) $(CFLAGS) demo.cc ExprNode.cc pes.tab.c pes.lex.c $(INCL_PATH) -o demo
+
+pes.lex.c: pes.l
+	$(FLEX) -p -8 -Ce -opes.lex.c pes.l
+
+pes.tab.c: pes.y
+	bison -t -d -v -o pes.tab.c pes.y
+
+testdbm: testdbm.cc DBM.hh
+	$(CC) -o testdbm $(CFLAGS) testdbm.cc
+
+testdbmlist: testdbmlist.cc DBMList.hh
+	$(CC) -o testdbmlist $(CFLAGS) testdbmlist.cc
+		
+clean:
+	-echo "Removing all object files!"
+	-rm -f demo *.o
+	-rm -f testdbm
+	-rm -f testdbmlist
+	-echo "Removing intermediate C files!"
+	-rm -f pes.lex.c pes.tab.c 
+	-echo "Removing intermediate header files!"
+	-rm -f pes.tab.h
+	-echo "Removing other parser-generated files!"
+	-rm -f pes.output
+	-echo "Removing Doxygen-generated documentation files!"
+	-rm -rf doc/DoxygenOutput/html
+	-rm -rf doc/DoxygenOutput/latex
+	-echo "Removing other tool-generated files!"
+	-rm -rf testdbmlist.dSYM
+	-rm -rf testdbm.dSYM
+	-rm -rf demo.dSYM
+	-rm -f gmon.out
+

@@ -1,0 +1,31 @@
+#define CPD 2
+CLOCKS: {x1,x2,x3,x4,x5,x6, z}
+CONTROL: {p1,p2,p3,p4,p5,p6, p}
+PREDICATE: {X, X2}
+START: X
+EQUATIONS: {
+1: mu X = X2[z]2: mu X2 = \exists time(((p == 0 && z>=3)) || \ExistAct(X2))}
+INVARIANT:
+	p1 == 0 && p==0 -> x1 <= CPD
+	p2 == 0 && p==0 -> x2 <= CPD
+	p3 == 0 && p==0 -> x3 <= CPD
+	p4 == 0 && p==0 -> x4 <= CPD
+	p5 == 0 && p==0 -> x5 <= CPD
+	p6 == 0 && p==0 -> x6 <= CPD
+TRANSITIONS:
+	(p2 == 0 && p1 == 0, x2 <= CPD && x1 <= CPD)->(p2 = 1){x2, x1};
+	(p3 == 0 && p1 == 0, x3 <= CPD && x1 <= CPD)->(p3 = 1){x3, x1};
+	(p3 == 0 && p2 == 0, x3 <= CPD && x2 <= CPD)->(p3 = 2){x3, x2};
+	(p4 == 0 && p1 == 0, x4 <= CPD && x1 <= CPD)->(p4 = 1){x4, x1};
+	(p4 == 0 && p2 == 0, x4 <= CPD && x2 <= CPD)->(p4 = 2){x4, x2};
+	(p4 == 0 && p3 == 0, x4 <= CPD && x3 <= CPD)->(p4 = 3){x4, x3};
+	(p5 == 0 && p1 == 0, x5 <= CPD && x1 <= CPD)->(p5 = 1){x5, x1};
+	(p5 == 0 && p2 == 0, x5 <= CPD && x2 <= CPD)->(p5 = 2){x5, x2};
+	(p5 == 0 && p3 == 0, x5 <= CPD && x3 <= CPD)->(p5 = 3){x5, x3};
+	(p5 == 0 && p4 == 0, x5 <= CPD && x4 <= CPD)->(p5 = 4){x5, x4};
+	(p6 == 0 && p1 == 0, x6 <= CPD && x1 <= CPD)->(p6 = 1){x6, x1};
+	(p6 == 0 && p2 == 0, x6 <= CPD && x2 <= CPD)->(p6 = 2){x6, x2};
+	(p6 == 0 && p3 == 0, x6 <= CPD && x3 <= CPD)->(p6 = 3){x6, x3};
+	(p6 == 0 && p4 == 0, x6 <= CPD && x4 <= CPD)->(p6 = 4){x6, x4};
+	(p6 == 0 && p5 == 0, x6 <= CPD && x5 <= CPD)->(p6 = 5){x6, x5};
+	(p==0 && p1==0 && p2!=0 && p3!=0 && p4!=0 && p5!=0 && p6!=0)->(p=1){x1, x2, x3, x4, x5, x6};

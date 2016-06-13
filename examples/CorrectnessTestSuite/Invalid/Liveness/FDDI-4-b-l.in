@@ -1,0 +1,41 @@
+#define CSA 20
+#define Ctd 0
+#define CTRTT 220
+CLOCKS: {x1,y1,x2,y2,x3,y3,x4,y4,x}
+CONTROL: {p1,p2,p3,p4,p=1}
+INITIALLY: x==0 && x1 == 0 && y1 >= CTRTT && x2 == 0 && y2 >= CTRTT && x3 == 0 && y3 >= CTRTT && x4 == 0 && y4 >= CTRTT
+PREDICATE: {X}
+START: X
+EQUATIONS: {
+1: mu X = \forall time\rel[(p2==2)]((p2==2) || \AllAct(X)) && (UnableWaitInf || \exists time((p2==2)))
+}
+INVARIANT:
+	p == 1 -> x <= Ctd
+	p1 == 1 -> x1 <= CSA
+	p1 == 2 -> y1 <= CTRTT
+	p == 3 -> x <= Ctd
+	p2 == 1 -> x2 <= CSA
+	p2 == 2 -> y2 <= CTRTT
+	p == 5 -> x <= Ctd
+	p3 == 1 -> x3 <= CSA
+	p3 == 2 -> y3 <= CTRTT
+	p == 7 -> x <= Ctd
+	p4 == 1 -> x4 <= CSA
+	p4 == 2 -> y4 <= CTRTT
+TRANSITIONS:
+	(p==1 && p1==0, x==Ctd)->(p=2,p1=1){x1}[[y1=x1]];
+	(p==2 && p1==1, x1 == CSA && y1 >= CTRTT)->(p=3,p1=0){x};
+	(p==2 && p1==2)->(p=3,p1=0){x};
+	(p==3 && p2==0, x==Ctd)->(p=4,p2=1){x2}[[y2=x2]];
+	(p==4 && p2==1, x2 == CSA && y2 >= CTRTT)->(p=5,p2=0){x};
+	(p==4 && p2==2)->(p=5,p2=0){x};
+	(p==5 && p3==0, x==Ctd)->(p=6,p3=1){x3}[[y3=x3]];
+	(p==6 && p3==1, x3 == CSA && y3 >= CTRTT)->(p=7,p3=0){x};
+	(p==6 && p3==2)->(p=7,p3=0){x};
+	(p==7 && p4==0, x==Ctd)->(p=8,p4=1){x4}[[y4=x4]];
+	(p==8 && p4==1, x4 == CSA && y4 >= CTRTT)->(p=9,p4=0){x};
+	(p==8 && p4==2)->(p=9,p4=0){x};
+	(p1==1, x1 == CSA && y1 < CTRTT)->(p1=2);
+	(p2==1, x2 == CSA && y2 < CTRTT)->(p2=2);
+	(p3==1, x3 == CSA && y3 < CTRTT)->(p3=2);
+	(p4==1, x4 == CSA && y4 < CTRTT)->(p4=2);

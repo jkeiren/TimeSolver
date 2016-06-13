@@ -1,0 +1,9 @@
+CLOCKS :{x1,x2}
+CONTROL :{p1, q1}
+PREDICATE: {X}
+START: X
+EQUATIONS: {
+1: nu X = (p1 != 2 || x2 < 3) 
+	&& (\forall time((p1 == 0 && x2 > 0 && x2 <= 3)->X[p1=1][x2]))
+	&& (\forall time((p1 == 1 && x2 <= 3 && x1 <= 3)->X[p1=2][x1]))
+}

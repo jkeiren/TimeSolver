@@ -1,0 +1,11 @@
+#define CA 3
+CLOCKS :{x1}
+CONTROL :{p1(1)}
+PREDICATE: {X, Y, Z}
+START: Z
+EQUATIONS: {
+1: nu Z = X || Y
+2: nu X = Y && x1 < 0
+3: nu Y = X && X
+	}
+

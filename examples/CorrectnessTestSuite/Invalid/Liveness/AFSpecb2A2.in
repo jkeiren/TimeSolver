@@ -1,0 +1,14 @@
+CLOCKS :{x1, x2, z1}
+CONTROL :{p1(2)}
+PREDICATE: {X1, X2}
+START: X1
+EQUATIONS: {
+1: mu X1 = X2[z1]
+2: mu X2 = (z1 <= 1 && p1 == 1)
+	  || ((\forall time(
+	     ( (p1 == 0 && x2 > 1) -> (X2[p1=0][x2]))
+	  && ( (p1 == 0) -> (X2[p1=1][x2]))
+	  && ( (p1 == 1 && x2 > 1) -> (X2[p1=1][x2]))) ))
+	}
+INVARIANT:
+	p1 == 0 -> x1 <= 2

@@ -1,0 +1,21 @@
+#define CPD 2
+CLOCKS: {x1,x2,x3,x4}
+CONTROL: {p1,p2,p3,p4, p}
+PREDICATE: {X}
+START: X
+EQUATIONS: {
+1: nu X = \forall time( (p == 1) || \AllAct(\forall time( (p == 1) || \AllAct(\forall time( (p == 1) || \AllAct(\forall time( (p == 1) || \AllAct(\forall time( (p == 1))) )) )) )) )
+}
+INVARIANT:
+	p1 == 0 && p==0 -> x1 <= CPD
+	p2 == 0 && p==0 -> x2 <= CPD
+	p3 == 0 && p==0 -> x3 <= CPD
+	p4 == 0 && p==0 -> x4 <= CPD
+TRANSITIONS:
+	(p2 == 0 && p1 == 0, x2 <= CPD && x1 <= CPD)->(p2 = 1){x2, x1};
+	(p3 == 0 && p1 == 0, x3 <= CPD && x1 <= CPD)->(p3 = 1){x3, x1};
+	(p3 == 0 && p2 == 0, x3 <= CPD && x2 <= CPD)->(p3 = 2){x3, x2};
+	(p4 == 0 && p1 == 0, x4 <= CPD && x1 <= CPD)->(p4 = 1){x4, x1};
+	(p4 == 0 && p2 == 0, x4 <= CPD && x2 <= CPD)->(p4 = 2){x4, x2};
+	(p4 == 0 && p3 == 0, x4 <= CPD && x3 <= CPD)->(p4 = 3){x4, x3};
+	(p==0 && p1==0 && p2!=0 && p3!=0 && p4!=0)->(p=1){x1, x2, x3, x4};

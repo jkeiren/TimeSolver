@@ -1,0 +1,21 @@
+#define CPERIOD 2
+#define CPERIODUNIT 1
+CLOCKS :{x1,y1,x2,y2}
+CONTROL :{p1,p2}
+INITIALLY : x1 >= CPERIOD && x2 >= CPERIOD
+PREDICATE: {X}
+START: X
+EQUATIONS: {
+1: nu X = ((p2 != 2) || (x2 <= CPERIODUNIT))
+	&&(\forall time((p1==1 && p2==2 && (p2 == 2) && y1 <= 1 && x2 <= CPERIODUNIT && ((p1 == 1)))->X[p1=0,p2=1][y2]))
+	&&(\forall time((p1==2 && p2==1 && x1 <= CPERIODUNIT && ((p2 == 1)) && (p1 == 2) && y2 <= 1)->X[p1=1,p2=0][y1]))
+	&&(\forall time((p1==0 && p2 != 1  && x1 >= CPERIOD)->X[p1=1][x1,y1]))
+	&&(\forall time((p1==0 && (p2 == 1 ) && x1 >= CPERIOD)->X[p1=2][x1]))
+	&&(\forall time((p1==1 && (p2 != 2) && y1 <= 1)->X[p1=0]))
+	&&(\forall time((p2==0 && p1 == 0  && x2 >= CPERIOD)->X[p2=1][x2,y2]))
+	&&(\forall time((p2==0 && (p1 != 0 ) && x2 >= CPERIOD)->X[p2=2][x2]))
+	&&(\forall time((p2==1 && (p1 != 2) && y2 <= 1)->X[p2=0]))
+}
+INVARIANT:
+	p1 == 1 -> y1 <= 1
+	p2 == 1 -> y2 <= 1

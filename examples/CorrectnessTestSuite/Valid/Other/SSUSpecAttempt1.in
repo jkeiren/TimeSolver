@@ -1,0 +1,10 @@
+CLOCKS :{x, z1, z2}
+CONTROL :{p1(2)}
+PREDICATE: {X1}
+START: X1
+EQUATIONS: {
+1: nu X1 = (\exists time( (p1 == 1 || (x==3->((p1==1)[p1=1])))
+			&& (\forall time((z2 - z1 <= 0) -> (x <= 5 || p1==1))[z2])))[z1] 
+	}
+INVARIANT:
+	p1 == 0 -> x <= 5

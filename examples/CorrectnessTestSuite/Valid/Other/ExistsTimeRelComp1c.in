@@ -1,0 +1,10 @@
+CLOCKS: {x1}
+CONTROL: {p1}
+INITIALLY: x1 == 0
+PREDICATE: {X}
+START: X
+EQUATIONS: {
+1: mu X = \exists time\rel[x1 <= 1 || x1 >= 3](x1 >= 4 || (x1 == 1))	
+}
+TRANSITIONS:
+

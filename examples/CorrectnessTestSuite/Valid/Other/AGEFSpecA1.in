@@ -1,0 +1,18 @@
+CLOCKS :{x1}
+CONTROL :{p1(2)}
+PREDICATE: {X1, X2}
+START: X1
+EQUATIONS: {
+1: nu X1 = X2
+	  && ((\forall time(X1 
+	  && ( (p1 == 0) -> (X1[p1=0][x1]))
+	  && ( (p1 == 0) -> (X1[p1=1]))
+	  && ( (p1 == 1) -> (X1[p1=1])))))
+2: mu X2 = p1 == 1
+	  || ((\exists time(X2 
+	  ||   ( (p1 == 0) && (X2[p1=0][x1]))
+	  || ( (p1 == 0) && (X2[p1=1]))
+	  || ( (p1 == 1) && (X2[p1=1])))))
+	}
+INVARIANT:
+	p1 == 0 -> x1 <= 2

@@ -1,0 +1,8 @@
+CLOCKS :{x1}
+CONTROL :{p1(1)}
+PREDICATE: {X}
+START: X
+EQUATIONS: {
+1: mu X = \forall time(x1 < 1 || x1 >= 1)
+	}
+

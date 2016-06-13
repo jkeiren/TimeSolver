@@ -1,0 +1,50 @@
+CC = g++
+#CFLAGS = -c -O -fno-inline
+CFLAGS = -c -pg -O
+FLEX = flex
+
+LDFLAGS = -pg -O
+INCL_PATH = -I.
+
+all: demo testdbm
+
+demo:	pes.tab.o pes.lex.o ExprNode.o demo.o
+	$(CC) -o demo -pg pes.lex.o pes.tab.o ExprNode.o demo.o $(LDFLAGS) 
+
+demo.o: demo.cc ExprNode.hh DBM.hh
+	$(CC) $(CFLAGS) demo.cc $(INCL_PATH)
+
+ExprNode.o: ExprNode.cc ExprNode.hh
+	$(CC) $(CFLAGS) ExprNode.cc $(INCL_PATH)
+
+pes.lex.o: pes.lex.c
+	$(CC) $(CFLAGS) pes.lex.c $(INCL_PATH)
+
+pes.lex.c: pes.l
+	$(FLEX) -p -8 -Ce -opes.lex.c pes.l
+
+pes.tab.o: pes.tab.c ExprNode.hh
+	$(CC) $(CFLAGS) pes.tab.c $(INCL_PATH)
+
+pes.tab.c: pes.y
+	bison -t -d -v -o pes.tab.c pes.y
+
+testdbm: testdbm.cc DBM.hh
+	$(CC) -o testdbm -pg -O testdbm.cc
+	
+	
+clean:
+	-echo "Removing all object files!"
+	-rm -f demo *.o
+	-rm -f testdbm
+#	-rm -f memtime
+	-rm -f *.gch
+	-echo "Removing intermediate C files!"
+	-rm -f pes.lex.c pes.tab.c 
+	-echo "Removing intermediate Header files!"
+	-rm -f pes.tab.h
+	-echo "Removing other parser-generated files!"
+	-rm -f pes.output
+	-echo "Removing Doxygen Generated Documentation files!"
+	-rm -rf doc/DoxygenOutput/html
+	-rm -rf doc/DoxygenOutput/latex

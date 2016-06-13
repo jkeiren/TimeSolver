@@ -1,0 +1,9 @@
+CLOCKS :{x, z1, z2}
+CONTROL :{p1(2)}
+PREDICATE: {X1}
+START: X1
+EQUATIONS: {
+1: nu X1 = ((p1 == 1 || p1 == 0) && p1 == 0)
+}
+INVARIANT:
+	p1 == 0 -> x <= 5

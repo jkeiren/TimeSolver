@@ -1,0 +1,11 @@
+CLOCKS: {x1}
+CONTROL: {p1}
+INITIALLY: x1 == 0
+PREDICATE: {X}
+START: X
+EQUATIONS: {
+1: nu X = \forall time\rel[x1 >=2](x1<=2)
+}
+INVARIANT:
+	p1 == 0 -> x1 < 3
+TRANSITIONS:

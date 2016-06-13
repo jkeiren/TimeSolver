@@ -1,0 +1,14 @@
+CLOCKS: {x1,x2,z}
+CONTROL: {p1}
+INITIALLY: x1 == 0 && x2 == 0 && z == 0
+PREDICATE: {X}
+START: X
+EQUATIONS: {
+1: nu X = \exists time(\ExistAct(
+	\forall time(x1 <= 3 && z <= 2)[z] ))	
+}
+INVARIANT:
+	p1 == 1 -> x1 <= 6
+	p1 == 1 -> x2 <= 6
+TRANSITIONS:
+	(p1 == 0)->(p1=1){x1};

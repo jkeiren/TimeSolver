@@ -1,0 +1,23 @@
+#define CPD 2
+CLOCKS :{x,x1,x2,x3,x4,x5,x6}
+CONTROL :{p1,p2,p3,p4,p5,p6}
+PREDICATE: {X}
+START: X
+EQUATIONS: {
+1: nu X = ((x <= 6) || ((p1!=0 || p2!=0) && (p1!=0 || p3!=0) && (p1!=0 || p4!=0) && (p1!=0 || p5!=0) && (p1!=0 || p6!=0) && (p2!=0 || p3!=0) && (p2!=0 || p4!=0) && (p2!=0 || p5!=0) && (p2!=0 || p6!=0) && (p3!=0 || p4!=0) && (p3!=0 || p5!=0) && (p3!=0 || p6!=0) && (p4!=0 || p5!=0) && (p4!=0 || p6!=0) && (p5!=0 || p6!=0)) )
+	&&(\forall time((x2 <= CPD && p2 == 0 && x1 <= CPD && p1 == 0)->X[p2 = 1][x2, x1]))
+	&&(\forall time((x3 <= CPD && p3 == 0 && x1 <= CPD && p1 == 0)->X[p3 = 1][x3, x1]))
+	&&(\forall time((x3 <= CPD && p3 == 0 && x2 <= CPD && p2 == 0)->X[p3 = 2][x3, x2]))
+	&&(\forall time((x4 <= CPD && p4 == 0 && x1 <= CPD && p1 == 0)->X[p4 = 1][x4, x1]))
+	&&(\forall time((x4 <= CPD && p4 == 0 && x2 <= CPD && p2 == 0)->X[p4 = 2][x4, x2]))
+	&&(\forall time((x4 <= CPD && p4 == 0 && x3 <= CPD && p3 == 0)->X[p4 = 3][x4, x3]))
+	&&(\forall time((x5 <= CPD && p5 == 0 && x1 <= CPD && p1 == 0)->X[p5 = 1][x5, x1]))
+	&&(\forall time((x5 <= CPD && p5 == 0 && x2 <= CPD && p2 == 0)->X[p5 = 2][x5, x2]))
+	&&(\forall time((x5 <= CPD && p5 == 0 && x3 <= CPD && p3 == 0)->X[p5 = 3][x5, x3]))
+	&&(\forall time((x5 <= CPD && p5 == 0 && x4 <= CPD && p4 == 0)->X[p5 = 4][x5, x4]))
+	&&(\forall time((x6 <= CPD && p6 == 0 && x1 <= CPD && p1 == 0)->X[p6 = 1][x6, x1]))
+	&&(\forall time((x6 <= CPD && p6 == 0 && x2 <= CPD && p2 == 0)->X[p6 = 2][x6, x2]))
+	&&(\forall time((x6 <= CPD && p6 == 0 && x3 <= CPD && p3 == 0)->X[p6 = 3][x6, x3]))
+	&&(\forall time((x6 <= CPD && p6 == 0 && x4 <= CPD && p4 == 0)->X[p6 = 4][x6, x4]))
+	&&(\forall time((x6 <= CPD && p6 == 0 && x5 <= CPD && p5 == 0)->X[p6 = 5][x6, x5]))
+}

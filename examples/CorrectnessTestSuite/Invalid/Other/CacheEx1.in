@@ -1,0 +1,9 @@
+#define CA 3
+CLOCKS :{x1}
+CONTROL :{p1(1)}
+PREDICATE: {X}
+START: X
+EQUATIONS: {
+1: mu X = X || X || X
+	}
+

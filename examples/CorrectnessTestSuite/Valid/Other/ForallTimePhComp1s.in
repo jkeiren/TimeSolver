@@ -1,0 +1,12 @@
+CLOCKS: {x1}
+CONTROL: {p1}
+INITIALLY: x1 == 0
+PREDICATE: {X}
+START: X
+EQUATIONS: {
+1: nu X = \exists time(
+	\forall time((x1 < 2 || x1 >= 2)) && x1 <= 1)
+}
+INVARIANT:
+TRANSITIONS:
+	

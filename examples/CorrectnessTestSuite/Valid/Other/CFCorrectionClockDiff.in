@@ -1,0 +1,15 @@
+CLOCKS :{x1,x2}
+CONTROL :{p1(2)}
+INITIALLY: x1 >= 0 && x2 >= 0
+PREDICATE: {X, Y}
+START: X
+EQUATIONS: {
+1: nu X = (p1 == 0 -> (\forall time(X[p1=1]))) &&
+           (p1 == 1 -> ((x2 - x1 < 3)
+	&& (\forall time(X[p1=1]))))
+}
+INVARIANT:
+	p1 == 0 -> x2 - x1 <= 3
+	p1 == 0 -> x2 < 3
+	p1 == 1 -> x2 - x1 <= 3
+	p1 == 1 -> x2 < 3

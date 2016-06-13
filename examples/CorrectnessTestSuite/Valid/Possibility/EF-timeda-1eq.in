@@ -1,0 +1,13 @@
+#define CA 3
+CLOCKS :{x1}
+CONTROL :{p1(2)}
+PREDICATE: {X}
+START: X
+EQUATIONS: {
+1: mu X = ((p1 == 1))
+	||(\exists time((p1==0)&&X[p1=1][x1]))
+	||(\exists time((p1==1 && x1 > 1)&&X[p1=0]))
+	}
+INVARIANT:
+	p1 == 0 -> x1 < 2
+	p1 == 1 -> x1 < 2

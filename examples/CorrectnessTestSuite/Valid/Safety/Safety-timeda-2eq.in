@@ -1,0 +1,13 @@
+#define CA 3
+CLOCKS :{x1}
+CONTROL :{p1}
+PREDICATE: {X1, X2}
+START: X1
+EQUATIONS: {
+1: nu X1 = ((x1 <= CA))
+	&&(\forall time((p1==0)->X2[x1]))
+1: nu X2 = ((x1 <= CA))
+	&&(\forall time((p1==0 && x1 > 1)->X1))
+	}
+INVARIANT:
+	p1 == 0 -> x1 < 2

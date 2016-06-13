@@ -1,0 +1,15 @@
+CLOCKS :{x1}
+CONTROL :{p1(3)}
+PREDICATE: {X1}
+START: X1
+EQUATIONS: {
+1: mu X1 = (p1 == 2 && x1 > 5)
+	  || (\exists time(X1
+	  || ( (p1 == 0) && (X1[p1=1]))
+	  || ( (p1 == 1 && x1 > 2) && (X1[p1=2]))
+	  || ( (p1 == 2) && (X1[p1=0][x1])) ) )
+}
+INVARIANT:
+	p1 == 0 -> x1 <= 5
+	p1 == 1 -> x1 <= 5
+	p1 == 2 -> x1 <= 5

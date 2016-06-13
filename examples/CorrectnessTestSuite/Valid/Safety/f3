@@ -1,0 +1,45 @@
+#define CA       26
+#define CB       52
+#define CLAMBDA  808
+CLOCKS :{x1,x2,y}
+CONTROL :{p1,p2,p}
+PREDICATE: {X}
+START: X
+EQUATIONS: {
+1: nu X =  (p1 != 1 || p2 != 1 || (x1 < CB) || (x2 < CB))
+&&(\forall time((p==0 && p1==0)->X[p=1,p1=1][y,x1]))
+&&(\forall time((p==0 && p1==2 && x1 < CB)->X[p=1,p1=1][y,x1]))
+&&(\forall time((p==0 && p2==0)->X[p=1,p2=1][y,x2]))
+&&(\forall time((p==0 && p2==2 && x2 < CB)->X[p=1,p2=1][y,x2]))
+&&(\forall time((p==1 && p1==1 && x1 == CLAMBDA)->X[p=0,p1=0][y,x1]))
+&&(\forall time((p==1 && p2==1 && x2 == CLAMBDA)->X[p=0,p2=0][y,x2]))
+&&(\forall time((p==1 && y >= CA && p1==0)->X[p=1,p1=2][x1]))
+&&(\forall time((p==1 && y >= CA && p1==2)->X[p=1,p1=2][x1]))
+&&(\forall time((p==1 && y >= CA && p2==0)->X[p=1,p2=2][x2]))
+&&(\forall time((p==1 && y >= CA && p2==2)->X[p=1,p2=2][x2]))
+&&(\forall time((p==1 && y < CA && p1==0)->X[p=2,p1=1][y,x1]))
+&&(\forall time((p==1 && y < CA && p1==2 && x1 < CB)->X[p=2,p1=1][y,x1]))
+&&(\forall time((p==1 && y < CA && p2==0)->X[p=2,p2=1][y,x2]))
+&&(\forall time((p==1 && y < CA && p2==2 && x2 < CB)->X[p=2,p2=1][y,x2]))
+&&(\forall time((p==2 && y < CA && p1==0 && p2==0)->X[p=0,p1=0,p2=0][y]))
+&&(\forall time((p==2 && y < CA && p1==0 && p2==0)->X[p=0,p1=0,p2=2][y,x2]))
+&&(\forall time((p==2 && y < CA && p1==0 && p2==1 && x2 < CB)->X[p=0,p1=0,p2=2][y,x2]))
+&&(\forall time((p==2 && y < CA && p1==0 && p2==2 && x2 < CB)->X[p=0,p1=0,p2=2][y]))
+&&(\forall time((p==2 && y < CA && p1==0 && p2==0)->X[p=0,p1=2,p2=0][y,x1]))
+&&(\forall time((p==2 && y < CA && p1==0 && p2==0)->X[p=0,p1=2,p2=2][y,x1,x2]))
+&&(\forall time((p==2 && y < CA && p1==0 && p2==1 && x2 < CB)->X[p=0,p1=2,p2=2][y,x1,x2]))
+&&(\forall time((p==2 && y < CA && p1==0 && p2==2 && x2 < CB)->X[p=0,p1=2,p2=2][y,x1]))
+&&(\forall time((p==2 && y < CA && p1==1 && x1 < CB && p2==0)->X[p=0,p1=2,p2=0][y,x1]))
+&&(\forall time((p==2 && y < CA && p1==1 && x1 < CB && p2==0)->X[p=0,p1=2,p2=2][y,x1,x2]))
+&&(\forall time((p==2 && y < CA && p1==1 && x1 < CB && p2==1 && x2 < CB)->X[p=0,p1=2,p2=2][y,x1,x2]))
+&&(\forall time((p==2 && y < CA && p1==1 && x1 < CB && p2==2 && x2 < CB)->X[p=0,p1=2,p2=2][y,x1]))
+&&(\forall time((p==2 && y < CA && p1==2 && x1 < CB && p2==0)->X[p=0,p1=2,p2=0][y]))
+&&(\forall time((p==2 && y < CA && p1==2 && x1 < CB && p2==0)->X[p=0,p1=2,p2=2][y,x2]))
+&&(\forall time((p==2 && y < CA && p1==2 && x1 < CB && p2==1 && x2 < CB)->X[p=0,p1=2,p2=2][y,x2]))
+&&(\forall time((p==2 && y < CA && p1==2 && x1 < CB && p2==2 && x2 < CB)->X[p=0,p1=2,p2=2][y]))
+}
+INVARIANT:
+	p1 == 1 -> x1 <= CLAMBDA
+	p1 == 2 -> x1 < CB
+	p2 == 1 -> x2 <= CLAMBDA
+	p2 == 2 -> x2 < CB

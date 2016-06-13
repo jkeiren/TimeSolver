@@ -1,0 +1,39 @@
+#define CPERIOD 4
+#define CPERIODUNIT 1
+CLOCKS :{x1,y1,x2,y2,x3,y3,x4,y4}
+CONTROL :{p1,p2,p3,p4}
+INITIALLY : x1 >= CPERIOD && x2 >= CPERIOD && x3 >= CPERIOD && x4 >= CPERIOD
+PREDICATE: {X}
+START: X
+EQUATIONS: {
+1: nu X = ((p4 != 2) || (x4 <= CPERIODUNIT))
+	&&(\forall time((p1==1 && p2==2 && (p2 == 2 || p3 == 2 || p4 == 2) && y1 <= 1 && x2 <= CPERIODUNIT && ((p1 == 1) || (p3 == 1 && p1 == 0) || (p4 == 1 && p1 == 0)))->X[p1=0,p2=1][y2]))
+	&&(\forall time((p1==1 && p3==2 && (p2 == 2 || p3 == 2 || p4 == 2) && y1 <= 1 && x3 <= CPERIODUNIT && ((p1 == 1 && p2 == 0) || (p2 == 1 && p1 == 0) || (p4 == 1 && p1 == 0 && p2 == 0)))->X[p1=0,p3=1][y3]))
+	&&(\forall time((p1==1 && p4==2 && (p2 == 2 || p3 == 2 || p4 == 2) && y1 <= 1 && x4 <= CPERIODUNIT && ((p1 == 1 && p2 == 0 && p3 == 0) || (p2 == 1 && p1 == 0 && p3 == 0) || (p3 == 1 && p1 == 0 && p2 == 0)))->X[p1=0,p4=1][y4]))
+	&&(\forall time((p1==2 && p2==1 && x1 <= CPERIODUNIT && ((p2 == 1) || (p3 == 1) || (p4 == 1)) && (p1 == 2 || p3 == 2 || p4 == 2) && y2 <= 1)->X[p1=1,p2=0][y1]))
+	&&(\forall time((p1==2 && p3==1 && x1 <= CPERIODUNIT && ((p2 == 1) || (p3 == 1) || (p4 == 1)) && (p1 == 2 || p2 == 2 || p4 == 2) && y3 <= 1)->X[p1=1,p3=0][y1]))
+	&&(\forall time((p1==2 && p4==1 && x1 <= CPERIODUNIT && ((p2 == 1) || (p3 == 1) || (p4 == 1)) && (p1 == 2 || p2 == 2 || p3 == 2) && y4 <= 1)->X[p1=1,p4=0][y1]))
+	&&(\forall time((p2==1 && p3==2 && (p1 == 2 || p3 == 2 || p4 == 2) && y2 <= 1 && x3 <= CPERIODUNIT && ((p1 == 1 && p2 == 0) || (p2 == 1 && p1 == 0) || (p4 == 1 && p1 == 0 && p2 == 0)))->X[p2=0,p3=1][y3]))
+	&&(\forall time((p2==1 && p4==2 && (p1 == 2 || p3 == 2 || p4 == 2) && y2 <= 1 && x4 <= CPERIODUNIT && ((p1 == 1 && p2 == 0 && p3 == 0) || (p2 == 1 && p1 == 0 && p3 == 0) || (p3 == 1 && p1 == 0 && p2 == 0)))->X[p2=0,p4=1][y4]))
+	&&(\forall time((p2==2 && p3==1 && x2 <= CPERIODUNIT && ((p1 == 1) || (p3 == 1 && p1 == 0) || (p4 == 1 && p1 == 0)) && (p1 == 2 || p2 == 2 || p4 == 2) && y3 <= 1)->X[p2=1,p3=0][y2]))
+	&&(\forall time((p2==2 && p4==1 && x2 <= CPERIODUNIT && ((p1 == 1) || (p3 == 1 && p1 == 0) || (p4 == 1 && p1 == 0)) && (p1 == 2 || p2 == 2 || p3 == 2) && y4 <= 1)->X[p2=1,p4=0][y2]))
+	&&(\forall time((p3==1 && p4==2 && (p1 == 2 || p2 == 2 || p4 == 2) && y3 <= 1 && x4 <= CPERIODUNIT && ((p1 == 1 && p2 == 0 && p3 == 0) || (p2 == 1 && p1 == 0 && p3 == 0) || (p3 == 1 && p1 == 0 && p2 == 0)))->X[p3=0,p4=1][y4]))
+	&&(\forall time((p3==2 && p4==1 && x3 <= CPERIODUNIT && ((p1 == 1 && p2 == 0) || (p2 == 1 && p1 == 0) || (p4 == 1 && p1 == 0 && p2 == 0)) && (p1 == 2 || p2 == 2 || p3 == 2) && y4 <= 1)->X[p3=1,p4=0][y3]))
+	&&(\forall time((p1==0 && p2 != 1  && p3 != 1  && p4 != 1  && x1 >= CPERIOD)->X[p1=1][x1,y1]))
+	&&(\forall time((p1==0 && (p2 == 1 ||p3 == 1 ||p4 == 1 ) && x1 >= CPERIOD)->X[p1=2][x1]))
+	&&(\forall time((p1==1 && (p2 != 2 && p3 != 2 && p4 != 2) && y1 <= 1)->X[p1=0]))
+	&&(\forall time((p2==0 && p1 == 0  && p3 != 1  && p4 != 1  && x2 >= CPERIOD)->X[p2=1][x2,y2]))
+	&&(\forall time((p2==0 && (p1 != 0 ||p3 == 1 ||p4 == 1 ) && x2 >= CPERIOD)->X[p2=2][x2]))
+	&&(\forall time((p2==1 && (p1 != 2 && p3 != 2 && p4 != 2) && y2 <= 1)->X[p2=0]))
+	&&(\forall time((p3==0 && p1 == 0  && p2 == 0  && p4 != 1  && x3 >= CPERIOD)->X[p3=1][x3,y3]))
+	&&(\forall time((p3==0 && (p1 != 0 ||p2 != 0 ||p4 == 1 ) && x3 >= CPERIOD)->X[p3=2][x3]))
+	&&(\forall time((p3==1 && (p1 != 2 && p2 != 2 && p4 != 2) && y3 <= 1)->X[p3=0]))
+	&&(\forall time((p4==0 && p1 == 0  && p2 == 0  && p3 == 0  && x4 >= CPERIOD)->X[p4=1][x4,y4]))
+	&&(\forall time((p4==0 && (p1 != 0 ||p2 != 0 ||p3 != 0 ) && x4 >= CPERIOD)->X[p4=2][x4]))
+	&&(\forall time((p4==1 && (p1 != 2 && p2 != 2 && p3 != 2) && y4 <= 1)->X[p4=0]))
+}
+INVARIANT:
+	p1 == 1 -> y1 <= 1
+	p2 == 1 -> y2 <= 1
+	p3 == 1 -> y3 <= 1
+	p4 == 1 -> y4 <= 1
