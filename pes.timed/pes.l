@@ -50,7 +50,7 @@ yyID_U    [pq]({yyALPHA}|{yyDIGIT})*
 /** Constant Variables */
 yyCONST   C({yyALPHA}|{yyDIGIT})*
 yyCHAR   .
-yyLINE   \n
+yyLINE   \n|\r|\r\n
 yyCOMM1  \/\*
 yyCOMM2  \/\/{yyCHAR}*
 
