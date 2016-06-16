@@ -1,3 +1,4 @@
+#!/Library/Frameworks/Python.framework/Versions/3.5/bin/python3
 import itertools
 import string
 import logging
@@ -222,6 +223,19 @@ def mergeGuards(aut1, aut2, g1, g2):
     LOG.debug("merged result: {0}".format(ret))
     return ret
 
+def mergeLabels(nTrains, aut1, aut2, l1, l2):
+    ret = None
+    if l1.find("front()") != -1:
+        ret = "q0 == {0}".format(aut2.id)
+    elif l2.find("front()") != -1:
+        ret = "q0 == {0}".format(aut1.id)
+    elif l1.find("tail()") != -1:
+        ret = "q{0} == {1}".format(nTrains-1, aut2.id)
+    elif l2.find("tail()") != -1:
+        ret = "q{0} == {1}".format(nTrains-1, aut1.id)
+    return ret
+    
+
 def mergeCommunicatingTransitions(nTrains, aut1, aut2, t1, t2):
     LOG.debug("merging communicating transitions {0} and {1}".format(t1, t2))
     (source1, condition1, guard1, dest1, label1, reset1, update1) = t1.encoding(aut1)
@@ -244,6 +258,11 @@ def mergeCommunicatingTransitions(nTrains, aut1, aut2, t1, t2):
     # Labels are compatible, so pick 1 here
     label = label1
     LOG.debug("  label: {0}".format(label))
+    
+    # But also make sure we add the right check, if needed.
+    extraCond = mergeLabels(nTrains, aut1, aut2, label1, label2)
+    if extraCond:
+        conditions += [extraCond]
     
     resets = reset1 + reset2
     LOG.debug("  clocks to reset: {0}".format(resets))
@@ -318,27 +337,51 @@ def generateEnqueue(nTrains, trainId):
     #     ret += [(condition, update)]
     # else: raise Exception("Enqueueing not implemented for {0} trains".format(nTrains))
     return ret
+
+# Produces all sublists of xs obtained by removing a single element
+def allListsOneShorter(xs):
+    # invariant xs + [x] + ys = original xs
+    ys = []
+    while xs != []:
+        x = xs.pop()
+        yield xs + ys
+        ys.insert(0,x)
+
+# All queue like permutations
+def queuePermutations(head, xs, tail):
+    # First, permute xs
+    for perm in itertools.permutations(xs):
+        yield ([head] + list(perm) + tail)
+    
+    
+    # Now, we need to remove each element, and permute the smaller list
+    # remember that xs = x[:i] ++ x[i:], x[:0] == []
+    for ys in allListsOneShorter(xs):
+        yield from queuePermutations(head, ys, tail + [0])  
     
 def generateDequeue(nTrains, trainId):
     LOG.debug("Generating code for dequeuing train {0}".format(trainId))
     ret = []
     LOG.debug("  Processing all permutations")
-    for perm in itertools.permutations([i+1 for i in range(nTrains)]):
+    
+    head = trainId
+    xs = list(filter(lambda x: x != head, [i+1 for i in range(nTrains)]))
+    
+    for perm in queuePermutations(head, xs, []):
         perm = list(perm)
-        if perm[0] == trainId:
-            LOG.debug("  Permutation {0}".format(perm))
-            condition = ["q0 == {0}".format(trainId)]
-            updates = []
-            for i in range(1, nTrains):
-                condition += ["q{0} == {1}".format(i, perm[i])]
-                updates += ["q{0} = {1}".format(i-1, perm[i])]
-            updates += ["q{0} = 0".format(nTrains-1)]
-            
-            LOG.debug("    condition: {0}".format(condition))
-            LOG.debug("    updates: {0}".format(updates))
-            
-            ret += [(str.join(" && ", condition), str.join(", ", updates))]
-    LOG.debug("Dequeue codes: {0}".format(ret))    
+        LOG.debug("  Permutation {0}".format(perm))
+        condition = ["q0 == {0}".format(perm[0])]
+        updates = []
+        for i in range(1, nTrains):
+            condition += ["q{0} == {1}".format(i, perm[i])]
+            updates += ["q{0} = {1}".format(i-1, perm[i])]
+        updates += ["q{0} = 0".format(nTrains-1)]
+        
+        LOG.debug("    condition: {0}".format(condition))
+        LOG.debug("    updates: {0}".format(updates))
+        
+        ret += [(str.join(" && ", condition), str.join(", ", updates))]
+        LOG.debug("Dequeue codes: {0}".format(ret))    
     # if nTrains == 1:
     #     condition = "q0 == {0}".format(trainId)
     #     updates = "q0 = 0"
@@ -399,7 +442,6 @@ def generateProperty(property, gate, trains):
                     conjunct = "{0} != {1}".format(train1.controlName(), train.stateIndexByName("Cross"))
                     LOG.debug("  disallowing this train using clause {0}".format(conjunct))
                     conjuncts += [conjunct]
-            print(conjuncts)
                     
             clauses += ["({0} || ({1}))".format(guard, str.join(" && ", conjuncts))]                   
                     
@@ -497,10 +539,12 @@ def runCmdLine():
     outputFile = args[0]
 
     logging.basicConfig()
-    if options.verbosity > 0:
-        logging.getLogger().setLevel(logging.INFO)
-    if options.verbosity > 1:
-        logging.getLogger().setLevel(logging.DEBUG)
+    
+    if options.verbosity:
+        if options.verbosity > 0:
+            logging.getLogger().setLevel(logging.INFO)
+        if options.verbosity > 1:
+            logging.getLogger().setLevel(logging.DEBUG)
 
     generateTrainGate(options.ntrains, outputFile, options.property)
 
