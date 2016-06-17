@@ -7,7 +7,17 @@ import optparse
 LOG = logging.getLogger()
 
 def concat(xss):
-    return list(itertools.chain.from_iterable(xss))
+    return itertools.chain.from_iterable(xss)
+
+def nub(xs):
+    ys = []
+    for x in xs:
+        if x not in ys:
+            ys.append(x)
+    return ys
+
+def boolToInt(b):
+    return 1 if b else 0
     
 def getState(states, name):
     for s in states:
@@ -44,10 +54,11 @@ class LabelStore:
 LABELSTORE = LabelStore()
 
 class State:
-    def __init__(self, name, invariant=None, initial=False):
+    def __init__(self, name, invariant=None, initial=False, committed=False):
         self.name = name
         self.invariant = invariant
-        self.initial = False   
+        self.initial = initial
+        self.committed = committed
         
     def __str__(self):
         return "{0}, {1}{2}".format(self.name, self.invariant, ", INIT" if self.initial else "")
@@ -56,7 +67,9 @@ class State:
         return "C{0}".format(self.name)
         
     def encoding(self, automaton, dest=False):
-        return "{0} {2} {1}".format(automaton.controlName(), automaton.stateIndex(self), "=" if dest else "==")    
+        stateClause = "{0} {2} {1}".format(automaton.controlName(), automaton.stateIndex(self), "=" if dest else "==")
+        committedClause = "qCommitted {0} {1}".format("=" if dest else "==", boolToInt(self.committed))
+        return [stateClause, committedClause]
 
 class Transition:
     def __init__(self, source, dest, guard, label, reset, update = None):
@@ -71,19 +84,26 @@ class Transition:
     
     # Split the guard into a part which is not about clocks, and a part which is.
     def guardIsCondition(self):
-        return self.guard in ["len > 0", "len == 0"]
+        return self.guard in [["len > 0"], ["len == 0"]]
         
     def replaceCondition(self, condition):
-        ret = condition.replace("len > 0", "q0 != 0")
-        ret = ret.replace("len == 0", "q0 == 0")
+        ret = []
+        for x in condition:
+            x = x.replace("len > 0", "q0 != 0")
+            x = x.replace("len == 0", "q0 == 0")
+            ret.append(x)
         LOG.debug("Replacing condition {0} with {1}".format(condition, ret))
         return ret
         
     def encoding(self, automaton):
+        # Reset extra clock for committed locations
+        c = []
+        if self.source.committed:
+            c.append('x0')
         return (self.source.encoding(automaton),
-                self.replaceCondition(self.guard) if self.guardIsCondition() else None,
-                None if self.guardIsCondition() else self.guard,
-                self.dest.encoding(automaton, dest=True),
+                self.replaceCondition(self.guard) if self.guardIsCondition() else [],
+                [] if self.guardIsCondition() else self.guard,
+                self.dest.encoding(automaton,True),
                 self.label,
                 self.reset,
                 self.update)
@@ -121,32 +141,30 @@ TRANSITIONS:
         raise Exception("State not found")
             
     def invariants(self):
-        res = []
         for s in self.states:
+            if s.committed:
+                yield "{0} == {1} -> {2}".format(self.controlName(), self.stateIndex(s), "x0 <= 0")
             if s.invariant:
-                res.append("{0} == {1} -> {2}".format(self.controlName(), self.stateIndex(s), s.invariant))
-        return res
+                yield "{0} == {1} -> {2}".format(self.controlName(), self.stateIndex(s), s.invariant)
         
     def localTransitions(self):
-        res = []
         for t in self.transitions:
             if not t.label:
-                res.append(t)
-        return res
+                yield t
 
 class Gate(TA):
   def __init__(self):
     states = [
         State("Free", None, True),
         State("Occ"),
-        State("Committed")
+        State("Committed", committed=True)
     ]
     transitions = [
-        Transition(getState(states, "Free"), getState(states, "Occ"), "len > 0", "go[front()]!", []),
-        Transition(getState(states, "Free"), getState(states, "Occ"), "len == 0", "appr[e]?", [], "enqueue(e)"),
-        Transition(getState(states, "Occ"), getState(states, "Committed"), None, "appr[e]?", [], "enqueue(e)"),
-        Transition(getState(states, "Occ"), getState(states, "Free"), "e == front()", "leave[e]?", [], "dequeue(e)"),
-        Transition(getState(states, "Committed"), getState(states, "Occ"),None, "stop[tail()]!", [])
+        Transition(getState(states, "Free"), getState(states, "Occ"), ["len > 0"], "go[front()]!", []),
+        Transition(getState(states, "Free"), getState(states, "Occ"), ["len == 0"], "appr[e]?", [], "enqueue(e)"),
+        Transition(getState(states, "Occ"), getState(states, "Committed"), [], "appr[e]?", [], "enqueue(e)"),
+        Transition(getState(states, "Occ"), getState(states, "Free"), ["e == front()"], "leave[e]?", [], "dequeue(e)"),
+        Transition(getState(states, "Committed"), getState(states, "Occ"), [], "stop[tail()]!", [])
     ]
     super().__init__("Gate", states, transitions, [])
   
@@ -162,12 +180,12 @@ class Train(TA):
         State("Cross", "x{0} <= 5".format(id))
     ]
     transitions = [
-        Transition(getState(states, "Safe"), getState(states, "Appr"), None, "appr[{0}]!".format(id), ["x{0}".format(id)]),
-        Transition(getState(states, "Appr"), getState(states, "Cross"), "x{0} >= 10".format(id), None, ["x{0}".format(id)]),
-        Transition(getState(states, "Appr"), getState(states, "Stop"), "x{0} <= 10".format(id), "stop[{0}]?".format(id), []),
-        Transition(getState(states, "Stop"), getState(states, "Start"), None, "go[{0}]?".format(id), ["x{0}".format(id)]),
-        Transition(getState(states, "Start"), getState(states, "Cross"), "x{0} >= 7".format(id), None, ["x{0}".format(id)]),
-        Transition(getState(states, "Cross"), getState(states, "Safe"), "x{0} >= 3".format(id), "leave[{0}]!".format(id), [])
+        Transition(getState(states, "Safe"), getState(states, "Appr"), [], "appr[{0}]!".format(id), ["x{0}".format(id)]),
+        Transition(getState(states, "Appr"), getState(states, "Cross"), ["x{0} >= 10".format(id)], None, ["x{0}".format(id)]),
+        Transition(getState(states, "Appr"), getState(states, "Stop"), ["x{0} <= 10".format(id)], "stop[{0}]?".format(id), []),
+        Transition(getState(states, "Stop"), getState(states, "Start"), [], "go[{0}]?".format(id), ["x{0}".format(id)]),
+        Transition(getState(states, "Start"), getState(states, "Cross"), ["x{0} >= 7".format(id)], None, ["x{0}".format(id)]),
+        Transition(getState(states, "Cross"), getState(states, "Safe"), ["x{0} >= 3".format(id)], "leave[{0}]!".format(id), [])
     ]
     clocks = "x{0}".format(self.id)
     super().__init__("Train{0}".format(id), states, transitions, clocks)
@@ -175,9 +193,11 @@ class Train(TA):
 def printTransitionEncoding(encoding):
     LOG.debug("Printing transition encoding {0}".format(encoding))
     (source, condition, guard, dest, label, reset, update) = encoding
-    if condition:
-        source = "{0} && {1}".format(source, condition)
-    return "({0}{1})->({2}){3};\n".format(source, ", {0}".format(guard) if guard else "", dest + ', qAct = {0}'.format(LABELSTORE.getIndex(label))  if label != None else dest, "{{{0}}}".format(str.join(", ", reset)) if reset else "")
+    return "({0}{1})->({2}){3};\n".format(
+        str.join(' && ', nub(source + condition)),
+        ", {0}".format(str.join(' && ', nub(guard))) if guard != [] else "",
+        str.join(', ', nub(dest)) + ', qAct = {0}'.format(LABELSTORE.getIndex(label)) if label != None else str.join(', ', nub(dest)),
+        "{{{0}}}".format(str.join(", ", reset)) if reset else "")
 
 def areCommunicatingTransitions(t1, t2):
     LOG.debug("Determining whether transitions {0} and {1} communicate ...".format(t1, t2))
@@ -204,35 +224,35 @@ def mergeGuards(aut1, aut2, g1, g2):
     LOG.debug("Merging guards {0} and {1}".format(g1, g2))
     conditions = []
     guards = []
-    if g1 == "e == front()":
+    if g1 == ["e == front()"]:
         LOG.debug("replacing g1 {0}".format(g1))
         g1 = "q0 == {0}".format(aut2.id)
         conditions.append(g1)
-    elif g1 != None:
+    else:
         LOG.debug("g1 remains a guard {0}".format(g1))
-        guards.append(g1)
-    if g2 == "e == front()":
+        guards += g1
+    if g2 == ["e == front()"]:
         LOG.debug("replacing g2 {0}".format(g2))
         g2 = "q0 == {0}".format(aut1.id)
         conditions.append(g2)
-    elif g2 != None:
+    else:
         LOG.debug("g2 remains a guard {0}".format(g2))
-        guards.append(g2)
+        guards += g2
     
     ret = (conditions, guards)
     LOG.debug("merged result: {0}".format(ret))
     return ret
 
 def mergeLabels(nTrains, aut1, aut2, l1, l2):
-    ret = None
+    ret = []
     if l1.find("front()") != -1:
-        ret = "q0 == {0}".format(aut2.id)
+        ret.append("q0 == {0}".format(aut2.id))
     elif l2.find("front()") != -1:
-        ret = "q0 == {0}".format(aut1.id)
+        ret.append("q0 == {0}".format(aut1.id))
     elif l1.find("tail()") != -1:
-        ret = "q{0} == {1}".format(nTrains-1, aut2.id)
+        ret.append("q{0} == {1}".format(nTrains-1, aut2.id))
     elif l2.find("tail()") != -1:
-        ret = "q{0} == {1}".format(nTrains-1, aut1.id)
+        ret.append("q{0} == {1}".format(nTrains-1, aut1.id))
     return ret
     
 
@@ -241,18 +261,17 @@ def mergeCommunicatingTransitions(nTrains, aut1, aut2, t1, t2):
     (source1, condition1, guard1, dest1, label1, reset1, update1) = t1.encoding(aut1)
     (source2, condition2, guard2, dest2, label2, reset2, update2) = t2.encoding(aut2)
     
-    sources = list(filter(lambda x: x != None,[source1, source2]))
+    sources = source1 + source2 #list(filter(lambda x: x != None,[source1, source2]))
     LOG.debug("  source: {0}".format(sources))
     
-    conditions = [condition1, condition2]
+    conditions = condition1 + condition2
     LOG.debug("  conditions: {0}".format(conditions))
     
     (extraConds, guards) = mergeGuards(aut1, aut2, guard1, guard2)
     conditions += extraConds
-    conditions = list(filter(lambda x: x != None, conditions))
     LOG.debug("  conditions after merging guards: {0}".format(conditions))
     
-    dests = list(filter(lambda x: x != None, [dest1, dest2]))
+    dests = dest1 + dest2 #list(filter(lambda x: x != None, [dest1, dest2]))
     LOG.debug("  target states: {0}".format(dests))
     
     # Labels are compatible, so pick 1 here
@@ -260,9 +279,7 @@ def mergeCommunicatingTransitions(nTrains, aut1, aut2, t1, t2):
     LOG.debug("  label: {0}".format(label))
     
     # But also make sure we add the right check, if needed.
-    extraCond = mergeLabels(nTrains, aut1, aut2, label1, label2)
-    if extraCond:
-        conditions += [extraCond]
+    conditions += mergeLabels(nTrains, aut1, aut2, label1, label2)
     
     resets = reset1 + reset2
     LOG.debug("  clocks to reset: {0}".format(resets))
@@ -277,19 +294,19 @@ def mergeCommunicatingTransitions(nTrains, aut1, aut2, t1, t2):
             (condition, dest) = update
             LOG.debug("    sources after merging updates: {0}".format(sources + [condition]))
             LOG.debug("    target states after merging updates: {0}".format(dests + [dest]))
-            ret += [(str.join(" && ", sources + [condition]),
-                str.join(" && ", conditions),
-                str.join(" && ", guards),
-                str.join(", ", dests + [dest]),
+            ret += [(sources + condition,
+                conditions,
+                guards,
+                dests + dest,
                 label,
                 resets,
                 None)]
                 
     else:
-        ret = [(str.join(" && ", sources),
-            str.join(" && ", conditions),
-            str.join(" && ", guards),
-            str.join(", ", dests),
+        ret = [(sources,
+            conditions,
+            guards,
+            dests,
             label,
             resets,
             None)]
@@ -320,22 +337,10 @@ def generateEnqueue(nTrains, trainId):
     LOG.debug("Generating code for enqueuing train {0}".format(trainId))
     ret = []
     for i in range(nTrains):
-        condition = str.join(" && ", ["q{0} != 0".format(j) for j in range(i)] + ["q{0} == 0".format(i)])
-        update = "q{0} = {1}".format(i, trainId)
+        condition = ["q{0} != 0".format(j) for j in range(i)] + ["q{0} == 0".format(i)]
+        update = ["q{0} = {1}".format(i, trainId)]
         ret += [(condition, update)]
 
-    # if nTrains == 1:
-    #     condition = "q0 == 0"
-    #     update = "q0 = {0}".format(trainId)
-    #     ret += [(condition, update)]
-    # elif nTrains == 2:
-    #     condition = "q0 == 0"
-    #     update = "q0 = {0}".format(trainId)
-    #     ret += [(condition, update)]
-    #     condition = "q0 != 0 && q1 == 0"
-    #     update = "q1 = {0}".format(trainId)
-    #     ret += [(condition, update)]
-    # else: raise Exception("Enqueueing not implemented for {0} trains".format(nTrains))
     return ret
 
 # Produces all sublists of xs obtained by removing a single element
@@ -380,23 +385,8 @@ def generateDequeue(nTrains, trainId):
         LOG.debug("    condition: {0}".format(condition))
         LOG.debug("    updates: {0}".format(updates))
         
-        ret += [(str.join(" && ", condition), str.join(", ", updates))]
+        ret += [(condition, updates)]
         LOG.debug("Dequeue codes: {0}".format(ret))    
-    # if nTrains == 1:
-    #     condition = "q0 == {0}".format(trainId)
-    #     updates = "q0 = 0"
-    #     ret += [(condition, updates)]
-    # elif nTrains == 2:
-    #     condition = "q0 == {0} && q1 == 0".format(trainId)
-    #     updates = "q0 = 0"
-    #     ret += [(condition, updates)]
-    #     otherId = 2 if trainId == 1 else 1
-    #     condition = "q0 == {0} && q1 == {0}".format(trainId, otherId)
-    #     updates = "q0 = {0}, q1 = 0".format(otherId)
-    #     ret += [(condition, updates)]
-    #
-    # else:
-    #     raise Exception("Dequeueing not implemented for {0} trains".format(nTrains))
         
     return ret
 
@@ -448,6 +438,10 @@ def generateProperty(property, gate, trains):
         return '''EQUATIONS: {{
 1: nu X = \\forall time(\AllAct(X)) && {0}
 }}\n'''.format(str.join(" && ", clauses))
+    elif property == "nodeadlock":
+        return '''EQUATIONS: {
+1: nu X = \\forall time(\AllAct(X)) && \\forall time(\ExistAct(TRUE))
+}\n'''
     else:
         raise Exception("Unknown property {0}".format(property))
     
@@ -481,13 +475,13 @@ def generateTrainGate(nTrains, outputFile, property):
         outfile.write("#define C{0} {1}\n".format(label,LABELSTORE.getIndex(label)))
     
     LOG.info("Generating clocks")
-    clocks = gate.clocks + list(map(lambda x: x.clocks, trains))
+    clocks = gate.clocks + list(map(lambda x: x.clocks, trains)) + ["x0"]
     outfile.write("CLOCKS: {{ {0} }}\n".format(str.join(", ", clocks)))
     
     LOG.info("Generating contol variables")
     names = [gate.controlName()] + list(map(lambda x: x.controlName(), trains))
     queue = ["q{0}".format(i) for i in range(nTrains)]
-    act = ["qAct"]
+    act = ["qAct", "qCommitted"]
     outfile.write("CONTROL: {{ {0} }}\n".format(str.join(", ", names + queue + act)))
     
     LOG.info("Generating MES")
@@ -498,7 +492,7 @@ def generateTrainGate(nTrains, outputFile, property):
     outfile.write(generateProperty(property, gate, trains))
     
     LOG.info("Generating invariants")
-    invariants = gate.invariants() + concat(map(lambda x: x.invariants(), trains))
+    invariants = list(gate.invariants()) + list(concat(map(lambda x: x.invariants(), trains)))
     outfile.write('''INVARIANT:
   {0}\n'''.format(str.join('\n  ', invariants)))
     
@@ -507,7 +501,9 @@ def generateTrainGate(nTrains, outputFile, property):
     LOG.info("Generating local transitions for the trains")
     for train in trains:
         outfile.write("// {0}\n".format(train.name))
-        outfile.write(str.join("", map(printTransitionEncoding,map(lambda x: x.encoding(train), train.localTransitions()))))
+        for t in train.localTransitions():
+            print(t.encoding(train))
+            outfile.write(printTransitionEncoding(t.encoding(train)))
     
     LOG.info("Generating communicating transitions")    
     # Communicating transitions
@@ -517,7 +513,7 @@ def generateTrainGate(nTrains, outputFile, property):
             for tgate in gate.transitions:
                 if areCommunicatingTransitions(ttrain, tgate):
                     merged = mergeCommunicatingTransitions(nTrains, train, gate, ttrain, tgate) 
-                    for t in merged:               
+                    for t in merged:    
                       outfile.write(printTransitionEncoding(t))
                     
 
@@ -531,7 +527,7 @@ def runCmdLine():
     parser.add_option('-n', action='store', type='int', dest='ntrains', default=2,
                       help='Generate system for given number of trains')
     parser.add_option('-p', action='store', type='string', dest='property', default='eventualaccess',
-                      help='Generate MES for given property; choose one of eventualaccess (default), canreachcross, canreachstop, canreachstart, canreachcommitted, mutex, mutexstate')
+                      help='Generate MES for given property; choose one of eventualaccess (default), canreachcross, canreachstop, canreachstart, canreachcommitted, mutex, mutexstate, nodeadlock')
     options, args = parser.parse_args()
     if not args:
         args = (None,)
