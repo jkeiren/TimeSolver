@@ -97,15 +97,18 @@ class Transition:
         
     def encoding(self, automaton):
         # Reset extra clock for committed locations
-        c = []
+        cguard = []
         if self.source.committed:
-            c.append('x0')
+            cguard.append('x0 <= 0')
+        creset = []
+        if self.dest.committed:
+            creset.append('x0')
         return (self.source.encoding(automaton),
                 self.replaceCondition(self.guard) if self.guardIsCondition() else [],
-                [] if self.guardIsCondition() else self.guard,
+                cguard if self.guardIsCondition() else self.guard + cguard,
                 self.dest.encoding(automaton,True),
                 self.label,
-                self.reset,
+                self.reset + creset,
                 self.update)
         
     def __str__(self):
@@ -246,13 +249,23 @@ def mergeGuards(aut1, aut2, g1, g2):
 def mergeLabels(nTrains, aut1, aut2, l1, l2):
     ret = []
     if l1.find("front()") != -1:
-        ret.append("q0 == {0}".format(aut2.id))
+        ret.append(["q0 == {0}".format(aut2.id)])
     elif l2.find("front()") != -1:
-        ret.append("q0 == {0}".format(aut1.id))
+        ret.append(["q0 == {0}".format(aut1.id)])
     elif l1.find("tail()") != -1:
-        ret.append("q{0} == {1}".format(nTrains-1, aut2.id))
+        for i in range(nTrains):
+            conjuncts = []
+            conjuncts.append("q{0} == {1}".format(i, aut2.id))
+            for j in range(i+1,nTrains):
+                conjuncts.append("q{0} == 0".format(j, aut2.id))
+            ret.append(conjuncts)
     elif l2.find("tail()") != -1:
-        ret.append("q{0} == {1}".format(nTrains-1, aut1.id))
+        for i in range(nTrains):
+            conjuncts = []
+            conjuncts.append("q{0} == {1}".format(i, aut1.id))
+            for j in range(i+1,nTrains):
+                conjuncts.append("q{0} == 0".format(j, aut1.id))
+            ret.append(conjuncts)
     return ret
     
 
@@ -262,6 +275,8 @@ def mergeCommunicatingTransitions(nTrains, aut1, aut2, t1, t2):
     (source2, condition2, guard2, dest2, label2, reset2, update2) = t2.encoding(aut2)
     
     sources = source1 + source2 #list(filter(lambda x: x != None,[source1, source2]))
+    if "qCommitted == 0" in sources and "qCommitted == 1" in sources:
+        sources = list(filter(lambda x: x != "qCommitted == 0", sources))
     LOG.debug("  source: {0}".format(sources))
     
     conditions = condition1 + condition2
@@ -272,44 +287,44 @@ def mergeCommunicatingTransitions(nTrains, aut1, aut2, t1, t2):
     LOG.debug("  conditions after merging guards: {0}".format(conditions))
     
     dests = dest1 + dest2 #list(filter(lambda x: x != None, [dest1, dest2]))
+    if "qCommitted = 0" in dests and "qCommitted = 1" in dests:
+        dests = list(filter(lambda x: x != "qCommitted = 0", dests))
     LOG.debug("  target states: {0}".format(dests))
     
     # Labels are compatible, so pick 1 here
-    label = label1
+    label = label2
     LOG.debug("  label: {0}".format(label))
     
     # But also make sure we add the right check, if needed.
-    conditions += mergeLabels(nTrains, aut1, aut2, label1, label2)
+    labelconditions = mergeLabels(nTrains, aut1, aut2, label1, label2)
+    if labelconditions == []:
+        #dirty trick to keep code compact below
+        labelconditions = [[]]
     
     resets = reset1 + reset2
     LOG.debug("  clocks to reset: {0}".format(resets))
     
     mergedUpdates = mergeUpdates(nTrains, aut1, aut2, update1, update2)
+    if mergedUpdates == []:
+        # Another dirty trick
+        mergedUpdates = [([],[])]
     LOG.debug("  merged updates: {0}".format(mergedUpdates))
     
     ret = []
-    if len(mergedUpdates) > 0:
+    for labelcondition in labelconditions:
         for update in mergedUpdates:
             LOG.debug("    updating...")
             (condition, dest) = update
-            LOG.debug("    sources after merging updates: {0}".format(sources + [condition]))
-            LOG.debug("    target states after merging updates: {0}".format(dests + [dest]))
+            LOG.debug("    sources after merging updates: {0}".format(sources + condition))
+            LOG.debug("    target states after merging updates: {0}".format(dests + dest))
             ret += [(sources + condition,
-                conditions,
+                conditions + labelcondition,
                 guards,
                 dests + dest,
                 label,
                 resets,
                 None)]
                 
-    else:
-        ret = [(sources,
-            conditions,
-            guards,
-            dests,
-            label,
-            resets,
-            None)]
     return ret
 
 def mergeUpdates(nTrains, aut1, aut2, update1, update2):
@@ -392,27 +407,39 @@ def generateDequeue(nTrains, trainId):
 
 def generateProperty(property, gate, trains):
     global LABELSTORE
-    if property == "eventualaccess":
+    if property == "canreachcross1":
         return '''EQUATIONS: {{
-1: mu X = {{ pTrain1 == {0} }} || (\\forall time(\AllAct(X)) && \exists time(\ExistAct(Y)))
-2: nu Y = \AllAct(Y) 
-}}\n'''.format(trains[0].stateIndexByName("Cross"))
-    elif property == "canreachcross":
+1: mu X = {{ {0} == {1} }} || \exists time(\ExistAct(X))
+}}\n'''.format(trains[0].controlName(), trains[0].stateIndexByName("Cross"))
+    elif property == "canreachcross2":
         return '''EQUATIONS: {{
-1: mu X = {{ pTrain1 == {0} }} || \exists time(\ExistAct(X))
-}}\n'''.format(trains[0].stateIndexByName("Cross"))
-    elif property == "canreachstop":
+1: mu X = {{ {0} == {1} }} || \exists time(\ExistAct(X))
+}}\n'''.format(trains[1].controlName(), trains[1].stateIndexByName("Cross"))
+    elif property == "canreachcross1stop2":
         return '''EQUATIONS: {{
-1: mu X = {{ pTrain1 == {0} }} || \exists time(\ExistAct(X))
-}}\n'''.format(trains[0].stateIndexByName("Stop"))
-    elif property == "canreachstart":
+1: mu X = {{ {0} == {1} && {2} == {3} }} || \exists time(\ExistAct(X))
+}}\n'''.format(trains[0].controlName(), trains[0].stateIndexByName("Cross"), trains[1].controlName(), trains[1].stateIndexByName("Stop"))
+    elif property == "canreachcross1stopothers":
+        stops = ["{0} == {1}".format(t.controlName(), t.stateIndexByName("Stop")) for t in trains[1:] ]
         return '''EQUATIONS: {{
-1: mu X = {{ pTrain1 == {0} }} || \exists time(\ExistAct(X))
-}}\n'''.format(trains[0].stateIndexByName("Start"))
+1: mu X = {{ {0} == {1} && {2} }} || \exists time(\ExistAct(X))
+}}\n'''.format(trains[0].controlName(), trains[0].stateIndexByName("Cross"), str.join(' && ', stops))
+    elif property == "canreachstop1":
+        return '''EQUATIONS: {{
+1: mu X = {{ {0} == {1} }} || \exists time(\ExistAct(X))
+}}\n'''.format(trains[0].controlName(), trains[0].stateIndexByName("Stop"))
+    elif property == "canreachstart1":
+        return '''EQUATIONS: {{
+1: mu X = {{ {0} == {1} }} || \exists time(\ExistAct(X))
+}}\n'''.format(trains[0].controlName(), trains[0].stateIndexByName("Start"))
     elif property == "canreachcommitted":
         return '''EQUATIONS: {{
-1: mu X = {{ pGate == {0} }} || \exists time(\ExistAct(X))
-}}\n'''.format(gate.stateIndexByName("Committed"))
+1: mu X = {{ {0} == {1} }} || \exists time(\ExistAct(X))
+}}\n'''.format(gate.controlName(), gate.stateIndexByName("Committed"))
+    elif property == "canreachocc":
+        return '''EQUATIONS: {{
+1: mu X = {{ {0} == {1} }} || \exists time(\ExistAct(X))
+}}\n'''.format(gate.controlName(), gate.stateIndexByName("Occ"))
     elif property == "mutex":
          return '''EQUATIONS: {{
  1: nu X = \\forall time(\AllAct(X)) && \\forall time(\AllAct(qAct != {0} || Y))
@@ -440,8 +467,13 @@ def generateProperty(property, gate, trains):
 }}\n'''.format(str.join(" && ", clauses))
     elif property == "nodeadlock":
         return '''EQUATIONS: {
-1: nu X = \\forall time(\AllAct(X)) && \\forall time(\ExistAct(TRUE))
+1: nu X = \\forall time(\AllAct(X)) && \\exists time(\ExistAct(TRUE))
 }\n'''
+    elif property == "train1apprthencross":
+        return '''EQUATIONS: {{
+1: nu X = \\forall time(\AllAct(X)) && ({0} != {1} || Y)
+2: mu Y = {0} == {2} || (\\forall time(\AllAct(X)) && \\exists time(\ExistAct(TRUE)))
+}}'''.format(trains[0].controlName(), trains[0].stateIndexByName("Appr"), trains[0].stateIndexByName("Cross"))
     else:
         raise Exception("Unknown property {0}".format(property))
     
@@ -502,7 +534,6 @@ def generateTrainGate(nTrains, outputFile, property):
     for train in trains:
         outfile.write("// {0}\n".format(train.name))
         for t in train.localTransitions():
-            print(t.encoding(train))
             outfile.write(printTransitionEncoding(t.encoding(train)))
     
     LOG.info("Generating communicating transitions")    
