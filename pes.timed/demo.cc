@@ -1868,8 +1868,8 @@ inline DBMList * predCheckRule(DBM * lhs, DBM * lhsSucc, DBMList * origPlace, DB
 /** Performs the succCheck rule of FORALL (and FORALL_REL) rules, including
  * the computing of the premise, the consequent, and the tightening of the
  * placeholder currPlace. 
- * @param (*) lhs the reference to the left hand sequent
- * @param (*) currPlace the reference to the current placeholder.
+ * @param lhs (*) the reference to the left hand sequent
+ * @param currPlace (*) the reference to the current placeholder.
  * @return the tightened placeholder that satisfies the succCheck, or an
  * empty placeholder if no such placeholder is possible. */
 inline DBMList * succCheckRule(DBM * lhs, DBMList * currPlace) {
