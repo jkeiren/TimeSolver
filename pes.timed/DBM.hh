@@ -470,7 +470,7 @@ public:
    * in canonical form.
    * @param Y (&) The right DBM
    * @return true: the calling DBM equals Y, false: otherwise. */
-  bool operator == (const DBM &Y) const {
+  bool operator == (const DBM &Y const){
     
     
      /* Change constraint comparison order:
