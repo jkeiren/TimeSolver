@@ -50,7 +50,7 @@ private:
    * because it is not needed by the prover. 
    * @param Y (&) The DBM to complement.
    * @return The complemented DBM, given as a DBMList. */
-  DBMList * complementDBM(DBM &Y) {
+  DBMList * complementDBM(const DBM &Y) {
     if(Y.emptiness()) {
       DBMList * newList = new DBMList(Y.nClocks); 
       return newList;
@@ -111,14 +111,14 @@ public:
    * optimized for a DBMList with one DBM, which is equivalent
    * to a DBM.
    * @return The number of DBMs in the DBMList. */
-  int numDBMs() {
+  int numDBMs() const {
     return dbmListVec->size();
   }
   
   /** Return the vector of DBMs. Utilized by other methods to access
    * the DBMs, often to iterate through each DBM.
    * @return The vector storing the DBMs in the DBMList. */
-  vector<DBM *> * getDBMList() {
+  vector<DBM *> * getDBMList() const {
     return dbmListVec;
   }
   
@@ -131,7 +131,7 @@ public:
    * "zero clock". Hence, there are numClocks - 1 actual clocks 
    * with 1 "zero" clock.
    * @return [Constructor] */
-  DBMList(short int numClocks) {
+  DBMList(const short int numClocks) {
     nClocks = numClocks;
     dbmListVec = new vector<DBM *>;
     dbmListVec->push_back(new DBM(numClocks));
@@ -142,7 +142,7 @@ public:
    * DBM.
    * @param Y (&) The object to copy.
    * @return [Constructor] */
-  DBMList(DBM &Y) { 
+  DBMList(const DBM &Y) {
     nClocks = Y.nClocks;
     dbmListVec = new vector<DBM *>;
     DBM * tDBM = new DBM(Y);
@@ -154,7 +154,7 @@ public:
   /** Copy Constructor for DBMLists, copying a DBMList.
    * @param Y (&) The object to copy.
    * @return [Constructor] */
-  DBMList(DBMList &Y) { 
+  DBMList(const DBMList &Y) {
     nClocks = Y.nClocks;
     // Vector constructor makes a deep copy of the pointers (not of the objects 
     // that the pointers point to). Make a deep copy of the DBM objects here
@@ -199,7 +199,7 @@ public:
   
   /** Returns whether this DBMList is in canonical form or not.
    * @return true: the DBMList is in canonical form; false: otherwise. */
-  bool isInCf() {
+  bool isInCf() const {
     return isCf;
   }
   
@@ -208,7 +208,7 @@ public:
    * The calling DBMList is changed.
    * @param Y (&) The DBM to add to the list of DBMs. 
    * @return None. */
-  void addDBM(DBM &Y) {
+  void addDBM(const DBM &Y) {
     dbmListVec->push_back(new DBM(Y));
   }
   
@@ -217,7 +217,7 @@ public:
    * The calling DBMList is changed.
    * @param Y (&) The DBMList to add to the list of DBMs. 
    * @return None. */
-  void addDBMList(DBMList &Y) {
+  void addDBMList(const DBMList &Y) {
     for(vector<DBM *>::iterator it=(Y.dbmListVec)->begin(); it != (Y.dbmListVec)->end(); it++)
     {
        dbmListVec->push_back(new DBM(*(*it)));
@@ -230,7 +230,7 @@ public:
    * Preserves canonical form.
    * @param Y (&) The object to copy.
    * @return A reference to the copied object, which is the LHS object. */
-  DBMList & operator = (DBMList &Y){
+  DBMList & operator = (const DBMList &Y){
     nClocks = Y.nClocks;
     if(dbmListVec->size() == 1 && Y.numDBMs() == 1) {
       *((*dbmListVec)[0]) = *((*(Y.getDBMList()))[0]);
@@ -271,7 +271,7 @@ public:
    * Preserves canonical form.
    * @param Y (&) The object to copy.
    * @return A reference to the copied object, which is the LHS object. */
-  DBMList & operator = (DBM &Y){
+  DBMList & operator = (const DBM &Y){
     nClocks = Y.nClocks;
     while(dbmListVec->size() > 1) {
 	    DBM * tempDBM = dbmListVec->back();
@@ -360,7 +360,7 @@ public:
    * @param Y (&) The DBM to intersect
    * @return The reference to the intersected DBMList (which is the now changed
    * calling DBMList). */    
-  DBMList & operator & (DBM &Y){
+  DBMList & operator & (const DBM &Y){
     if(dbmListVec->size() == 1) { // Do you really want to treat 1 as a special case?
       *((*dbmListVec)[0]) & Y;
       isCf = false;
@@ -387,7 +387,7 @@ public:
    * @param Y (&) The DBMList to intersect
    * @return The reference to the intersected DBMList (which is the now changed
    * calling DBMList). */      
-  DBMList & operator & (DBMList &Y){
+  DBMList & operator & (const DBMList &Y){
     if(dbmListVec->size() == 1 && Y.numDBMs() == 1) {
       *((*dbmListVec)[0]) & *((*(Y.getDBMList()))[0]);
       isCf = false;
@@ -459,7 +459,7 @@ public:
    * only Y is required to be in canonical form.
    * @param Y (&) The right DBM.
    * @return true: *this <= Y; false: otherwise. */
-  bool operator <= (DBM &Y){
+  bool operator <= (const DBM &Y) const{
   
     bool tempB = true;
     for(unsigned int i = 0; i < dbmListVec->size(); i++) {
@@ -480,7 +480,7 @@ public:
    * only Y is required to be in canonical form.
    * @param Y (&) The right DBMList.
    * @return true: *this <= Y; false: otherwise. */
-  bool operator <= (DBMList &Y){
+  bool operator <= (const DBMList &Y) const {
     if(dbmListVec->size() == 1) {
       return Y >= *((*dbmListVec)[0]);
     }
@@ -510,7 +510,7 @@ public:
    * (*this), the calling DBMList, is required to be in canonical form.
    * @param Y (&) The right DBM.
    * @return true: *this >= Y; false: otherwise. */
-  bool operator >= (DBM &Y){
+  bool operator >= (const DBM &Y) const{
     
     if(dbmListVec->size() == 1) {
       return *((*dbmListVec)[0]) >= Y;
@@ -542,7 +542,7 @@ public:
    * (*this), the calling DBMList, is required to be in canonical form.
    * @param Y (&) The right DBMList.
    * @return true: *this >= Y; false: otherwise. */
-  bool operator >= (DBMList &Y){
+  bool operator >= (const DBMList &Y) const {
     
     if(dbmListVec->size() == 1) {
       return Y <= *((*dbmListVec)[0]);
@@ -571,7 +571,7 @@ public:
    * structures have the same set of clock valuations. 
    * @param Y (&) The right DBM
    * @return true: the calling DBMList equals Y, false: otherwise. */
-  bool operator == (DBM &Y){
+  bool operator == (const DBM &Y) const {
     if(dbmListVec->size() == 1) {
       return *((*dbmListVec)[0]) == Y;
     }
@@ -586,7 +586,7 @@ public:
    * structures have the same set of clock valuations. 
    * @param Y (&) The right DBMList
    * @return true: the calling DBMList equals Y, false: otherwise. */
-  bool operator == (DBMList &Y){
+  bool operator == (const DBMList &Y) const {
     if(dbmListVec->size() == 1) {
       return Y == *((*dbmListVec)[0]);
     }
@@ -602,7 +602,7 @@ public:
    * 1: X <= Y,  2: X >= Y,  3: X == Y.
    * @note This method assumes that the calling DBMList and Y have the same
    * number of clocks. */ 
-  int relation(DBM &Y){
+  int relation(const DBM &Y) const {
     
     /* For now, just utilize the <= and >= comparisons. */
     bool gt = this->operator>=(Y);
@@ -623,7 +623,7 @@ public:
    * 1: X <= Y,  2: X >= Y,  3: X == Y.
    * @note This method assumes that the calling DBMList and Y have the same
    * number of clocks. */ 
-  int relation(DBMList &Y){
+  int relation(const DBMList &Y) const {
     
     /* For now, just utilize the <= and >= comparisons. */
     bool gt = this->operator>=(Y);
@@ -667,7 +667,7 @@ public:
    * The final DBMList is not in canonical form.
    * @param x The clock to reset to 0.
    * @return The reference to the changed, calling resulting DBMList. */
-  DBMList & reset(short int x){
+  DBMList & reset(const short int x){
     for(unsigned int i = 0; i < dbmListVec->size(); i++) {
       DBM *tD = (*dbmListVec)[i];
       tD->reset(x);
@@ -696,7 +696,7 @@ public:
    * @param x The clock to change the value of
    * @param y The clock to reset the first clock to.
    * @return The reference to the changed, calling resulting DBMList. */
-  DBMList & reset (short int x, short int y){
+  DBMList & reset (const short int x, const short int y){
     for(unsigned int i = 0; i < dbmListVec->size(); i++) {
       DBM *tD = (*dbmListVec)[i];
       tD->reset(x,y);
@@ -713,7 +713,7 @@ public:
    * after this operation.
    * @param x The clock that was just reset (after the predecessor zone).
    * @return The reference to the modified DBMList. */
-  DBMList &preset( short int x){
+  DBMList &preset(const short int x){
     for(unsigned int i = 0; i < dbmListVec->size(); i++) {
       DBM *tD = (*dbmListVec)[i];
       tD->preset(x);
@@ -748,7 +748,7 @@ public:
    * @param x The clock that was just reset (after the predecessor zone).
    * @param y The second clock; the clock whose value x was just assigned to.
    * @return The reference to the modified DBMList. */
-  DBMList &preset( short int x, short int y){
+  DBMList &preset(const short int x, const short int y){
     for(unsigned int i = 0; i < dbmListVec->size(); i++) {
       DBM *tD = (*dbmListVec)[i];
       tD->preset(x,y);
@@ -766,7 +766,7 @@ public:
    * @return none 
    * @note This only works when the timed automaton is "diagonal-free,"
    * or does not have any clock difference constraints in the automaton. */
-  void bound(int maxc){
+  void bound(const int maxc){
     
     for(unsigned int i = 0; i < dbmListVec->size(); i++) {
       DBM *tD = (*dbmListVec)[i];
@@ -861,7 +861,7 @@ public:
 	 * or the empty clock zone. This method assumes the DBMList
 	 * is in canonical form.
    * @return true: this clock zone is empty, false: otherwise. */
-  bool emptiness(){ 
+  bool emptiness() const{
     
 		if(dbmListVec->size() == 0) {
 		  /* Note: we should not get this case since
@@ -934,7 +934,7 @@ public:
    * The # is the integer bound for the constraint,
    * and op is based on the fourth bit. 0: <, 1: <=
    * @return None */
-	void print(){
+	void print() const{
 	  int dInd = 0;
 		for(vector<DBM *>::iterator it = dbmListVec->begin();  
 		  it != dbmListVec->end(); it++) {
@@ -951,7 +951,7 @@ public:
 	 * are printed in the order they appear in each matrix, and the DBMs are
 	 * separated by || (without line breaks).
 	 * @return none */
-	void print_constraint(){
+	void print_constraint() const{
 		for(vector<DBM *>::iterator it = dbmListVec->begin();  
 		  it != dbmListVec->end(); it++) {
 		  DBM *tD = *it;
@@ -969,7 +969,7 @@ public:
 	 * that can be derived from other constraints. The output format
 	 * is the same as for print_constraint().
 	 * @return None */
-	void print_ExplicitConstraint(){
+	void print_ExplicitConstraint() const{
     for(vector<DBM *>::iterator it = dbmListVec->begin();  
         it != dbmListVec->end(); it++) {
         DBM *tD = *it;
