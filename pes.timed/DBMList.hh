@@ -288,8 +288,7 @@ public:
    * the (simple) method of performing a DBM that is the union of all
    * the negated constraints of the DBM, and complementing
    * DBM-by-DBM by converting the complement of the DBMs into
-   * disjunctive normal form. 
-   * @param Y (&) The DBMList to complement.
+   * disjunctive normal form.
    * @return The complemented DBMList, given as a DBMList. */
   DBMList & operator!(){
     if(dbmListVec->size() == 1) {
@@ -362,7 +361,7 @@ public:
    * @return The reference to the intersected DBMList (which is the now changed
    * calling DBMList). */    
   DBMList & operator & (DBM &Y){
-    if(dbmListVec->size() == 1) {
+    if(dbmListVec->size() == 1) { // Do you really want to treat 1 as a special case?
       *((*dbmListVec)[0]) & Y;
       isCf = false;
       return *this;
@@ -678,7 +677,7 @@ public:
   }
   
   /** Resets all the clocks in the given clock set to $0$ by resetting
-   * each DBM in the DBMList..
+   * each DBM in the DBMList.
    * The final DBM is not in canonical form.
    * @param rs (*) The set of clocks to reset to 0.
    * @return The reference to the changed, calling resulting DBM. */
