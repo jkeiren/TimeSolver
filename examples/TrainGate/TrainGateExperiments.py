@@ -12,7 +12,7 @@ Combined running time: (?P<total>[0-9.e-]+) seconds
 Number of locations: (?P<locations>\d+)
 '''
 
-N=6
+N=7
 PROPERTIES = ["canreachocc", "canreachcross1", "canreachcross2", "canreachcross1stop2", "canreachcross1stopothers", "mutex", "mutexstate", "nodeadlock", "train1apprthencross"]
 
 RESULTS = []

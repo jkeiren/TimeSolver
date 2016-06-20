@@ -3,7 +3,7 @@ CFLAGS = -c -g -O -Wall
 # Stack size set to 4GB for Mac, since terminal hard limit is 64MB
 # My machine has 8GM of RAM
 # This number is the number of bytes in Hex
-SFLAGS = -Wl,-stack_size,100000000
+SFLAGS = -Wl,-stack_size,200000000
 FLEX = flex
 
 LDFLAGS =  
