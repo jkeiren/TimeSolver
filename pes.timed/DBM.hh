@@ -30,7 +30,7 @@ public:
    * @param numClocks The number of clocks in the set of clocks. This
    * number does not include the dummy "zero clock".  
    * @return [Constructor]. */
-  ClockSet(int bit, int numClocks) : num(numClocks){
+  ClockSet(const int bit, const int numClocks) : num(numClocks){
     int b = bit & 0x1F;
     int idx = bit >> 5;
     cc = new unsigned int [(numClocks >> 5) + 1];
@@ -45,7 +45,7 @@ public:
    /** Copy Constructor. 
    * @param Y (&) The object to copy. 
    * @return [Constructor]. */
-  ClockSet(ClockSet &Y) {
+  ClockSet(const ClockSet &Y) {
     num = Y.num;
     cc = new unsigned int [(num >> 5) + 1];
      for(int i = 0; i < (num >> 5) + 1; i++) {
@@ -64,7 +64,7 @@ public:
   /** This adds a clock to the clock set.
    * @param bit The index of the clock to add.
    * @return The changed ClockSet object. */
-  ClockSet * addclock(int bit){
+  ClockSet * addclock(const int bit){
     int b = bit & 0x1F;
     int idx = bit >> 5;
     cc[idx] = cc[idx] | (0x1 << b);
@@ -102,7 +102,7 @@ public:
    * @param bit The index of the clock to see if it is in the
    * ClockSet.
    * @return 1: the clock bit is in the ClockSet; 0: otherwise. */
-  unsigned int getc(int bit) const {
+  unsigned int getc(const int bit) const {
     int b = bit & 0x1F;
     int idx = bit >> 5;
     return ((cc[idx] >> b) & 0x1);
@@ -150,7 +150,7 @@ private:
    * @param col The second clock, or the column clock, 
    * with 0 being the first column.
    * @return The value of the upper bound constraint on row - col. */
-  short int operatorRead(short int row, short int col) const {
+  short int operatorRead(const short int row, const short int col) const {
     /* Indexes are zero based */
     
     // Offsets to one dimentional array
@@ -173,7 +173,7 @@ private:
    * with 0 being the first column.
    * @return A reference to the element indexed at the row "row" and column
    * "col". A reference is returned to allow the constraint to be changed. */
-  short int& operatorWrite(short int row, short int col) {
+  short int& operatorWrite(const short int row, const short int col) {
     /* Indexes are zero based */
     
     // Offsets to one dimentional array
@@ -198,7 +198,7 @@ public:
    * "zero clock". Hence, there are numClocks - 1 actual clocks 
    * with 1 "zero" clock.
    * @return [Constructor] */
-  DBM(short int numClocks) 
+  DBM(const short int numClocks)
   : OneDIntArray(numClocks * numClocks), nClocks(numClocks) {
     for(short int i = 0; i < nClocks; i++){
       for(short int j = 0; j < nClocks; j++){
@@ -230,7 +230,7 @@ public:
    * @param col The second clock in constraint.
    * @param val The value constraining the upper bound of row - col.
    * @return [Constructor] */
-  DBM(int numClocks, short int row, short int col, short int val)  : OneDIntArray(numClocks * numClocks), nClocks(numClocks) {
+  DBM(const int numClocks, const short int row, const short int col, const short int val)  : OneDIntArray(numClocks * numClocks), nClocks(numClocks) {
     for(short int i = 0; i < nClocks; i++){
       for(short int j = 0; j < nClocks; j++){
       /* 0x1 means (0, <=) , since the left 3-bits
@@ -272,7 +272,7 @@ public:
   
   /** Returns whether this DBM is in canonical form or not.
    * @return true: the DBM is in canonical form; false: otherwise. */
-  bool isInCf() {
+  bool isInCf() const {
     return isCf;
   }
   
@@ -283,7 +283,7 @@ public:
    * @param col The second clock, or the column clock, 
    * with 0 being the first column.
    * @return The value of the upper bound constraint on row - col. */
-  short int operator() (short int row, short int col) {
+  short int operator() (const short int row, const short int col) const {
     //Indexes are zero based
     /* Give out of bounds check for public method */
     if (row < 0 || row >= nClocks || col >= nClocks || col < 0){  
@@ -309,7 +309,7 @@ public:
    * with 0 being the first column.
    * @param val The new 13-bit value for the upper bound of row - col.
    * @return None*/
-	void addConstraint(short int row, short int col, short int val) {
+	void addConstraint(const short int row, const short int col, const short int val) {
     // Use Version of operator() that allows for a reference
     // But avoid additional method invocation.
     /* Give out of bounds check for public method */
@@ -341,7 +341,7 @@ public:
    * with 0 being the first column.
    * @return true: the constraint is implicit (no constraint), 
    * false: otherwise */
-  bool isConstraintImplicit(short int row, short int col) {
+  bool isConstraintImplicit(const short int row, const short int col) const {
     if(row == 0 || row == col) {
       return (this->operatorRead(row,col)) == 0x1; 
     }
@@ -355,7 +355,7 @@ public:
    * Preserves canonical form.
    * @param Y (&) The object to copy.
    * @return A reference to the copied object, which is the LHS object. */
-  DBM & operator = (DBM &Y){
+  DBM & operator = (const DBM &Y){
     quantity = Y.quantity;
     nClocks = Y.nClocks;
     memcpy(storage, Y.storage, quantity * sizeof(short int));
@@ -371,7 +371,7 @@ public:
    * @param Y (&) The DBM to intersect
    * @return The reference to the intersected DBM (which is the now changed
    * calling DBM). */     
-  DBM & operator & (DBM &Y){
+  DBM & operator & (const DBM &Y){
     /* Should we check for same number of clocks (?)
      * Currently, the code does not. */
     for(short int i = 0; i < nClocks; i++) {
@@ -392,7 +392,7 @@ public:
    * only Y is required to be in canonical form.
    * @param Y (&) The right DBM.
    * @return true: *this <= Y; false: otherwise. */
-  bool operator <= (DBM &Y){
+  bool operator <= (const DBM &Y){
     
     
     /* Change constraint comparison order:
@@ -430,7 +430,7 @@ public:
    * @param Y (&) The right DBM.
    * @return true: the calling DBM is a superset of Y, 
    * false: otherwise */
-  bool operator >= (DBM &Y){
+  bool operator >= (const DBM &Y){
     
     
     /* Change constraint comparison order:
@@ -510,7 +510,7 @@ public:
    * 1: X <= Y,  2: X >= Y,  3: X == Y.
    * @note This method assumes that the calling DBM and Y have the same
    * number of clocks. */ 
-  int relation(DBM &Y){
+  int relation(const DBM &Y){
     
     /* Should we check for same number of clocks (?)
      * Currently, the code does not. */
@@ -566,7 +566,7 @@ public:
    * The final DBM is in canonical form.
    * @param x The clock to reset to 0.
    * @return The reference to the changed, calling resulting DBM. */
-  DBM & reset(short int x){
+  DBM & reset(const short int x){
     /* Do out of bounds checking now instead of in methods */
     if (x < 0 || x >= nClocks){  
       cerr << "nClocks : " << nClocks << " x : "<< x <<endl;
@@ -606,7 +606,7 @@ public:
    * @param x The clock to change the value of
    * @param y The clock to reset the first clock to.
    * @return The reference to the changed, calling resulting DBM. */
-  DBM &reset(short int x, short int y){
+  DBM &reset(const short int x, const short int y){
     /* Do out of bounds checking now instead of in methods */
     if (x < 0 || x >= nClocks || y >= nClocks || y < 0){  
       cerr << "nClocks : " << nClocks << " x : "<< x << " y : " 
@@ -635,7 +635,7 @@ public:
    * after this operation.
    * @param x The clock that was just reset (after the predecessor zone).
    * @return The reference to the modified DBM. */
-  DBM &preset( short int x){
+  DBM &preset(const short int x){
     /* Do out of bounds checking now instead of in methods */
     if (x < 0 || x >= nClocks){  
       cerr << "nClocks : " << nClocks << " x : "<< x <<endl;
@@ -776,7 +776,7 @@ public:
    * @param x The clock that was just reset (after the predecessor zone).
    * @param y The second clock; the clock whose value x was just assigned to.
    * @return The reference to the modified DBM. */
-  DBM &preset( short int x, short int y){
+  DBM &preset(const short int x, const short int y){
     /* Do out of bounds checking now instead of in methods */
     if (x < 0 || x >= nClocks || y >= nClocks || y < 0){  
       cerr << "nClocks : " << nClocks << " x : "<< x << " y : " 
@@ -833,7 +833,7 @@ public:
    * @return none 
    * @note This only works when the timed automaton is "diagonal-free,"
    * or does not have any clock difference constraints in the automaton. */
-  void bound(int maxc){
+  void bound(const int maxc){
     
     // Is this method correct (?) Should it also be loosening 
     // clock differences based on single clock constraints?
@@ -1002,7 +1002,7 @@ public:
 	 * or the empty clock zone. This method assumes the DBM
 	 * is in canonical form.
    * @return true: this clock zone is empty, false: otherwise. */
-  bool emptiness(){ 
+  bool emptiness() const{
     
 		/* O(n) version. This assumes that the DBM is in canonical form.
 		 * an O(n^2) version was previously used to handle overflow possibilities
@@ -1024,7 +1024,7 @@ public:
    * for faster performance. 
    * @return true: the DBM has a single-clock upper bound constraint, false: 
    * otherwise. */
-  bool hasUpperConstraint() {
+  bool hasUpperConstraint() const {
     for(int i = 1; i < nClocks; i++) {
       int cons = this->operatorRead(i,0);
       if((cons >> 1) != 0xFFF) {
@@ -1089,7 +1089,7 @@ public:
    * The # is the integer bound for the constraint,
    * and op is based on the fourth bit. 0: <, 1: <=
    * @return None */
-	void print(){
+	void print() const{
 		for(short int i = 0; i < nClocks; i++){
 			for(short int j = 0; j < nClocks; j++){
 				short int val = this->operatorRead(i,j) >> 1;
@@ -1113,7 +1113,7 @@ public:
 	/** Print the DBM, more compactly, as a list of constraints. The constraints
 	 * are printed in the order they appear in the matrix.
 	 * @return none */
-	void print_constraint(){
+	void print_constraint() const{
 		bool end = false;
 		bool isAllImplicit=true;
 		if(this->emptiness()) {
@@ -1172,7 +1172,7 @@ public:
 	 * constrain any values. This does not omit constraints
 	 * that can be derived from other constraints.
 	 * @return None */
-	void print_ExplicitConstraint(){
+	void print_ExplicitConstraint() const{
 		bool end = false;
 		for(short int i = 0; i < nClocks; i++){
 			for(short int j = 0; j < nClocks; j++){
