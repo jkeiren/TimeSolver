@@ -70,7 +70,7 @@ void makeAssignmentList(ExprNode *e, vector<pair<short int,short int> > * av) {
  * to the current list of all clocks.
  * @param s (*) The string that is the clock label.
  * @return 1:when finished. */
-int add_clock(char *s)
+int add_clock(const char *s)
 { 
   string name(s);
   clocks.insert(make_pair(name,clocks.size()+1));
@@ -83,7 +83,7 @@ int add_clock(char *s)
  * @param s (*) The label to search for
  * @return the int value of the clock index: if it is in the list;
  * -1: otherwise (s is not a clock). */
-int lookup_clock(char *s)
+int lookup_clock(const char *s)
 {
   string name(s);
   map<string, int>::iterator it = clocks.find(name);
@@ -109,7 +109,7 @@ int print_clocks()
  * This gives the atomic variable the default value of 0.
  * @param s (*) The label for the atomic value.
  * @return 1 when done. */
-int add_atomic(char *s)
+int add_atomic(const char *s)
 {
   string name(s);
   int idx = atomic.size();
@@ -124,7 +124,7 @@ int add_atomic(char *s)
  * @param s (*) The label for the atomic value.
  * @param v The value of the atomic variable labeled by s.
  * @return 1 when done. */
-int add_atomicv(char *s, int v)
+int add_atomicv(const char *s, const int v)
 {
   string name(s);
   int idx = atomic.size();
@@ -138,7 +138,7 @@ int add_atomicv(char *s, int v)
  * @param s (*) The label for the atomic value to look up.
  * @return the value of the atomic label if found or -1 if it is
  * not in the list. */
-int lookup_atomic(char *s)
+int lookup_atomic(const char *s)
 {
   string name(s);
   map<string, int>::iterator it = atomic.find(name);
@@ -168,7 +168,7 @@ int print_atomic()
  * @param s The label of the predicate to add.
  * @param i The integer index of the predicate.
  * @return 1 when done. */
-int add_predicate(char *s, int i)
+int add_predicate(const char *s, const int i)
 {
   string name(s);
   predicates.insert(make_pair(name, (new ExprNode(PREDICATE, s, i))));
@@ -182,7 +182,7 @@ int add_predicate(char *s, int i)
  * @param parity The desired parity: true = gfp, false = lfp.
  * @return true:if successful (found the predicate expression), 
  * false:otherwise. */
-bool set_parity_block(string name, int block, bool parity)
+bool set_parity_block(const string& name, const int block, const bool parity)
 {
   map<string, ExprNode *>::iterator it = predicates.find(name);
   if (it != predicates.end()){
@@ -206,7 +206,7 @@ bool set_parity_block(string name, int block, bool parity)
  * @param s (*) The equation label.
  * @param e (*) The expression of the RHS of the equation.
  * @return 1 if successful in doing so and 0 otherwise. */
-int add_equation(int block, bool parity, char *s, ExprNode *e)
+int add_equation(const int block, const bool parity, const char *s, ExprNode *e)
 {
   string name(s);
   if(set_parity_block(name, block, parity)){
@@ -223,7 +223,7 @@ int add_equation(int block, bool parity, char *s, ExprNode *e)
  * @param s (*) The label of the predicate to look up.
  * @return The reference to the Expression that the predicate is if in the
  * list and NULL otherwise. */
-ExprNode * lookup_predicate(char *s)
+ExprNode * lookup_predicate(const char *s)
 {
   string name(s);
   map<string, ExprNode *>::iterator it = predicates.find(name);
@@ -239,7 +239,7 @@ ExprNode * lookup_predicate(char *s)
  * @param s (*) The label of the equation.
  * @return The Expression (a reference) if found in the list, or NULL if not
  * found in the list of equations. */
-ExprNode * lookup_equation(char *s)
+ExprNode * lookup_equation(const char *s)
 {
   string name(s);
   map<string, ExprNode *>::iterator it = equations.find(name);
@@ -288,7 +288,7 @@ int print_predicates()
  * @param op The Expression type of the proof rule; this is the rule that the
  * model checker applies to continue the proof.
  * @return None */
-void print_sequent(int step, bool retVal, DBM *lhs, ExprNode *rhs, SubstList *sub, opType op){
+void print_sequent(const int step, const bool retVal, DBM *lhs, ExprNode *rhs, SubstList *sub, const opType op){
   cout << "seq#" << step << "  " <<retVal << "  ";
   if (lhs != NULL) {
     lhs->print_constraint() ;
@@ -318,7 +318,7 @@ void print_sequent(int step, bool retVal, DBM *lhs, ExprNode *rhs, SubstList *su
  * @param op The Expression type of the proof rule; this is the rule that the
  * model checker applies to continue the proof.
  * @return None */
-void print_sequentCheck(int step, bool retVal, DBM *lhs, DBMList *rhsList, SubstList *sub, opType op){
+void print_sequentCheck(const int step, const bool retVal, DBM *lhs, DBMList *rhsList, SubstList *sub, const opType op){
   cout << "seq#" << step << "  " <<retVal << "  ";
   if (lhs != NULL) {
     lhs->print_constraint() ;
@@ -347,7 +347,7 @@ void print_sequentCheck(int step, bool retVal, DBM *lhs, DBMList *rhsList, Subst
  * @param op The Expression type of the proof rule; this is the rule that the
  * model checker applies to continue the proof.
  * @return None */
-void print_sequent_place(int step, bool retVal, DBM *lhs, DBMList * place, ExprNode *rhs, SubstList *sub, opType op){
+void print_sequent_place(const int step, const bool retVal, DBM *lhs, DBMList * place, ExprNode *rhs, SubstList *sub, const opType op){
   cout << "seq#" << step << "  " <<retVal << "  ";
   if (lhs != NULL) {
     lhs->print_constraint() ;
@@ -383,7 +383,7 @@ void print_sequent_place(int step, bool retVal, DBM *lhs, DBMList * place, ExprN
  * @param op The Expression type of the proof rule; this is the rule that the
  * model checker applies to continue the proof.
  * @return None */
-void print_sequent_placeCheck(int step, bool retVal, DBM *lhs, DBMList * place, DBMList *rhsList, SubstList *sub, opType op){
+void print_sequent_placeCheck(const int step, const bool retVal, DBM *lhs, DBMList * place, DBMList *rhsList, SubstList *sub, const opType op){
   cout << "seq#" << step << "  " <<retVal << "  ";
   if (lhs != NULL) {
     lhs->print_constraint() ;
@@ -552,7 +552,7 @@ void print_ExprNode(ExprNode * e, std::ostream& os)
  * @param op (*) The expression type.
  * @param os (&) The type of output stream to print the output to.
  * @return none */
-void print_ExprNodeType(opType op, std::ostream& os)
+void print_ExprNodeType(const opType op, std::ostream& os)
 {
   os << "**(";
   switch (op){
@@ -643,7 +643,7 @@ void print_ExprNodeType(opType op, std::ostream& os)
  * @param op (*) The expression type.
  * @param os (&) The type of output stream to print the output to.
  * @return none */
-void print_ExprNodeTypePlace(opType op, std::ostream& os)
+void print_ExprNodeTypePlace(const opType op, std::ostream& os)
 {
   os << "**(";
   switch (op){
@@ -750,7 +750,7 @@ void SubstList::print(std::ostream &os){
  * its binary equivalent.
  * @param val The integer in base 10 to print.
  * @return none */
-void printBinary(int val) {
+void printBinary(const int val) {
   for(int i = 15; i >=0; i--){
     if (val & (1 << i))
       std::cout <<"1";
