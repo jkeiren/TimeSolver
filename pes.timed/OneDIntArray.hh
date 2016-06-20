@@ -22,12 +22,7 @@ public:
    * @param numElements The number of elements to allocate
    * for the array.
    * @return [Constructor]. */
-  OneDIntArray(short int numElements) : Generic1DArray(numElements, sizeof(short int)) {}
-  
-  /** Copy Constructor.
-   * @param Y (&) The reference to the object to copy.
-   * @return [Constructor]. */
-  OneDIntArray(OneDIntArray &Y) : Generic1DArray(Y){};
+  OneDIntArray(const short int numElements) : Generic1DArray(numElements, sizeof(short int)) {}
   
   /** Copy Constructor for constant objects.
    * @param Y (&) The reference to the object to copy.
@@ -41,7 +36,7 @@ public:
    * @param index The index of the element to acces; 0 is
    * the first index.
    * @return A reference to the element in the array. */
-  short int& operator[](short int index) {
+  short int& operator[](const short int index) {
     // Indexes are zero based
     /* We might want a private method that does not use bounds checks
      * In order to improve performance. */
@@ -66,7 +61,7 @@ protected:
    * @param index The index of the element to acces; 0 is
    * the first index.
    * @return A reference to the element in the array. */
-  short int& operatorAccess(short int index) {
+  short int& operatorAccess(const short int index) {
     // Indexes are zero based
     short int offset = index * sizeof(short int);
     short int *p = (short int*) &(storage[offset]);

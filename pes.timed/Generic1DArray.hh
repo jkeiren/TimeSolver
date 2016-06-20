@@ -38,24 +38,14 @@ public:
    * @param nEls The number of elements to allocate in the array
    * @param sz The size of each element.
    * @return [Constructor]. */
-  Generic1DArray(short int nEls, short int sz) {
+  Generic1DArray(const short int nEls, const short int sz) {
     quantity = nEls;
     eltSize = sz;
 	  /* Edit: Changed from sizeof(short int) to have the specified size.
 	   * This fixes the problem of parameter sz not being used. */
     storage = new unsigned char [quantity * sz];
   }
-  
-	/** Copy Constructor.
-   * @param Y (&) The reference to the object to copy.
-   * @return [Constructor]. */
-  Generic1DArray(Generic1DArray &Y){
-    quantity = Y.quantity;
-    eltSize = Y.eltSize;
-    storage = new unsigned char [quantity * Y.eltSize];
-    memcpy(storage, Y.storage, quantity * Y.eltSize);
-  }
-  
+
   /** Copy Constructor for constant objects.
    * @param Y (&) The reference to the object to copy.
    * @return [Constructor]. */
@@ -78,7 +68,7 @@ public:
    * @param Y (&) The reference to the second Generic1D Array
    * @return A reference to the copied object (the LHS).  When completed,
    * the LHS Generic1DArray object will be changed. */
-  Generic1DArray & operator = (Generic1DArray &Y){
+  Generic1DArray & operator = (const Generic1DArray &Y){
     quantity = Y.quantity;
     eltSize = Y.eltSize;
     memcpy(storage, Y.storage, quantity * Y.eltSize);
@@ -90,7 +80,7 @@ public:
    * @param inx The index in the array to add;  0 is
    * the first index.
    * @return None. When completed, the array will be changed.*/
-  void add(void* element, short int inx) {
+  void add(const void* element, const short int inx) {
     if (inx < 0 || inx >= quantity) {
       cerr << "Generic1DArray add - index out of bounds " << endl;
       exit(-1);
@@ -108,7 +98,7 @@ public:
    * @param index The index of the element in the array; 0 is
    * the first index.
    * @return A pointer to the specified element in the array. */
-  void* fetch(short int index) const {
+  void* fetch(const short int index) const {
     if(index >= quantity || index < 0) {
       return 0;
     }
@@ -120,7 +110,7 @@ public:
    * both arrays.
    * @param Y (&) The second Generic1DArray to compare to.
    * @return true: the two arrays are equal; false: otherwise. */
-  bool operator == (Generic1DArray & Y){
+  bool operator == (const Generic1DArray & Y){
     for (int i = 0; i < (quantity >>1); i++) {
       if ((int *)&(storage[i << 2]) != (int *)&(Y.storage[i << 2])) {
 	     	return false;
