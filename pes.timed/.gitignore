@@ -1,3 +1,12 @@
 *.exe
 *.exe.stackdump
 *.o
+demo
+pes.lex.c
+pes.output
+pes.tab.c
+pes.tab.h
+testdbm
+testdbm.dSYM
+testdbmlist
+testdbmlist.dSYM
