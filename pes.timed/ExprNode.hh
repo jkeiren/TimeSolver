@@ -61,7 +61,7 @@ public:
    * @param val The value to initialize the specified variable to.
    * @param numElements The number of variables (the size of the list). 
    * @return [Constructor]. */
-  SubstList(int index, int val, int numElements) : OneDIntArray(numElements) {
+  SubstList(const int index, const int val, const int numElements) : OneDIntArray(numElements) {
     for(int i = 0; i < numElements; i++)
       this->operatorAccess(i) = -1;
     this->operatorAccess(index) = val;
@@ -71,7 +71,7 @@ public:
    * state.
    * @param numElements The number of variables (the size of the list). 
    * @return [Constructor]. */
-  SubstList(int numElements) : OneDIntArray(numElements) {
+  SubstList(const int numElements) : OneDIntArray(numElements) {
     for(int i = 0; i < numElements; i++)
       this->operatorAccess(i) = 0;
   };
@@ -97,7 +97,7 @@ public:
   /** Copy Constructor. 
    * @param Y (&) The object to copy. 
    * @return [Constructor]. */
-  SubstList(SubstList &Y) : OneDIntArray(Y){};
+  SubstList(const SubstList &Y) : OneDIntArray(Y){};
   
   /** Destructor.  Does nothing.
    * @return [Destructor]. */
@@ -108,7 +108,7 @@ public:
    * for each variable.
    * @param Y (&) The reference to the RHS SubstList. 
    * @return true: the SubstList is equal to Y; false: otherwise. */
-  bool operator == (SubstList &Y){
+  bool operator == (const SubstList &Y) const {
     return (memcmp(storage, Y.storage, quantity * sizeof(short int)) == 0);
   }
   
@@ -117,14 +117,14 @@ public:
    * @param index The location to change the value of
    * @param val The value to change the desired element to.
    * @return a pointer to the SubstList that was just changed. */
-  SubstList * addst(int index, int val){
+  SubstList * addst(const int index, const int val){
     this->operator[](index) = val;
     return this;
   };
   
   /** Returns the number of variables in this SubstList.
    * @return the number of variables in the SubstList. */
-  int nElements(void) {return quantity;};
+  int nElements(void) const {return quantity;};
   
   /** Prints the contents of the SubstList.  A variable with
    * value -1 is considered empty (the SubstList does not restrict
@@ -172,7 +172,7 @@ public:
    * @note Using this constructor with an opType value other than one of
    * the values given above may result in program errors.
    * @return [Constructor]. */
-  ExprNode(opType o, ExprNode * q) : op(o), left(q){
+  ExprNode(const opType o, ExprNode * q) : op(o), left(q){
   	right = NULL;
   	constraint = NULL;
   	cset = NULL;
@@ -188,7 +188,7 @@ public:
    * @note Using this constructor with an opType value other than one of
    * the values given above may result in program errors.
    * @return [Constructor]. */
-  ExprNode(opType o, ExprNode * l, ExprNode *r) :op(o), left(l), right(r){
+  ExprNode(const opType o, ExprNode * l, ExprNode *r) :op(o), left(l), right(r){
   	constraint = NULL;
   	predicate = NULL;
   	cset = NULL;
@@ -202,7 +202,7 @@ public:
    * @note Using this constructor with an opType value other than one of
    * the values given above may result in program errors.
    * @return [Constructor]. */
-  ExprNode(opType o, DBM *c) : op(o){
+  ExprNode(const opType o, DBM *c) : op(o){
   	left = NULL;
   	right = NULL;
   	predicate = NULL;
@@ -221,7 +221,7 @@ public:
    * @note Using this constructor with an opType value other than one of
    * the values given above may result in program errors.
    * @return [Constructor]. */
-  ExprNode(opType o, bool bv) : op(o), b(bv){
+  ExprNode(const opType o, const bool bv) : op(o), b(bv){
   	left = NULL;
   	right = NULL;
   	predicate = NULL;
@@ -246,7 +246,7 @@ public:
    * @note Using this constructor with an opType value other than one of
    * the values given above may result in program errors.
    * @return [Constructor]. */
-  ExprNode(opType o, int a, int i) : op(o), atomic(a), intVal(i){
+  ExprNode(const opType o, const int a, const int i) : op(o), atomic(a), intVal(i){
   	left = NULL;
   	right = NULL;
   	predicate = NULL;
@@ -272,7 +272,7 @@ public:
    * @note Using this constructor with an opType value other than one of
    * the values given above may result in program errors.
    * @return [Constructor]. */
-  ExprNode(opType o, int a, int i, DBM *c) : op(o), atomic(a), intVal(i), constraint(c){
+  ExprNode(const opType o, const int a, const int i, DBM *c) : op(o), atomic(a), intVal(i), constraint(c){
   	left = NULL;
   	right = NULL;
   	predicate = NULL;
@@ -288,7 +288,7 @@ public:
    * @note Using this constructor with an opType value other than one of
    * the values given above may result in program errors.
    * @return [Constructor]. */
-  ExprNode(opType o, char * a, int i) : op(o), predicate(a), intVal(i){
+  ExprNode(const opType o, const char * a, const int i) : op(o), predicate(a), intVal(i){
   	left = NULL;
   	right = NULL;
   	cset = NULL;
@@ -305,7 +305,7 @@ public:
    * @note Using this constructor with an opType value other than one of
    * the values given above may result in program errors.
    * @return [Constructor]. */
-  ExprNode(opType o, ExprNode *l, ClockSet *s) : op(o), left(l), cset(s){
+  ExprNode(const opType o, ExprNode *l, ClockSet *s) : op(o), left(l), cset(s){
   	right = NULL;
   	predicate = NULL;
   	constraint = NULL;
@@ -324,7 +324,7 @@ public:
    * @note Using this constructor with an opType value other than one of
    * the values given above may result in program errors.
    * @return [Constructor]. */
-  ExprNode(opType o, ExprNode *l, SubstList *s) : op(o), left(l), subst(s){
+  ExprNode(const opType o, ExprNode *l, SubstList *s) : op(o), left(l), subst(s){
   	right = NULL;
   	predicate = NULL;
   	cset = NULL;
@@ -346,7 +346,7 @@ public:
    * @note Using this constructor with an opType value other than one of
    * the values given above may result in program errors.
    * @return [Constructor]. */
-  ExprNode(opType o, ExprNode *l, short int cx, short int cy) : op(o), left(l), atomic(cx), intVal(cy){
+  ExprNode(const opType o, ExprNode *l, const short int cx, const short int cy) : op(o), left(l), atomic(cx), intVal(cy){
   	right = NULL;
   	predicate = NULL;
   	cset = NULL;
@@ -360,7 +360,7 @@ public:
    * descendants of the ExprNode E
    * @param E (&) The ExprNode object to make a deep copy of
    * @return [Constructor]. */
-  ExprNode(ExprNode & E)  {
+  ExprNode(const ExprNode & E)  {
     op = E.op;
     if(E.op != PREDICATE) {
       if(E.constraint != NULL) {
@@ -448,7 +448,7 @@ public:
   /** Returns the clock constraint (DBM representation) of the expression.
    * @return The reference to the DBM representing the clock constraints.
    * @see The Constructor(s) comments for more information. */
-  DBM* dbm() {return constraint;};
+  DBM* dbm() const {return constraint;};
   
   /** Sets the constraint of the ExprNode to the specified DBM reference.
    * This method assigns the DBM with a shallow copy (copies the address).
@@ -476,7 +476,7 @@ public:
    * the expression. 
    * @return The expression's predicate variable's name.
    * @see The Constructor(s) comments for more information. */
-  char * getPredicate() const {return predicate;};
+  const char * getPredicate() const {return predicate;};
   
   /** Returns the value representing constant with which to compare the variable
    * stored in atomic.
@@ -521,7 +521,7 @@ public:
   /** Sets the parity of the expression, using true = gfp and false = lfp.
    * @param parity The desired parity: true = gfp and false = lfp. 
    * @return None. */
-  void set_Parity(bool parity) { b=parity;};
+  void set_Parity(const bool parity) { b=parity;};
   
   /** Sets the block (equation block) the expression represents 
    * by changing the value of intVal. Used for PREDICATE (equation) expressions.
@@ -529,7 +529,7 @@ public:
    * the block of the expression. 
    * @note The integer storing the block can be used for other purposes.
    * @return None.*/
-  void set_Block(int block) {intVal = block;};
+  void set_Block(const int block) {intVal = block;};
   
   
   /** Returns the parity of the expression: true = gfp, false = lfp.
@@ -555,7 +555,7 @@ public:
    * @param b The candidate intVal value.
    * @returns true: if a is the atomic id in the expression and b is the intVal
    * value in the expression; false: otherwise. */
-  bool inv_loc(int a, int b) {return ((a==atomic) && (b==intVal));};
+  bool inv_loc(const int a, const int b) {return ((a==atomic) && (b==intVal));};
   
   
   /** Negates all the atomic propositions in the expression. The negation
@@ -641,7 +641,7 @@ protected:
   opType op;
   
   /** The string label of a predicate variable in an expression. */
-  char *predicate;
+  const char *predicate;
   
   /** The left child of an ExprNode in an expression tree.  
    * Possibly empty. */
@@ -720,7 +720,7 @@ public:
    * @param reset (*) The set of clocks the transition resets. This will be NULL
    * if no clocks are reset.
    * @return [Constructor]. */
-  Transition(ExprNode *destParent, ExprNode * leftExprIn, ExprNode * rightExprIn, bool isDestOnLeft, SubstList * dest, ClockSet * reset,  vector<pair<short int, short int> > * clockAssignments) {
+  Transition(ExprNode *destParent, ExprNode * leftExprIn, ExprNode * rightExprIn, const bool isDestOnLeft, SubstList * dest, ClockSet * reset,  vector<pair<short int, short int> > * clockAssignments) {
     destPar = destParent;
     leftExpr = leftExprIn;
     rightExpr = rightExprIn;
@@ -821,7 +821,7 @@ public:
   
   /** Returns the clock set of the clocks reset by this transition.
    * @return the clocks reset by this transition. */
-  ClockSet * getCSet() {
+  ClockSet * getCSet() const {
     return resetList;
   }
   
@@ -833,7 +833,7 @@ public:
    * @param source (*) The leaving location (the discrete state component).
    * @return The entering location if the given location executed this
    * transition. */
-  SubstList * getEnteringLocation(SubstList * source) {
+  SubstList * getEnteringLocation(SubstList * source) const {
     // Since a new substList is created, delete it when finished.
     SubstList *st = NULL;
     if(destList == NULL) {
@@ -1136,14 +1136,14 @@ void makeAssignmentList(ExprNode *e, vector<pair<short int, short int> > * av);
  * to the current list of all clocks.
  * @param s (*) The string that is the clock label.
  * @return 1:when finished. */
-int add_clock(char *s);
+int add_clock(const char *s);
 
 /** Determines if a clock with label s is already in
  * the list of clocks and gets its index if it is.
  * @param s (*) The label to search for
  * @return the int value of the clock index: if it is in the list;
  * -1: otherwise (s is not a clock). */
-int lookup_clock(char *s);
+int lookup_clock(const char *s);
 
 /** Prints out the list of clocks with their labels
  * and current values.
@@ -1155,7 +1155,7 @@ int print_clocks();
  * This gives the atomic variable the default value of 0.
  * @param s (*) The label for the atomic value.
  * @return 1 when done. */
-int add_atomic(char *s);
+int add_atomic(const char *s);
 
 /** Insert an atomic variable with label s and initial value
  * v into the list of atomic variables and give it an id.
@@ -1163,14 +1163,14 @@ int add_atomic(char *s);
  * @param s (*) The label for the atomic value.
  * @param v The value of the atomic variable labeled by s.
  * @return 1 when done. */
-int add_atomicv(char *s, int i);
+int add_atomicv(const char *s, const int i);
 
 /** Try to find the value of the atomic variable with label s
  * in the atomic list.
  * @param s (*) The label for the atomic value to look up.
  * @return the value of the atomic label if found or -1 if it is
  * not in the list. */
-int lookup_atomic(char *s);
+int lookup_atomic(const char *s);
 
 /** Prints out the list of atomic variables with their
  * labels (ids) and values.
@@ -1186,7 +1186,7 @@ int print_atomic();
  * @param s The label of the predicate to add.
  * @param i The integer index of the predicate.
  * @return 1 when done. */
-int add_predicate(char *s, int i);
+int add_predicate(const char *s, const int i);
 
 /** Sets or changes the parity and the block number of a given
  * predicate ExprNode in the list of predicates.
@@ -1195,7 +1195,7 @@ int add_predicate(char *s, int i);
  * @param parity The desired parity: true = gfp, false = lfp.
  * @return true:if successful (found the predicate expression), 
  * false:otherwise. */
-bool set_parity_block(string name, int block, bool parity);
+bool set_parity_block(const string& name, const int block, const bool parity);
 
 /** Adds an an equation, with its variable name and right hand side, to
  * the list of equations. This list links predicate variable expressions
@@ -1208,7 +1208,7 @@ bool set_parity_block(string name, int block, bool parity);
  * @param s (*) The equation label.
  * @param e (*) The expression of the RHS of the equation.
  * @return 1 if successful in doing so and 0 otherwise. */
-int add_equation(int block, bool parity, char *s, ExprNode *e);
+int add_equation(const int block, const bool parity, const char *s, ExprNode *e);
 
 
 
@@ -1217,7 +1217,7 @@ int add_equation(int block, bool parity, char *s, ExprNode *e);
  * @param s (*) The label of the predicate to look up.
  * @return The reference to the Expression that the predicate is if in the
  * list and NULL otherwise. */
-ExprNode * lookup_predicate(char *s);
+ExprNode * lookup_predicate(const char *s);
 
 /** Tries to find the RHS expression of an equation with a given predicate
  * variable label,
@@ -1225,7 +1225,7 @@ ExprNode * lookup_predicate(char *s);
  * @param s (*) The label of the equation.
  * @return The Expression (a reference) if found in the list, or NULL if not
  * found in the list of equations. */
-ExprNode * lookup_equation(char *s);
+ExprNode * lookup_equation(const char *s);
 
 /** Prints out an error if it occurs during the parsing process. 
  * This method is only used in the parser.
@@ -1248,7 +1248,7 @@ int print_predicates();
  * @param op The Expression type of the proof rule; this is the rule that the
  * model checker applies to continue the proof.
  * @return None */
-void print_sequent(int, bool, DBM *, ExprNode *, SubstList *, opType op);
+void print_sequent(const int, const bool, DBM *, ExprNode *, SubstList *, const opType op);
 
 
 /** Prints out a placeholder check sequent in the proof tree; used for
@@ -1262,7 +1262,7 @@ void print_sequent(int, bool, DBM *, ExprNode *, SubstList *, opType op);
  * @param op The Expression type of the proof rule; this is the rule that the
  * model checker applies to continue the proof.
  * @return None */
-void print_sequentCheck(int, bool, DBM *, DBMList *, SubstList *, opType op);
+void print_sequentCheck(const int, const bool, DBM *, DBMList *, SubstList *, const opType op);
 
 /** Prints out a sequent with a placeholder clock state in a proof tree.
  * @param step The tree level (sequent step) of the sequent (0 is root).
@@ -1274,7 +1274,7 @@ void print_sequentCheck(int, bool, DBM *, DBMList *, SubstList *, opType op);
  * @param op The Expression type of the proof rule; this is the rule that the
  * model checker applies to continue the proof.
  * @return None */
-void print_sequent_place(int step, bool retVal, DBM *lhs, DBMList * place, ExprNode *rhs, SubstList *sub, opType op);
+void print_sequent_place(const int step, const bool retVal, DBM *lhs, DBMList * place, ExprNode *rhs, SubstList *sub, const opType op);
 
 /** Prints out a placeholder check sequent in the proof tree; used for
  * exists, forall and reset sequents within placeholder proofs. This check
@@ -1289,8 +1289,8 @@ void print_sequent_place(int step, bool retVal, DBM *lhs, DBMList * place, ExprN
  * @param op The Expression type of the proof rule; this is the rule that the
  * model checker applies to continue the proof.
  * @return None */
-void print_sequent_placeCheck(int step, bool retVal, DBM *lhs, DBMList * place, 
-  DBMList *rhsList, SubstList *sub, opType op);
+void print_sequent_placeCheck(const int step, const bool retVal, DBM *lhs, DBMList * place,
+  DBMList *rhsList, SubstList *sub, const opType op);
 
 /** Prints out the expression to the desired output stream, labeling
  * the expression with its opType. The typical output stream is cout.
