@@ -36,10 +36,6 @@ def run(infile, outfile, property):
             ysparsing.append(d['parsing'])
             ysproving.append(d['proving'])
             
-    print (xs)
-    print(ystotal)
-    print(ysparsing)
-    print(ysproving)
     plt.plot(xs, ystotal, 'ro', label='total', ls='-')
     plt.plot(xs, ysparsing, 'bo', label='parsing', ls='-')
     plt.plot(xs, ysproving, 'go', label='proving', ls='-')
