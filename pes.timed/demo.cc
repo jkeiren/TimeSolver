@@ -451,7 +451,7 @@ inline bool invs_chk(DBMList * lhs, SubstList *sub){
 /** Simplified and performance-optimized proof engine for (AllAct) transitions
  * and IMPLY nodes. This method assumes that the expression e
  * is either the left hand side of an IMPLY node or the conditions
- * of a transition. Given the assumption that its is working on the left
+ * of a transition. Given the assumption that it is working on the left
  * hand implication of a possible transition (potentially with an invariant),
  * it utilizes a simpler proof-rule scheme. Using comp_ph(...) instead
  * of do_proof(...) (or do_proof_place(...)) results in faster performance
@@ -1747,7 +1747,7 @@ bool look_for_and_purge_rhs_backStack(vector<Sequent *> * initialPtr, vector<Seq
 
 }
 
-/** Method to compute the predecessor check of reativized exists operators.
+/** Method to compute the predecessor check of relativized exists operators.
  * This method is inlined for performance reasons.
  * @param lhs (*) the left-hand clock set
  * @param lhsSucc (*) the sucessor of the left-hand clock constraint, after
@@ -3811,8 +3811,8 @@ bool do_proof(int step, DBM *lhs, ExprNode *rhs, SubstList *sub)
       lhs->cf();
       
       /* Look in Known True and Known False Sequent Caches */
-      /* First look in known False Sequent table */
       if(useCaching) {
+        /* First look in known False Sequent table */
         Sequent *tf = new Sequent(rhs, sub);
         Sequent *hf = look_for_sequent(tf->sub(), Xlist_false, pInd);
         if(hf != NULL && tabled_false_sequent(hf, lhs)) {
@@ -3829,16 +3829,14 @@ bool do_proof(int step, DBM *lhs, ExprNode *rhs, SubstList *sub)
           if(tf != hf) {
             delete tf;
           }
-          break;
+          break; // break out of switch
         } 
         if(tf != hf) {
           delete tf;
         }
-      }
-      
-      /* Now look in known True Sequent table */
-      if(useCaching) {
-        Sequent *tfb = new Sequent(rhs, sub);
+
+        /* Now look in known True Sequent table */
+        Sequent *tfb = new Sequent(rhs, sub); //JK Can be optimised out by reusing tf?
         Sequent *hfb = look_for_sequent(tfb->sub(), Xlist_true, pInd);
         if(hfb != NULL && tabled_sequent(hfb, lhs)) {
           retVal = true;  
@@ -3852,7 +3850,7 @@ bool do_proof(int step, DBM *lhs, ExprNode *rhs, SubstList *sub)
           if(tfb != hfb) {
             delete tfb;
           }
-          break;
+          break; // break out of switch
         } 
         if(tfb != hfb) {
           delete tfb;
@@ -3914,6 +3912,8 @@ bool do_proof(int step, DBM *lhs, ExprNode *rhs, SubstList *sub)
 				
         h->ds.push_back(new DBM(*lhs));
       }
+
+      // NO CIRCULARITY FOUND
       
       /* Assign parent value after caching since during caching we may have
        * to use the previous parent */
