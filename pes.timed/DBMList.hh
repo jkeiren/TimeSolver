@@ -220,9 +220,8 @@ public:
   void addDBMList(const DBMList &Y) {
     for(vector<DBM *>::iterator it=(Y.dbmListVec)->begin(); it != (Y.dbmListVec)->end(); it++)
     {
-       dbmListVec->push_back(new DBM(*(*it)));
+      addDBM(*(*it));
     }
-   
   }
   
   /** Performs a deep copy of the DBMList.  
@@ -681,7 +680,7 @@ public:
    * The final DBM is not in canonical form.
    * @param rs (*) The set of clocks to reset to 0.
    * @return The reference to the changed, calling resulting DBM. */
-  DBMList & reset(ClockSet * rs){
+  DBMList & reset(const ClockSet * const rs){
     for(unsigned int i = 0; i < dbmListVec->size(); i++) {
       DBM *tD = (*dbmListVec)[i];
       tD->reset(rs);
@@ -730,7 +729,7 @@ public:
    * after this operation.
    * @param prs (*) The set of clocks just reset (after the predecessor zone).
    * @return The reference to the modified DBMList. */
-  DBMList &preset( ClockSet *prs){
+  DBMList &preset(const ClockSet * const prs){
     for(unsigned int i = 0; i < dbmListVec->size(); i++) {
       DBM *tD = (*dbmListVec)[i];
       tD->preset(prs);

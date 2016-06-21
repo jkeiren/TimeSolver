@@ -79,7 +79,7 @@ public:
    * printing out which clocks are in them.
    * @param os - the output stream to print to.
    * @return none */
-  void print(std::ostream &os){
+  void print(std::ostream &os) const {
     bool end = false;
     os << "[";
     for(int i = 1; i <= num; i++){
@@ -590,7 +590,7 @@ public:
    * The final DBM is in canonical form.
    * @param rs (*) The set of clocks to reset to 0.
    * @return The reference to the changed, calling resulting DBM. */
-  DBM &reset(ClockSet *rs) {
+  DBM &reset(const ClockSet * const rs) {
     /* This for loop takes the DBM and resets
      * all the specified clocks to reset to
      * 0. */
@@ -692,7 +692,7 @@ public:
    * after this operation.
    * @param prs (*) The set of clocks just reset (after the predecessor zone).
    * @return The reference to the modified DBM. */
-  DBM &preset(ClockSet * prs){
+  DBM &preset(const ClockSet * const prs){
     
     /* Handle clock difference constraints first. This
      * allows us to use the single-clock constraints
