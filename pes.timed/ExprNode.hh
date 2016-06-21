@@ -1145,6 +1145,8 @@ int add_clock(const char *s);
  * -1: otherwise (s is not a clock). */
 int lookup_clock(const char *s);
 
+const std::vector<string>& get_clock_strings();
+
 /** Prints out the list of clocks with their labels
  * and current values.
  * @return 1 when done. */
