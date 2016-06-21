@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = -c -g -O -Wall
+CFLAGS = -c -g -O -Wall -Wextra
 # Stack size set to 4GB for Mac, since terminal hard limit is 64MB
 # My machine has 8GM of RAM
 # This number is the number of bytes in Hex
