@@ -767,11 +767,11 @@ inline bool comp_ph_all_place(DBM * const ph, DBMList * const place,
  * then examined for the desired clock state (with tabled_sequent()).
  * @param s (*) The sequent; only its discrete state is examined, but the entire
  * sequent is added if not found.
- * @param Xlist (*&) The cache of sequents to look in.
+ * @param Xlist (*) The cache of sequents to look in.
  * @param pInd The index of the predicate; used to find the proper hashing bin.
  * @return The reference to the sequent with the three components
  * specified as parameters. */
-Sequent * locate_sequent(Sequent * const s, stack *& Xlist, int pInd){
+Sequent * locate_sequent(Sequent * const s, stack * const Xlist, int pInd){
   int indexH = hash_func(s->sub());
   int index = pInd*seqStSize + indexH;
   for(stack::const_iterator it = Xlist[index].begin(); it != Xlist[index].end(); it++){
@@ -813,11 +813,11 @@ Sequent * locate_sequent(Sequent * const s, stack *& Xlist, int pInd){
  * then examined for the desired clock state (with tabled_sequent()).
  * @param s (*) The sequent with placeholders; only its discrete state is 
  * examined, but the entire sequent is added if not found.
- * @param Xlist (*&) The cache of placeholder sequents to look in.
+ * @param Xlist (*) The cache of placeholder sequents to look in.
  * @param pInd The index of the predicate; used to find the proper hashing bin.
  * @return The reference to the sequent with the three components
  * specified as parameters. */
-SequentPlace * locate_sequentPlace(SequentPlace * const s, stackPlace *& Xlist, int pInd){
+SequentPlace * locate_sequentPlace(SequentPlace * const s, stackPlace * const Xlist, int pInd){
   int indexH = hash_func(s->sub());
   int index = pInd*seqStSize + indexH;
   for(stackPlace::const_iterator it = Xlist[index].begin(); it != Xlist[index].end(); it++){
@@ -856,11 +856,11 @@ SequentPlace * locate_sequentPlace(SequentPlace * const s, stackPlace *& Xlist, 
  * The returned partial sequent is 
  * then examined for the desired clock state (with tabled_sequent()).
  * @param subs (*) The discrete state of the sequent.
- * @param Xlist (*&) The cache of sequents to look in.
+ * @param Xlist (*) The cache of sequents to look in.
  * @param pInd The index of the predicate; used to find the proper hashing bin.
  * @return The reference to the sequent with the three components
  * specified as parameters. */
-Sequent * look_for_sequent(const SubstList * const subs, stack *& Xlist, int pInd){
+Sequent * look_for_sequent(const SubstList * const subs, const stack * const Xlist, int pInd){
   int indexH = hash_func(subs);
   int index = pInd*seqStSize + indexH;
   for(stack::const_iterator it = Xlist[index].begin(); it != Xlist[index].end(); it++){
@@ -890,13 +890,13 @@ Sequent * look_for_sequent(const SubstList * const subs, stack *& Xlist, int pIn
  * then examined for the desired clock state (with tabled_sequent()).
  * @param lhsPlace (*) The placeholder DBM.
  * @param subs (*) The discrete state of the sequent with placeholders.
- * @param Xlist (*&) The cache of placeholder sequents to look in.
+ * @param Xlist (*) The cache of placeholder sequents to look in.
  * @param pInd The index of the predicate; used to find the proper hashing bin.
  * @return The reference to the sequent with the three components
  * specified as parameters. */
 SequentPlace * look_for_sequentPlace(const DBMList * const lhsPlace,
                                      const SubstList * const subs,
-                                     stackPlace *& Xlist, const int pInd){
+                                     const stackPlace * const Xlist, const int pInd){
   int indexH = hash_func(subs);
   int index = pInd*seqStSize + indexH;
   for(stackPlace::const_iterator it = Xlist[index].begin(); it != Xlist[index].end(); it++){
@@ -943,7 +943,7 @@ SequentPlace * look_for_sequentPlace(const DBMList * const lhsPlace,
  * @return The pointer to the purged sequent, or 
  * NULL if no sequent was purged.*/
 Sequent * look_for_and_purge_rhs_sequent(const DBM* const lhs, const Sequent * const s,
-                                         stack *& Xlist, const int pInd,
+                                         stack * const Xlist, const int pInd,
                                          const bool tableCheck, bool * const madeEmpty){
   int indexH = hash_func(s->sub());
   int index = pInd*seqStSize + indexH;
@@ -1047,7 +1047,7 @@ Sequent * look_for_and_purge_rhs_sequent(const DBM* const lhs, const Sequent * c
 SequentPlace * look_for_and_purge_rhs_sequentPlace(const DBM * const lhs,
                                                    const DBMList * const lhsPlace,
                                                    SequentPlace const * const s,
-                                                   stackPlace *& Xlist,
+                                                   stackPlace * const Xlist,
                                                    const int pInd, const bool tableCheck,
                                                    bool * const madeEmpty){
   int indexH = hash_func(s->sub());
@@ -1164,7 +1164,7 @@ SequentPlace * look_for_and_purge_rhs_sequentPlace(const DBM * const lhs,
  * if tableCheck = false, then we are aiming to purge sequents cached as
  * false but discovered to be true.
  * @return true: one or more sequents were purged; false: otherwise.*/
-bool look_for_and_purge_rhs_sequent_state(const Sequent * const s, stack *& Xlist,
+bool look_for_and_purge_rhs_sequent_state(const Sequent * const s, stack * const Xlist,
                                           const int pInd, const bool tableCheck){
   int indexH = hash_func(s->sub());
   int index = pInd*seqStSize + indexH;
@@ -1240,7 +1240,7 @@ bool look_for_and_purge_rhs_sequent_state(const Sequent * const s, stack *& Xlis
  * false but discovered to be true.
  * @return true: one or more sequents were purged; false: otherwise.*/
 bool look_for_and_purge_rhs_sequentPlace_state(const SequentPlace * const s,
-                                               stackPlace *& Xlist, const int pInd,
+                                               stackPlace * const Xlist, const int pInd,
                                                const bool tableCheck){
   int indexH = hash_func(s->sub());
   int index = pInd*seqStSize + indexH;
