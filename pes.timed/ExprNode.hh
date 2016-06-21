@@ -85,7 +85,7 @@ public:
    * SubstList to get values from.
    * @param st2 (*) The pointer to the second SubstList to get values from.
    * @return [Constructor]. */
-  SubstList(SubstList *st1, SubstList *st2) : OneDIntArray(st1->quantity){
+  SubstList(const SubstList * const st1, const SubstList * const st2) : OneDIntArray(st1->quantity){
     for(int i = 0; i < quantity; i++){
       if(st1->operatorAccess(i) != -1)
         this->operatorAccess(i) = st1->operatorAccess(i);
@@ -438,17 +438,17 @@ public:
    * for expressions with two (left and right) children.
    * @return The reference to the left (or single) child of that expression. 
    * @see The Constructor(s) comments for more information. */
-  ExprNode * getLeft() const {return left;};
+  const ExprNode * getLeft() const {return left;};
   
   /** Returns the right (or second) child of the expression.
    * @return The reference to the right (or second) child of that expression. 
    * @see The Constructor(s) comments for more information. */
-  ExprNode * getRight() const {return right;};
+  const ExprNode * getRight() const {return right;};
   
   /** Returns the clock constraint (DBM representation) of the expression.
    * @return The reference to the DBM representing the clock constraints.
    * @see The Constructor(s) comments for more information. */
-  DBM* dbm() const {return constraint;};
+  const DBM* dbm() const {return constraint;};
   
   /** Sets the constraint of the ExprNode to the specified DBM reference.
    * This method assigns the DBM with a shallow copy (copies the address).
@@ -494,12 +494,12 @@ public:
   /** Returns the set of clocks stored in the ExprNode.
    * @return The set of clocks stored in the Expression.
    * @see The Constructor(s) comments for more information. */
-  ClockSet * getClockSet() const {return cset;};
+  const ClockSet * getClockSet() const {return cset;};
   
   /** Returns the assignment of control variables stored in the expression.
    * @return The assignment of (discrete) variables.
    * @see The Constructor(s) comments for more information. */
-  SubstList * getSublist() const {return subst;};
+  const SubstList * getSublist() const {return subst;};
   
   /** Returns the clock id of the clock to reset or to give a 
    * different variable. While this can be used for other
@@ -720,23 +720,17 @@ public:
    * @param reset (*) The set of clocks the transition resets. This will be NULL
    * if no clocks are reset.
    * @return [Constructor]. */
-  Transition(ExprNode *destParent, ExprNode * leftExprIn, ExprNode * rightExprIn, const bool isDestOnLeft, SubstList * dest, ClockSet * reset,  vector<pair<short int, short int> > * clockAssignments) {
-    destPar = destParent;
-    leftExpr = leftExprIn;
-    rightExpr = rightExprIn;
-    isDestLeft = isDestOnLeft;
-    hasRightExpr = true;
-    if(rightExpr == NULL) {
-      hasRightExpr = false;
-    }
-    if(clockAssignments == NULL) {
-      clockAssignmentList = NULL;
-    }
-    else {
-      clockAssignmentList = new vector<pair<short int, short int> >(*clockAssignments);
-    }
-    destList = dest;
-    resetList = reset;
+  Transition(ExprNode * const destParent, const ExprNode * const leftExprIn,
+             ExprNode * const rightExprIn, const bool isDestOnLeft,
+             const SubstList * const dest, const ClockSet * const reset,
+             const vector<pair<short int, short int> > * const clockAssignments) :
+  destPar(destParent),
+  isDestLeft(isDestOnLeft),
+  leftExpr(leftExprIn),
+  rightExpr(rightExprIn),
+  clockAssignmentList(clockAssignments == 0?NULL:new vector<pair<short int, short int> >(*clockAssignments)),
+  destList(dest),
+  resetList(reset) {
   };
 
   
@@ -749,7 +743,7 @@ public:
    * @return [Destructor]. */
   ~Transition() {
     /* First set destExpr to NULL to not double delete */
-    if(destPar == NULL && !hasRightExpr) {
+    if(destPar == NULL && rightExpr != NULL) {
       rightExpr = NULL;
     }
     else if(isDestLeft && destPar != NULL) {
@@ -758,9 +752,11 @@ public:
     else if(destPar != NULL){
       destPar->setExprDestRight(NULL);
     }
+    /* should be superfluous
     if(clockAssignmentList != NULL) {
       clockAssignmentList->clear();
     }
+     */
     delete clockAssignmentList;
     delete leftExpr;
     delete rightExpr;
@@ -773,7 +769,7 @@ public:
    * the enabling condition of the transition.
    * @return The ExprNode describing the enabling conditions of the
    * transition. */
-  ExprNode * getLeftExpr() const {
+  const ExprNode * getLeftExpr() const {
     return leftExpr;
   };
   
@@ -781,14 +777,14 @@ public:
    * the destination (state change) of the transition.
    * @return The ExprNode describing the destination (state change) of the
    * transition. */
-  ExprNode * getRightExpr() const {
+  const ExprNode * getRightExpr() const {
     return rightExpr;
   };
   
   /** Retrieve the list of clock assignments stored by this transition.
   * @return the vector containing the ordered list of clock assignments
   * that occur on the edge of this transition. */
-  vector<pair<short int, short int> > * getAssignmentVector() const {
+  const vector<pair<short int, short int> > * getAssignmentVector() const {
     return clockAssignmentList;
   }
   
@@ -802,7 +798,7 @@ public:
    * @param destExpr (*) the expression that needs to be proven
    * after the transition is executed.
    * @return None. */
-  void getNewTrans(ExprNode *destExpr) {
+  void getNewTrans(ExprNode * const destExpr) {
     if(destPar == NULL) {
       rightExpr = destExpr;
     }
@@ -821,7 +817,7 @@ public:
   
   /** Returns the clock set of the clocks reset by this transition.
    * @return the clocks reset by this transition. */
-  ClockSet * getCSet() const {
+  const ClockSet * getCSet() const {
     return resetList;
   }
   
@@ -833,7 +829,7 @@ public:
    * @param source (*) The leaving location (the discrete state component).
    * @return The entering location if the given location executed this
    * transition. */
-  SubstList * getEnteringLocation(SubstList * source) const {
+  const SubstList * getEnteringLocation(SubstList * source) const {
     // Since a new substList is created, delete it when finished.
     SubstList *st = NULL;
     if(destList == NULL) {
@@ -854,30 +850,27 @@ private:
   /** if false, we have an imply node with the destination at the right.
    * otherwise, true means the destination expression is the left child
    * of destPar. */
-  bool isDestLeft;
-  /** True if the transition has a right hand expression (excluding fed
-   * destination) */
-  bool hasRightExpr;
+  const bool isDestLeft;
   /** List of clock assignments in the edge. An empty list
    * means that there are no clock assignments on the edge.
    * Since assignments are executed
    * sequentially, the list is assumed to have no clock swaps 
    * (i.e. no conflicts in clock assignments). By construction,
    * the innermost assignments are at the back. */
-  vector<pair<short int, short int> > * clockAssignmentList;
+  const vector<pair<short int, short int> > * clockAssignmentList;
 
   /** The enabling conditions of the transition. */
-  ExprNode *leftExpr;
+  const ExprNode *leftExpr;
   /** The destination (state change) of the transition. */
   ExprNode *rightExpr;
   
   /** A reference to the subList of the transition.
    * If there is no change in location, destList will be NULL. */
-  SubstList * destList;
+  const SubstList * destList;
   
   /** The set of clocks to reset on the transition. This is NULL
    * if there are no clocks to reset */
-  ClockSet * resetList;
+  const ClockSet * resetList;
   
 };
 
@@ -934,8 +927,8 @@ public:
    * of the sequent.
    * @return [Constructor]. */
   Sequent(const ExprNode * const rhs, const SubstList * const sub)
-  : e(rhs) { 
-    st = new SubstList(*sub);
+  : e(rhs),
+    st(new SubstList(*sub)){
   };
   
   
@@ -972,7 +965,7 @@ public:
   
   /** Returns the discrete state of the sequent's left (the SubstList).
    * @return the discrete state of the sequent's left (the SubstList). */
-  SubstList * sub() const {return st ; }; 
+  const SubstList * sub() const {return st ; };
   
   
   
@@ -1002,7 +995,7 @@ protected:
   const ExprNode *e;
   /** The discrete state of the left of a sequent, represented
    * as a SubstList. */
-  SubstList *st;
+  const SubstList *st;
 };
 
 
@@ -1040,8 +1033,8 @@ public:
    * of the sequent.
    * @return [Constructor]. */
   SequentPlace(const ExprNode * const rhs, const SubstList * const sub)
-  : e(rhs) { 
-    st = new SubstList(*sub);
+  : e(rhs),
+    st(new SubstList(*sub)) {
   };
   
   
@@ -1130,7 +1123,7 @@ protected:
  * @param av (*) the pointer to the vector of clock assignments.
  * @return None. When finished, av is changed to be the vector of 
  * clock assignments.  */
-void makeAssignmentList(ExprNode *e, vector<pair<short int, short int> > * av);
+void makeAssignmentList(const ExprNode * const e, vector<pair<short int, short int> > * av);
 
 /** Adds a clock with a desired string label
  * to the current list of all clocks.

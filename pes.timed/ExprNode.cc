@@ -58,7 +58,7 @@ const vector<string>& get_clock_strings()
  * @param av (*) the pointer to the vector of clock assignments.
  * @return None. When finished, av is changed to be the vector of 
  * clock assignments.  */
-void makeAssignmentList(ExprNode *e, vector<pair<short int,short int> > * av) {
+void makeAssignmentList(const ExprNode * const e, vector<pair<short int,short int> > * av) {
   pair<short int,short int> p;
   switch (e->getOpType()){
     case ASSIGN:
@@ -945,8 +945,8 @@ void print_ExprNodeTrans(const ExprNode * const e, std::ostream& os)
  * @return none */
 void print_Transition(const Transition * const t, std::ostream& os)
 {
-  ExprNode * leftExpr = t->getLeftExpr();
-  ExprNode * rightExpr = t->getRightExpr();
+  const ExprNode * leftExpr = t->getLeftExpr();
+  const ExprNode * rightExpr = t->getRightExpr();
   if(leftExpr != NULL) {
     print_ExprNodeTrans(leftExpr, os);
   }
