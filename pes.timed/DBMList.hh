@@ -951,11 +951,11 @@ public:
 	 * are printed in the order they appear in each matrix, and the DBMs are
 	 * separated by || (without line breaks).
 	 * @return none */
-	void print_constraint() const{
+  void print_constraint(const std::vector<string>& clock_strings) const{
 		for(vector<DBM *>::iterator it = dbmListVec->begin();  
 		  it != dbmListVec->end(); it++) {
 		  DBM *tD = *it;
-		  tD->print_constraint();
+		  tD->print_constraint(clock_strings);
 		  if( (it+1) != dbmListVec->end()) {
 		    cout << " || ";
 		  }
@@ -969,11 +969,11 @@ public:
 	 * that can be derived from other constraints. The output format
 	 * is the same as for print_constraint().
 	 * @return None */
-	void print_ExplicitConstraint() const{
+	void print_ExplicitConstraint(const std::vector<string>& clock_strings) const{
     for(vector<DBM *>::iterator it = dbmListVec->begin();  
         it != dbmListVec->end(); it++) {
         DBM *tD = *it;
-        tD->print_ExplicitConstraint();
+        tD->print_ExplicitConstraint(clock_strings);
         if( (it+1) != dbmListVec->end()) {
           cout << " || ";
         }
