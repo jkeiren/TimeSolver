@@ -572,9 +572,9 @@ void print_ExprNode(const ExprNode * const e, std::ostream& os)
     case ASSIGN:
       print_ExprNode(e->getExpr(), os);
       os << "[";
-      os << "x" << (e->getcX());
+      os << lookup_clock_name(e->getcX());
       os << "==";
-      os << "x" << (e->getcY());
+      os << lookup_clock_name(e->getcY());
       os << "]";
       break;
     case ABLEWAITINF:
@@ -923,9 +923,9 @@ void print_ExprNodeTrans(const ExprNode * const e, std::ostream& os)
       case ASSIGN:
         print_ExprNodeTrans(e->getExpr(), os);
         os << "[";
-        os << "x" << (e->getcX());
+        os << lookup_clock_name(e->getcX());
         os << "==";
-        os << "x" << (e->getcY());
+        os << lookup_clock_name(e->getcY());
         os << "]";
         break;
       case ABLEWAITINF:
