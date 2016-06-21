@@ -6,6 +6,7 @@
  * @version 1.21
  * @date November 8, 2013 */
 
+#include <cassert>
 #include <iostream>
 #include <string>
 #include <map>
@@ -27,7 +28,11 @@ int spaceDimension;
 map <string, int> clocks;
 /** A Hash table of Atomic values used to store predicate
  * and/or control variable ids */
+/** A vector of strings, mapping clock ids to their strings */
+vector <string> clock_strings;
 map <string, int> atomic;
+/** A vector of strings, mapping the position of the atomic to its string */
+vector <string> atomic_strings;
 /** A Hash table of ints storing integer 
  * substituations for atomic variables. 
  * This maps atomic ids to atomic values.  0 is the default value.
@@ -40,6 +45,10 @@ map <string, ExprNode *> predicates;
  * and their expressions. */
 map <string, ExprNode *> equations;
 
+const vector<string>& get_clock_strings()
+{
+  return clock_strings;
+}
 
 /** Assuming that e is a chain of ASSIGN expressions (possibly ending
  * with a BOOL expression, this converts that expression to an ordered
@@ -71,9 +80,15 @@ void makeAssignmentList(ExprNode *e, vector<pair<short int,short int> > * av) {
  * @param s (*) The string that is the clock label.
  * @return 1:when finished. */
 int add_clock(const char *s)
-{ 
+{
+  if(clock_strings.empty())
+  {
+    clock_strings.push_back("<DUMMY>");
+  }
   string name(s);
   clocks.insert(make_pair(name,clocks.size()+1));
+  clock_strings.push_back(name);
+  assert(clock_strings[clocks.size()] == name);
   spaceDimension = clocks.size() + 1;
   return 1;
 }
@@ -91,6 +106,13 @@ int lookup_clock(const char *s)
     return (*it).second;
   else
     return -1;
+}
+
+/** Lookup the name of the clock with id n */
+const string& lookup_clock_name(const unsigned int n)
+{
+  assert(n < clock_strings.size());
+  return clock_strings[n];
 }
 
 /** Prints out the list of clocks with their labels
@@ -114,6 +136,11 @@ int add_atomic(const char *s)
   string name(s);
   int idx = atomic.size();
   atomic.insert(make_pair(name, idx));
+  atomic_strings.push_back(name);
+  if(atomic_strings[idx] != name) {
+    cerr << "Administration of atomic names is inconsistent" << std::endl;
+    exit(-1);
+  }
   InitSub.insert(make_pair(idx, 0));
   return 1;
 }
@@ -146,6 +173,13 @@ int lookup_atomic(const char *s)
     return (*it).second;
   else
     return -1;
+}
+
+/** Lookup the name of the atomic with id n */
+const string& lookup_atomic_name(const unsigned int n)
+{
+  assert(n < atomic_strings.size());
+  return atomic_strings[n];
 }
 
 /** Prints out the list of atomic variables with their
@@ -292,7 +326,7 @@ void print_sequent(const int step, const bool retVal, const DBM * const lhs,
                    const ExprNode * const rhs, const SubstList * const sub, const opType op){
   cout << "seq#" << step << "  " <<retVal << "  ";
   if (lhs != NULL) {
-    lhs->print_constraint() ;
+    lhs->print_constraint(clock_strings) ;
   }
   if (sub != NULL) {
     cout << ", ";
@@ -323,7 +357,7 @@ void print_sequentCheck(const int step, const bool retVal, const DBM * const lhs
                         const DBMList * const rhsList, const SubstList * const sub, const opType op){
   cout << "seq#" << step << "  " <<retVal << "  ";
   if (lhs != NULL) {
-    lhs->print_constraint() ;
+    lhs->print_constraint(clock_strings) ;
   }
   if (sub != NULL) {
     cout << ", ";
@@ -331,7 +365,7 @@ void print_sequentCheck(const int step, const bool retVal, const DBM * const lhs
   }
   cout << "\t|-  " ;
   if (rhsList != NULL) {
-    rhsList->print_constraint();
+    rhsList->print_constraint(clock_strings);
   }
   cout << "\t";
   print_ExprNodeType(op, cout);
@@ -354,11 +388,11 @@ void print_sequent_place(const int step, const bool retVal, const DBM * const lh
                          const SubstList * const sub, const opType op){
   cout << "seq#" << step << "  " <<retVal << "  ";
   if (lhs != NULL) {
-    lhs->print_constraint() ;
+    lhs->print_constraint(clock_strings) ;
   }
   if (place != NULL) {
   	cout << " plhold: {";
-  	place->print_constraint();
+  	place->print_constraint(clock_strings);
   	cout << "}";
   }
   if (sub != NULL) {
@@ -392,11 +426,11 @@ void print_sequent_placeCheck(const int step, const bool retVal, const DBM * con
                               const SubstList * const sub, const opType op){
   cout << "seq#" << step << "  " <<retVal << "  ";
   if (lhs != NULL) {
-    lhs->print_constraint() ;
+    lhs->print_constraint(clock_strings) ;
   }
   if (place != NULL) {
   	cout << " plhold: {";
-  	place->print_constraint();
+  	place->print_constraint(clock_strings);
   	cout << "}";
   }
   if (sub != NULL) {
@@ -405,7 +439,7 @@ void print_sequent_placeCheck(const int step, const bool retVal, const DBM * con
   }
   cout << "\t|-  " ;
   if (rhsList != NULL) {
-    rhsList->print_constraint();
+    rhsList->print_constraint(clock_strings);
   }
   cout << "\t";
   print_ExprNodeTypePlace(op, cout);
@@ -491,40 +525,40 @@ void print_ExprNode(const ExprNode * const e, std::ostream& os)
       break;
     case REPLACE:
       print_ExprNode(e->getExpr(), os);
-      os << "p" << (e->getAtomic());
+      os << lookup_atomic_name(e->getAtomic());
       os << ":=";
       os << e->getIntVal();
       break;
     case CONSTRAINT:
-      e->dbm()->print_constraint();
+      e->dbm()->print_constraint(clock_strings);
       break;
     case ATOMIC:
-      os << "p" << (e->getAtomic());
+      os << lookup_atomic_name(e->getAtomic());
       os << "==";
       os << e->getIntVal();
       break;
     case ATOMIC_NOT:
-      os << "p" << (e->getAtomic());
+      os << lookup_atomic_name(e->getAtomic());
       os << "!=";
       os << e->getIntVal();
       break;
     case ATOMIC_LT:
-      os << "p" << (e->getAtomic());
+      os << lookup_atomic_name(e->getAtomic());
       os << "<";
       os << e->getIntVal();
       break;
     case ATOMIC_GT:
-      os << "p" << (e->getAtomic());
+      os << lookup_atomic_name(e->getAtomic());
       os << ">";
       os << e->getIntVal();
       break;
     case ATOMIC_LE:
-      os << "p" << (e->getAtomic());
+      os << lookup_atomic_name(e->getAtomic());
       os << "<=";
       os << e->getIntVal();
       break;
     case ATOMIC_GE:
-      os << "p" << (e->getAtomic());
+      os << lookup_atomic_name(e->getAtomic());
       os << ">=";
       os << e->getIntVal();
       break;
@@ -744,7 +778,8 @@ void SubstList::print(std::ostream &os) const {
   for(int i = 0; i < quantity; i++){
     if (this->at(i) != -1){
       if(end) os <<",";
-      os << "p" << i;
+      //os << "p" << i;
+      os << lookup_atomic_name(i);
       os <<"=" << this->at(i);
       end = true;
     }
@@ -841,40 +876,40 @@ void print_ExprNodeTrans(const ExprNode * const e, std::ostream& os)
         break;
       case REPLACE:
         print_ExprNodeTrans(e->getExpr(), os);
-        os << "p" << (e->getAtomic());
+        os << lookup_atomic_name(e->getAtomic());
         os << ":=";
         os << e->getIntVal();
         break;
       case CONSTRAINT:
-        e->dbm()->print_constraint();
+        e->dbm()->print_constraint(clock_strings);
         break;
       case ATOMIC:
-        os << "p" << (e->getAtomic());
+        os << lookup_atomic_name(e->getAtomic());
         os << "==";
         os << e->getIntVal();
         break;
       case ATOMIC_NOT:
-        os << "p" << (e->getAtomic());
+        os << lookup_atomic_name(e->getAtomic());
         os << "!=";
         os << e->getIntVal();
         break;
       case ATOMIC_LT:
-        os << "p" << (e->getAtomic());
+        os << lookup_atomic_name(e->getAtomic());
         os << "<";
         os << e->getIntVal();
         break;
       case ATOMIC_GT:
-        os << "p" << (e->getAtomic());
+        os << lookup_atomic_name(e->getAtomic());
         os << ">";
         os << e->getIntVal();
         break;
       case ATOMIC_LE:
-        os << "p" << (e->getAtomic());
+        os << lookup_atomic_name(e->getAtomic());
         os << "<=";
         os << e->getIntVal();
         break;
       case ATOMIC_GE:
-        os << "p" << (e->getAtomic());
+        os << lookup_atomic_name(e->getAtomic());
         os << ">=";
         os << e->getIntVal();
         break;
