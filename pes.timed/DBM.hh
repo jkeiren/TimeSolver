@@ -10,6 +10,7 @@
 #define DBM_H
 
 #include <iostream>
+#include <vector>
 #include "OneDIntArray.hh"
 
 using namespace std;
@@ -1112,7 +1113,7 @@ public:
 	/** Print the DBM, more compactly, as a list of constraints. The constraints
 	 * are printed in the order they appear in the matrix.
 	 * @return none */
-	void print_constraint() const{
+  void print_constraint(const std::vector<string>& clock_strings) const{
 		bool end = false;
 		bool isAllImplicit=true;
 		if(this->emptiness()) {
@@ -1137,18 +1138,19 @@ public:
 				  cout <<","; 
 				}
 				if(i != 0 && j!=0){
-					cout << "x" << (i);
+					//cout << "x" << (i);
+          cout << clock_strings[i];
 					cout << "-";
-					cout << "x" << (j);
-					
+					//cout << "x" << (j);
+          cout << clock_strings[j];
 				}else if (i == 0){
-					cout << "x" << (j);
+					cout << clock_strings[j];
 					if (type == 1) cout << ">=" << -val ;
 					else cout << ">" << -val ;
 					end = true;
 					continue;
 				}else if (j == 0){
-					cout << "x" << (i);
+					cout << clock_strings[i];
 				}
 				
 				if (type == 1) {
@@ -1171,7 +1173,7 @@ public:
 	 * constrain any values. This does not omit constraints
 	 * that can be derived from other constraints.
 	 * @return None */
-	void print_ExplicitConstraint() const{
+	void print_ExplicitConstraint(const std::vector<string>& clock_strings) const{
 		bool end = false;
 		for(short int i = 0; i < nClocks; i++){
 			for(short int j = 0; j < nClocks; j++){
@@ -1186,17 +1188,17 @@ public:
 				}
 				if(end) cout <<","; 
 				if(i != 0 && j!=0){
-					cout << "x" << (i);
+					cout << clock_strings[i];
 					cout << "-";
-					cout << "x" << (j);
+					cout << clock_strings[j];
 				}else if (i == 0){
-					cout << "x" << (j);
+					cout << clock_strings[j];;
 					if (type == 1) cout << ">=" << -val ;
 					else cout << ">" << -val ;
 					end = true;
 					continue;
 				}else if (j == 0){
-					cout << "x" << (i);
+					cout << clock_strings[i];
 				}
 				
 				if (type == 1) {
