@@ -44,11 +44,30 @@ public:
       cerr << "OneDIntArray operator[] - out of bounds." <<endl;
       exit(-1);
     }
+    return operatorAccess(index);
+  }
+
+  /** Retrieves a const reference for the element specified at the given index.
+   * The reference returned is a reference to the actual copy, not a deep copy.
+   * Consequently, since this is a constant reference it cannot be used to
+   * change the referred object's value.
+   * @param index The index of the element to acces; 0 is
+   * the first index.
+   * @return A const reference to the element in the array. */
+  const short int& at(const short int index) const {
+    // Indexes are zero based
+    /* We might want a private method that does not use bounds checks
+     * In order to improve performance. */
+    if (index < 0 || index >= quantity) {
+      cerr << "OneDIntArray operator[] - out of bounds." <<endl;
+      exit(-1);
+    }
     short int offset = index * sizeof(short int);
     short int *p = (short int*) &(storage[offset]);
     // Dereference p
-    return (*p);                                       
+    return (*p);
   }
+
 
 protected:
 

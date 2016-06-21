@@ -288,7 +288,8 @@ int print_predicates()
  * @param op The Expression type of the proof rule; this is the rule that the
  * model checker applies to continue the proof.
  * @return None */
-void print_sequent(const int step, const bool retVal, DBM *lhs, ExprNode *rhs, SubstList *sub, const opType op){
+void print_sequent(const int step, const bool retVal, const DBM * const lhs,
+                   const ExprNode * const rhs, const SubstList * const sub, const opType op){
   cout << "seq#" << step << "  " <<retVal << "  ";
   if (lhs != NULL) {
     lhs->print_constraint() ;
@@ -318,7 +319,8 @@ void print_sequent(const int step, const bool retVal, DBM *lhs, ExprNode *rhs, S
  * @param op The Expression type of the proof rule; this is the rule that the
  * model checker applies to continue the proof.
  * @return None */
-void print_sequentCheck(const int step, const bool retVal, DBM *lhs, DBMList *rhsList, SubstList *sub, const opType op){
+void print_sequentCheck(const int step, const bool retVal, const DBM * const lhs,
+                        const DBMList * const rhsList, const SubstList * const sub, const opType op){
   cout << "seq#" << step << "  " <<retVal << "  ";
   if (lhs != NULL) {
     lhs->print_constraint() ;
@@ -347,7 +349,9 @@ void print_sequentCheck(const int step, const bool retVal, DBM *lhs, DBMList *rh
  * @param op The Expression type of the proof rule; this is the rule that the
  * model checker applies to continue the proof.
  * @return None */
-void print_sequent_place(const int step, const bool retVal, DBM *lhs, DBMList * place, ExprNode *rhs, SubstList *sub, const opType op){
+void print_sequent_place(const int step, const bool retVal, const DBM * const lhs,
+                         const DBMList * const place, const ExprNode * const rhs,
+                         const SubstList * const sub, const opType op){
   cout << "seq#" << step << "  " <<retVal << "  ";
   if (lhs != NULL) {
     lhs->print_constraint() ;
@@ -383,7 +387,9 @@ void print_sequent_place(const int step, const bool retVal, DBM *lhs, DBMList * 
  * @param op The Expression type of the proof rule; this is the rule that the
  * model checker applies to continue the proof.
  * @return None */
-void print_sequent_placeCheck(const int step, const bool retVal, DBM *lhs, DBMList * place, DBMList *rhsList, SubstList *sub, const opType op){
+void print_sequent_placeCheck(const int step, const bool retVal, const DBM * const lhs,
+                              const DBMList * const place, const DBMList * const rhsList,
+                              const SubstList * const sub, const opType op){
   cout << "seq#" << step << "  " <<retVal << "  ";
   if (lhs != NULL) {
     lhs->print_constraint() ;
@@ -411,7 +417,7 @@ void print_sequent_placeCheck(const int step, const bool retVal, DBM *lhs, DBMLi
  * @param e (*) The expression to print out.
  * @param os (&) The type of output stream to print the output to.
  * @return None */
-void print_ExprNode(ExprNode * e, std::ostream& os)
+void print_ExprNode(const ExprNode * const e, std::ostream& os)
 {
   switch (e->getOpType()){
     case PREDICATE:
@@ -732,14 +738,14 @@ void print_ExprNodeTypePlace(const opType op, std::ostream& os)
  * to be empty. 
  * @param os (&) The output stream to print the output to
  * @return none. */
-void SubstList::print(std::ostream &os){ 
+void SubstList::print(std::ostream &os) const {
   bool end =false;
   os << "[";
   for(int i = 0; i < quantity; i++){
-    if (this->operator[](i) != -1){
+    if (this->at(i) != -1){
       if(end) os <<",";
       os << "p" << i;
-      os <<"=" << this->operator[](i);
+      os <<"=" << this->at(i);
       end = true;
     }
   }
@@ -764,7 +770,7 @@ void printBinary(const int val) {
  * @param e (*) The ExprNode to print out.
  * @param os (&) The type of output stream to print the output to.
  * @return none */
-void print_ExprNodeTrans(ExprNode * e, std::ostream& os)
+void print_ExprNodeTrans(const ExprNode * const e, std::ostream& os)
 {
   if(e != NULL) {
     switch (e->getOpType()){
@@ -902,7 +908,7 @@ void print_ExprNodeTrans(ExprNode * e, std::ostream& os)
  * @param t (*) The transition to print.
  * @param os (&) The type of output stream to print the output to.
  * @return none */
-void print_Transition(Transition * t, std::ostream& os)
+void print_Transition(const Transition * const t, std::ostream& os)
 {
   ExprNode * leftExpr = t->getLeftExpr();
   ExprNode * rightExpr = t->getRightExpr();

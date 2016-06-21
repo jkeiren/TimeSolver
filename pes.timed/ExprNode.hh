@@ -131,7 +131,7 @@ public:
    * this variable).
    * @param os (&) The output stream to print the output to
    * @return none. */
-  void print(std::ostream &os);
+  void print(std::ostream &os) const;
 };
 
 
@@ -773,7 +773,7 @@ public:
    * the enabling condition of the transition.
    * @return The ExprNode describing the enabling conditions of the
    * transition. */
-  ExprNode * getLeftExpr() {
+  ExprNode * getLeftExpr() const {
     return leftExpr;
   };
   
@@ -781,14 +781,14 @@ public:
    * the destination (state change) of the transition.
    * @return The ExprNode describing the destination (state change) of the
    * transition. */
-  ExprNode * getRightExpr() {
+  ExprNode * getRightExpr() const {
     return rightExpr;
   };
   
   /** Retrieve the list of clock assignments stored by this transition.
   * @return the vector containing the ordered list of clock assignments
   * that occur on the edge of this transition. */
-  vector<pair<short int, short int> > * getAssignmentVector() {
+  vector<pair<short int, short int> > * getAssignmentVector() const {
     return clockAssignmentList;
   }
   
@@ -933,7 +933,7 @@ public:
    * @param sub (*) The discrete state component of the left side
    * of the sequent.
    * @return [Constructor]. */
-  Sequent(ExprNode *rhs, SubstList *sub) 
+  Sequent(const ExprNode * const rhs, const SubstList * const sub)
   : e(rhs) { 
     st = new SubstList(*sub);
   };
@@ -968,7 +968,7 @@ public:
   
   /** Returns the ExprNode element (rhs or consequent) of the Sequent.
    * @return the rhs expression of the ExprNode element of the Sequent. */
-  ExprNode * rhs() const {return e ; };
+  const ExprNode * rhs() const {return e ; };
   
   /** Returns the discrete state of the sequent's left (the SubstList).
    * @return the discrete state of the sequent's left (the SubstList). */
@@ -999,7 +999,7 @@ public:
 protected:
   
   /** The right hand side expression of the sequent. */
-  ExprNode *e;
+  const ExprNode *e;
   /** The discrete state of the left of a sequent, represented
    * as a SubstList. */
   SubstList *st;
@@ -1039,7 +1039,7 @@ public:
    * @param sub (*) The discrete state component of the left side
    * of the sequent.
    * @return [Constructor]. */
-  SequentPlace(ExprNode *rhs, SubstList *sub) 
+  SequentPlace(const ExprNode * const rhs, const SubstList * const sub)
   : e(rhs) { 
     st = new SubstList(*sub);
   };
@@ -1079,11 +1079,11 @@ public:
   
   /** Returns the ExprNode element (rhs or consequent) of the Sequent.
    * @return the rhs expression of the ExprNode element of the Sequent. */
-  ExprNode * rhs() const {return e ; };
+  const ExprNode * rhs() const {return e ; };
   
   /** Returns the discrete state of the sequent's left (the SubstList).
    * @return the discrete state of the sequent's left (the SubstList). */
-  SubstList * sub() const {return st ; }; 
+  const SubstList * sub() const {return st ; };
   
   
   
@@ -1111,10 +1111,10 @@ public:
 protected:
   
   /** The right hand side expression of the sequent. */
-  ExprNode *e;
+  const ExprNode *e;
   /** The discrete state of the left of a sequent, represented
    * as a SubstList. */
-  SubstList *st;
+  const SubstList *st;
 };
 
 /* These next set of functions are global and
@@ -1248,7 +1248,8 @@ int print_predicates();
  * @param op The Expression type of the proof rule; this is the rule that the
  * model checker applies to continue the proof.
  * @return None */
-void print_sequent(const int, const bool, DBM *, ExprNode *, SubstList *, const opType op);
+void print_sequent(const int, const bool, const DBM * const, const ExprNode * const,
+                   const SubstList * const, const opType op);
 
 
 /** Prints out a placeholder check sequent in the proof tree; used for
@@ -1262,7 +1263,8 @@ void print_sequent(const int, const bool, DBM *, ExprNode *, SubstList *, const 
  * @param op The Expression type of the proof rule; this is the rule that the
  * model checker applies to continue the proof.
  * @return None */
-void print_sequentCheck(const int, const bool, DBM *, DBMList *, SubstList *, const opType op);
+void print_sequentCheck(const int, const bool, const DBM * const, const DBMList * const,
+                        const SubstList * const, const opType op);
 
 /** Prints out a sequent with a placeholder clock state in a proof tree.
  * @param step The tree level (sequent step) of the sequent (0 is root).
@@ -1274,7 +1276,9 @@ void print_sequentCheck(const int, const bool, DBM *, DBMList *, SubstList *, co
  * @param op The Expression type of the proof rule; this is the rule that the
  * model checker applies to continue the proof.
  * @return None */
-void print_sequent_place(const int step, const bool retVal, DBM *lhs, DBMList * place, ExprNode *rhs, SubstList *sub, const opType op);
+void print_sequent_place(const int step, const bool retVal, const DBM * const lhs,
+                         const DBMList * const place, const ExprNode * const rhs,
+                         const SubstList * const sub, const opType op);
 
 /** Prints out a placeholder check sequent in the proof tree; used for
  * exists, forall and reset sequents within placeholder proofs. This check
@@ -1289,22 +1293,23 @@ void print_sequent_place(const int step, const bool retVal, DBM *lhs, DBMList * 
  * @param op The Expression type of the proof rule; this is the rule that the
  * model checker applies to continue the proof.
  * @return None */
-void print_sequent_placeCheck(const int step, const bool retVal, DBM *lhs, DBMList * place,
-  DBMList *rhsList, SubstList *sub, const opType op);
+void print_sequent_placeCheck(const int step, const bool retVal, const DBM * const lhs,
+                              const DBMList * const place, const DBMList * const rhsList,
+                              const SubstList * const sub, const opType op);
 
 /** Prints out the expression to the desired output stream, labeling
  * the expression with its opType. The typical output stream is cout.
  * @param e (*) The expression to print out.
  * @param os (&) The type of output stream to print the output to.
  * @return None */
-void print_ExprNode(ExprNode * e, std::ostream& os);
+void print_ExprNode(const ExprNode * const e, std::ostream& os);
 
 /** Prints out the expression type (opType) to the desired output stream.
  * The typical output stream is cout.
  * @param op (*) The expression type.
  * @param os (&) The type of output stream to print the output to.
  * @return none */
-void print_ExprNodeType(opType op, std::ostream& os);
+void print_ExprNodeType(const opType op, std::ostream& os);
 
 
 /** Prints out the expression type (opType), for expressions
@@ -1314,13 +1319,13 @@ void print_ExprNodeType(opType op, std::ostream& os);
  * @param op (*) The expression type.
  * @param os (&) The type of output stream to print the output to.
  * @return none */
-void print_ExprNodeTypePlace(opType op, std::ostream& os);
+void print_ExprNodeTypePlace(const opType op, std::ostream& os);
 
 /** Prints out the transition to the desired output stream.
  * The typical output stream is cout.
  * @param t (*) The transition to print.
  * @param os (&) The type of output stream to print the output to.
  * @return none */
-void print_Transition(Transition * t, std::ostream& os);
+void print_Transition(const Transition * const t, std::ostream& os);
 
 #endif
