@@ -251,11 +251,11 @@ bool useCaching = true;
  * to save space.
  * @param sub (*) The discrete state to hash into a bin.
  * @return The hashed bin index for that discrete state.*/
-inline int hash_func(SubstList *sub){
+inline int hash_func(const SubstList * const sub){
   // From demo.7.cc (instead of from demo.cc) of previous code
 	int sum = 0;
   for(int i=0; i<aSize; i++){
-    sum += (sub->operator[](i) & nbits);
+    sum += (sub->at(i) & nbits);
     sum = sum & nbits;
   }   
   return sum; 
@@ -282,13 +282,13 @@ void printUsage(){
  * sides. Typically, the right hand sides will be predicate variables.
  * @param Xlist (*) The stack of sequents to print.
  * @return None. */
-void print_Xlist(stack *Xlist){
+void print_Xlist(const stack * const Xlist){
 	int totNumSeq = 0;
 	cout << "\t--For Each Sequence, Premise sets separated by \";\" --" << endl;
   for(int i = 0; i < predicateInd*(nbits+1); i++){
-    for(stack::iterator it = Xlist[i].begin(); it != Xlist[i].end(); it++){
+    for(stack::const_iterator it = Xlist[i].begin(); it != Xlist[i].end(); it++){
       int conseqNumSeq = 0;
-      for(DBMset::iterator ie = (*it)->ds.begin(); ie != (*it)->ds.end(); ie++){
+      for(DBMset::const_iterator ie = (*it)->ds.begin(); ie != (*it)->ds.end(); ie++){
         (*ie)->print_constraint();
         conseqNumSeq++;
         totNumSeq++;
@@ -314,11 +314,11 @@ void print_Xlist(stack *Xlist){
  * sides. Typically, the right hand sides will be predicate variables.
  * @param Xlist (*) The stack of placeholder sequents to print.
  * @return None. */
-void print_Xlist(stackPlace *Xlist){
+void print_Xlist(const stackPlace * const Xlist){
 	int totNumSeq = 0;
 	cout << "\t--For Each Sequence, Premise sets separated by \";\" --" << endl;
   for(int i = 0; i < predicateInd*(nbits+1); i++){
-    for(stackPlace::iterator it = Xlist[i].begin(); it != Xlist[i].end(); it++){
+    for(stackPlace::const_iterator it = Xlist[i].begin(); it != Xlist[i].end(); it++){
       int conseqNumSeq = 0;
       for(DBMPlaceSet::iterator ie = (*it)->dsp.begin(); ie != (*it)->dsp.end(); ie++){
         (*ie).first->print_constraint();
@@ -350,44 +350,39 @@ void print_Xlist(stackPlace *Xlist){
  * @param sublist (*) The discrete location of the left hand side.
  * @return true: the expression evaluates to true, false: otherwise (if
  * the set of discrete and clock states satisfying the premise is empty).*/
-bool comp_ph_invs(ExprNode *e, SubstList *sublist)
+inline bool comp_ph_invs(const ExprNode& e, const SubstList &sublist)
 {
-  switch (e->getOpType())
+  switch (e.getOpType())
   {
     case ATOMIC : {
-      return (sublist->operator[](e->getAtomic()) == e->getIntVal());
+      return (sublist.at(e.getAtomic()) == e.getIntVal());
       break; }
     case ATOMIC_NOT : {
-      return (sublist->operator[](e->getAtomic()) != e->getIntVal());
+      return (sublist.at(e.getAtomic()) != e.getIntVal());
       break; }
     case ATOMIC_LT : {
-      return (sublist->operator[](e->getAtomic()) < e->getIntVal());
+      return (sublist.at(e.getAtomic()) < e.getIntVal());
       break; }
     case ATOMIC_GT : {
-      return (sublist->operator[](e->getAtomic()) > e->getIntVal());
+      return (sublist.at(e.getAtomic()) > e.getIntVal());
       break; }
     case ATOMIC_LE : {
-      return (sublist->operator[](e->getAtomic()) <= e->getIntVal());
+      return (sublist.at(e.getAtomic()) <= e.getIntVal());
       break; }
     case ATOMIC_GE : {
-      return (sublist->operator[](e->getAtomic()) >= e->getIntVal());
+      return (sublist.at(e.getAtomic()) >= e.getIntVal());
       break; }
     case AND : {
-      return (comp_ph_invs(e->getLeft(), sublist) 
+      return (comp_ph_invs(*(e.getLeft()), sublist)
               &&
-              comp_ph_invs(e->getRight(), sublist));
+              comp_ph_invs(*(e.getRight()), sublist));
       break; }
-    case OR : {
-      /* We only have atomic booleans so this simplified rule works. */
-      return (comp_ph_invs(e->getLeft(), sublist) 
-              ||  
-              comp_ph_invs(e->getRight(), sublist));
-      break; }
+    case OR :
     case OR_SIMPLE : {
       /* We only have atomic booleans so this simplified rule works. */
-      return (comp_ph_invs(e->getLeft(), sublist) 
+      return (comp_ph_invs(*(e.getLeft()), sublist)
               ||  
-              comp_ph_invs(e->getRight(), sublist));
+              comp_ph_invs(*(e.getRight()), sublist));
       break; }
     default: {
       cerr << "Not a valid condition" <<endl;
@@ -410,12 +405,12 @@ bool comp_ph_invs(ExprNode *e, SubstList *sublist)
  * @param sub (*) The discrete state (location variable assignment) 
  * of the sequent.
  * @return true: the model has a non-vacuous invariant; false: otherwise. */
-inline bool invs_chk(DBM *lhs, SubstList *sub){
+inline bool invs_chk(DBM * const lhs, const SubstList& sub){
   bool outRes = false;
   if (invs.empty()) return false;
-  for (int i=0; i < sub->nElements(); i++){
-    for (vector<ExprNode*>::iterator it = invs.begin(); it != invs.end(); it++){
-      if (comp_ph_invs((*it), sub)) {
+  for (int i=0; i < sub.nElements(); i++){
+    for (vector<ExprNode*>::const_iterator it = invs.begin(); it != invs.end(); ++it){
+      if (comp_ph_invs(*(*it), sub)) {
         (*lhs) & (*(*it)->dbm()) ;
         outRes = true;
       }
@@ -437,7 +432,7 @@ inline bool invs_chk(DBM *lhs, SubstList *sub){
  * @param sub (*) The discrete state (location variable assignment) 
  * of the sequent.
  * @return true: the DBMList is changed; false: otherwise. */
-inline bool invs_chk(DBMList * lhs, SubstList *sub){
+inline bool invs_chk(DBMList * const lhs, const SubstList& sub){
   bool outRes = false;
   if (invs.empty()) return false;
   vector<DBM *> * lList = lhs->getDBMList();
@@ -470,60 +465,51 @@ inline bool invs_chk(DBMList * lhs, SubstList *sub){
  * @return true: the expression evaluates to true (and ph is
  * tightened to make the expression true), false: otherwise (if
  * the set of discrete and clock states satisfying the premise is empty).*/
-bool comp_ph(DBM *ph, ExprNode *e, SubstList *sublist)
+inline bool comp_ph(DBM * const ph, const ExprNode& e, const SubstList& sublist)
 {
-  switch (e->getOpType())
+  switch (e.getOpType())
   {
     case CONSTRAINT : {
-      (*ph) & (*(e->dbm()));
+      (*ph) & (*(e.dbm()));
       ph->cf(); // Calls Canonical Form Here.
       return (!(ph->emptiness()));
       break; }
     case BOOL : {
-      return (e->getBool());
+      return (e.getBool());
       break; }
     case ATOMIC : {
-      return (sublist->operator[](e->getAtomic()) == e->getIntVal());
+      return (sublist.at(e.getAtomic()) == e.getIntVal());
       break; }
     case ATOMIC_NOT : {
-      return (sublist->operator[](e->getAtomic()) != e->getIntVal());
+      return (sublist.at(e.getAtomic()) != e.getIntVal());
       break; }
     case ATOMIC_LT : {
-      return (sublist->operator[](e->getAtomic()) < e->getIntVal());
+      return (sublist.at(e.getAtomic()) < e.getIntVal());
       break; }
     case ATOMIC_GT : {
-      return (sublist->operator[](e->getAtomic()) > e->getIntVal());
+      return (sublist.at(e.getAtomic()) > e.getIntVal());
       break; }
     case ATOMIC_LE : {
-      return (sublist->operator[](e->getAtomic()) <= e->getIntVal());
+      return (sublist.at(e.getAtomic()) <= e.getIntVal());
       break; }
     case ATOMIC_GE : {
-      return (sublist->operator[](e->getAtomic()) >= e->getIntVal());
+      return (sublist.at(e.getAtomic()) >= e.getIntVal());
       break; }
     case AND : {
-      return (comp_ph(ph, e->getLeft(), sublist) 
+      return (comp_ph(ph, *(e.getLeft()), sublist)
               &&
-              comp_ph(ph, e->getRight(), sublist));
+              comp_ph(ph, *(e.getRight()), sublist));
       break; }
-    case OR : {
-      /* This OR rule only works when there is at most one constraint.
-       * By definition of its input, we have a discrete state (with
-       * && and || notes) conjuncted with an intersection of constraints.
-       * By construction of the fed input to this function, the above
-       * bad case will never occur. */
-      return (comp_ph(ph, e->getLeft(), sublist) 
-              ||  
-              comp_ph(ph, e->getRight(), sublist));
-      break; }
+    case OR :
     case OR_SIMPLE : {
       /* This OR rule only works when there is at most one constraint.
        * By definition of its input, we have a discrete state (with
        * && and || notes) conjuncted with an intersection of constraints.
        * By construction of the fed input to this function, the above
        * bad case will never occur. */
-      return (comp_ph(ph, e->getLeft(), sublist) 
+      return (comp_ph(ph, *(e.getLeft()), sublist)
               ||  
-              comp_ph(ph, e->getRight(), sublist));
+              comp_ph(ph, *(e.getRight()), sublist));
       break; }
     default: {
       cerr << "Not a valid condition" <<endl;
@@ -551,59 +537,50 @@ bool comp_ph(DBM *ph, ExprNode *e, SubstList *sublist)
  * @return true: the expression evaluates to true (and ph is
  * tightened to make the expression true), false: otherwise (if
  * the set of discrete and clock states satisfying the premise is empty).*/
-bool comp_ph_exist(DBM *ph, ExprNode *e, SubstList *sublist)
+inline bool comp_ph_exist(DBM * const ph, const ExprNode& e, const SubstList& sublist)
 {
-  switch (e->getOpType())
+  switch (e.getOpType())
   {
     case CONSTRAINT : {
       ph->cf();
-      return (*ph) <= (*(e->dbm()));
+      return (*ph) <= (*(e.dbm()));
       break; }
     case BOOL : {
-      return (e->getBool());
+      return (e.getBool());
       break; }
     case ATOMIC : {
-      return (sublist->operator[](e->getAtomic()) == e->getIntVal());
+      return (sublist.at(e.getAtomic()) == e.getIntVal());
       break; }
     case ATOMIC_NOT : {
-      return (sublist->operator[](e->getAtomic()) != e->getIntVal());
+      return (sublist.at(e.getAtomic()) != e.getIntVal());
       break; }
     case ATOMIC_LT : {
-      return (sublist->operator[](e->getAtomic()) < e->getIntVal());
+      return (sublist.at(e.getAtomic()) < e.getIntVal());
       break; }
     case ATOMIC_GT : {
-      return (sublist->operator[](e->getAtomic()) > e->getIntVal());
+      return (sublist.at(e.getAtomic()) > e.getIntVal());
       break; }
     case ATOMIC_LE : {
-      return (sublist->operator[](e->getAtomic()) <= e->getIntVal());
+      return (sublist.at(e.getAtomic()) <= e.getIntVal());
       break; }
     case ATOMIC_GE : {
-      return (sublist->operator[](e->getAtomic()) >= e->getIntVal());
+      return (sublist.at(e.getAtomic()) >= e.getIntVal());
       break; }
     case AND : {
-      return (comp_ph_exist(ph, e->getLeft(), sublist) 
+      return (comp_ph_exist(ph, *(e.getLeft()), sublist)
               &&
-              comp_ph_exist(ph, e->getRight(), sublist));
+              comp_ph_exist(ph, *(e.getRight()), sublist));
       break; }
-    case OR : {
-      /* This OR rule only works when there is at most one constraint.
-       * By definition of its input, we have a discrete state (with
-       * && and || notes) conjuncted with an intersection of constraints.
-       * By construction of the fed input to this function, the above
-       * bad case will never occur. */
-      return (comp_ph_exist(ph, e->getLeft(), sublist) 
-              ||  
-              comp_ph_exist(ph, e->getRight(), sublist));
-      break; }
+    case OR :
     case OR_SIMPLE : {
       /* This OR rule only works when there is at most one constraint.
        * By definition of its input, we have a discrete state (with
        * && and || notes) conjuncted with an intersection of constraints.
        * By construction of the fed input to this function, the above
        * bad case will never occur. */
-      return (comp_ph_exist(ph, e->getLeft(), sublist) 
+      return (comp_ph_exist(ph, *(e.getLeft()), sublist)
               ||  
-              comp_ph_exist(ph, e->getRight(), sublist));
+              comp_ph_exist(ph, *(e.getRight()), sublist));
       break; }
     default: {
       cerr << "Not a valid condition" <<endl;
@@ -632,13 +609,14 @@ bool comp_ph_exist(DBM *ph, ExprNode *e, SubstList *sublist)
  * @return true: the expression evaluates to true (and ph is
  * tightened to make the expression true), false: otherwise (if
  * the set of discrete and clock states satisfying the premise is empty).*/
-bool comp_ph_exist_place(DBM *ph, DBMList * place, ExprNode *e, SubstList *sublist)
+inline bool comp_ph_exist_place(DBM * const ph, DBMList * const place,
+                                const ExprNode& e, const SubstList& sublist)
 {
-  switch (e->getOpType())
+  switch (e.getOpType())
   {
     case CONSTRAINT : {
       ph->cf();
-      DBM * eDBM = e->dbm();
+      DBM * eDBM = e.dbm();
       bool res = (*ph) <= (*eDBM);
       (*ph) & (*eDBM);
       ph->cf(); // Calls Canonical Form Here.
@@ -653,55 +631,46 @@ bool comp_ph_exist_place(DBM *ph, DBMList * place, ExprNode *e, SubstList *subli
        * becomes the entire constraint.
        * It may be necessary to make placeholder looser than
        * the constraint to not have inequalities that ph satisfies. */
-      *place & (*(e->dbm()));
+      *place & (*(e.dbm()));
       place->cf();
       return !(place->emptiness());
       break; }
     case BOOL : {
-      return (e->getBool());
+      return (e.getBool());
       break; }
     case ATOMIC : {
-      return (sublist->operator[](e->getAtomic()) == e->getIntVal());
+      return (sublist.at(e.getAtomic()) == e.getIntVal());
       break; }
     case ATOMIC_NOT : {
-      return (sublist->operator[](e->getAtomic()) != e->getIntVal());
+      return (sublist.at(e.getAtomic()) != e.getIntVal());
       break; }
     case ATOMIC_LT : {
-      return (sublist->operator[](e->getAtomic()) < e->getIntVal());
+      return (sublist.at(e.getAtomic()) < e.getIntVal());
       break; }
     case ATOMIC_GT : {
-      return (sublist->operator[](e->getAtomic()) > e->getIntVal());
+      return (sublist.at(e.getAtomic()) > e.getIntVal());
       break; }
     case ATOMIC_LE : {
-      return (sublist->operator[](e->getAtomic()) <= e->getIntVal());
+      return (sublist.at(e.getAtomic()) <= e.getIntVal());
       break; }
     case ATOMIC_GE : {
-      return (sublist->operator[](e->getAtomic()) >= e->getIntVal());
+      return (sublist.at(e.getAtomic()) >= e.getIntVal());
       break; }
     case AND : {
-      return (comp_ph_exist_place(ph, place, e->getLeft(), sublist) 
+      return (comp_ph_exist_place(ph, place, *(e.getLeft()), sublist)
               &&
-              comp_ph_exist_place(ph, place, e->getRight(), sublist));
+              comp_ph_exist_place(ph, place, *(e.getRight()), sublist));
       break; }
-    case OR : {
-      /* This OR rule only works when there is at most one constraint.
-       * By definition of its input, we have a discrete state (with
-       * && and || notes) conjuncted with an intersection of constraints.
-       * By construction of the fed input to this function, the above
-       * bad case will never occur. */
-      return (comp_ph_exist_place(ph, place, e->getLeft(), sublist) 
-              ||  
-              comp_ph_exist_place(ph, place, e->getRight(), sublist));
-      break; }
+    case OR :
     case OR_SIMPLE : {
       /* This OR rule only works when there is at most one constraint.
        * By definition of its input, we have a discrete state (with
        * && and || notes) conjuncted with an intersection of constraints.
        * By construction of the fed input to this function, the above
        * bad case will never occur. */
-      return (comp_ph_exist_place(ph, place, e->getLeft(), sublist) 
+      return (comp_ph_exist_place(ph, place, *(e.getLeft()), sublist)
               ||  
-              comp_ph_exist_place(ph, place, e->getRight(), sublist));
+              comp_ph_exist_place(ph, place, *(e.getRight()), sublist));
       break; }
     default: {
       cerr << "Not a valid condition" <<endl;
@@ -723,19 +692,20 @@ bool comp_ph_exist_place(DBM *ph, DBMList * place, ExprNode *e, SubstList *subli
  * @return true: the expression evaluates to true (and ph is
  * tightened to make the expression true), false: otherwise (if
  * the set of discrete and clock states satisfying the premise is empty).*/
-bool comp_ph_all_place(DBM *ph, DBMList * place, ExprNode *e, SubstList *sublist)
+inline bool comp_ph_all_place(DBM * const ph, DBMList * const place,
+                              const ExprNode& e, const SubstList& sublist)
 {
-  switch (e->getOpType())
+  switch (e.getOpType())
   {
     case CONSTRAINT : {
-      (*ph) & (*(e->dbm()));
+      (*ph) & (*(e.dbm()));
       ph->cf(); // Calls Canonical Form Here.
       bool lhEmpty;
       lhEmpty = ph->emptiness();
       if(lhEmpty) {
         return false;
       }
-      *place & (*(e->dbm()));
+      *place & (*(e.dbm()));
       place->cf();
       if(place->emptiness()) {
         return false;
@@ -743,50 +713,41 @@ bool comp_ph_all_place(DBM *ph, DBMList * place, ExprNode *e, SubstList *sublist
       return true;
       break; }
     case BOOL : {
-      return (e->getBool());
+      return (e.getBool());
       break; }
     case ATOMIC : {
-      return (sublist->operator[](e->getAtomic()) == e->getIntVal());
+      return (sublist.at(e.getAtomic()) == e.getIntVal());
       break; }
     case ATOMIC_NOT : {
-      return (sublist->operator[](e->getAtomic()) != e->getIntVal());
+      return (sublist.at(e.getAtomic()) != e.getIntVal());
       break; }
     case ATOMIC_LT : {
-      return (sublist->operator[](e->getAtomic()) < e->getIntVal());
+      return (sublist.at(e.getAtomic()) < e.getIntVal());
       break; }
     case ATOMIC_GT : {
-      return (sublist->operator[](e->getAtomic()) > e->getIntVal());
+      return (sublist.at(e.getAtomic()) > e.getIntVal());
       break; }
     case ATOMIC_LE : {
-      return (sublist->operator[](e->getAtomic()) <= e->getIntVal());
+      return (sublist.at(e.getAtomic()) <= e.getIntVal());
       break; }
     case ATOMIC_GE : {
-      return (sublist->operator[](e->getAtomic()) >= e->getIntVal());
+      return (sublist.at(e.getAtomic()) >= e.getIntVal());
       break; }
     case AND : {
-      return (comp_ph_all_place(ph, place, e->getLeft(), sublist) 
+      return (comp_ph_all_place(ph, place, *(e.getLeft()), sublist)
               &&
-              comp_ph_all_place(ph, place, e->getRight(), sublist));
+              comp_ph_all_place(ph, place, *(e.getRight()), sublist));
       break; }
-    case OR : {
-      /* This OR rule only works when there is at most one constraint.
-       * By definition of its input, we have a discrete state (with
-       * && and || notes) conjuncted with an intersection of constraints.
-       * By construction of the fed input to this function, the above
-       * bad case will never occur. */
-      return (comp_ph_all_place(ph, place, e->getLeft(), sublist) 
-              ||  
-              comp_ph_all_place(ph, place, e->getRight(), sublist));
-      break; }
+    case OR :
     case OR_SIMPLE : {
       /* This OR rule only works when there is at most one constraint.
        * By definition of its input, we have a discrete state (with
        * && and || notes) conjuncted with an intersection of constraints.
        * By construction of the fed input to this function, the above
        * bad case will never occur. */
-      return (comp_ph_all_place(ph, place, e->getLeft(), sublist) 
+      return (comp_ph_all_place(ph, place, *(e.getLeft()), sublist)
               ||  
-              comp_ph_all_place(ph, place, e->getRight(), sublist));
+              comp_ph_all_place(ph, place, *(e.getRight()), sublist));
       break; }
     default: {
       cerr << "Not a valid condition" <<endl;
@@ -810,14 +771,14 @@ bool comp_ph_all_place(DBM *ph, DBMList * place, ExprNode *e, SubstList *sublist
  * @param pInd The index of the predicate; used to find the proper hashing bin.
  * @return The reference to the sequent with the three components
  * specified as parameters. */
-Sequent * locate_sequent(Sequent *s, stack *& Xlist, int pInd){
+Sequent * locate_sequent(Sequent * const s, stack *& Xlist, int pInd){
   int indexH = hash_func(s->sub());
   int index = pInd*seqStSize + indexH;
-  for(stack::iterator it = Xlist[index].begin(); it != Xlist[index].end(); it++){
+  for(stack::const_iterator it = Xlist[index].begin(); it != Xlist[index].end(); it++){
     Sequent *ls = (*it);
     bool matched = true;
     for(int j = 0; j < aSize; j++){
-      if (s->sub()->operator[](j) != ls->sub()->operator[](j)){
+      if (s->sub()->at(j) != ls->sub()->at(j)){
         matched  = false;
         break;
       }
@@ -856,14 +817,14 @@ Sequent * locate_sequent(Sequent *s, stack *& Xlist, int pInd){
  * @param pInd The index of the predicate; used to find the proper hashing bin.
  * @return The reference to the sequent with the three components
  * specified as parameters. */
-SequentPlace * locate_sequentPlace(SequentPlace *s, stackPlace *& Xlist, int pInd){
+SequentPlace * locate_sequentPlace(SequentPlace * const s, stackPlace *& Xlist, int pInd){
   int indexH = hash_func(s->sub());
   int index = pInd*seqStSize + indexH;
-  for(stackPlace::iterator it = Xlist[index].begin(); it != Xlist[index].end(); it++){
+  for(stackPlace::const_iterator it = Xlist[index].begin(); it != Xlist[index].end(); it++){
     SequentPlace *ls = (*it);
     bool matched = true;
     for(int j = 0; j < aSize; j++){
-      if (s->sub()->operator[](j) != ls->sub()->operator[](j)){
+      if (s->sub()->at(j) != ls->sub()->at(j)){
         matched  = false;
         break;
       }
@@ -899,14 +860,14 @@ SequentPlace * locate_sequentPlace(SequentPlace *s, stackPlace *& Xlist, int pIn
  * @param pInd The index of the predicate; used to find the proper hashing bin.
  * @return The reference to the sequent with the three components
  * specified as parameters. */
-Sequent * look_for_sequent(SubstList *subs, stack *& Xlist, int pInd){
+Sequent * look_for_sequent(const SubstList * const subs, stack *& Xlist, int pInd){
   int indexH = hash_func(subs);
   int index = pInd*seqStSize + indexH;
-  for(stack::iterator it = Xlist[index].begin(); it != Xlist[index].end(); it++){
+  for(stack::const_iterator it = Xlist[index].begin(); it != Xlist[index].end(); it++){
     Sequent *ls = (*it);
     bool matched = true;
     for(int j = 0; j < aSize; j++){
-      if (subs->operator[](j) != ls->sub()->operator[](j)){
+      if (subs->at(j) != ls->sub()->at(j)){
         matched  = false;
         break;
       }
@@ -933,14 +894,16 @@ Sequent * look_for_sequent(SubstList *subs, stack *& Xlist, int pInd){
  * @param pInd The index of the predicate; used to find the proper hashing bin.
  * @return The reference to the sequent with the three components
  * specified as parameters. */
-SequentPlace * look_for_sequentPlace(DBMList *lhsPlace, SubstList *subs, stackPlace *& Xlist, int pInd){
+SequentPlace * look_for_sequentPlace(const DBMList * const lhsPlace,
+                                     const SubstList * const subs,
+                                     stackPlace *& Xlist, const int pInd){
   int indexH = hash_func(subs);
   int index = pInd*seqStSize + indexH;
-  for(stackPlace::iterator it = Xlist[index].begin(); it != Xlist[index].end(); it++){
+  for(stackPlace::const_iterator it = Xlist[index].begin(); it != Xlist[index].end(); it++){
     SequentPlace *ls = (*it);
     bool matched = true;
     for(int j = 0; j < aSize; j++){
-      if (subs->operator[](j) != ls->sub()->operator[](j)){
+      if (subs->at(j) != ls->sub()->at(j)){
         matched  = false;
         break;
       }
@@ -979,21 +942,21 @@ SequentPlace * look_for_sequentPlace(DBMList *lhsPlace, SubstList *subs, stackPl
  * can change it to true if the found sequent was deleted from the list.
  * @return The pointer to the purged sequent, or 
  * NULL if no sequent was purged.*/
-Sequent * look_for_and_purge_rhs_sequent(DBM *lhs, Sequent *s, stack *& Xlist,
-                                    int pInd, bool tableCheck, 
-                                    bool * madeEmpty){
+Sequent * look_for_and_purge_rhs_sequent(const DBM* const lhs, const Sequent * const s,
+                                         stack *& Xlist, const int pInd,
+                                         const bool tableCheck, bool * const madeEmpty){
   int indexH = hash_func(s->sub());
   int index = pInd*seqStSize + indexH;
   bool matched = false;
   *madeEmpty = false;
   /* This assumes that location only locates one sequent in the stack */
   Sequent * foundSequent = NULL;
-  for(stack::iterator it = Xlist[index].begin(); it != Xlist[index].end(); it++){
+  for(stack::const_iterator it = Xlist[index].begin(); it != Xlist[index].end(); it++){
     Sequent *ls = (*it);
     matched = true; 
     
     for(int j = 0; j < aSize; j++){
-      if (s->sub()->operator[](j) != ls->sub()->operator[](j)){
+      if (s->sub()->at(j) != ls->sub()->at(j)){
         matched  = false; 
         break;
       }
@@ -1081,9 +1044,12 @@ Sequent * look_for_and_purge_rhs_sequent(DBM *lhs, Sequent *s, stack *& Xlist,
  * can change it to true if the found sequent was deleted from the list.
  * @return The pointer to the purged sequent, or 
  * NULL if no sequent was purged.*/
-SequentPlace * look_for_and_purge_rhs_sequentPlace(DBM *lhs, DBMList *lhsPlace, 
-      SequentPlace *s, stackPlace *& Xlist, int pInd, bool tableCheck,
-      bool * madeEmpty){
+SequentPlace * look_for_and_purge_rhs_sequentPlace(const DBM * const lhs,
+                                                   const DBMList * const lhsPlace,
+                                                   SequentPlace const * const s,
+                                                   stackPlace *& Xlist,
+                                                   const int pInd, const bool tableCheck,
+                                                   bool * const madeEmpty){
   int indexH = hash_func(s->sub());
   int index = pInd*seqStSize + indexH;
   bool matched = false;
@@ -1095,7 +1061,7 @@ SequentPlace * look_for_and_purge_rhs_sequentPlace(DBM *lhs, DBMList *lhsPlace,
     matched = true; 
     
     for(int j = 0; j < aSize; j++){
-      if (s->sub()->operator[](j) != ls->sub()->operator[](j)){
+      if (s->sub()->at(j) != ls->sub()->at(j)){
         matched  = false; 
         break;
       }
@@ -1198,8 +1164,8 @@ SequentPlace * look_for_and_purge_rhs_sequentPlace(DBM *lhs, DBMList *lhsPlace,
  * if tableCheck = false, then we are aiming to purge sequents cached as
  * false but discovered to be true.
  * @return true: one or more sequents were purged; false: otherwise.*/
-bool look_for_and_purge_rhs_sequent_state(Sequent *s, stack *& Xlist,
-                                    int pInd, bool tableCheck){
+bool look_for_and_purge_rhs_sequent_state(const Sequent * const s, stack *& Xlist,
+                                          const int pInd, const bool tableCheck){
   int indexH = hash_func(s->sub());
   int index = pInd*seqStSize + indexH;
   bool matched = false;
@@ -1209,7 +1175,7 @@ bool look_for_and_purge_rhs_sequent_state(Sequent *s, stack *& Xlist,
     matched = true; 
     
     for(int j = 0; j < aSize; j++){
-      if (s->sub()->operator[](j) != ls->sub()->operator[](j)){
+      if (s->sub()->at(j) != ls->sub()->at(j)){
         matched  = false; 
         break;
       }
@@ -1229,7 +1195,7 @@ bool look_for_and_purge_rhs_sequent_state(Sequent *s, stack *& Xlist,
        * is done for that specific cache */
       // Potential memory leak: may need to go through and delete DBMs
       // Iterate Through and Delete every element of ds
-      for(vector<DBM *>::iterator itB = ls->ds.begin(); 
+      for(vector<DBM *>::const_iterator itB = ls->ds.begin();
           itB != ls->ds.end(); itB++) {
         DBM *lsB = (*itB);
         delete lsB;
@@ -1273,8 +1239,9 @@ bool look_for_and_purge_rhs_sequent_state(Sequent *s, stack *& Xlist,
  * if tableCheck = false, then we are aiming to purge sequents cached as
  * false but discovered to be true.
  * @return true: one or more sequents were purged; false: otherwise.*/
-bool look_for_and_purge_rhs_sequentPlace_state(SequentPlace *s, 
-                                    stackPlace *& Xlist, int pInd, bool tableCheck){
+bool look_for_and_purge_rhs_sequentPlace_state(const SequentPlace * const s,
+                                               stackPlace *& Xlist, const int pInd,
+                                               const bool tableCheck){
   int indexH = hash_func(s->sub());
   int index = pInd*seqStSize + indexH;
   bool matched = false;
@@ -1284,7 +1251,7 @@ bool look_for_and_purge_rhs_sequentPlace_state(SequentPlace *s,
     matched = true; 
     
     for(int j = 0; j < aSize; j++){
-      if (s->sub()->operator[](j) != ls->sub()->operator[](j)){
+      if (s->sub()->at(j) != ls->sub()->at(j)){
         matched  = false; 
         break;
       }
@@ -1343,8 +1310,8 @@ bool look_for_and_purge_rhs_sequentPlace_state(SequentPlace *s,
  * @param lhs (*) The DBM to compare the sequent's DBMs to.
  * @return true: lhs <= some sequent in s 
  * (consequently, the sequent is true), false: otherwise.*/
-bool tabled_sequent(Sequent *s, DBM *lhs){
-  for(DBMset::iterator it = s->ds.begin(); it != s->ds.end(); it++) {
+bool tabled_sequent(const Sequent * const s, const DBM * const lhs){
+  for(DBMset::const_iterator it = s->ds.begin(); it != s->ds.end(); it++) {
     if (*(*it) >= *lhs) {
       return true;
     }
@@ -1374,8 +1341,9 @@ bool tabled_sequent(Sequent *s, DBM *lhs){
  * @param lhsPlace (*) The placeholder DBMList of the clock state.
  * @return true: (lhs, lhsPlace) <= some sequent in s 
  * (consequently, the sequent is true), false: otherwise.*/
-bool tabled_sequentPlace(SequentPlace *s, DBM *lhs, DBMList * lhsPlace){
-  for(DBMPlaceSet::iterator it = s->dsp.begin(); it != s->dsp.end(); it++) {
+bool tabled_sequentPlace(const SequentPlace * const s, const DBM * const lhs,
+                         DBMList * const lhsPlace){
+  for(DBMPlaceSet::const_iterator it = s->dsp.begin(); it != s->dsp.end(); it++) {
     if (*((*it).first) == *lhs) {
       // Since in the cache, we have the largest placeholder where this is true
       *lhsPlace & *((*it).second);
@@ -1400,8 +1368,8 @@ bool tabled_sequentPlace(SequentPlace *s, DBM *lhs, DBMList * lhsPlace){
  * @param lhs (*) The DBM to compare the sequent's DBMs to.
  * @return true: lhs >= some sequent in s 
  * (consequently, the sequent is false), false: otherwise.*/
-bool tabled_false_sequent(Sequent *s, DBM *lhs){
-  for(DBMset::iterator it = s->ds.begin(); it != s->ds.end(); it++) {
+bool tabled_false_sequent(const Sequent * const s, const DBM * const lhs){
+  for(DBMset::const_iterator it = s->ds.begin(); it != s->ds.end(); it++) {
     if (*(*it) <= *lhs) {
       return true;
     }
@@ -1427,8 +1395,9 @@ bool tabled_false_sequent(Sequent *s, DBM *lhs){
  * @param lhsPlace (*) The placeholder DBMList of the clock state.
  * @return true: (lhs, lhsPlace) >= some sequent in s 
  * (consequently, the sequent is false), false: otherwise.*/
-bool tabled_false_sequentPlace(SequentPlace *s, DBM *lhs, DBMList * lhsPlace){
-  for(DBMPlaceSet::iterator it = s->dsp.begin(); it != s->dsp.end(); it++) {
+bool tabled_false_sequentPlace(const SequentPlace * const s, const DBM * const lhs,
+                               const DBMList * const lhsPlace){
+  for(DBMPlaceSet::const_iterator it = s->dsp.begin(); it != s->dsp.end(); it++) {
     // if (*((*it).first) == *lhs && *((*it).second) <= *lhsPlace) {
     if (*((*it).first) <= *lhs) {
       return true;
@@ -1448,8 +1417,8 @@ bool tabled_false_sequentPlace(SequentPlace *s, DBM *lhs, DBMList * lhsPlace){
  * @param s (*) The sequent that contains a set of DBMs.
  * @param lhs (*) The DBM to compare the sequent's DBMs to.
  * @return true: lhs == some sequent in s, false: otherwise.*/
-bool tabled_sequent_lfp(Sequent *s, DBM *lhs){
-  for(DBMset::iterator it = s->ds.begin(); it != s->ds.end(); it++) {
+bool tabled_sequent_lfp(const Sequent * const s, const DBM * const lhs){
+  for(DBMset::const_iterator it = s->ds.begin(); it != s->ds.end(); it++) {
     if (*(*it) == *lhs) {
       return true;
     }
@@ -1471,8 +1440,9 @@ bool tabled_sequent_lfp(Sequent *s, DBM *lhs){
  * @param lhs (*) The DBM of the clock state to compare the sequent's DBMs to.
  * @param lhsPlace (*) The placeholder DBMList of the clock state.
  * @return true: (lhs, lhsPlace) == some sequent in s, false: otherwise.*/
-bool tabled_sequent_lfpPlace(SequentPlace *s, DBM *lhs, DBMList *lhsPlace){
-  for(DBMPlaceSet::iterator it = s->dsp.begin(); it != s->dsp.end(); it++) {
+bool tabled_sequent_lfpPlace(const SequentPlace * const s, const DBM * const lhs,
+                             const DBMList * const lhsPlace){
+  for(DBMPlaceSet::const_iterator it = s->dsp.begin(); it != s->dsp.end(); it++) {
     /* Extra work for placeholders. For now,
      * force equality on LHS sequent and use tabling logic
      * for placeholders. */
@@ -1502,8 +1472,9 @@ bool tabled_sequent_lfpPlace(SequentPlace *s, DBM *lhs, DBMList *lhsPlace){
  * @param lhsPlace (*) The placeholder DBMList of the clock state.
  * @return true: (lhs, lhsPlace) <= some sequent in s 
  * (consequently, the sequent is true), false: otherwise.*/
-bool tabled_sequent_gfpPlace(SequentPlace *s, DBM *lhs, DBMList * lhsPlace){
-  for(DBMPlaceSet::iterator it = s->dsp.begin(); it != s->dsp.end(); it++) {
+bool tabled_sequent_gfpPlace(const SequentPlace * const s, const DBM * const lhs,
+                             const DBMList * const lhsPlace){
+  for(DBMPlaceSet::const_iterator it = s->dsp.begin(); it != s->dsp.end(); it++) {
     /* Extra work for placeholders. For now,
      * force equality on LHS sequent and use tabling logic
      * for placeholders. */
@@ -1527,8 +1498,8 @@ bool tabled_sequent_gfpPlace(SequentPlace *s, DBM *lhs, DBMList * lhsPlace){
  * @param lhs (*) The DBM of the newly-established clock state.
  * @return true: the clock state was incorporated into one of s's
  * sequents; false: otherwise (a new sequent was added to s). */
-bool update_sequent(Sequent *s, DBM *lhs){
-  for(DBMset::iterator it = s->ds.begin(); it != s->ds.end(); it++) {
+bool update_sequent(Sequent * const s, const DBM * const lhs){
+  for(DBMset::const_iterator it = s->ds.begin(); it != s->ds.end(); it++) {
     if (*(*it) <= *lhs) { 
       *(*it) = *lhs; 
       return true; 
@@ -1555,7 +1526,8 @@ bool update_sequent(Sequent *s, DBM *lhs){
  * @param lhsPlace (*) The DBMList of the newly-established clock state.
  * @return true: the clock state was incorporated into one of s's
  * sequents; false: otherwise (a new sequent was added to s). */
-bool update_sequentPlace(SequentPlace *s, DBM *lhs, DBMList *lhsPlace){
+bool update_sequentPlace(SequentPlace * const s, const DBM * const lhs,
+                         const DBMList * const lhsPlace){
   for(DBMPlaceSet::iterator it = s->dsp.begin(); it != s->dsp.end(); it++) {
     /* Extra work for placeholders. For now,
      * force equality on LHS sequent and use tabling logic
@@ -1586,7 +1558,7 @@ bool update_sequentPlace(SequentPlace *s, DBM *lhs, DBMList *lhsPlace){
  * @param lhs (*) The DBM of the newly-established clock state.
  * @return true: the clock state was incorporated into one of s's
  * sequents; false: otherwise (a new sequent was added to s). */
-bool update_false_sequent(Sequent *s, DBM *lhs){
+bool update_false_sequent(Sequent * const s, const DBM * const lhs){
   for(DBMset::iterator it = s->ds.begin(); it != s->ds.end(); it++) {
     if (*(*it) >= *lhs) { 
       *(*it) = *lhs; 
@@ -1615,7 +1587,8 @@ bool update_false_sequent(Sequent *s, DBM *lhs){
  * @param lhsPlace (*) The DBMList of the newly-established clock state.
  * @return true: the clock state was incorporated into one of s's
  * sequents; false: otherwise (a new sequent was added to s). */
-bool update_false_sequentPlace(SequentPlace *s, DBM *lhs, DBMList *lhsPlace){
+bool update_false_sequentPlace(SequentPlace * const s, const DBM * const lhs,
+                               const DBMList * const lhsPlace){
   for(DBMPlaceSet::iterator it = s->dsp.begin(); it != s->dsp.end(); it++) {
     if (*((*it).first) >= *lhs) {
       *((*it).first) = *lhs; 
@@ -1647,7 +1620,8 @@ bool update_false_sequentPlace(SequentPlace *s, DBM *lhs, DBMList *lhsPlace){
  * placeholder sequents to purge.
  * @return true: something was purged; false: otherwise (nothing was
  * purged).*/
-bool look_for_and_purge_rhs_backStack(vector<Sequent *> * initialPtr, vector<SequentPlace *> * initialPlacePtr) 
+bool look_for_and_purge_rhs_backStack(const vector<Sequent *> * const initialPtr,
+                                      const vector<SequentPlace *> * const initialPlacePtr)
 {
   bool madeChange = false;
   
@@ -1761,8 +1735,9 @@ bool look_for_and_purge_rhs_backStack(vector<Sequent *> * initialPtr, vector<Seq
  * @param phi2PredPlace (*) the time predecessor of phi2Place; this predecessor
  * may by <= or <, depending on the proof rule that calls this method.
  * @return the output placeholder, which is also retPlaceDBM. */
-inline DBMList * predCheckRule(DBM * lhs, DBM * lhsSucc, DBMList * origPlace, DBMList * phi1Place, 
-  DBMList * phi2Place, DBMList * phi2PredPlace ) {
+inline DBMList * predCheckRule(const DBM * const lhs, const DBM * const lhsSucc,
+                               const DBMList * const origPlace, const DBMList * const phi1Place,
+  const DBMList * const phi2Place, const DBMList * const phi2PredPlace ) {
   
   retPlaceDBM->makeEmpty();
   /* Iterate through each DBM of phi2Place and union the results. */
@@ -1872,7 +1847,7 @@ inline DBMList * predCheckRule(DBM * lhs, DBM * lhsSucc, DBMList * origPlace, DB
  * @param currPlace (*) the reference to the current placeholder.
  * @return the tightened placeholder that satisfies the succCheck, or an
  * empty placeholder if no such placeholder is possible. */
-inline DBMList * succCheckRule(DBM * lhs, DBMList * currPlace) {
+inline DBMList * succCheckRule(const DBM * const lhs, const DBMList * const currPlace) {
     
     DBM succLHS(*lhs);
     succLHS.suc();
@@ -1962,7 +1937,8 @@ inline DBMList * succCheckRule(DBM * lhs, DBMList * currPlace) {
  * atomic "state" of the Sequent.
  * @return The DBM Value of the placeholder constraint or an empty DBM if
  * no valid value for the placeholder exists (thus proof is Invalid). */
-DBMList * do_proof_place(int step, DBM *lhs, DBMList * place, ExprNode *rhs, SubstList *sub)
+DBMList * do_proof_place(int step, DBM * const lhs, DBMList * const place,
+                         const ExprNode * const rhs, SubstList * const sub)
 {	
 	/* do_proof_place() written by Peter Fontana, needed for support
 	 * of EXISTS Quantifiers. */    
@@ -2254,10 +2230,9 @@ DBMList * do_proof_place(int step, DBM *lhs, DBMList * place, ExprNode *rhs, Sub
 			  place->cf();
 			  DBMList tPlace(*place);
 				tPlace & (*retPlaceDBM);
-				DBMList * tempDBM2 = new DBMList(*retPlaceDBM);
+				DBMList tempDBM2(*retPlaceDBM);
         retPlaceDBM = do_proof_place(step, lhs, &tPlace, rhs->getRight(), sub);
-        *retPlaceDBM & *tempDBM2;
-        delete tempDBM2;
+        *retPlaceDBM & tempDBM2;
         
 			}
       break;}
@@ -2277,7 +2252,7 @@ DBMList * do_proof_place(int step, DBM *lhs, DBMList * place, ExprNode *rhs, Sub
       }
       
       retPlaceDBM->cf();
-      DBMList * leftPlace = new DBMList(*retPlaceDBM);
+      DBMList leftPlace(*retPlaceDBM);
       retPlaceDBM = do_proof_place(step, lhs, &placeB, rhs->getRight(), sub);
       retPlaceDBM->cf();
       
@@ -2286,7 +2261,7 @@ DBMList * do_proof_place(int step, DBM *lhs, DBMList * place, ExprNode *rhs, Sub
         // Check Debugging Here to make sure it is giving the right output
         print_sequentCheck(step - 1, retVal, lhs, place, sub, rhs->getOpType());
         cout << "Left Placeholder of OR (P): ";
-        leftPlace->print_constraint();
+        leftPlace.print_constraint();
         cout << "\nRight Placeholder of OR (P): ";
         retPlaceDBM->print_constraint();
         cout << endl;
@@ -2299,18 +2274,18 @@ DBMList * do_proof_place(int step, DBM *lhs, DBMList * place, ExprNode *rhs, Sub
       }
       else if(retPlaceDBM->emptiness()) {
         // Take previous DBM
-        *retPlaceDBM = (*leftPlace);
+        *retPlaceDBM = leftPlace;
       }
-      else if((*leftPlace) <= (*retPlaceDBM)) {
+      else if(leftPlace <= (*retPlaceDBM)) {
         // do nothing
         
       }
-      else if (*retPlaceDBM <= *leftPlace) {
-        *retPlaceDBM = (*leftPlace);
+      else if (*retPlaceDBM <= leftPlace) {
+        *retPlaceDBM = leftPlace;
         retVal = retPlaceDBM->emptiness();
       }
       else { /* Corner Case: make DBM Union*/
-        retPlaceDBM->addDBMList(*leftPlace);
+        retPlaceDBM->addDBMList(leftPlace);
         retPlaceDBM->cf();
       }
       retVal = !(retPlaceDBM->emptiness());
@@ -2322,8 +2297,6 @@ DBMList * do_proof_place(int step, DBM *lhs, DBMList * place, ExprNode *rhs, Sub
         cout << endl << endl;
       }
       #endif
-      
-      delete leftPlace;
       break;}
     case OR_SIMPLE:{
       /* In OR_SIMPLE, the placeholder will either be empty or completely full
@@ -2345,7 +2318,7 @@ DBMList * do_proof_place(int step, DBM *lhs, DBMList * place, ExprNode *rhs, Sub
       
       retPlaceDBM->cf();
       //DBMList * leftPlace = retPlaceDBM;
-      DBMList * leftPlace = new DBMList(*retPlaceDBM);
+      DBMList leftPlace(*retPlaceDBM);
       // no delete since assigning the value
       retPlaceDBM = do_proof_place(step, lhs, &placeB, rhs->getRight(), sub);
       retPlaceDBM->cf();
@@ -2356,7 +2329,7 @@ DBMList * do_proof_place(int step, DBM *lhs, DBMList * place, ExprNode *rhs, Sub
       }
       else if(retPlaceDBM->emptiness()) {
         // Take previous DBM
-        *retPlaceDBM = (*leftPlace);
+        *retPlaceDBM = leftPlace;
       }
       /* If neither the if or the else if clauses were taken,
        * then both are non-empty and the left is not the
@@ -2365,7 +2338,6 @@ DBMList * do_proof_place(int step, DBM *lhs, DBMList * place, ExprNode *rhs, Sub
        * and must be the entire placeholder. */
         
       retVal = !(retPlaceDBM->emptiness());
-      delete leftPlace;
       break;}
     case FORALL:{
       /* Here the model checker looks at the zone of
@@ -2378,9 +2350,9 @@ DBMList * do_proof_place(int step, DBM *lhs, DBMList * place, ExprNode *rhs, Sub
       /* Per proof rules with the placeholder,
        * do not incorporate the invariant into the FORALL here */
       
-      DBMList *tPlace = new DBMList(*INFTYDBM);
+      DBMList tPlace(*INFTYDBM);
       
-      retPlaceDBM = do_proof_place(step, &ph, tPlace, rhs->getQuant(), sub);
+      retPlaceDBM = do_proof_place(step, &ph, &tPlace, rhs->getQuant(), sub);
       retPlaceDBM->cf();
       //must we consider not the invariant even if the placeholder is empty. (?)
       if(!(retPlaceDBM->emptiness())) { // Only do if a nonempty placeholder
@@ -2390,7 +2362,7 @@ DBMList * do_proof_place(int step, DBM *lhs, DBMList * place, ExprNode *rhs, Sub
 			  /* Note; we union retPlaceDBM with the complement of the invariant.
 			   * should we do this if retPlaceDBM is nonempty? */
 			  DBMList invCompPlace(*INFTYDBM);
-			  bool hasInv = invs_chk(&invCompPlace, sub);
+			  bool hasInv = invs_chk(&invCompPlace, *sub);
 			  if(hasInv) {
 			    invCompPlace.cf();
 			    !invCompPlace;
@@ -2435,7 +2407,6 @@ DBMList * do_proof_place(int step, DBM *lhs, DBMList * place, ExprNode *rhs, Sub
         #endif
         
       }
-      delete tPlace;
       break;}
     case FORALL_REL: {
     
@@ -2455,7 +2426,7 @@ DBMList * do_proof_place(int step, DBM *lhs, DBMList * place, ExprNode *rhs, Sub
       ph.suc(); 
       
       DBMList * tPlace = new DBMList(*INFTYDBM); 
-			invs_chk(tPlace, sub); 
+			invs_chk(tPlace, *sub);
       retPlaceDBM = do_proof_place(step, &ph, tPlace, 		
                                        rhs->getLeft(), sub);
       retPlaceDBM->cf();
@@ -2474,15 +2445,15 @@ DBMList * do_proof_place(int step, DBM *lhs, DBMList * place, ExprNode *rhs, Sub
         DBM ph(*lhs);
         ph.suc();
     
-        DBMList *newPlace = new DBMList(*INFTYDBM);
-        retPlaceDBM = do_proof_place(step, &ph, newPlace, rhs->getRight(), sub);
+        DBMList newPlace(*INFTYDBM);
+        retPlaceDBM = do_proof_place(step, &ph, &newPlace, rhs->getRight(), sub);
         retPlaceDBM->cf();
         if(!(retPlaceDBM->emptiness())){ // Only do if a nonempty placeholder
           /* Now do the second proof rule to compute the first placeholder
            */
        
           DBMList invCompPlace(*INFTYDBM);
-          bool hasInv = invs_chk(&invCompPlace, sub);
+          bool hasInv = invs_chk(&invCompPlace, *sub);
           if(hasInv) {
             invCompPlace.cf();
             !invCompPlace;
@@ -2526,7 +2497,6 @@ DBMList * do_proof_place(int step, DBM *lhs, DBMList * place, ExprNode *rhs, Sub
           }
           #endif
         }
-        delete newPlace;
       }
       else {
         // First check for the simplest case: no time elapse is needed
@@ -2546,22 +2516,22 @@ DBMList * do_proof_place(int step, DBM *lhs, DBMList * place, ExprNode *rhs, Sub
           
           // If here, we neither need a placeholder nor to elapse time
           DBM phb(*lhs);
-          DBMList *infPlace = new DBMList(*INFTYDBM);
-          retPlaceDBM = do_proof_place(step, &phb, infPlace, rhs->getRight(), sub);
+          DBMList infPlace(*INFTYDBM);
+          retPlaceDBM = do_proof_place(step, &phb, &infPlace, rhs->getRight(), sub);
           retPlaceDBM->cf();
           if(!(retPlaceDBM->emptiness())){ // Only do if a nonempty placeholder
             /* Now do the second proof rule to compute the first placeholder */
             
          
            // No Successor Check required since this is for no time elapse
-            infPlace->cf();
-            *infPlace & *retPlaceDBM;
-            infPlace->cf();
+            infPlace.cf();
+            infPlace & *retPlaceDBM;
+            infPlace.cf();
             /* Now do the containment check 
              * and use to compute the value of the place holder *place */
-            if(!(infPlace->emptiness())){
+            if(!(infPlace.emptiness())){
               retVal = true;
-              *retPlaceDBM = (*infPlace);
+              *retPlaceDBM = infPlace;
             }
             else {/* proof is false */
               retVal = false;
@@ -2569,7 +2539,7 @@ DBMList * do_proof_place(int step, DBM *lhs, DBMList * place, ExprNode *rhs, Sub
             }
             #if DEBUG	  
             if (debug) {
-              print_sequentCheck(step - 1, retVal, &phb, infPlace, sub, rhs->getOpType());
+              print_sequentCheck(step - 1, retVal, &phb, &infPlace, sub, rhs->getOpType());
               if(retVal) {
                 cout <<"----(Valid) Placeholder Check Passed-----" << endl
                 <<"--With Placeholder := {";
@@ -2583,7 +2553,6 @@ DBMList * do_proof_place(int step, DBM *lhs, DBMList * place, ExprNode *rhs, Sub
             }
             #endif
           }
-          delete infPlace;
           
         }
         else {
@@ -2641,7 +2610,7 @@ DBMList * do_proof_place(int step, DBM *lhs, DBMList * place, ExprNode *rhs, Sub
             
             DBMList invCompPlace(*INFTYDBM);
             // Do I worry about the invariants here?
-            bool hasInv = invs_chk(&invCompPlace, sub);
+            bool hasInv = invs_chk(&invCompPlace, *sub);
             if(hasInv) {
               invCompPlace.cf();
               !invCompPlace;
@@ -2672,11 +2641,11 @@ DBMList * do_proof_place(int step, DBM *lhs, DBMList * place, ExprNode *rhs, Sub
              * computed previously, we save time by not having to recompute
              * the formulas. */
             DBMList currRetPlaceDBM(*retPlaceDBM);
-            DBMList * phi1PredPlace = new DBMList(phi1Place);
-            phi1PredPlace->pre();
-            phi1PredPlace->cf();
+            DBMList phi1PredPlace(phi1Place);
+            phi1PredPlace.pre();
+            phi1PredPlace.cf();
             /*--- PredCheck code----*/
-            retPlaceDBM = predCheckRule(lhs, &ph, NULL, &phi2Place, &phi1Place, phi1PredPlace);
+            retPlaceDBM = predCheckRule(lhs, &ph, NULL, &phi2Place, &phi1Place, &phi1PredPlace);
             retPlaceDBM->cf();
             #if DEBUG
             if(debug) {
@@ -2742,8 +2711,6 @@ DBMList * do_proof_place(int step, DBM *lhs, DBMList * place, ExprNode *rhs, Sub
               }
             }
             // retVal is computed above
-      
-            delete phi1PredPlace;
           }
           #if DEBUG
           if(debug) {
@@ -2767,11 +2734,11 @@ DBMList * do_proof_place(int step, DBM *lhs, DBMList * place, ExprNode *rhs, Sub
       DBM ph(*lhs);
       ph.suc();
       // The invariant goes into the placeholder, not the left hand side
-      DBMList * tPlace = new DBMList(*INFTYDBM);
-			invs_chk(tPlace, sub); 
+      DBMList tPlace(*INFTYDBM);
+			invs_chk(&tPlace, *sub);
 			
 			//DBMList * tempPlace = new DBMList(*retPlaceDBM);
-      retPlaceDBM = do_proof_place(step, &ph, tPlace, 		
+      retPlaceDBM = do_proof_place(step, &ph, &tPlace,
                                        rhs->getQuant(), sub);
       retPlaceDBM->cf();
       if(retPlaceDBM->emptiness()){
@@ -2781,7 +2748,6 @@ DBMList * do_proof_place(int step, DBM *lhs, DBMList * place, ExprNode *rhs, Sub
 				  cout <<"----(Invalid) Empty First Placeholder: No Need for additional Placeholder Checks-----" << endl << endl;
         }
         retVal = false;
-        delete tPlace;
         break;
       }
       /* Now check that it works (the new placeholder can be 
@@ -2813,7 +2779,6 @@ DBMList * do_proof_place(int step, DBM *lhs, DBMList * place, ExprNode *rhs, Sub
 				}
       }
       #endif
-      delete tPlace;
   
       break;
     }
@@ -2826,7 +2791,7 @@ DBMList * do_proof_place(int step, DBM *lhs, DBMList * place, ExprNode *rhs, Sub
       DBM phb(ph);
       
       DBMList * tPlace = new DBMList(*INFTYDBM);
-			invs_chk(tPlace, sub); 
+			invs_chk(tPlace, *sub);
 			
       retPlaceDBM = do_proof_place(step, &ph, tPlace, 		
                                        rhs->getRight(), sub);
@@ -3031,7 +2996,7 @@ DBMList * do_proof_place(int step, DBM *lhs, DBMList * place, ExprNode *rhs, Sub
         DBM tempLHS(*lhs);
         
         DBMList guardPlace(*place);
-        bool tempBool = comp_ph_all_place(&tempLHS, &guardPlace, tempT->getLeftExpr(), sub);
+        bool tempBool = comp_ph_all_place(&tempLHS, &guardPlace, *(tempT->getLeftExpr()), *sub);
         if(tempBool == false) {
           #if DEBUG	   
           if (debug) {
@@ -3052,7 +3017,7 @@ DBMList * do_proof_place(int step, DBM *lhs, DBMList * place, ExprNode *rhs, Sub
         DBM invPlace(*INFTYDBM);
         SubstList tSub(*sub);
         SubstList * sl = tempT->getEnteringLocation(&tSub);
-        bool isInv = invs_chk(&invPlace, sl);
+        bool isInv = invs_chk(&invPlace, *sl);
         delete sl;
         if(isInv) {
           invPlace.cf();
@@ -3277,7 +3242,7 @@ DBMList * do_proof_place(int step, DBM *lhs, DBMList * place, ExprNode *rhs, Sub
         DBMList tempPlace(*place);
         DBM tempLHS(*lhs);
         // Method tightens lhs and place
-        bool tempBool = comp_ph_exist_place(&tempLHS, &tempPlace, tempT->getLeftExpr(), sub);
+        bool tempBool = comp_ph_exist_place(&tempLHS, &tempPlace, *(tempT->getLeftExpr()), *sub);
         if(tempBool == false) {
           #if DEBUG	   
           if (debug) {
@@ -3293,7 +3258,7 @@ DBMList * do_proof_place(int step, DBM *lhs, DBMList * place, ExprNode *rhs, Sub
         DBM invCons(*INFTYDBM);
         SubstList tSub(*sub);
         SubstList * sl = tempT->getEnteringLocation(&tSub);
-        bool isInv = invs_chk(&invCons, sl);
+        bool isInv = invs_chk(&invCons, *sl);
         delete sl;
         if(isInv) {
           invCons.cf();
@@ -3403,7 +3368,7 @@ DBMList * do_proof_place(int step, DBM *lhs, DBMList * place, ExprNode *rhs, Sub
     case IMPLY:{
       DBM tempLHS(*lhs);
       /* call comp_ph() for efficient proving of IMPLY's left. */
-      if(comp_ph(&tempLHS, rhs->getLeft(), sub)){
+      if(comp_ph(&tempLHS, *(rhs->getLeft()), *sub)){
         /* Constraints are bounded by MAXC */
         /* This is to extend the LHS to make sure that
          * the RHS is satisfied by any zone that satisfies
@@ -3497,7 +3462,7 @@ DBMList * do_proof_place(int step, DBM *lhs, DBMList * place, ExprNode *rhs, Sub
       #endif
       break;}
     case ATOMIC:{
-      retVal = (sub->operator[](rhs->getAtomic()) == rhs->getIntVal());
+      retVal = (sub->at(rhs->getAtomic()) == rhs->getIntVal());
       if(retVal) {
         *retPlaceDBM = (*place);
       }
@@ -3514,7 +3479,7 @@ DBMList * do_proof_place(int step, DBM *lhs, DBMList * place, ExprNode *rhs, Sub
       #endif
       break;}
     case ATOMIC_NOT:{
-      retVal = (sub->operator[](rhs->getAtomic()) != rhs->getIntVal());
+      retVal = (sub->at(rhs->getAtomic()) != rhs->getIntVal());
       if(retVal) {
         *retPlaceDBM = (*place);
       }
@@ -3531,7 +3496,7 @@ DBMList * do_proof_place(int step, DBM *lhs, DBMList * place, ExprNode *rhs, Sub
       #endif
       break;}
     case ATOMIC_LT:{
-      retVal = (sub->operator[](rhs->getAtomic()) < rhs->getIntVal());
+      retVal = (sub->at(rhs->getAtomic()) < rhs->getIntVal());
       if(retVal) {
         *retPlaceDBM = (*place);
       }
@@ -3548,7 +3513,7 @@ DBMList * do_proof_place(int step, DBM *lhs, DBMList * place, ExprNode *rhs, Sub
       #endif
       break;}
     case ATOMIC_GT:{
-      retVal = (sub->operator[](rhs->getAtomic()) > rhs->getIntVal());
+      retVal = (sub->at(rhs->getAtomic()) > rhs->getIntVal());
       if(retVal) {
         *retPlaceDBM = (*place);
       }
@@ -3565,7 +3530,7 @@ DBMList * do_proof_place(int step, DBM *lhs, DBMList * place, ExprNode *rhs, Sub
       #endif
       break;}
     case ATOMIC_LE:{
-      retVal = (sub->operator[](rhs->getAtomic()) <= rhs->getIntVal());
+      retVal = (sub->at(rhs->getAtomic()) <= rhs->getIntVal());
       if(retVal) {
         *retPlaceDBM = (*place);
       }
@@ -3582,7 +3547,7 @@ DBMList * do_proof_place(int step, DBM *lhs, DBMList * place, ExprNode *rhs, Sub
       #endif
       break;}
     case ATOMIC_GE:{
-      retVal = (sub->operator[](rhs->getAtomic()) >= rhs->getIntVal());
+      retVal = (sub->at(rhs->getAtomic()) >= rhs->getIntVal());
       if(retVal) {
         *retPlaceDBM = (*place);
       }
@@ -3599,9 +3564,8 @@ DBMList * do_proof_place(int step, DBM *lhs, DBMList * place, ExprNode *rhs, Sub
       #endif
       break;}
     case SUBLIST:{
-      SubstList *st = new SubstList(rhs->getSublist(), sub );
-      retPlaceDBM = do_proof_place(step, lhs, place, rhs->getExpr(), st);
-      delete st;
+      SubstList st(rhs->getSublist(), sub );
+      retPlaceDBM = do_proof_place(step, lhs, place, rhs->getExpr(), &st);
       break;}
     case RESET:{
       // Bound the LHS to prevent infinite proofs
@@ -3612,9 +3576,8 @@ DBMList * do_proof_place(int step, DBM *lhs, DBMList * place, ExprNode *rhs, Sub
       ClockSet *rs = rhs->getClockSet();
       ph.reset(rs);
       
-      DBMList * tPlace = new DBMList(*INFTYDBM);
-      retPlaceDBM = do_proof_place(step, &ph, tPlace, rhs->getExpr(), sub);
-      delete tPlace;
+      DBMList tPlace(*INFTYDBM);
+      retPlaceDBM = do_proof_place(step, &ph, &tPlace, rhs->getExpr(), sub);
       retPlaceDBM->cf();
       if(!(retPlaceDBM->emptiness())) {
 				/* Now do the check that the new placeholder follows from 
@@ -3662,8 +3625,8 @@ DBMList * do_proof_place(int step, DBM *lhs, DBMList * place, ExprNode *rhs, Sub
       short int cX = rhs->getcX();
       short int cY = rhs->getcY();
       ph.reset(cX, cY);
-      DBMList * placeB = new DBMList(*INFTYDBM);
-      retPlaceDBM = do_proof_place(step, &ph, placeB, rhs->getExpr(), sub);
+      DBMList placeB(*INFTYDBM);
+      retPlaceDBM = do_proof_place(step, &ph, &placeB, rhs->getExpr(), sub);
       retPlaceDBM->cf();
       if(!(retPlaceDBM->emptiness())) {
 				// Double Check that the new placeholder follows from the first
@@ -3696,11 +3659,10 @@ DBMList * do_proof_place(int step, DBM *lhs, DBMList * place, ExprNode *rhs, Sub
 					}
 				}
         #endif
-        delete placeB;
 			}
       break; }
     case REPLACE:{
-      sub->operator[](rhs->getcX()) = sub->operator[](rhs->getcY());
+      sub->operator[](rhs->getcX()) = sub->at(rhs->getcY());
       retPlaceDBM = do_proof_place(step, lhs, place, rhs->getExpr(), sub);
       break; }
     case ABLEWAITINF:{
@@ -3709,7 +3671,7 @@ DBMList * do_proof_place(int step, DBM *lhs, DBMList * place, ExprNode *rhs, Sub
       ph & *place;
       ph.cf();
       ph.suc();
-      invs_chk(&ph, sub);
+      invs_chk(&ph, *sub);
       ph.cf();
       /* Time can diverge if and only if there are no upper bound
        * constraints in the successor. By design of succ() and invariants,
@@ -3739,7 +3701,7 @@ DBMList * do_proof_place(int step, DBM *lhs, DBMList * place, ExprNode *rhs, Sub
       ph & *place;
       ph.cf();
       ph.suc();
-      invs_chk(&ph, sub);
+      invs_chk(&ph, *sub);
       ph.cf();
       /* Time canot diverge if and only if there is an upper bound
        * constraint in the successor. By design of succ() and invariants,
@@ -3784,7 +3746,7 @@ DBMList * do_proof_place(int step, DBM *lhs, DBMList * place, ExprNode *rhs, Sub
  * atomic "state" of the Sequent.
  * @return True if the expression evaluates to True given the other parameters
  * and False otherwise (if the expression evaluates to False).*/
-bool do_proof(int step, DBM *lhs, ExprNode *rhs, SubstList *sub)
+bool do_proof(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub)
 {
   bool retVal = false; 
   #if DEBUG	   
@@ -4021,8 +3983,8 @@ bool do_proof(int step, DBM *lhs, ExprNode *rhs, SubstList *sub)
       break;}
     case OR:{
       /* Use two placeholders to provide split here */
-      DBMList * place1 = new DBMList(*INFTYDBM);
-      retPlaceDBM = do_proof_place(step, lhs, place1, rhs->getLeft(), sub);
+      DBMList place1(*INFTYDBM);
+      retPlaceDBM = do_proof_place(step, lhs, &place1, rhs->getLeft(), sub);
       retPlaceDBM->cf();
       // Reset place parent to NULL
       parentPlaceRef = NULL;
@@ -4035,9 +3997,9 @@ bool do_proof(int step, DBM *lhs, ExprNode *rhs, SubstList *sub)
       else { 
         /* Here we get the corner case where we have to use the
          * OR Split rule */
-        *place1 = *retPlaceDBM;
-        DBMList * place2 = new DBMList(*INFTYDBM);
-        retPlaceDBM = do_proof_place(step, lhs, place2, rhs->getRight(), sub);
+        place1 = *retPlaceDBM;
+        DBMList place2(*INFTYDBM);
+        retPlaceDBM = do_proof_place(step, lhs, &place2, rhs->getRight(), sub);
         retPlaceDBM->cf();
    
         // Reset place parent to NULL
@@ -4049,13 +4011,10 @@ bool do_proof(int step, DBM *lhs, ExprNode *rhs, SubstList *sub)
           retVal = true;
         }
         else {
-          retPlaceDBM->addDBMList(*place1);
+          retPlaceDBM->addDBMList(place1);
           retVal = (*retPlaceDBM) >= *lhs;
         }
-       
-        delete place2; 
       }
-      delete place1; 
       break;}
     case OR_SIMPLE:{
       /* Simplified OR does not need to split on placeholders */
@@ -4077,7 +4036,7 @@ bool do_proof(int step, DBM *lhs, ExprNode *rhs, SubstList *sub)
        * allowing multiple branches of AND and OR to have the same lhs. */
       DBM ph(*lhs);
       ph.suc();
-      invs_chk(&ph, sub); 
+      invs_chk(&ph, *sub);
       
       retVal = do_proof(step, &ph, rhs->getQuant(), sub);
       break;}
@@ -4096,7 +4055,7 @@ bool do_proof(int step, DBM *lhs, ExprNode *rhs, SubstList *sub)
       ph.suc();
       
       DBMList * tPlace = new DBMList(*INFTYDBM);
-      invs_chk(tPlace, sub); 
+      invs_chk(tPlace, *sub);
       retPlaceDBM = do_proof_place(step, &ph, tPlace, 		
                                        rhs->getLeft(), sub);
       // Reset place parent to NULL
@@ -4116,7 +4075,7 @@ bool do_proof(int step, DBM *lhs, ExprNode *rhs, SubstList *sub)
          * allowing multiple branches of AND and OR to have the same lhs. */
         DBM ph(*lhs);
         ph.suc();
-        invs_chk(&ph, sub); 
+        invs_chk(&ph, *sub);
       
         retVal = do_proof(step, &ph, rhs->getRight(), sub);
       }
@@ -4195,7 +4154,7 @@ bool do_proof(int step, DBM *lhs, ExprNode *rhs, SubstList *sub)
              * nor everything. */
             
             DBMList invCompPlace(*INFTYDBM);
-            bool hasInv = invs_chk(&invCompPlace, sub);
+            bool hasInv = invs_chk(&invCompPlace, *sub);
             if(hasInv) {
               invCompPlace.cf();
               !invCompPlace;
@@ -4334,10 +4293,10 @@ bool do_proof(int step, DBM *lhs, ExprNode *rhs, SubstList *sub)
       
       /* The proper derivation for EXISTS is to incorporate the invariant
        * in the placeholder, and not the LHS. */
-      DBMList * tPlace = new DBMList(*INFTYDBM);
-			invs_chk(tPlace, sub); 
+      DBMList tPlace(*INFTYDBM);
+			invs_chk(&tPlace, *sub);
 			
-      retPlaceDBM = do_proof_place(step, &ph, tPlace, 		
+      retPlaceDBM = do_proof_place(step, &ph, &tPlace,
                                        rhs->getQuant(), sub);
       // Reset place parent to NULL
       parentPlaceRef = NULL;
@@ -4349,7 +4308,6 @@ bool do_proof(int step, DBM *lhs, ExprNode *rhs, SubstList *sub)
 				
 				  cout <<"----(Invalid) Empty Placeholder: No Need for Placeholder Check-----" << endl << endl;
         }
-        delete tPlace;
         break;
       }
       retVal = true;
@@ -4377,8 +4335,6 @@ bool do_proof(int step, DBM *lhs, ExprNode *rhs, SubstList *sub)
 				}
       }
       #endif
-      delete tPlace;
-      
       break;
     }
     case EXISTS_REL: {
@@ -4390,7 +4346,7 @@ bool do_proof(int step, DBM *lhs, ExprNode *rhs, SubstList *sub)
       DBM phb(ph);
       
       DBMList * tPlace = new DBMList(*INFTYDBM);
-			invs_chk(tPlace, sub); 
+			invs_chk(tPlace, *sub);
 			
       retPlaceDBM = do_proof_place(step, &ph, tPlace, 		
                                        rhs->getRight(), sub);
@@ -4583,7 +4539,7 @@ bool do_proof(int step, DBM *lhs, ExprNode *rhs, SubstList *sub)
         /* Obtain the entire ExprNode and prove it */
         DBM tempLHS(*lhs);
         
-        bool tempBool = comp_ph(&tempLHS, tempT->getLeftExpr(), sub);
+        bool tempBool = comp_ph(&tempLHS, *(tempT->getLeftExpr()), *sub);
         if(tempBool == false) {
           #if DEBUG	   
           if (debug) {
@@ -4598,7 +4554,7 @@ bool do_proof(int step, DBM *lhs, ExprNode *rhs, SubstList *sub)
         /* Now check the invariant */
         DBM invCons(*INFTYDBM);
         SubstList * sl = tempT->getEnteringLocation(sub);
-        bool isInv = invs_chk(&invCons, sl);
+        bool isInv = invs_chk(&invCons, *sl);
         delete sl;
         if(isInv) {
           invCons.cf();
@@ -4704,7 +4660,7 @@ bool do_proof(int step, DBM *lhs, ExprNode *rhs, SubstList *sub)
         DBMList tempPlace(*INFTYDBM);
         lhs->cf();
         DBM tempLHS(*lhs);
-        bool tempBool = comp_ph_exist_place(&tempLHS, &tempPlace, tempT->getLeftExpr(), sub);
+        bool tempBool = comp_ph_exist_place(&tempLHS, &tempPlace, *(tempT->getLeftExpr()), *sub);
         if(tempBool == false) {
           #if DEBUG	   
           if (debug) {
@@ -4719,7 +4675,7 @@ bool do_proof(int step, DBM *lhs, ExprNode *rhs, SubstList *sub)
         /* Now check the invariant */
         DBM invCons(*INFTYDBM);
         SubstList * sl = tempT->getEnteringLocation(sub);
-        bool isInv = invs_chk(&invCons, sl);
+        bool isInv = invs_chk(&invCons, *sl);
         delete sl;
         if(isInv) {
           invCons.cf();
@@ -4827,7 +4783,7 @@ bool do_proof(int step, DBM *lhs, ExprNode *rhs, SubstList *sub)
     case IMPLY:{
       /* Here is the one call to comp_ph(...) outside of copm_ph(...) */
       DBM tempLHS(*lhs);
-      if(comp_ph(&tempLHS, rhs->getLeft(), sub)){
+      if(comp_ph(&tempLHS, *(rhs->getLeft()), *sub)){
         /* Constraints are bounded by MAXC */
         /* This is to extend the LHS to make sure that
          * the RHS is satisfied by any zone that satisfies
@@ -4941,9 +4897,8 @@ bool do_proof(int step, DBM *lhs, ExprNode *rhs, SubstList *sub)
       #endif
       break;}
     case SUBLIST:{
-      SubstList *st = new SubstList(rhs->getSublist(), sub );
-      retVal = do_proof(step, lhs, rhs->getExpr(), st);
-      delete st;
+      SubstList st(rhs->getSublist(), sub );
+      retVal = do_proof(step, lhs, rhs->getExpr(), &st);
       break;}
     case RESET:{
       lhs->cf();
@@ -4974,7 +4929,7 @@ bool do_proof(int step, DBM *lhs, ExprNode *rhs, SubstList *sub)
       lhs->cf();
       DBM ph(*lhs);
       ph.suc();
-      invs_chk(&ph, sub);
+      invs_chk(&ph, *sub);
       ph.cf();
       /* Time can diverge if and only if there are no upper bound
        * constraints in the successor */
@@ -4992,7 +4947,7 @@ bool do_proof(int step, DBM *lhs, ExprNode *rhs, SubstList *sub)
       lhs->cf();
       DBM ph(*lhs);
       ph.suc();
-      invs_chk(&ph, sub);
+      invs_chk(&ph, *sub);
       ph.cf();
       /* Time cannot diverge if and only if there is an upper bound
        * constraint in the successor */
