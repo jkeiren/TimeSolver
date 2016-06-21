@@ -616,7 +616,7 @@ inline bool comp_ph_exist_place(DBM * const ph, DBMList * const place,
   {
     case CONSTRAINT : {
       ph->cf();
-      DBM * eDBM = e.dbm();
+      const DBM * eDBM = e.dbm();
       bool res = (*ph) <= (*eDBM);
       (*ph) & (*eDBM);
       ph->cf(); // Calls Canonical Form Here.
@@ -3016,22 +3016,22 @@ DBMList * do_proof_place(int step, DBM * const lhs, DBMList * const place,
         DBM phLHS(tempLHS);
         DBM invPlace(*INFTYDBM);
         SubstList tSub(*sub);
-        SubstList * sl = tempT->getEnteringLocation(&tSub);
+        const SubstList * sl = tempT->getEnteringLocation(&tSub);
         bool isInv = invs_chk(&invPlace, *sl);
         delete sl;
         if(isInv) {
           invPlace.cf();
-          ClockSet * st = tempT->getCSet();
+          const ClockSet * st = tempT->getCSet();
           if(st != NULL) {
             invPlace.preset(st);
           }
           invPlace.cf();
           /* Now perform clock assignments sequentially: perform the
            * front assignments first */
-          vector<pair<short int, short int> > * av = tempT->getAssignmentVector();
+          const vector<pair<short int, short int> > * av = tempT->getAssignmentVector();
           if(av != NULL) {
             // Iterate over the vector and print it
-            for(vector<pair<short int, short int> >::iterator it=av->begin(); it != av->end(); it++) {
+            for(vector<pair<short int, short int> >::const_iterator it=av->begin(); it != av->end(); it++) {
               invPlace.preset((*it).first, (*it).second);
               invPlace.cf();
             }
@@ -3257,22 +3257,22 @@ DBMList * do_proof_place(int step, DBM * const lhs, DBMList * const place,
         /* Now check the invariant */
         DBM invCons(*INFTYDBM);
         SubstList tSub(*sub);
-        SubstList * sl = tempT->getEnteringLocation(&tSub);
+        const SubstList * sl = tempT->getEnteringLocation(&tSub);
         bool isInv = invs_chk(&invCons, *sl);
         delete sl;
         if(isInv) {
           invCons.cf();
-          ClockSet * st = tempT->getCSet();
+          const ClockSet * st = tempT->getCSet();
           if(st != NULL) {
             invCons.preset(st);
           }
           invCons.cf();
           /* Now perform clock assignments sequentially: perform the
            * front assignments first */
-          vector<pair<short int, short int> > * av = tempT->getAssignmentVector();
+          const vector<pair<short int, short int> > * av = tempT->getAssignmentVector();
           if(av != NULL) {
             // Iterate over the vector and print it
-            for(vector<pair<short int, short int> >::iterator it=av->begin(); it != av->end(); it++) {
+            for(vector<pair<short int, short int> >::const_iterator it=av->begin(); it != av->end(); it++) {
               invCons.preset((*it).first, (*it).second);
               invCons.cf();
             }
@@ -3573,7 +3573,7 @@ DBMList * do_proof_place(int step, DBM * const lhs, DBMList * const place,
 			lhs->bound(MAXC);  
       lhs->cf();
       DBM ph(*lhs);
-      ClockSet *rs = rhs->getClockSet();
+      const ClockSet *rs = rhs->getClockSet();
       ph.reset(rs);
       
       DBMList tPlace(*INFTYDBM);
@@ -3584,7 +3584,7 @@ DBMList * do_proof_place(int step, DBM * const lhs, DBMList * const place,
 				 * the previous placeholder. by setting it to such */
 				DBMList p2Copy(*retPlaceDBM);
 				// Apply the reset (weakest precondition operator)
-				ClockSet *rsb = rhs->getClockSet();
+				const ClockSet *rsb = rhs->getClockSet();
 				p2Copy.preset(rsb);
 				
 				// Use the rule to compute what the old place holder should be
@@ -4553,22 +4553,22 @@ bool do_proof(int step, DBM * const lhs, const ExprNode * const rhs, SubstList *
         
         /* Now check the invariant */
         DBM invCons(*INFTYDBM);
-        SubstList * sl = tempT->getEnteringLocation(sub);
+        const SubstList * sl = tempT->getEnteringLocation(sub);
         bool isInv = invs_chk(&invCons, *sl);
         delete sl;
         if(isInv) {
           invCons.cf();
-          ClockSet * st = tempT->getCSet();
+          const ClockSet * st = tempT->getCSet();
           if(st != NULL) {
             invCons.preset(st);
           }
           invCons.cf();
           /* Now perform clock assignments sequentially: perform the
            * front assignments first */
-          vector<pair<short int, short int> > * av = tempT->getAssignmentVector();
+          const vector<pair<short int, short int> > * av = tempT->getAssignmentVector();
           if(av != NULL) {
             // Iterate over the vector and print it
-            for(vector<pair<short int, short int> >::iterator it=av->begin(); it != av->end(); it++) {
+            for(vector<pair<short int, short int> >::const_iterator it=av->begin(); it != av->end(); it++) {
               invCons.preset((*it).first, (*it).second);
               invCons.cf();
             }
@@ -4674,22 +4674,22 @@ bool do_proof(int step, DBM * const lhs, const ExprNode * const rhs, SubstList *
         
         /* Now check the invariant */
         DBM invCons(*INFTYDBM);
-        SubstList * sl = tempT->getEnteringLocation(sub);
+        const SubstList * sl = tempT->getEnteringLocation(sub);
         bool isInv = invs_chk(&invCons, *sl);
         delete sl;
         if(isInv) {
           invCons.cf();
-          ClockSet * st = tempT->getCSet();
+          const ClockSet * st = tempT->getCSet();
           if(st != NULL) {
             invCons.preset(st);
           }
           invCons.cf();
           /* Now perform clock assignments sequentially: perform the
            * front assignments first */
-          vector<pair<short int, short int> > * av = tempT->getAssignmentVector();
+          const vector<pair<short int, short int> > * av = tempT->getAssignmentVector();
           if(av != NULL) {
             // Iterate over the vector and print it
-            for(vector<pair<short int, short int> >::iterator it=av->begin(); it != av->end(); it++) {
+            for(vector<pair<short int, short int> >::const_iterator it=av->begin(); it != av->end(); it++) {
               invCons.preset((*it).first, (*it).second);
               invCons.cf();
             }
@@ -4903,7 +4903,7 @@ bool do_proof(int step, DBM * const lhs, const ExprNode * const rhs, SubstList *
     case RESET:{
       lhs->cf();
       DBM ph(*lhs);
-      ClockSet *rs = rhs->getClockSet();
+      const ClockSet *rs = rhs->getClockSet();
       ph.reset(rs);
       
       retVal = do_proof(step, &ph, rhs->getExpr(), sub);
