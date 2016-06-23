@@ -1,0 +1,16 @@
+*.png
+*.map
+*.md5
+*.pdf
+*.tex
+*.html
+*.js
+*.xcscheme
+*.plist
+*.xcbkptlist
+*.css
+*.xcsettings
+*.xcworkspacedata
+*.xcuserstate
+*.pbxproj
+*.sty

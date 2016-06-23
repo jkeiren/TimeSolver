@@ -16,14 +16,20 @@ all: demo testdbm testdbmlist doc
 doc: demo *.hh *.cc
 	doxygen pes-timed_Doxyfile
 
-demo:	pes.tab.o pes.lex.o ExprNode.o demo.o
-	$(CC) -o demo pes.lex.o pes.tab.o ExprNode.o demo.o $(SFLAGS) $(LDFLAGS) 
+demo:	pes.tab.o pes.lex.o ExprNode.o demo.o proof.o proof_data.o
+	$(CC) -o demo pes.lex.o pes.tab.o ExprNode.o demo.o proof_data.o proof.o $(SFLAGS) $(LDFLAGS)
 
 demo.o: demo.cc DBM.hh ExprNode.hh DBMList.hh
 	$(CC) $(CFLAGS) demo.cc $(INCL_PATH)
 
 ExprNode.o: ExprNode.cc ExprNode.hh DBM.hh
 	$(CC) $(CFLAGS) ExprNode.cc $(INCL_PATH)
+
+proof.o: proof.cc DBM.hh ExprNode.hh DBMList.hh comp_ph.hh
+	$(CC) $(CFLAGS) proof.cc $(INCL_PATH)
+	
+proof_data.o: proof_data.cc DBM.hh ExprNode.hh DBMList.hh
+	$(CC) $(CFLAGS) proof_data.cc $(INCL_PATH)	
 
 pes.lex.o: pes.lex.c
 	$(CC) $(CFLAGS) pes.lex.c $(INCL_PATH) 
