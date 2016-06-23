@@ -9,8 +9,11 @@
 #include <cassert>
 #include <iostream>
 #include <string>
+#include <sstream>
 #include <map>
 #include "ExprNode.hh"
+
+#define PRINT_INTERNAL_NAMES false
 
 using namespace std;
 
@@ -86,9 +89,16 @@ int add_clock(const char *s)
     clock_strings.push_back("<DUMMY>");
   }
   string name(s);
-  clocks.insert(make_pair(name,clocks.size()+1));
+  int idx = clocks.size() + 1;
+  clocks.insert(make_pair(name,idx));
+  #if PRINT_INTERNAL_NAMES
+  std::stringstream ss;
+  ss << "x" << idx;
+  clock_strings.push_back(ss.str());
+  #else
   clock_strings.push_back(name);
-  assert(clock_strings[clocks.size()] == name);
+  assert(clock_strings[idx] == name);
+  #endif
   spaceDimension = clocks.size() + 1;
   return 1;
 }
@@ -136,11 +146,14 @@ int add_atomic(const char *s)
   string name(s);
   int idx = atomic.size();
   atomic.insert(make_pair(name, idx));
+#if PRINT_INTERNAL_NAMES
+  std::stringstream ss;
+  ss << "p" << idx;
+  atomic_strings.push_back(ss.str());
+#else
   atomic_strings.push_back(name);
-  if(atomic_strings[idx] != name) {
-    cerr << "Administration of atomic names is inconsistent" << std::endl;
-    exit(-1);
-  }
+  assert(atomic_strings[idx] == name);
+#endif
   InitSub.insert(make_pair(idx, 0));
   return 1;
 }
