@@ -144,6 +144,7 @@ public:
   predicateInd(a_predicateInd),
   nHash(a_nHash),
   debug(debug),
+  numLocations(1),
   MAXC(MAXC),
   nbits(nbits),
   seqStSize(seqStSize),
@@ -191,6 +192,11 @@ public:
     delete INFTYDBM;
     delete retPlaceDBM;
   };
+
+  long int getNumLocations() const
+  {
+    return numLocations;
+  }
 
   /** The prover function to prove whether a sequent is true or false.
    * @param step The "tree level" of the sequent in the proof tree.
@@ -306,7 +312,7 @@ protected:
    * (consequently, the sequent is true), false: otherwise.*/
   bool tabled_sequentPlace(const SequentPlace * const s, const DBM * const lhs,
                            DBMList * const lhsPlace){
-    for(DBMPlaceSet::const_iterator it = s->dsp.begin(); it != s->dsp.end(); it++) {
+    for(DBMPlaceSet::const_iterator it = s->ds.begin(); it != s->ds.end(); it++) {
       if (*((*it).first) == *lhs) {
         // Since in the cache, we have the largest placeholder where this is true
         *lhsPlace & *((*it).second);
@@ -360,7 +366,7 @@ protected:
    * (consequently, the sequent is false), false: otherwise.*/
   bool tabled_false_sequentPlace(const SequentPlace * const s, const DBM * const lhs,
                                  const DBMList * const lhsPlace){
-    for(DBMPlaceSet::const_iterator it = s->dsp.begin(); it != s->dsp.end(); it++) {
+    for(DBMPlaceSet::const_iterator it = s->ds.begin(); it != s->ds.end(); it++) {
       // if (*((*it).first) == *lhs && *((*it).second) <= *lhsPlace) {
       if (*((*it).first) <= *lhs) {
         return true;
@@ -405,7 +411,7 @@ protected:
    * @return true: (lhs, lhsPlace) == some sequent in s, false: otherwise.*/
   bool tabled_sequent_lfpPlace(const SequentPlace * const s, const DBM * const lhs,
                                const DBMList * const lhsPlace){
-    for(DBMPlaceSet::const_iterator it = s->dsp.begin(); it != s->dsp.end(); it++) {
+    for(DBMPlaceSet::const_iterator it = s->ds.begin(); it != s->ds.end(); it++) {
       /* Extra work for placeholders. For now,
        * force equality on LHS sequent and use tabling logic
        * for placeholders. */
@@ -437,7 +443,7 @@ protected:
    * (consequently, the sequent is true), false: otherwise.*/
   bool tabled_sequent_gfpPlace(const SequentPlace * const s, const DBM * const lhs,
                                const DBMList * const lhsPlace){
-    for(DBMPlaceSet::const_iterator it = s->dsp.begin(); it != s->dsp.end(); it++) {
+    for(DBMPlaceSet::const_iterator it = s->ds.begin(); it != s->ds.end(); it++) {
       /* Extra work for placeholders. For now,
        * force equality on LHS sequent and use tabling logic
        * for placeholders. */
@@ -491,7 +497,7 @@ protected:
    * sequents; false: otherwise (a new sequent was added to s). */
   bool update_sequentPlace(SequentPlace * const s, const DBM * const lhs,
                            const DBMList * const lhsPlace){
-    for(DBMPlaceSet::iterator it = s->dsp.begin(); it != s->dsp.end(); it++) {
+    for(DBMPlaceSet::iterator it = s->ds.begin(); it != s->ds.end(); it++) {
       /* Extra work for placeholders. For now,
        * force equality on LHS sequent and use tabling logic
        * for placeholders. */
@@ -503,7 +509,7 @@ protected:
     DBM *m = new DBM(*lhs);
     DBMList *mp = new DBMList(*lhsPlace);
     pair <DBM *, DBMList *> p (m, mp);
-    s->dsp.push_back(p);
+    s->ds.push_back(p);
     return false;
   }
 
@@ -552,7 +558,7 @@ protected:
    * sequents; false: otherwise (a new sequent was added to s). */
   bool update_false_sequentPlace(SequentPlace * const s, const DBM * const lhs,
                                  const DBMList * const lhsPlace){
-    for(DBMPlaceSet::iterator it = s->dsp.begin(); it != s->dsp.end(); it++) {
+    for(DBMPlaceSet::iterator it = s->ds.begin(); it != s->ds.end(); it++) {
       if (*((*it).first) >= *lhs) {
         *((*it).first) = *lhs;
         return true;
@@ -562,7 +568,7 @@ protected:
     /* I would like this to be NULL, but it is checked in the program */
     DBMList *mp = new DBMList(*EMPTY);
     pair <DBM *, DBMList *> p (m,mp);
-    s->dsp.push_back(p);
+    s->ds.push_back(p);
     return false;
   }
 
@@ -612,9 +618,9 @@ protected:
        * they are not purged. */
 
       /* If found, Purge Sequent from its cache */
-      b2 = Xlist_false_ph.look_for_and_purge_rhs_sequentPlace_state(tp, pInd, false);
+      b2 = Xlist_false_ph.look_for_and_purge_rhs_sequent_state(tp, pInd, false);
 
-      b2b = Xlist_true_ph.look_for_and_purge_rhs_sequentPlace_state(tp, pInd, false);
+      b2b = Xlist_true_ph.look_for_and_purge_rhs_sequent_state(tp, pInd, false);
 
       /* Now find its backpointers to add to the queue
        * Only add backpointers to queue if something is purged. */

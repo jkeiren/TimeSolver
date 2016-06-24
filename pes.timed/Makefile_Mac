@@ -27,9 +27,6 @@ ExprNode.o: ExprNode.cc ExprNode.hh DBM.hh
 
 proof.o: proof.cc DBM.hh ExprNode.hh DBMList.hh comp_ph.hh
 	$(CC) $(CFLAGS) proof.cc $(INCL_PATH)
-	
-proof_data.o: proof_data.cc DBM.hh ExprNode.hh DBMList.hh
-	$(CC) $(CFLAGS) proof_data.cc $(INCL_PATH)	
 
 pes.lex.o: pes.lex.c
 	$(CC) $(CFLAGS) pes.lex.c $(INCL_PATH) 
