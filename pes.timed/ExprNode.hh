@@ -1052,14 +1052,14 @@ public:
   ~SequentPlace(){
     delete st;
     // Iterate Through and Delete every element of ds
-    for(vector<pair<DBM*, DBMList *> >::iterator it = dsp.begin(); 
-    		it != dsp.end(); it++) {
+    for(vector<pair<DBM*, DBMList *> >::iterator it = ds.begin();
+    		it != ds.end(); it++) {
       DBM *ls = (*it).first;
       DBMList * lsList = (*it).second;
       delete ls;
       delete lsList;
     }
-    dsp.clear();
+    ds.clear();
     // Do not delete e since it is a pointer to the overall ExprNode.
     
     // Do not delete parent sequent parSequentPlace
@@ -1087,7 +1087,7 @@ public:
    * Each element in ds is combined with the location state (st)
    * and the right hand expression (e) to form a proof sequent
    * in the proof tree. */
-  vector<pair<DBM*, DBMList* > > dsp;
+  vector<pair<DBM*, DBMList* > > ds;
   
   /** The placeholder sequent parent to this sequent in the proof tree; 
    * this is used  to quickly access backpointers. A sequent either has a parent

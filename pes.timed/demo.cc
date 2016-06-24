@@ -145,8 +145,6 @@ int seqStSize = 0xF;
  * correctness is guaranteed but performance is slowed if set to FALSE */
 bool useCaching = true;
 
-long int numLocations;
-
 /** Prints out the "help" info for the user or
  * the information that is displayed when the
  * user does not give or format the argument properly. 
@@ -331,8 +329,7 @@ int main(int argc, char** argv){
   }
   #endif
 
-  numLocations = 1;
-  /* Call the Model Checker with the given ExprNode 
+  /* Call the Model Checker with the given ExprNode
    * to prove or disprove the specification. */
   prover p(invs, transList,
            currParityGfp,prevParityGfp,useCaching,predicateInd,nHash,
@@ -369,7 +366,7 @@ int main(int argc, char** argv){
   cout << "Prover running time: " << clockToSecs*(end - begin) << " seconds" << endl; 
   cout << "Combined running time: " << totalTime  << " seconds" << endl;
   
-  cout << "Number of locations: " << numLocations << endl;
+  cout << "Number of locations: " << p.getNumLocations() << endl;
   
   #if DEBUG
   if(tabled){
