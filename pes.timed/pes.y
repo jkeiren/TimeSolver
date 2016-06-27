@@ -53,9 +53,9 @@
   char * start_predicate;
   extern int spaceDimension;
   
-  extern int print_clocks();
-  extern int print_atomic();
-  extern int print_predicates();
+  extern void print_clocks(std::ostream&);
+  extern void print_atomic(std::ostream&);
+  extern void print_predicates(std::ostream&);
   
   extern map <string, int> clocks;
   extern map <string, int> atomic;
@@ -600,7 +600,7 @@ TOK_CLOCKS TOK_COLON TOK_LBRACE clocks_list TOK_RBRACE
 { 
   if(debug){
     cout << "clocks declared: ";
-    print_clocks();
+    print_clocks(cout);
     cout << endl;
   }
 };
@@ -622,7 +622,7 @@ TOK_ATOMIC TOK_COLON TOK_LBRACE atomic_list TOK_RBRACE
 { 	
   if(debug) {
     cout << "control variable declared: ";
-    print_atomic();
+    print_atomic(cout);
     cout << endl;
   }
 };
@@ -696,7 +696,7 @@ TOK_PREDICATE TOK_COLON TOK_LBRACE predicate_list TOK_RBRACE
 { 
   if(debug) {
     cout << "predicate declared: ";
-    print_predicates();
+    print_predicates(std::cout);
     cout << endl;
   }
 };

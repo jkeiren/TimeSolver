@@ -232,37 +232,37 @@ public:
   DBMList * do_proof_place(int step, DBM * const lhs, DBMList * const place,
                                    const ExprNode * const rhs, SubstList * const sub);
 
-  void printTabledSequents() const
+  void printTabledSequents(std::ostream& os) const
   {
     /* If in DEBUG Mode, print out list of Tabled Sequents */
-    cout << endl;
-    cout << "##--Debug Info: Tabled Sequents===============" << endl;
-    cout << "----GFP Cached Sequents---------" << endl;
-    Xlist_pGFP.print_Xlist();
-    // cout << "Number of GFP Sequents Tabled: " endl;
-    cout << endl;
-    cout << "----LFP Cached Sequents---------" << endl;
-    Xlist_pLFP.print_Xlist();
-    cout << endl;
-    cout << "----Known False Cached Sequents---------" << endl;
-    Xlist_false.print_Xlist();
-    cout << endl;
-    cout << "----Known True Cached Sequents---------" << endl;
-    Xlist_true.print_Xlist();
-    cout << endl;
-    cout << "##--Debug Info: Tabled Placeholder Sequents==========" << endl;
-    cout << "----GFP Placeholder Cached Sequents---------" << endl;
-    Xlist_pGFP_ph.print_Xlist();
-    // cout << "Number of GFP Sequents Tabled: " endl;
-    cout << endl;
-    cout << "----LFP Placeholder Cached Sequents---------" << endl;
-    Xlist_pLFP_ph.print_Xlist();
-    cout << endl;
-    cout << "----Known False (Placeholder) Cached Sequents---------" << endl;
-    Xlist_false_ph.print_Xlist();
-    cout << endl;
-    cout << "----Known True (Placeholder) Cached Sequents---------" << endl;
-    Xlist_true_ph.print_Xlist();
+    os << endl;
+    os << "##--Debug Info: Tabled Sequents===============" << endl;
+    os << "----GFP Cached Sequents---------" << endl;
+    Xlist_pGFP.print_Xlist(os);
+    // os << "Number of GFP Sequents Tabled: " endl;
+    os << endl;
+    os << "----LFP Cached Sequents---------" << endl;
+    Xlist_pLFP.print_Xlist(os);
+    os << endl;
+    os << "----Known False Cached Sequents---------" << endl;
+    Xlist_false.print_Xlist(os);
+    os << endl;
+    os << "----Known True Cached Sequents---------" << endl;
+    Xlist_true.print_Xlist(os);
+    os << endl;
+    os << "##--Debug Info: Tabled Placeholder Sequents==========" << endl;
+    os << "----GFP Placeholder Cached Sequents---------" << endl;
+    Xlist_pGFP_ph.print_Xlist(os);
+    // os << "Number of GFP Sequents Tabled: " endl;
+    os << endl;
+    os << "----LFP Placeholder Cached Sequents---------" << endl;
+    Xlist_pLFP_ph.print_Xlist(os);
+    os << endl;
+    os << "----Known False (Placeholder) Cached Sequents---------" << endl;
+    Xlist_false_ph.print_Xlist(os);
+    os << endl;
+    os << "----Known True (Placeholder) Cached Sequents---------" << endl;
+    Xlist_true_ph.print_Xlist(os);
   }
 
 protected:

@@ -103,47 +103,20 @@ extern int spaceDimension;
  * from the automata/PES description. */
 extern vector<Transition *> *transList;
 
-/** A Placeholder to remember the current parity;
- * false = lfp parity, true = gfp parity. */
-bool currParityGfp;
-/** A Placeholder to remember the previous parity;
- * false = lfp parity, true = gfp parity. */
-bool prevParityGfp;
-
-/** This DBM represents the initial DBM provided
- * if one is provided by the parser. */
-DBM *InitC;
-
-/** This is the size of the atomic data, used for
- * hashing sequents.
- * This is set within the main(0) method of (demo.cc). */
-int aSize = 0;
-
-/** True if debug mode is on, and
- * False if debug mode is off. Running the
- * program with -d sets it to true. */
-bool debug = false;
-
 /** This parameter is the size of the maximum
  * constant (in the clock constraints).  There
  * is one constant for all of the clocks
  * This is modified by the program and the parser. */
 int MAXC = 0;
 
-/** The maximum number of bits used in the hashing function
- * when storing discrete states. */
-int nbits = 0xF;
+/** True if debug mode is on, and
+ * False if debug mode is off. Running the
+ * program with -d sets it to true. */
+bool debug = false;
 
-/** Public variable that stores the number of hashing bins.
- * used for ease of locating the proper bin for each sequent,
- * especially when multiple predicate variables exist. */
-int seqStSize = 0xF;
-
-
-/** Debug boolean to enable or disable known true and known false caches.
- * This parameter does not influence caching of circularities. As a result,
- * correctness is guaranteed but performance is slowed if set to FALSE */
-bool useCaching = true;
+/** This DBM represents the initial DBM provided
+ * if one is provided by the parser. */
+DBM *InitC;
 
 /** Prints out the "help" info for the user or
  * the information that is displayed when the
@@ -166,6 +139,32 @@ void printUsage(){
  * the program arguments.
  * @return 0 for a normal exit, -1 for an exit upon an error. */
 int main(int argc, char** argv){
+
+  /** Debug boolean to enable or disable known true and known false caches.
+   * This parameter does not influence caching of circularities. As a result,
+   * correctness is guaranteed but performance is slowed if set to FALSE */
+  bool useCaching = true;
+
+  /** A Placeholder to remember the current parity;
+   * false = lfp parity, true = gfp parity. */
+  bool currParityGfp;
+  /** A Placeholder to remember the previous parity;
+   * false = lfp parity, true = gfp parity. */
+  bool prevParityGfp;
+
+  /** This is the size of the atomic data, used for
+   * hashing sequents.
+   * This is set within the main(0) method of (demo.cc). */
+  int aSize = 0;
+
+  /** The maximum number of bits used in the hashing function
+   * when storing discrete states. */
+  int nbits = 0xF;
+
+  /** Public variable that stores the number of hashing bins.
+   * used for ease of locating the proper bin for each sequent,
+   * especially when multiple predicate variables exist. */
+  int seqStSize = 0xF;
   
   cout << "\n\n====Begin Program Input==============================" << endl;
   /* Get times for lexing and parsing files: */
@@ -334,6 +333,7 @@ int main(int argc, char** argv){
   prover p(invs, transList,
            currParityGfp,prevParityGfp,useCaching,predicateInd,nHash,
            debug, MAXC, nbits, seqStSize, aSize);
+  
   if (InitC != NULL) {
 		InitC->setIsCfFalse();
     InitC->cf();
@@ -370,7 +370,7 @@ int main(int argc, char** argv){
   
   #if DEBUG
   if(tabled){
-    p.printTabledSequents();
+    p.printTabledSequents(cout);
   }
   #endif
   
