@@ -16,8 +16,8 @@ all: demo testdbm testdbmlist doc
 doc: demo *.hh *.cc
 	doxygen pes-timed_Doxyfile
 
-demo:	pes.tab.o pes.lex.o ExprNode.o demo.o proof.o proof_data.o
-	$(CC) -o demo pes.lex.o pes.tab.o ExprNode.o demo.o proof_data.o proof.o $(SFLAGS) $(LDFLAGS)
+demo:	pes.tab.o pes.lex.o ExprNode.o demo.o proof.o
+	$(CC) -o demo pes.lex.o pes.tab.o ExprNode.o demo.o proof.o $(SFLAGS) $(LDFLAGS)
 
 demo.o: demo.cc DBM.hh ExprNode.hh DBMList.hh
 	$(CC) $(CFLAGS) demo.cc $(INCL_PATH)

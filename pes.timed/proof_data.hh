@@ -78,11 +78,11 @@ protected:
   }
 
   /** print the elements pointed to by the components of p */
-  void print_DBMset_elt(const std::pair<const DBM * const, const DBMList * const>& p) const
+  void print_DBMset_elt(std::ostream& os, const std::pair<const DBM * const, const DBMList * const>& p) const
   {
-    p.first->print_constraint(get_clock_strings());
-    cout << ", plhold: ";
-    p.second->print_constraint(get_clock_strings());
+    p.first->print_constraint(os, get_clock_strings());
+    os << ", plhold: ";
+    p.second->print_constraint(os, get_clock_strings());
   }
 
   /** delete the elements pointed to by the components of p */
@@ -98,9 +98,9 @@ protected:
   }
 
   /** print the element pointed to by p */
-  void print_DBMset_elt(const DBM * const p) const
+  void print_DBMset_elt(std::ostream& os, const DBM * const p) const
   {
-    p->print_constraint(get_clock_strings());
+    p->print_constraint(os, get_clock_strings());
   }
 
   /** delete the element pointed to by p */
@@ -399,30 +399,30 @@ public:
    * sides. Typically, the right hand sides will be predicate variables.
    * @param Xlist (*) The stack of sequents to print.
    * @return None. */
-  void print_Xlist() const {
+  void print_Xlist(std::ostream& os) const {
     int totNumSeq = 0;
-    cout << "\t--For Each Sequence, Premise sets separated by \";\" --" << endl;
+    os << "\t--For Each Sequence, Premise sets separated by \";\" --" << endl;
     for(int i = 0; i < predicateInd*(nbits+1); i++){
       for(typename stack::const_iterator it = Xlist[i].begin(); it != Xlist[i].end(); it++){
         int conseqNumSeq = 0;
         for(typename DBMsetType::const_iterator ie = (*it)->ds.begin(); ie != (*it)->ds.end(); ie++){
-          print_DBMset_elt(*ie);
+          print_DBMset_elt(os, *ie);
           conseqNumSeq++;
           totNumSeq++;
-          cout << " ; ";
+          os << " ; ";
         }
-        (*it)->sub()->print(cout);
-        cout << "\t |- ";
-        print_ExprNode((*it)->rhs(), cout);
+        (*it)->sub()->print(os);
+        os << "\t |- ";
+        print_ExprNode((*it)->rhs(), os);
 
-        cout << " (" << conseqNumSeq;
+        os << " (" << conseqNumSeq;
         string tempStr;
         (conseqNumSeq == 1) ? (tempStr = "Premise") : (tempStr = "Premises" );
-        cout << " "<< tempStr << " for this Consequent)";
-        cout << endl;
+        os << " "<< tempStr << " for this Consequent)";
+        os << endl;
       }
     }
-    cout << "Total Number of Sequents: " << totNumSeq << endl;
+    os << "Total Number of Sequents: " << totNumSeq << endl;
   }
 
 };
