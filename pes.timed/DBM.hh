@@ -87,7 +87,7 @@ public:
       int idx = i >> 5;
       if((cc[idx] >> b)&0x1) {
         if (end) {
-        	cout << ",";
+        	os << ",";
         }
         /* Print clocks as x(ind): x1, x2, ...
          * x0, the dummy clock, is not printed. */
@@ -1089,36 +1089,35 @@ public:
    * The # is the integer bound for the constraint,
    * and op is based on the fourth bit. 0: <, 1: <=
    * @return None */
-	void print() const{
+  void print(std::ostream& os) const{
 		for(short int i = 0; i < nClocks; i++){
 			for(short int j = 0; j < nClocks; j++){
 				short int val = this->operatorRead(i,j) >> 1;
 				short int type = this->operatorRead(i,j) & 0x1;
 				if (type == 1){
 					if (val == 0xFFF) 
-						cout << "(" << "+inf" << "," << "<=)\t";
+						os << "(" << "+inf" << "," << "<=)\t";
 					else
-						cout << "( " << val << "," << "<= )\t";
+						os << "( " << val << "," << "<= )\t";
 				}else{
 					if (val == 0xFFF) 
-						cout << "(" << "+inf" << "," << "<)\t";
+						os << "(" << "+inf" << "," << "<)\t";
 					else
-						cout << "( " << val << "," << "<  )\t";
+						os << "( " << val << "," << "<  )\t";
 				}	  
 			}
-			cout << endl;
+			os << endl;
 		}
 	}
 	
 	/** Print the DBM, more compactly, as a list of constraints. The constraints
 	 * are printed in the order they appear in the matrix.
 	 * @return none */
-  void print_constraint(const std::vector<string>& clock_strings) const{
+  void print_constraint(std::ostream& os, const std::vector<string>& clock_strings) const{
 		bool end = false;
 		bool isAllImplicit=true;
 		if(this->emptiness()) {
-		  cout << "EMPTY";
-		  return;
+		  os << "EMPTY";
 		}
 		for(short int i = 0; i < nClocks; i++){
 			for(short int j = 0; j < nClocks; j++){
@@ -1135,35 +1134,35 @@ public:
         }
         isAllImplicit=false;
 				if(end) { 
-				  cout <<","; 
+				  os <<",";
 				}
 				if(i != 0 && j!=0){
-					//cout << "x" << (i);
-          cout << clock_strings[i];
-					cout << "-";
-					//cout << "x" << (j);
-          cout << clock_strings[j];
+					//os << "x" << (i);
+          os << clock_strings[i];
+					os << "-";
+					//os << "x" << (j);
+          os << clock_strings[j];
 				}else if (i == 0){
-					cout << clock_strings[j];
-					if (type == 1) cout << ">=" << -val ;
-					else cout << ">" << -val ;
+					os << clock_strings[j];
+					if (type == 1) os << ">=" << -val ;
+					else os << ">" << -val ;
 					end = true;
 					continue;
 				}else if (j == 0){
-					cout << clock_strings[i];
+					os << clock_strings[i];
 				}
 				
 				if (type == 1) {
-					cout << "<=" << val ;
+					os << "<=" << val ;
 				}
 				else {
-					cout << "<" << val ;
+					os << "<" << val ;
 				}
 				end = true;
 			}
 		}
 		if(isAllImplicit) {
-		  cout << "INFTY";
+		  os << "INFTY";
 		}
 	}
 	
@@ -1173,7 +1172,7 @@ public:
 	 * constrain any values. This does not omit constraints
 	 * that can be derived from other constraints.
 	 * @return None */
-	void print_ExplicitConstraint(const std::vector<string>& clock_strings) const{
+  void print_ExplicitConstraint(std::ostream& os, const std::vector<string>& clock_strings) const{
 		bool end = false;
 		for(short int i = 0; i < nClocks; i++){
 			for(short int j = 0; j < nClocks; j++){
@@ -1186,26 +1185,26 @@ public:
 				if(i == 0 && val == 0x0 && type == 0x1) {
 				  continue;
 				}
-				if(end) cout <<","; 
+				if(end) os <<","; 
 				if(i != 0 && j!=0){
-					cout << clock_strings[i];
-					cout << "-";
-					cout << clock_strings[j];
+					os << clock_strings[i];
+					os << "-";
+					os << clock_strings[j];
 				}else if (i == 0){
-					cout << clock_strings[j];;
-					if (type == 1) cout << ">=" << -val ;
-					else cout << ">" << -val ;
+					os << clock_strings[j];;
+					if (type == 1) os << ">=" << -val ;
+					else os << ">" << -val ;
 					end = true;
 					continue;
 				}else if (j == 0){
-					cout << clock_strings[i];
+					os << clock_strings[i];
 				}
 				
 				if (type == 1) {
-					cout << "<=" << val ;
+					os << "<=" << val ;
 				}
 				else {
-					cout << "<" << val ;
+					os << "<" << val ;
 				}
 				end = true;
 			}

@@ -726,9 +726,9 @@ public:
              const vector<pair<short int, short int> > * const clockAssignments) :
   destPar(destParent),
   isDestLeft(isDestOnLeft),
+  clockAssignmentList(clockAssignments == 0?NULL:new vector<pair<short int, short int> >(*clockAssignments)),
   leftExpr(leftExprIn),
   rightExpr(rightExprIn),
-  clockAssignmentList(clockAssignments == 0?NULL:new vector<pair<short int, short int> >(*clockAssignments)),
   destList(dest),
   resetList(reset) {
   };
@@ -1232,7 +1232,7 @@ void yyerror(char *s);
 /** Prints out the list of predicate variables (without their right hand
  * side equations).  
  * @return 1 when done. */
-int print_predicates();
+void print_predicates(std::ostream& os);
 
 /** Prints out a sequent in a proof tree.
  * @param step The tree level (sequent step) of the sequent (0 is root).
@@ -1243,7 +1243,7 @@ int print_predicates();
  * @param op The Expression type of the proof rule; this is the rule that the
  * model checker applies to continue the proof.
  * @return None */
-void print_sequent(const int, const bool, const DBM * const, const ExprNode * const,
+void print_sequent(std::ostream& os, const int, const bool, const DBM * const, const ExprNode * const,
                    const SubstList * const, const opType op);
 
 
@@ -1258,7 +1258,7 @@ void print_sequent(const int, const bool, const DBM * const, const ExprNode * co
  * @param op The Expression type of the proof rule; this is the rule that the
  * model checker applies to continue the proof.
  * @return None */
-void print_sequentCheck(const int, const bool, const DBM * const, const DBMList * const,
+void print_sequentCheck(std::ostream& os, const int, const bool, const DBM * const, const DBMList * const,
                         const SubstList * const, const opType op);
 
 /** Prints out a sequent with a placeholder clock state in a proof tree.
@@ -1271,7 +1271,7 @@ void print_sequentCheck(const int, const bool, const DBM * const, const DBMList 
  * @param op The Expression type of the proof rule; this is the rule that the
  * model checker applies to continue the proof.
  * @return None */
-void print_sequent_place(const int step, const bool retVal, const DBM * const lhs,
+void print_sequent_place(std::ostream& os, const int step, const bool retVal, const DBM * const lhs,
                          const DBMList * const place, const ExprNode * const rhs,
                          const SubstList * const sub, const opType op);
 
@@ -1288,7 +1288,7 @@ void print_sequent_place(const int step, const bool retVal, const DBM * const lh
  * @param op The Expression type of the proof rule; this is the rule that the
  * model checker applies to continue the proof.
  * @return None */
-void print_sequent_placeCheck(const int step, const bool retVal, const DBM * const lhs,
+void print_sequent_placeCheck(std::ostream& os, const int step, const bool retVal, const DBM * const lhs,
                               const DBMList * const place, const DBMList * const rhsList,
                               const SubstList * const sub, const opType op);
 

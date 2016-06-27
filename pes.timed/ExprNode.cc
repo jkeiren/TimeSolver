@@ -128,12 +128,11 @@ const string& lookup_clock_name(const unsigned int n)
 /** Prints out the list of clocks with their labels
  * and current values.
  * @return 1 when done. */
-int print_clocks()
+void print_clocks(std::ostream& os)
 {
   map <string, int>::iterator it;
   for (it = clocks.begin(); it != clocks.end(); it++)
-    cout << (*it).first <<":"<< (*it).second <<"  ";
-  return 1;	
+    os << (*it).first <<":"<< (*it).second <<"  ";
 }
 
 /** Insert an atomic variable with label s
@@ -198,12 +197,11 @@ const string& lookup_atomic_name(const unsigned int n)
 /** Prints out the list of atomic variables with their
  * labels (ids) and values.
  * @return 1 when done. */
-int print_atomic()
+void print_atomic(std::ostream& os)
 {
   map <string, int>::iterator it;
   for (it = atomic.begin(); it != atomic.end(); it++)
-    cout << (*it).first << ":" << (*it).second << "  ";
-  return 1;	
+    os << (*it).first << ":" << (*it).second << "  ";
 }
 
 /** Adds an empty PREDICATE expression to the list of
@@ -314,14 +312,13 @@ yyerror(char *s)
 /** Prints out the list of predicate variables (without their right hand
  * side equations).  
  * @return 1 when done. */
-int print_predicates()
+void print_predicates(std::ostream& os)
 {
   map <string, ExprNode *>::iterator it;
   for (it = predicates.begin(); it != predicates.end(); it++){    
-    cout << (*it).first << "  "; 
-    cout << "ind: " << ((*it).second)->getIntVal() << "  ";
+    os << (*it).first << "  "; 
+    os << "ind: " << ((*it).second)->getIntVal() << "  ";
   }
-  return 1;	
 }
 
 
@@ -335,24 +332,24 @@ int print_predicates()
  * @param op The Expression type of the proof rule; this is the rule that the
  * model checker applies to continue the proof.
  * @return None */
-void print_sequent(const int step, const bool retVal, const DBM * const lhs,
+void print_sequent(std::ostream& os, const int step, const bool retVal, const DBM * const lhs,
                    const ExprNode * const rhs, const SubstList * const sub, const opType op){
-  cout << "seq#" << step << "  " <<retVal << "  ";
+  os << "seq#" << step << "  " <<retVal << "  ";
   if (lhs != NULL) {
-    lhs->print_constraint(clock_strings) ;
+    lhs->print_constraint(os, clock_strings) ;
   }
   if (sub != NULL) {
-    cout << ", ";
-    sub->print(cout);
+    os << ", ";
+    sub->print(os);
   }
-  cout << "\t|-  " ;
+  os << "\t|-  " ;
   if (rhs != NULL) {
-    print_ExprNode(rhs, cout);
+    print_ExprNode(rhs, os);
   }
-  cout << "\t";
-  print_ExprNodeType(op, cout);
+  os << "\t";
+  print_ExprNodeType(op, os);
   
-  cout << endl;
+  os << endl;
 }
 
 /** Prints out a placeholder check sequent in the proof tree; used for
@@ -366,24 +363,24 @@ void print_sequent(const int step, const bool retVal, const DBM * const lhs,
  * @param op The Expression type of the proof rule; this is the rule that the
  * model checker applies to continue the proof.
  * @return None */
-void print_sequentCheck(const int step, const bool retVal, const DBM * const lhs,
+void print_sequentCheck(std::ostream& os, const int step, const bool retVal, const DBM * const lhs,
                         const DBMList * const rhsList, const SubstList * const sub, const opType op){
-  cout << "seq#" << step << "  " <<retVal << "  ";
+  os << "seq#" << step << "  " <<retVal << "  ";
   if (lhs != NULL) {
-    lhs->print_constraint(clock_strings) ;
+    lhs->print_constraint(os, clock_strings) ;
   }
   if (sub != NULL) {
-    cout << ", ";
-    sub->print(cout);
+    os << ", ";
+    sub->print(os);
   }
-  cout << "\t|-  " ;
+  os << "\t|-  " ;
   if (rhsList != NULL) {
-    rhsList->print_constraint(clock_strings);
+    rhsList->print_constraint(os, clock_strings);
   }
-  cout << "\t";
-  print_ExprNodeType(op, cout);
+  os << "\t";
+  print_ExprNodeType(op, os);
   
-  cout << endl;
+  os << endl;
 }
 
 /** Prints out a sequent with a placeholder clock state in a proof tree.
@@ -396,29 +393,29 @@ void print_sequentCheck(const int step, const bool retVal, const DBM * const lhs
  * @param op The Expression type of the proof rule; this is the rule that the
  * model checker applies to continue the proof.
  * @return None */
-void print_sequent_place(const int step, const bool retVal, const DBM * const lhs,
+void print_sequent_place(std::ostream& os, const int step, const bool retVal, const DBM * const lhs,
                          const DBMList * const place, const ExprNode * const rhs,
                          const SubstList * const sub, const opType op){
-  cout << "seq#" << step << "  " <<retVal << "  ";
+  os << "seq#" << step << "  " <<retVal << "  ";
   if (lhs != NULL) {
-    lhs->print_constraint(clock_strings) ;
+    lhs->print_constraint(os, clock_strings) ;
   }
   if (place != NULL) {
-  	cout << " plhold: {";
-  	place->print_constraint(clock_strings);
-  	cout << "}";
+  	os << " plhold: {";
+  	place->print_constraint(os, clock_strings);
+  	os << "}";
   }
   if (sub != NULL) {
-    cout << ", ";
-    sub->print(cout);
+    os << ", ";
+    sub->print(os);
   }
-  cout << "\t|-  " ;
+  os << "\t|-  " ;
   if (rhs != NULL) {
-    print_ExprNode(rhs, cout);
+    print_ExprNode(rhs, os);
   }
-  cout << "\t";
-  print_ExprNodeTypePlace(op, cout);
-  cout << endl;
+  os << "\t";
+  print_ExprNodeTypePlace(op, os);
+  os << endl;
 }
 
 /** Prints out a placeholder check sequent in the proof tree; used for
@@ -434,33 +431,33 @@ void print_sequent_place(const int step, const bool retVal, const DBM * const lh
  * @param op The Expression type of the proof rule; this is the rule that the
  * model checker applies to continue the proof.
  * @return None */
-void print_sequent_placeCheck(const int step, const bool retVal, const DBM * const lhs,
+void print_sequent_placeCheck(std::ostream& os, const int step, const bool retVal, const DBM * const lhs,
                               const DBMList * const place, const DBMList * const rhsList,
                               const SubstList * const sub, const opType op){
-  cout << "seq#" << step << "  " <<retVal << "  ";
+  os << "seq#" << step << "  " <<retVal << "  ";
   if (lhs != NULL) {
-    lhs->print_constraint(clock_strings) ;
+    lhs->print_constraint(os, clock_strings) ;
   }
   if (place != NULL) {
-  	cout << " plhold: {";
-  	place->print_constraint(clock_strings);
-  	cout << "}";
+  	os << " plhold: {";
+  	place->print_constraint(os, clock_strings);
+  	os << "}";
   }
   if (sub != NULL) {
-    cout << ", ";
-    sub->print(cout);
+    os << ", ";
+    sub->print(os);
   }
-  cout << "\t|-  " ;
+  os << "\t|-  " ;
   if (rhsList != NULL) {
-    rhsList->print_constraint(clock_strings);
+    rhsList->print_constraint(os, clock_strings);
   }
-  cout << "\t";
-  print_ExprNodeTypePlace(op, cout);
-  cout << endl;
+  os << "\t";
+  print_ExprNodeTypePlace(op, os);
+  os << endl;
 }
 
 /** Prints out the expression to the desired output stream, labeling
- * the expression with its opType. The typical output stream is cout.
+ * the expression with its opType. The typical output stream is os.
  * @param e (*) The expression to print out.
  * @param os (&) The type of output stream to print the output to.
  * @return None */
@@ -512,18 +509,18 @@ void print_ExprNode(const ExprNode * const e, std::ostream& os)
       os << ")";
       break;
     case OR:
-      cout << "(";
+      os << "(";
       print_ExprNode(e->getLeft(), os); 
       os << " OR ";
       print_ExprNode(e->getRight(), os); 
-      cout << ")";
+      os << ")";
       break;
     case OR_SIMPLE:
-      cout << "(";
+      os << "(";
       print_ExprNode(e->getLeft(), os); 
       os << " OR_S ";
       print_ExprNode(e->getRight(), os); 
-      cout << ")";
+      os << ")";
       break;
     case IMPLY:
       os << "-(-";
@@ -543,7 +540,7 @@ void print_ExprNode(const ExprNode * const e, std::ostream& os)
       os << e->getIntVal();
       break;
     case CONSTRAINT:
-      e->dbm()->print_constraint(clock_strings);
+      e->dbm()->print_constraint(os, clock_strings);
       break;
     case ATOMIC:
       os << lookup_atomic_name(e->getAtomic());
@@ -597,11 +594,10 @@ void print_ExprNode(const ExprNode * const e, std::ostream& os)
       os << "UnableWaitInf";
       break;
   }
-  
 }
 
 /** Prints out the expression type (opType) to the desired output stream.
- * The typical output stream is cout.
+ * The typical output stream is os.
  * @param op (*) The expression type.
  * @param os (&) The type of output stream to print the output to.
  * @return none */
@@ -691,7 +687,7 @@ void print_ExprNodeType(const opType op, std::ostream& os)
 
 /** Prints out the expression type (opType), for expressions
  * with placeholders, to the desired output stream.
- * The typical output stream is cout. This method is used for
+ * The typical output stream is os. This method is used for
  * expression types within proof subtrees with placehloders.
  * @param op (*) The expression type.
  * @param os (&) The type of output stream to print the output to.
@@ -804,11 +800,11 @@ void SubstList::print(std::ostream &os) const {
  * its binary equivalent.
  * @param val The integer in base 10 to print.
  * @return none */
-void printBinary(const int val) {
+void printBinary(std::ostream& os, const int val) {
   for(int i = 15; i >=0; i--){
     if (val & (1 << i))
-      std::cout <<"1";
-    else std::cout <<"0";
+      os <<"1";
+    else os <<"0";
   }   
 }
 
@@ -865,18 +861,18 @@ void print_ExprNodeTrans(const ExprNode * const e, std::ostream& os)
         print_ExprNodeTrans(e->getRight(), os); 
         break;
       case OR:
-        cout << "(";
+        os << "(";
         print_ExprNodeTrans(e->getLeft(), os); 
         os << " OR ";
         print_ExprNodeTrans(e->getRight(), os); 
-        cout << ")";
+        os << ")";
         break;
       case OR_SIMPLE:
-        cout << "(";
+        os << "(";
         print_ExprNodeTrans(e->getLeft(), os); 
         os << " OR_S ";
         print_ExprNodeTrans(e->getRight(), os); 
-        cout << ")";
+        os << ")";
         break;
       case IMPLY:
         print_ExprNodeTrans(e->getLeft(), os);
@@ -894,7 +890,7 @@ void print_ExprNodeTrans(const ExprNode * const e, std::ostream& os)
         os << e->getIntVal();
         break;
       case CONSTRAINT:
-        e->dbm()->print_constraint(clock_strings);
+        e->dbm()->print_constraint(os, clock_strings);
         break;
       case ATOMIC:
         os << lookup_atomic_name(e->getAtomic());
@@ -952,7 +948,7 @@ void print_ExprNodeTrans(const ExprNode * const e, std::ostream& os)
 }
 
 /** Prints out the transition to the desired output stream.
- * The typical output stream is cout.
+ * The typical output stream is os.
  * @param t (*) The transition to print.
  * @param os (&) The type of output stream to print the output to.
  * @return none */
