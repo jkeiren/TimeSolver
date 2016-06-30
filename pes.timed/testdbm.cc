@@ -137,74 +137,74 @@ int main(int argc, char** argv){
   }
 	
 	cout << "\nDBM1: IsEmpty: " << testDBM1->emptiness() << "\n";
-	testDBM1->print();
+	testDBM1->print(cout);
 	
 	testDBM1->cf();
 	cout << "\n\nDBM1 in canonical form: IsEmpty: " << testDBM1->emptiness() << "\n";
-	testDBM1->print();
+	testDBM1->print(cout);
 	
 	tDBM1p->pre();
 	cout << "\nDBM1 after pre(): IsEmpty: " << tDBM1p->emptiness() << "\n";
-	tDBM1p->print();
+	tDBM1p->print(cout);
 	
 	tDBM1p->cf();
 	cout << "\n\nDBM1 after pre() in canonical form: IsEmpty: " << tDBM1p->emptiness() << "\n";
-	tDBM1p->print();
+	tDBM1p->print(cout);
 	
 	cout << "\n\nDBM1b: IsEmpty: " << testDBM1b->emptiness() << "\n";
-	testDBM1b->print();
+	testDBM1b->print(cout);
   
   
   testDBM1b->cf();
 	cout << "\n\nDBM1b in canonical form: IsEmpty: " << testDBM1b->emptiness() << "\n";
-	testDBM1b->print();
+	testDBM1b->print(cout);
 	
 	cout << "\n\nDBM2: IsEmpty: " << testDBM2->emptiness() << "\n";
-	testDBM2->print();
+	testDBM2->print(cout);
   
   testDBM2->cf();
 	cout << "\n\nDBM2 in canonical form: IsEmpty: " << testDBM2->emptiness() << "\n";
-	testDBM2->print();
+	testDBM2->print(cout);
 	
 	testDBM2->bound(3);
 	cout << "\n\nDBM2 bounded with maxc=3: IsEmpty: " << testDBM2->emptiness() << "\n";
-	testDBM2->print();
+	testDBM2->print(cout);
 	
 	cout << "\n\nDBM3: IsEmpty: " << testDBM3->emptiness() << "\n";
-	testDBM3->print();
+	testDBM3->print(cout);
   
   testDBM3->cf();
 	cout << "\n\nDBM3 in canonical form: IsEmpty: " << testDBM3->emptiness() << "\n";
-	testDBM3->print();
+	testDBM3->print(cout);
 	
 	
 	cout << "\n\nDBM4: IsEmpty: " << testDBM4->emptiness() << "\n";
-	testDBM4->print();
+	testDBM4->print(cout);
   
   testDBM4->cf();
 	cout << "\n\nDBM4 in canonical form: IsEmpty: " << testDBM4->emptiness() << "\n";
-	testDBM4->print();
+	testDBM4->print(cout);
 	
 	cout << "\n\nDBM5: IsEmpty: " << testDBM5->emptiness() << "\n";
-	testDBM5->print();
+	testDBM5->print(cout);
   
   testDBM5->cf();
 	cout << "\n\nDBM5 in canonical form: IsEmpty: " << testDBM5->emptiness() << "\n";
-	testDBM5->print();
+	testDBM5->print(cout);
 	
 	cout << "\n\nDBM6: IsEmpty: " << testDBM6->emptiness() << "\n";
-	testDBM6->print();
+	testDBM6->print(cout);
   
   testDBM6->cf();
 	cout << "\n\nDBM6 in canonical form: IsEmpty: " << testDBM6->emptiness() << "\n";
-	testDBM6->print();
+	testDBM6->print(cout);
 	
 	cout << "\n\nDBM7: IsEmpty: " << testDBM7->emptiness() << "\n";
-	testDBM7->print();
+	testDBM7->print(cout);
   
   testDBM7->cf();
 	cout << "\n\nDBM7 in canonical form: IsEmpty: " << testDBM7->emptiness() << "\n";
-	testDBM7->print();
+	testDBM7->print(cout);
 	
 	DBM testDBM7b(*testDBM7);
 	DBM *testDBM8 = new DBM(*testDBM7);
@@ -214,51 +214,51 @@ int main(int argc, char** argv){
 	testDBM7b & *testDBM6;
 	
 	cout << "\n\nDBM7 ^ DBM6 via testDBM7b IsEmpty: " << testDBM7b.emptiness() << "\n";
-	testDBM7b.print();
+	testDBM7b.print(cout);
   
   testDBM7b.cf();
 	cout << "\n\nDBM7 ^ DBM6 via testDBM7b in canonical form: IsEmpty: " << testDBM7b.emptiness() << "\n";
-	testDBM7b.print();
+	testDBM7b.print(cout);
 	
 	*testDBM8 & *testDBM6;
 	
 	cout << "\n\nDBM7 ^ DBM6 via testDBM8 IsEmpty: " << testDBM8->emptiness() << "\n";
-	testDBM8->print();
+	testDBM8->print(cout);
   
   testDBM8->cf();
 	cout << "\n\nDBM7 ^ DBM6 via testDBM8 in canonical form: IsEmpty: " << testDBM8->emptiness() << "\n";
-	testDBM8->print();
+	testDBM8->print(cout);
 	
 	
 	cout << "\n\nDBM7 via testDBM7c IsEmpty: " << testDBM7c.emptiness() << "\n";
-	testDBM7c.print();
+	testDBM7c.print(cout);
   
   testDBM7c.cf();
 	cout << "\n\nDBM7 via testDBM7c in canonical form: IsEmpty: " << testDBM7c.emptiness() << "\n";
-	testDBM7c.print();
+	testDBM7c.print(cout);
 	
 	*testDBM9 & *testDBM6;
 	
 	cout << "\n\nDBM7 ^ DBM6 via testDBM9 IsEmpty: " << testDBM9->emptiness() << "\n";
-	testDBM9->print();
+	testDBM9->print(cout);
   
   testDBM9->cf();
 	cout << "\n\nDBM7 ^ DBM6 via testDBM9 in canonical form: IsEmpty: " << testDBM9->emptiness() << "\n";
-	testDBM9->print();
+	testDBM9->print(cout);
 	
 	cout << "\n\nDBM7 ^ DBM6 via testDBM7c/9 IsEmpty: " << testDBM7c.emptiness() << "\n";
-	testDBM7c.print();
+	testDBM7c.print(cout);
   
   testDBM7c.cf();
 	cout << "\n\nDBM7 ^ DBM6 via testDBM7c/9 in canonical form: IsEmpty: " << testDBM7c.emptiness() << "\n";
-	testDBM7c.print();
+	testDBM7c.print(cout);
 	
 	cout << "\n\nINFTYDBM: IsEmpty: " << INFTYDBM->emptiness() << "\n";
-	INFTYDBM->print();
+	INFTYDBM->print(cout);
   
   INFTYDBM->cf();
 	cout << "\n\nINFTYDBM in canonical form: IsEmpty: " << INFTYDBM->emptiness() << "\n";
-	INFTYDBM->print();
+	INFTYDBM->print(cout);
 	
 	DBM *ccrepA = new DBM(5);
   for (int i=0; i<5; i++) {
@@ -266,11 +266,11 @@ int main(int argc, char** argv){
   }
   
   cout << "\n\nccrepA: IsEmpty: " << ccrepA->emptiness() << "\n";
-	ccrepA->print();
+	ccrepA->print(cout);
   
   ccrepA->cf();
 	cout << "\n\nccrepA in canonical form: IsEmpty: " << ccrepA->emptiness() << "\n";
-	ccrepA->print();
+	ccrepA->print(cout);
 	
 	DBM * EMPTY = new DBM(3);
   for (int i=1; i<3; i++){
@@ -279,11 +279,11 @@ int main(int argc, char** argv){
   }
 	
 	cout << "\n\nEMPTY: IsEmpty: " << EMPTY->emptiness() << "\n";
-	EMPTY->print();
+	EMPTY->print(cout);
   
   EMPTY->cf();
 	cout << "\n\nEMPTY in canonical form: IsEmpty: " << EMPTY->emptiness() << "\n";
-	EMPTY->print();
+	EMPTY->print(cout);
 	
 	cout << "----------------------------\n";
 	cout << "Extra DBM Tests:\n";
@@ -294,11 +294,11 @@ int main(int argc, char** argv){
 	tDBM5->addConstraint(1,0, (2 << 1) + 1);
 	tDBM5->addConstraint(2,0, (2 << 1) + 1);
 	cout << "\n\ntDBM5: IsEmpty: " << tDBM5->emptiness() << "\n";
-	tDBM5->print();
+	tDBM5->print(cout);
   
   tDBM5->cf();
 	cout << "\n\ntDBM5 in canonical form: IsEmpty: " << tDBM5->emptiness() << "\n";
-	tDBM5->print();
+	tDBM5->print(cout);
 	
 	/* Make DBM to try to test the correctnes of bound(maxc) */
 	DBM * testDBMBound1 = new DBM(3);
@@ -313,15 +313,15 @@ int main(int argc, char** argv){
 	testDBMBound1->addConstraint(2,2, (0x1));
 	
 	cout << "\n\ntestDBMBound1: IsEmpty: " << testDBMBound1->emptiness() << "\n";
-	testDBMBound1->print();
+	testDBMBound1->print(cout);
 	
 	testDBMBound1->cf();
 	cout << "\n\ntestDBMBound1 in canonical form: IsEmpty: " << testDBMBound1->emptiness() << "\n";
-	testDBMBound1->print();
+	testDBMBound1->print(cout);
 	
 	testDBMBound1->bound(2);
 	cout << "\n\ntestDBMBound1 after normalization with maxc = 2: IsEmpty: " << testDBMBound1->emptiness() << "\n";
-	testDBMBound1->print();
+	testDBMBound1->print(cout);
 	
 	/* Make DBM to try to test the correctnes of bound(maxc) */
 	DBM * testDBMBound2 = new DBM(3);
@@ -336,15 +336,15 @@ int main(int argc, char** argv){
 	testDBMBound2->addConstraint(2,2, (0x1));
 	
 	cout << "\n\ntestDBMBound2: IsEmpty: " << testDBMBound2->emptiness() << "\n";
-	testDBMBound2->print();
+	testDBMBound2->print(cout);
 	
 	testDBMBound2->cf();
 	cout << "\n\ntestDBMBound2 in canonical form: IsEmpty: " << testDBMBound2->emptiness() << "\n";
-	testDBMBound2->print();
+	testDBMBound2->print(cout);
 	
 	testDBMBound2->bound(4);
 	cout << "\n\ntestDBMBound2 after normalization with maxc = 4: IsEmpty: " << testDBMBound2->emptiness() << "\n";
-	testDBMBound2->print();
+	testDBMBound2->print(cout);
 	
 	/* Make DBM to try to test the correctnes of bound(maxc) */
 	DBM * testDBMBound3 = new DBM(3);
@@ -359,15 +359,15 @@ int main(int argc, char** argv){
 	testDBMBound3->addConstraint(2,2, (0x1));
 	
 	cout << "\n\ntestDBMBound3: IsEmpty: " << testDBMBound3->emptiness() << "\n";
-	testDBMBound3->print();
+	testDBMBound3->print(cout);
 	
 	testDBMBound3->cf();
 	cout << "\n\ntestDBMBound3 in canonical form: IsEmpty: " << testDBMBound3->emptiness() << "\n";
-	testDBMBound3->print();
+	testDBMBound3->print(cout);
 	
 	testDBMBound3->bound(4);
 	cout << "\n\ntestDBMBound3 after normalization with maxc = 4: IsEmpty: " << testDBMBound3->emptiness() << "\n";
-	testDBMBound3->print();
+	testDBMBound3->print(cout);
 	
 	/* Make DBM to try to test the correctnes of bound(maxc) */
 	DBM * testDBMBound4 = new DBM(3);
@@ -382,15 +382,15 @@ int main(int argc, char** argv){
 	testDBMBound4->addConstraint(2,2, (0x1));
 	
 	cout << "\n\ntestDBMBound4: IsEmpty: " << testDBMBound4->emptiness() << "\n";
-	testDBMBound4->print();
+	testDBMBound4->print(cout);
 	
 	testDBMBound4->cf();
 	cout << "\n\ntestDBMBound4 in canonical form: IsEmpty: " << testDBMBound4->emptiness() << "\n";
-	testDBMBound4->print();
+	testDBMBound4->print(cout);
 	
 	testDBMBound4->bound(4);
 	cout << "\n\ntestDBMBound4 after normalization with maxc = 4: IsEmpty: " << testDBMBound4->emptiness() << "\n";
-	testDBMBound4->print();
+	testDBMBound4->print(cout);
 	
 	/* Make DBM to try to test the correctnes of bound(maxc) */
 	DBM * testDBMBound5 = new DBM(3);
@@ -405,15 +405,15 @@ int main(int argc, char** argv){
 	testDBMBound5->addConstraint(2,2, (0x1));
 	
 	cout << "\n\ntestDBMBound5: IsEmpty: " << testDBMBound5->emptiness() << "\n";
-	testDBMBound5->print();
+	testDBMBound5->print(cout);
 	
 	testDBMBound5->cf();
 	cout << "\n\ntestDBMBound5 in canonical form: IsEmpty: " << testDBMBound5->emptiness() << "\n";
-	testDBMBound5->print();
+	testDBMBound5->print(cout);
 	
 	testDBMBound5->bound(4);
 	cout << "\n\ntestDBMBound5 after normalization with maxc = 4: IsEmpty: " << testDBMBound5->emptiness() << "\n";
-	testDBMBound5->print();
+	testDBMBound5->print(cout);
 	
 	/* Make DBM to try to test the correctnes of bound(maxc) */
 	DBM * testDBMBound6 = new DBM(3);
@@ -428,19 +428,19 @@ int main(int argc, char** argv){
 	testDBMBound6->addConstraint(2,2, (0x1));
 	
 	cout << "\n\ntestDBMBound6: IsEmpty: " << testDBMBound6->emptiness() << "\n";
-	testDBMBound6->print();
+	testDBMBound6->print(cout);
 	
 	testDBMBound6->cf();
 	cout << "\n\ntestDBMBound6 in canonical form: IsEmpty: " << testDBMBound6->emptiness() << "\n";
-	testDBMBound6->print();
+	testDBMBound6->print(cout);
 	
 	testDBMBound6->bound(1);
 	cout << "\n\ntestDBMBound6 after normalization with maxc = 1: IsEmpty: " << testDBMBound6->emptiness() << "\n";
-	testDBMBound6->print();
+	testDBMBound6->print(cout);
 	
 	testDBMBound6->cf();
 	cout << "\n\ntestDBMBound6 in canonical form after maxc = 1 normalization: IsEmpty: " << testDBMBound6->emptiness() << "\n";
-	testDBMBound6->print();
+	testDBMBound6->print(cout);
 	
 	/* Make DBM to try to test the correctnes of emptiness()
 	 * try to see why we cannot just check the diagonals */
@@ -456,19 +456,19 @@ int main(int argc, char** argv){
 	testDBMEmpty1->addConstraint(2,2, (0x1));
 	
 	cout << "\n\ntestDBMEmpty1: IsEmpty: " << testDBMEmpty1->emptiness() << "\n";
-	testDBMEmpty1->print();
+	testDBMEmpty1->print(cout);
 	
 	testDBMEmpty1->cf();
 	cout << "\n\ntestDBMEmpty1 in canonical form: IsEmpty: " << testDBMEmpty1->emptiness() << "\n";
-	testDBMEmpty1->print();
+	testDBMEmpty1->print(cout);
 	
 	testDBMEmpty1->bound(4);
 	cout << "\n\ntestDBMEmpty1 after normalization with maxc = 4: IsEmpty: " << testDBMEmpty1->emptiness() << "\n";
-	testDBMEmpty1->print();
+	testDBMEmpty1->print(cout);
 	
 	testDBMEmpty1->cf();
 	cout << "\n\ntestDBMEmpty1 in canonical form after maxc = 4 normalization: IsEmpty: " << testDBMEmpty1->emptiness() << "\n";
-	testDBMEmpty1->print();
+	testDBMEmpty1->print(cout);
 	
 	
 	DBM * myDBM1 = new DBM(4);
@@ -490,41 +490,41 @@ int main(int argc, char** argv){
 	DBM * myDBM2b = new DBM(*myDBM2);
 	
 	cout << "\n\nmyDBM1: IsEmpty: " << myDBM1->emptiness() << "\n";
-	myDBM1->print();
+	myDBM1->print(cout);
 	
 	myDBM1->cf();
 	cout << "\n\nmyDBM1 in canonical form: IsEmpty: " << myDBM1->emptiness() << "\n";
-	myDBM1->print();
+	myDBM1->print(cout);
 	
 	cout << "\n\nmyDBM1a1: IsEmpty: " << myDBM1a1->emptiness() << "\n";
-	myDBM1a1->print();
+	myDBM1a1->print(cout);
 	
 	myDBM1a1->cf();
 	cout << "\n\nmyDBM1a1 in canonical form: IsEmpty: " << myDBM1a1->emptiness() << "\n";
-	myDBM1a1->print();
+	myDBM1a1->print(cout);
 	
 	cout << "\n\nmyDBM1a2: IsEmpty: " << myDBM1a2->emptiness() << "\n";
-	myDBM1a2->print();
+	myDBM1a2->print(cout);
 	
 	myDBM1->cf();
 	cout << "\n\nmyDBM1a2 in canonical form: IsEmpty: " << myDBM1a2->emptiness() << "\n";
-	myDBM1a2->print();
+	myDBM1a2->print(cout);
 	
 	cout << "\n\nmyDBM2: IsEmpty: " << myDBM2->emptiness() << "\n";
-	myDBM2->print();
+	myDBM2->print(cout);
 	
 	myDBM2->cf();
 	cout << "\n\nmyDBM2 in canonical form: IsEmpty: " << myDBM2->emptiness() << "\n";
-	myDBM2->print();
+	myDBM2->print(cout);
 	
 	*myDBM2 & *myDBM1;
 	
 	cout << "\n\nmyDBM2 & myDBM1: IsEmpty: " << myDBM2->emptiness() << "\n";
-	myDBM2->print();
+	myDBM2->print(cout);
 	
 	myDBM2->cf();
 	cout << "\n\nmyDBM2 & myDBM1 in canonical form: IsEmpty: " << myDBM2->emptiness() << "\n";
-	myDBM2->print();
+	myDBM2->print(cout);
 	
 	delete myDBM2;
 	myDBM2 = new DBM(*myDBM2b);
@@ -532,11 +532,11 @@ int main(int argc, char** argv){
 	*myDBM2 & *myDBM1a1;
 	
 	cout << "\n\nmyDBM2 & myDBM1a1: IsEmpty: " << myDBM2->emptiness() << "\n";
-	myDBM2->print();
+	myDBM2->print(cout);
 	
 	myDBM2->cf();
 	cout << "\n\nmyDBM2 & myDBM1a1 in canonical form: IsEmpty: " << myDBM2->emptiness() << "\n";
-	myDBM2->print();
+	myDBM2->print(cout);
 	
 	delete myDBM2;
 	myDBM2 = new DBM(*myDBM2b);
@@ -544,11 +544,11 @@ int main(int argc, char** argv){
 	*myDBM2 & *myDBM1a2;
 	
 	cout << "\n\nmyDBM2 & myDBM1a2: IsEmpty: " << myDBM2->emptiness() << "\n";
-	myDBM2->print();
+	myDBM2->print(cout);
 	
 	myDBM2->cf();
 	cout << "\n\nmyDBM2 & myDBM1a2 in canonical form: IsEmpty: " << myDBM2->emptiness() << "\n";
-	myDBM2->print();
+	myDBM2->print(cout);
 	
 	
 	cout << endl;

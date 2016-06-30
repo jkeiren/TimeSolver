@@ -105,30 +105,30 @@ int main(int argc, char** argv){
 	
 	
 	cout << "\n\nDBMList 1: IsEmpty: " << tDBM1->emptiness() << "\n";
-	tDBM1->print();
+	tDBM1->print(cout);
 	tDBM1->cf();
 	cout << "\n\nDBMList 1 in canonical form: IsEmpty: " << tDBM1->emptiness() << "\n";
-	tDBM1->print();
+	tDBM1->print(cout);
 	
 	tDBM1p->pre();
 	cout << "\nDBMList 1 after pre(): IsEmpty: " << tDBM1p->emptiness() << "\n";
-	tDBM1p->print();
+	tDBM1p->print(cout);
 	
 	tDBM1p->cf();
 	cout << "\n\nDBMList 1 after pre() in canonical form: IsEmpty: " << tDBM1p->emptiness() << "\n";
-	tDBM1p->print();
+	tDBM1p->print(cout);
   
 	cout << "\n\nlist 1: IsEmpty: " << list1->emptiness() << "\n";
-	list1->print();
+	list1->print(cout);
 	list1->cf();
 	cout << "\n\nlist 1 in canonical form: IsEmpty: " << list1->emptiness() << "\n";
-	list1->print();
+	list1->print(cout);
 	
 	cout << "\n\nlist 1b: IsEmpty: " << list1b->emptiness() << "\n";
-	list1b->print();
+	list1b->print(cout);
 	list1b->cf();
 	cout << "\n\nlist1b in canonical form: IsEmpty: " << list1b->emptiness() << "\n";
-	list1b->print();
+	list1b->print(cout);
 	
 	bool tempBool = (*list1) <= (*INFTYDBM);
 	cout << "\n(*list1) <= (*INFTYDBM) " << tempBool << endl;
@@ -160,22 +160,22 @@ int main(int argc, char** argv){
 	cout << "(*list1) == (*list1b) " << tempBool << endl;
 	
   cout << "\n\ndList2: IsEmpty: " << dList2->emptiness() << "\n";
-	dList2->print();
+	dList2->print(cout);
 	dList2->cf();
 	cout << "\n\ndList2 in canonical form: IsEmpty: " << dList2->emptiness() << "\n";
-	dList2->print();
+	dList2->print(cout);
 	
 	cout << "\n\ndList2copy: IsEmpty: " << dList2copy->emptiness() << "\n";
-	dList2copy->print();
+	dList2copy->print(cout);
 	dList2copy->cf();
 	cout << "\n\ndList2copy in canonical form: IsEmpty: " << dList2copy->emptiness() << "\n";
-	dList2copy->print();
+	dList2copy->print(cout);
 	
 	cout << "\n\nINFTYDBM: IsEmpty: " << INFTYDBM->emptiness() << "\n";
-	INFTYDBM->print();
+	INFTYDBM->print(cout);
 	INFTYDBM->cf();
 	cout << "\n\nINFTYDBM in canonical form: IsEmpty: " << INFTYDBM->emptiness() << "\n";
-	INFTYDBM->print();
+	INFTYDBM->print(cout);
 	
 	tempBool = (*dList2) <= (*INFTYDBM);
 	cout << "\n(*dList2) <= (*INFTYDBM) " << tempBool << endl;
@@ -187,7 +187,7 @@ int main(int argc, char** argv){
 	/* Check since <=, >=, == should not change the original
 	 * DBM */
 	cout << "\n\ndList2: IsEmpty: " << dList2->emptiness() << "\n";
-	dList2->print();
+	dList2->print(cout);
 	
 	tempBool = (*dList2) <= (*d2a);
 	cout << "\n(*dList2) <= (*d2a) " << tempBool << endl;
@@ -207,29 +207,29 @@ int main(int argc, char** argv){
 	DBMList * dList2copy2 = new DBMList(*dList2);
 	
 	cout << "\n\ndList2copy2: IsEmpty: " << dList2copy2->emptiness() << "\n";
-	dList2copy2->print();
+	dList2copy2->print(cout);
 	dList2copy2->cf();
 	cout << "\n\ndList2copy2 in canonical form: IsEmpty: " << dList2copy2->emptiness() << "\n";
-	dList2copy2->print();
+	dList2copy2->print(cout);
 	
 	*dList2copy2 & *dList2;
 	cout << "\n\ndList2copy2 after self intersection: IsEmpty: " << dList2copy2->emptiness() << "\n";
-	dList2copy2->print();
+	dList2copy2->print(cout);
 	dList2copy2->cf();
 	cout << "\n\ndList2copy2 after self intersection in canonical form: IsEmpty: " << dList2copy2->emptiness() << "\n";
-	dList2copy2->print();
+	dList2copy2->print(cout);
 	
 	cout << "\n\nlist3: IsEmpty: " << list3->emptiness() << "\n";
-	list3->print();
+	list3->print(cout);
 	list3->cf();
 	cout << "\n\ndlist3 in canonical form: IsEmpty: " << list3->emptiness() << "\n";
-	list3->print();
+	list3->print(cout);
 	
 	cout << "\n\nlist4: IsEmpty: " << list4->emptiness() << "\n";
-	list4->print();
+	list4->print(cout);
 	list4->cf();
 	cout << "\n\nlist4 in canonical form: IsEmpty: " << list4->emptiness() << "\n";
-	list4->print();
+	list4->print(cout);
 	
 	DBMList * list3copy = new DBMList(3);
 	// Add this to test method.
@@ -244,10 +244,10 @@ int main(int argc, char** argv){
 	
 	(*list3) & (*list3copy);
 	cout << "\n\nlist3 after intersection with copy: IsEmpty: " << list3->emptiness() << "\n";
-	list3->print();
+	list3->print(cout);
 	list3->cf();
 	cout << "\n\nlist3 after intersection with copy: " << list3->emptiness() << "\n";
-	list3->print();
+	list3->print(cout);
 	
 	tempBool = (*list3) <= (*list3copy);
 	cout << "\n(*list3) <= (*list3copy) " << tempBool << endl;
@@ -277,18 +277,18 @@ int main(int argc, char** argv){
 	tempBool = (*list4 == *list3copy);
 	cout << "(*list4) == (*list3copy) " << tempBool << endl;
 	cout << "\n\nlist4: IsEmpty: " << list4->emptiness() << "\n";
-	list4->print();
+	list4->print(cout);
 	list4->cf();
 	cout << "\n\nlist4 in canonical form: IsEmpty: " << list4->emptiness() << "\n";
-	list4->print();
+	list4->print(cout);
 	cout << endl;
 	
 	list4->makeEmpty();
 	cout << "\n After list4 is made empty" << endl;
-	list4->print();
+	list4->print(cout);
 	list4->cf();
 	cout << "\n\nlist4 in canonical form: IsEmpty: " << list4->emptiness() << "\n";
-	list4->print();
+	list4->print(cout);
 	cout << endl;
 	
 	
@@ -317,7 +317,7 @@ int main(int argc, char** argv){
  	
  	// Check that list4 is still here
  	cout << "\n\nlist4 in canonical form after list3copy deletion: IsEmpty: " << list4->emptiness() << "\n";
-	list4->print();
+	list4->print(cout);
 	cout << endl;
 	
  	delete list4;
