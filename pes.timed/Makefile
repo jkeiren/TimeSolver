@@ -1,11 +1,18 @@
-CC = g++
-CFLAGS = -c -g -O
+# Flags passed to the C compiler.
+CFLAGS = -c -g -O -Wall
+
+# Flags passed to the C++ compiler.
+CXXFLAGS += -g -Wall -Wextra
+
 FLEX = flex
 
 LDFLAGS =  
 INCL_PATH = -I.
 
-all: demo testdbm testdbmlist doc
+.PHONY: default
+default: all
+
+all: demo testdbm testdbmlist check
 
 doc: demo *.hh *.cc
 	doxygen pes-timed_Doxyfile
@@ -30,6 +37,9 @@ pes.tab.o: pes.tab.c DBM.hh ExprNode.hh
 
 pes.tab.c: pes.y
 	bison -t -d -v -o pes.tab.c pes.y
+
+check:
+	$(MAKE) -C test
 
 testdbm: testdbm.cc
 	$(CC) -o testdbm -g testdbm.cc
@@ -56,6 +66,7 @@ clean:
 	-rm -rf testdbm.dSYM
 	-rm -rf demo.dSYM
 	-rm -f gmon.out
+	@$(MAKE) -C test clean
 
 cleanBin:
 	-echo "Removing all object files!"
