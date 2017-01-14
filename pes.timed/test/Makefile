@@ -17,7 +17,7 @@
 GTEST_DIR = googletest
 
 # Where to find user code.
-USER_DIR = ./
+USER_DIR = .
 
 INCL = -I ../
 
@@ -78,3 +78,7 @@ dbmtest.o : $(USER_DIR)/dbmtest.cc $(GTEST_HEADERS)
 
 dbmtest : dbmtest.o gtest_main.a
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@
+	
+.PHONY: check
+check : dbmtest
+	$(USER_DIR)/dbmtest

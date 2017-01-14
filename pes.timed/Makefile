@@ -41,7 +41,7 @@ pes.tab.cc: pes.y
 	bison -t -d -v -o pes.tab.cc pes.y
 
 check:
-	$(MAKE) -C $(TEST_DIR)
+	$(MAKE) -C $(TEST_DIR) check
 
 testdbmlist: testdbmlist.cc DBMList.hh DBM.hh
 	$(CXX) -o testdbmlist -g testdbmlist.cc
