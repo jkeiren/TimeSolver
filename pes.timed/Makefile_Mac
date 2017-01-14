@@ -16,6 +16,8 @@ FLEX = flex
 LDFLAGS =  
 INCL_PATH = -I.
 
+TEST_DIR = test
+
 .PHONY: default
 default: all
 
@@ -46,7 +48,7 @@ pes.tab.c: pes.y
 	bison -t -d -v -o pes.tab.c pes.y
 
 check:
-	$(MAKE) -C test
+	$(MAKE) -C $(TEST_DIR)
 
 testdbm: testdbm.cc
 	$(CC) -o testdbm -g testdbm.cc
