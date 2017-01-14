@@ -11,7 +11,7 @@
 #include "ExprNode.hh"
 #include <string>
 #include <iostream>
-#include "pes.tab.h"
+#include "pes.tab.hh"
 
 
 int yyline=1;
