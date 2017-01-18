@@ -42,14 +42,10 @@ pes.tab.cc: pes.y
 
 check:
 	$(MAKE) -C $(TEST_DIR) check
-
-testdbmlist: testdbmlist.cc DBMList.hh DBM.hh
-	$(CXX) -o testdbmlist -g testdbmlist.cc
  
 clean:
 	-echo "Removing all object files!"
 	-rm -f demo *.o
-	-rm -f testdbmlist
 	-echo "Removing intermediate C++ files!"
 	-rm -f pes.lex.cc pes.tab.cc 
 	-echo "Removing intermediate header files!"
@@ -60,7 +56,6 @@ clean:
 	-rm -rf doc/DoxygenOutput/html
 	-rm -rf doc/DoxygenOutput/latex
 	-echo "Removing other tool-generated files!"
-	-rm -rf testdbmlist.dSYM
 	-rm -rf demo.dSYM
 	-rm -f gmon.out
 	$(MAKE) -C $(TEST_DIR) clean
