@@ -150,7 +150,7 @@ private:
    * @param col The second clock, or the column clock, 
    * with 0 being the first column.
    * @return The value of the upper bound constraint on row - col. */
-  short int operatorRead(short int row, short int col) {
+  short int operatorRead(short int row, short int col) const {
     /* Indexes are zero based */
     
     // Offsets to one dimentional array
@@ -260,7 +260,7 @@ public:
   /** Copy Constructor for DBMs.
    * @param Y (&) The object to copy.
    * @return [Constructor] */
-  DBM(DBM &Y): OneDIntArray(Y){ nClocks = Y.nClocks; isCf = Y.isCf;}
+  DBM(const DBM &Y): OneDIntArray(Y){ nClocks = Y.nClocks; isCf = Y.isCf;}
   
   /** Tell the object that it is not in canonical form.
    * Call this method whenever changing the DBM's value from the outside. 
@@ -470,7 +470,7 @@ public:
    * in canonical form.
    * @param Y (&) The right DBM
    * @return true: the calling DBM equals Y, false: otherwise. */
-  bool operator == (DBM &Y){
+  bool operator == (const DBM &Y) const {
     
     
      /* Change constraint comparison order:

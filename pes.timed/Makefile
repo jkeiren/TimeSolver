@@ -1,4 +1,3 @@
-
 # For now, always build with debug symbols
 DEBUG = 1
 
@@ -74,20 +73,17 @@ ExprNode.o: ExprNode.cc ExprNode.hh DBM.hh
 pes.lex.o: pes.lex.cc
 	$(CXX) $(CXXFLAGS) -c pes.lex.cc $(INCL_PATH) 
 
-pes.lex.c: pes.l
-	$(FLEX) -p -8 -Ce -opes.lex.c pes.l
+pes.lex.cc: pes.l
+	$(FLEX) -p -8 -Ce -opes.lex.cc pes.l
 
 pes.tab.o: pes.tab.cc DBM.hh ExprNode.hh
 	$(CXX) $(CXXFLAGS) -c pes.tab.cc $(INCL_PATH)
 
-pes.tab.c: pes.y
-	bison -t -d -v -o pes.tab.c pes.y
+pes.tab.cc: pes.y
+	bison -t -d -v -o pes.tab.cc pes.y
 
-testdbm: testdbm.cc
-	$(CC) -o testdbm -g testdbm.cc
-
-testdbmlist: testdbmlist.cc DBMList.hh DBM.hh
-	$(CC) -o testdbmlist -g testdbmlist.cc
+check:
+	$(MAKE) -C $(TEST_DIR) check
  
 clean:
 	-echo "Removing all object files!"
@@ -95,7 +91,7 @@ clean:
 	-echo "Removing intermediate C files!"
 	-rm -f pes.lex.c pes.tab.c 
 	-echo "Removing intermediate header files!"
-	-rm -f pes.tab.h
+	-rm -f pes.tab.hh
 	-echo "Removing other parser-generated files!"
 	-rm -f pes.output
 	-echo "Removing Doxygen-generated documentation files!"
@@ -104,3 +100,4 @@ clean:
 	-echo "Removing other tool-generated files!"
 	-rm -rf demo.dSYM
 	-rm -f gmon.out
+	$(MAKE) -C $(TEST_DIR) clean

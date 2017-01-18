@@ -118,7 +118,7 @@ public:
   /** Return the vector of DBMs. Utilized by other methods to access
    * the DBMs, often to iterate through each DBM.
    * @return The vector storing the DBMs in the DBMList. */
-  vector<DBM *> * getDBMList() {
+  vector<DBM *> * getDBMList() const {
     return dbmListVec;
   }
   
@@ -154,7 +154,7 @@ public:
   /** Copy Constructor for DBMLists, copying a DBMList.
    * @param Y (&) The object to copy.
    * @return [Constructor] */
-  DBMList(DBMList &Y) { 
+  DBMList(const DBMList &Y) {
     nClocks = Y.nClocks;
     // Vector constructor makes a deep copy of the pointers (not of the objects 
     // that the pointers point to). Make a deep copy of the DBM objects here
