@@ -50,6 +50,7 @@ ifeq ($(UNAME_S), Darwin)
 endif
 
 FLEX = flex
+BISON = bison
 INCL_PATH = -I.
 TEST_DIR = test
 
@@ -76,11 +77,11 @@ pes.lex.o: pes.lex.cc
 pes.lex.cc: pes.l
 	$(FLEX) -p -8 -Ce -opes.lex.cc pes.l
 
-pes.tab.o: pes.tab.cc DBM.hh ExprNode.hh
+pes.tab.o: pes.tab.cc pes.tab.hh DBM.hh ExprNode.hh
 	$(CXX) $(CXXFLAGS) -c pes.tab.cc $(INCL_PATH)
 
-pes.tab.cc: pes.y
-	bison -t -d -v -o pes.tab.cc pes.y
+pes.tab.cc pes.tab.hh: pes.y
+	$(BISON) -t -d -v -o pes.tab.cc pes.y
 
 check:
 	$(MAKE) -C $(TEST_DIR) check
