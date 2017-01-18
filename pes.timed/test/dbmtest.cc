@@ -1,28 +1,7 @@
 #include <limits.h>
 #include "DBM.hh"
+#include "testdbms.hh"
 #include "gtest/gtest.h"
-
-DBM emptyDBM3()
-{
-    DBM empty(3);
-    empty.makeEmpty();
-    return empty;
-}
-
-DBM testDBM1()
-{
-    DBM testDBM1(3);
-    testDBM1.addConstraint(0,0, (0x1));
-    testDBM1.addConstraint(0,1, (-1 << 1) + 1);
-    testDBM1.addConstraint(0,2,  (-5 << 1) + 1);
-    testDBM1.addConstraint(1,0,  (3 << 1) + 1);
-    testDBM1.addConstraint(1,1, (0x1));
-    testDBM1.addConstraint(1,2, (0xFFF<<1));
-    testDBM1.addConstraint(2,0, (7 << 1) + 1);
-    testDBM1.addConstraint(2,1,  (0xFFF<<1));
-    testDBM1.addConstraint(2,2, (0x1));
-    return testDBM1;
-}
 
 DBM testDBM2()
 {
@@ -145,21 +124,7 @@ DBM testDBM11()
     return testDBM11;
 }
 
-DBM inftyDBM()
-{
-  DBM INFTYDBM(3);
-  for(int i = 0; i < 3;i++) {
-    for(int j = 0; j < 3; j++){
-      if(i == j || i == 0){
-        INFTYDBM.addConstraint(i,j, 0x1);
-      }
-      else {
-        INFTYDBM.addConstraint(i,j, (0xFFF << 1));
-      }
-    }
-  }
-  return INFTYDBM;
-}
+
 
 TEST(DBMTest, Copy)
 {
@@ -193,20 +158,7 @@ TEST(DBMTest, CanonicalDBM1)
     DBM canonical(testDBM1());
     canonical.cf();
     EXPECT_FALSE(canonical.emptiness());
-
-    // DBM in canonical form (expected result)
-    DBM expected(3);
-    expected.addConstraint(0,0, (0x1));
-    expected.addConstraint(0,1, (-1 << 1) + 1);
-    expected.addConstraint(0,2,  (-5 << 1) + 1);
-    expected.addConstraint(1,0,  (3 << 1) + 1);
-    expected.addConstraint(1,1, (0x1));
-    expected.addConstraint(1,2, (-2 << 1) + 1);
-    expected.addConstraint(2,0, (7 << 1) + 1);
-    expected.addConstraint(2,1,  (6 << 1) + 1);
-    expected.addConstraint(2,2, (0x1));
-
-    EXPECT_EQ(expected, canonical);
+    EXPECT_EQ(testDBM1cf(), canonical);
 }
 
 TEST(DBMTest, CanonicalDBM2)
@@ -301,18 +253,7 @@ TEST(DBMTest, PreDBM1)
     DBM pre(testDBM1());
     pre.pre();
 
-    DBM expected(3);
-    expected.addConstraint(0,0, (0x1));
-    expected.addConstraint(0,1, (0x1));
-    expected.addConstraint(0,2,  (0x1));
-    expected.addConstraint(1,0,  (3 << 1) + 1);
-    expected.addConstraint(1,1, (0x1));
-    expected.addConstraint(1,2, (0xFFF<<1));
-    expected.addConstraint(2,0, (7 << 1) + 1);
-    expected.addConstraint(2,1,  (0xFFF<<1));
-    expected.addConstraint(2,2, (0x1));
-
-    EXPECT_EQ(expected, pre);
+    EXPECT_EQ(testDBM1pre(), pre);
 }
 
 TEST(DBMTest, PreCanonicalDBM1)
@@ -321,18 +262,7 @@ TEST(DBMTest, PreCanonicalDBM1)
     pre_cf.pre();
     pre_cf.cf();
 
-    DBM expected(3);
-    expected.addConstraint(0,0, (0x1));
-    expected.addConstraint(0,1, (0x1));
-    expected.addConstraint(0,2, (0x1));
-    expected.addConstraint(1,0, (3 << 1) + 1);
-    expected.addConstraint(1,1, (0x1));
-    expected.addConstraint(1,2, (3 << 1) + 1);
-    expected.addConstraint(2,0, (7 << 1) + 1);
-    expected.addConstraint(2,1, (7 << 1) + 1);
-    expected.addConstraint(2,2, (0x1));
-
-    EXPECT_EQ(expected, pre_cf);
+    EXPECT_EQ(testDBM1precf(), pre_cf);
 }
 
 TEST(DBMTest, AddDBM1)
