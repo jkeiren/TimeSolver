@@ -1,75 +1,61 @@
-CC = g++
-CFLAGS = -c -g -O
+# Flags passed to the C compiler.
+CFLAGS = -c -g -O -Wall
+
+# Flags passed to the C++ compiler.
+CXXFLAGS += -g -Wall -Wextra
+
 FLEX = flex
 
 LDFLAGS =  
 INCL_PATH = -I.
 
-all: demo testdbm testdbmlist doc
+TEST_DIR = test
+
+.PHONY: default
+default: all
+
+all: demo testdbmlist check
 
 doc: demo *.hh *.cc
 	doxygen pes-timed_Doxyfile
 
 demo:	pes.tab.o pes.lex.o ExprNode.o demo.o
-	$(CC) -o demo pes.lex.o pes.tab.o ExprNode.o demo.o $(LDFLAGS) 
+	$(CXX) -o demo pes.lex.o pes.tab.o ExprNode.o demo.o $(LDFLAGS) 
 
 demo.o: demo.cc DBM.hh ExprNode.hh DBMList.hh
-	$(CC) $(CFLAGS) demo.cc $(INCL_PATH)
+	$(CXX) $(CFLAGS) demo.cc $(INCL_PATH)
 
 ExprNode.o: ExprNode.cc ExprNode.hh DBM.hh
-	$(CC) $(CFLAGS) ExprNode.cc $(INCL_PATH)
+	$(CXX) $(CFLAGS) ExprNode.cc $(INCL_PATH)
 
-pes.lex.o: pes.lex.c
-	$(CC) $(CFLAGS) pes.lex.c $(INCL_PATH) 
+pes.lex.o: pes.lex.cc
+	$(CXX) $(CFLAGS) pes.lex.cc $(INCL_PATH) 
 
-pes.lex.c: pes.l
-	$(FLEX) -p -8 -Ce -opes.lex.c pes.l
+pes.lex.cc: pes.l
+	$(FLEX) -p -8 -Ce -opes.lex.cc pes.l
 
-pes.tab.o: pes.tab.c DBM.hh ExprNode.hh
-	$(CC) $(CFLAGS) pes.tab.c $(INCL_PATH)
+pes.tab.o: pes.tab.cc DBM.hh ExprNode.hh
+	$(CXX) $(CFLAGS) pes.tab.cc $(INCL_PATH)
 
-pes.tab.c: pes.y
-	bison -t -d -v -o pes.tab.c pes.y
+pes.tab.cc: pes.y
+	bison -t -d -v -o pes.tab.cc pes.y
 
-testdbm: testdbm.cc
-	$(CC) -o testdbm -g testdbm.cc
-
-testdbmlist: testdbmlist.cc DBMList.hh DBM.hh
-	$(CC) -o testdbmlist -g testdbmlist.cc
+check:
+	$(MAKE) -C $(TEST_DIR) check
  
 clean:
 	-echo "Removing all object files!"
 	-rm -f demo *.o
-	-rm -f testdbm
-	-rm -f testdbmlist
-	-echo "Removing intermediate C files!"
-	-rm -f pes.lex.c pes.tab.c 
+	-echo "Removing intermediate C++ files!"
+	-rm -f pes.lex.cc pes.tab.cc 
 	-echo "Removing intermediate header files!"
-	-rm -f pes.tab.h
+	-rm -f pes.tab.hh
 	-echo "Removing other parser-generated files!"
 	-rm -f pes.output
 	-echo "Removing Doxygen-generated documentation files!"
 	-rm -rf doc/DoxygenOutput/html
 	-rm -rf doc/DoxygenOutput/latex
 	-echo "Removing other tool-generated files!"
-	-rm -rf testdbmlist.dSYM
-	-rm -rf testdbm.dSYM
 	-rm -rf demo.dSYM
 	-rm -f gmon.out
-
-cleanBin:
-	-echo "Removing all object files!"
-	-rm -f demo *.o
-	-rm -f testdbm
-	-rm -f testdbmlist
-	-echo "Removing intermediate C files!"
-	-rm -f pes.lex.c pes.tab.c 
-	-echo "Removing intermediate header files!"
-	-rm -f pes.tab.h
-	-echo "Removing other parser-generated files!"
-	-rm -f pes.output
-	-echo "Removing other tool-generated files!"
-	-rm -rf testdbmlist.dSYM
-	-rm -rf testdbm.dSYM
-	-rm -rf demo.dSYM
-	-rm -f gmon.out
+	$(MAKE) -C $(TEST_DIR) clean
