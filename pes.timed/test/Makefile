@@ -22,7 +22,7 @@ USER_DIR = .
 INCL = -I ../
 
 # Project headers
-HEADERS = $(INCL_PATH)/*.hh
+HEADERS = ../*.hh
 
 # Flags passed to the preprocessor.
 # Set Google Test's header directory as a system directory, such that
@@ -73,12 +73,19 @@ gtest_main.a : gtest-all.o gtest_main.o
 # gtest_main.a, depending on whether it defines its own main()
 # function.
 
-dbmtest.o : $(USER_DIR)/dbmtest.cc $(GTEST_HEADERS)
+dbmtest.o : $(USER_DIR)/dbmtest.cc $(HEADERS) $(GTEST_HEADERS)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/dbmtest.cc $(INCL)
 
 dbmtest : dbmtest.o gtest_main.a
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@
 	
+dbmlisttest.o : $(USER_DIR)/dbmlisttest.cc $(HEADERS) $(GTEST_HEADERS)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/dbmlisttest.cc $(INCL)
+
+dbmlisttest : dbmlisttest.o gtest_main.a
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@
+	
 .PHONY: check
-check : dbmtest
+check : dbmtest dbmlisttest
 	$(USER_DIR)/dbmtest
+	$(USER_DIR)/dbmlisttest
