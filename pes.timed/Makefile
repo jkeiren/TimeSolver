@@ -50,13 +50,17 @@ ifeq ($(VALGRIND),1)
   LDFLAGS += $(LDFLAGS_VALGRIND)
 endif
 
-
 ifeq ($(UNAME_S), Darwin)
 	# Stack size set to 4GB for Mac, since terminal hard limit is 64MB
 	# My machine has 16GB of RAM
 	# This number is the number of bytes in Hex
 	LDFLAGS += -Wl,-stack_size,200000000
 endif
+
+# Export flags to make sure they are used by submakes, e.g. for testing
+export CFLAGS
+export CXXFLAGS
+export LDFLAGS
 
 FLEX = flex
 BISON = bison
