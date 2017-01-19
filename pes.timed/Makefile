@@ -21,6 +21,7 @@ CXXFLAGS_VALGRIND = -g3
 LDFLAGS_ALL =
 LDFLAGS_PROFILE = -pg -O
 LDFLAGS_DEBUG =
+LDFLAGS_VALGRIND =
 
 # Assume sane defaults from the environment, and we add to this.
 CFLAGS += $(CFLAGS_ALL)
@@ -41,6 +42,14 @@ ifeq ($(DEBUG),1)
 	CXXFLAGS += $(CXXFLAGS_DEBUG)
 	LDFLAGS += $(LDFLAGS_DEBUG)
 endif
+
+# VALGRIND=1 can be passed in from the command line.
+ifeq ($(VALGRIND),1)
+  CFLAGS += $(CFLAGS_VALGRIND)
+  CXXFLAGS += $(CXXFLAGS_VALGRIND)
+  LDFLAGS += $(LDFLAGS_VALGRIND)
+endif
+
 
 ifeq ($(UNAME_S), Darwin)
 	# Stack size set to 4GB for Mac, since terminal hard limit is 64MB
