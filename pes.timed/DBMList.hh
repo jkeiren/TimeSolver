@@ -976,6 +976,7 @@ public:
 };
 
 /** Stream operator for DBMLists */
+inline
 std::ostream& operator<<(std::ostream& os, const DBMList& l)
 {
     l.print(os);

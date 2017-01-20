@@ -3,19 +3,6 @@
 #include "testdbms.hh"
 #include "gtest/gtest.h"
 
-
-#define EXPECT_EQ_NONCONST(expected, given) \
-    EXPECT_TRUE(expected == given);
-
-#define EXPECT_EQ_NONCONST_PRINT(expected, given) \
-    EXPECT_TRUE(expected == given); \
-    if(!(expected == given)) { \
-      std::cerr << "expected: " << expected << std::endl; \
-      expected.print(std::cerr); \
-      std::cerr << "given: " << std::endl; \
-      given.print(std::cerr); \
-    }
-
 // l1b
 DBM testDBM3()
 {
@@ -148,7 +135,7 @@ TEST(DBMListTest, CanonicalDBMList1)
 
     DBM test1cf(testDBM1cf());
     DBMList expected(test1cf);
-    EXPECT_EQ_NONCONST_PRINT(expected, canonical);
+    EXPECT_EQ(expected, canonical);
 }
 
 TEST(DBMListTest, CanonicalDBMList3)
@@ -157,7 +144,7 @@ TEST(DBMListTest, CanonicalDBMList3)
     canonical.cf();
 
     DBMList expected(3);
-    EXPECT_EQ_NONCONST_PRINT(expected, canonical);
+    EXPECT_EQ(expected, canonical);
 }
 
 TEST(DBMListTest, CanonicalDBMList4)
@@ -166,7 +153,7 @@ TEST(DBMListTest, CanonicalDBMList4)
     canonical.cf();
 
     DBMList expected = testDBMList4();
-    EXPECT_EQ_NONCONST_PRINT(expected, canonical);
+    EXPECT_EQ(expected, canonical);
 }
 
 TEST(DBMListTest, CanonicalDBMList5)
@@ -209,7 +196,7 @@ TEST(DBMListTest, CanonicalDBMList5)
     expected.addDBM(testDBM5cf);
     expected.addDBM(testDBM6cf);
 
-    EXPECT_EQ_NONCONST_PRINT(expected, canonical);
+    EXPECT_EQ(expected, canonical);
 }
 
 TEST(DBMListTest, CanonicalDBMList6)
@@ -220,7 +207,7 @@ TEST(DBMListTest, CanonicalDBMList6)
 
     DBM empty(emptyDBM3());
     DBMList expected(empty);
-    EXPECT_EQ_NONCONST_PRINT(expected, canonical);
+    EXPECT_EQ(expected, canonical);
 
 }
 
@@ -230,7 +217,7 @@ TEST(DBMListTest, CanonicalDBMList7)
     canonical.cf();
 
     DBMList expected = testDBMList7();
-    EXPECT_EQ_NONCONST_PRINT(expected, canonical);
+    EXPECT_EQ(expected, canonical);
 }
 
 TEST(DBMListTest, PreDBMList1)
@@ -240,7 +227,7 @@ TEST(DBMListTest, PreDBMList1)
 
     DBM test1pre(testDBM1pre());
     DBMList expected(test1pre);
-    EXPECT_EQ_NONCONST_PRINT(expected, pre);
+    EXPECT_EQ(expected, pre);
 }
 
 TEST(DBMListTest, PreCfDBMList1)
@@ -251,7 +238,7 @@ TEST(DBMListTest, PreCfDBMList1)
 
     DBM test1precf(testDBM1precf());
     DBMList expected(test1precf);
-    EXPECT_EQ_NONCONST_PRINT(expected, precf);
+    EXPECT_EQ(expected, precf);
 }
 
 TEST(DBMListTest, Subset)
@@ -299,21 +286,21 @@ TEST(DBMListTest, DBMList7Test)
 
     EXPECT_FALSE(list7.emptiness());
     EXPECT_FALSE(list7copy->emptiness());
-    EXPECT_EQ_NONCONST(list7, *list7copy);
+    EXPECT_EQ(list7, *list7copy);
 
     list7.cf();
     list7copy->cf();
-    EXPECT_EQ_NONCONST_PRINT(list7, (*list7copy));
-    EXPECT_EQ_NONCONST_PRINT(list7orig, list7);
-    EXPECT_EQ_NONCONST(list7orig, *list7copy);
+    EXPECT_EQ(list7, (*list7copy));
+    EXPECT_EQ(list7orig, list7);
+    EXPECT_EQ(list7orig, *list7copy);
 
     DBM infty = inftyDBM();
     EXPECT_TRUE(list7 == infty);
-    EXPECT_EQ_NONCONST_PRINT(list7, list7orig);
+    EXPECT_EQ(list7, list7orig);
     EXPECT_TRUE(list7 >= infty);
-    EXPECT_EQ_NONCONST_PRINT(list7, list7orig);
+    EXPECT_EQ(list7, list7orig);
     EXPECT_TRUE(list7 <= infty);
-    EXPECT_EQ_NONCONST_PRINT(list7, list7orig);
+    EXPECT_EQ(list7, list7orig);
 
     delete list7copy;
 }
@@ -348,10 +335,10 @@ TEST(DBMListTest, Intersection)
     expected.addDBM(test8);
     expected.addDBM(test9);
 
-    EXPECT_EQ_NONCONST_PRINT(expected, list7);
+    EXPECT_EQ(expected, list7);
 
     list7.cf();
-    EXPECT_EQ_NONCONST_PRINT(list7orig, list7);
+    EXPECT_EQ(list7orig, list7);
 }
 
 TEST(DBMListTest, CopyAndIntersectSelf)
@@ -375,7 +362,7 @@ TEST(DBMListTest, CopyAndIntersectSelf)
     expected.addDBM(test6);
 
     list5.cf();
-    EXPECT_EQ_NONCONST(*list5copy, list5);
+    EXPECT_EQ(*list5copy, list5);
 
     EXPECT_TRUE(list5 <= *list5copy);
     EXPECT_TRUE(list5 >= *list5copy);
@@ -391,15 +378,13 @@ TEST(DBMListTest, CopyAndIntersectSelf)
     EXPECT_TRUE(list6 == *list5copy);
 
     list6.cf();
-    EXPECT_EQ_NONCONST_PRINT(list5, list6);
+    EXPECT_EQ(list5, list6);
 
     list6.makeEmpty();
     DBM empty(emptyDBM3());
     DBMList emptylist(empty);
-    EXPECT_EQ_NONCONST_PRINT(emptylist, list6)
+    EXPECT_EQ(emptylist, list6);
 
     delete list5copy;
-    EXPECT_EQ_NONCONST_PRINT(emptylist, list6)
-
-
+    EXPECT_EQ(emptylist, list6);
 }
