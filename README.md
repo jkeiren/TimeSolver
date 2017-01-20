@@ -6,11 +6,11 @@ Written by Peter Fontana (pfontana@cs.umd.edu).
 
 ## Contents
 
-* [Brief Program Description][]
-* [Installing/Compiling][]
-* [Running the Program][]
-* [Generating Examples][]
-* [Notes][]
+* [Brief Program Description](#brief-program-description)
+* [Installing/Compiling](#installing-compiling)
+* [Running the Program](#running-the-program)
+* [Generating Examples](#generating-examples)
+* [Notes](#notes)
 
 ## Brief Program Description
 
