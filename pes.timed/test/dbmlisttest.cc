@@ -10,10 +10,10 @@
 #define EXPECT_EQ_NONCONST_PRINT(expected, given) \
     EXPECT_TRUE(expected == given); \
     if(!(expected == given)) { \
-      std::cerr << "expected: " << std::endl; \
-      expected.print(); \
+      std::cerr << "expected: " << expected << std::endl; \
+      expected.print(std::cerr); \
       std::cerr << "given: " << std::endl; \
-      given.print(); \
+      given.print(std::cerr); \
     }
 
 // l1b

@@ -981,4 +981,12 @@ public:
 	
 	
 };
+
+/** Stream operator for DBMLists */
+std::ostream& operator<<(std::ostream& os, const DBMList& l)
+{
+    l.print(os);
+    return os;
+}
+
 #endif //DBMLIST_H
