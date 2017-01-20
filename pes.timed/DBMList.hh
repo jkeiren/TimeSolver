@@ -459,7 +459,6 @@ public:
    * @param Y (&) The right DBM.
    * @return true: *this <= Y; false: otherwise. */
   bool operator <= (const DBM &Y) const{
-  
     bool tempB = true;
     for(unsigned int i = 0; i < dbmListVec->size(); i++) {
       tempB = *((*dbmListVec)[i]) <= Y;
@@ -510,7 +509,6 @@ public:
    * @param Y (&) The right DBM.
    * @return true: *this >= Y; false: otherwise. */
   bool operator >= (const DBM &Y) const{
-    
     if(dbmListVec->size() == 1) {
       return *((*dbmListVec)[0]) >= Y;
     }
@@ -542,7 +540,6 @@ public:
    * @param Y (&) The right DBMList.
    * @return true: *this >= Y; false: otherwise. */
   bool operator >= (const DBMList &Y) const {
-    
     if(dbmListVec->size() == 1) {
       return Y <= *((*dbmListVec)[0]);
     }
@@ -602,7 +599,6 @@ public:
    * @note This method assumes that the calling DBMList and Y have the same
    * number of clocks. */ 
   int relation(const DBM &Y) const {
-    
     /* For now, just utilize the <= and >= comparisons. */
     bool gt = this->operator>=(Y);
     bool lt = this->operator<=(Y);
@@ -623,7 +619,6 @@ public:
    * @note This method assumes that the calling DBMList and Y have the same
    * number of clocks. */ 
   int relation(const DBMList &Y) const {
-    
     /* For now, just utilize the <= and >= comparisons. */
     bool gt = this->operator>=(Y);
     bool lt = this->operator<=(Y);
@@ -766,7 +761,6 @@ public:
    * @note This only works when the timed automaton is "diagonal-free,"
    * or does not have any clock difference constraints in the automaton. */
   void bound(const int maxc){
-    
     for(unsigned int i = 0; i < dbmListVec->size(); i++) {
       DBM *tD = (*dbmListVec)[i];
       tD->bound(maxc);
@@ -861,7 +855,6 @@ public:
 	 * is in canonical form.
    * @return true: this clock zone is empty, false: otherwise. */
   bool emptiness() const{
-    
 		if(dbmListVec->size() == 0) {
 		  /* Note: we should not get this case since
 		   * we always keep in one DBM. */

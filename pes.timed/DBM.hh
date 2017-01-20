@@ -262,7 +262,6 @@ public:
    * @param Y (&) The object to copy.
    * @return [Constructor] */
   DBM(const DBM &Y): OneDIntArray(Y){ nClocks = Y.nClocks; isCf = Y.isCf;}
-  
   /** Tell the object that it is not in canonical form.
    * Call this method whenever changing the DBM's value from the outside. 
    * Otherwise, cf() will fail to convert the DBM to canonical form.
@@ -394,8 +393,6 @@ public:
    * @param Y (&) The right DBM.
    * @return true: *this <= Y; false: otherwise. */
   bool operator <= (const DBM &Y){
-    
-    
     /* Change constraint comparison order:
      * 1. First, check all single-clock lower bound constraints.
      * 2. Second, check all single-clock upper bound constraints.
@@ -432,8 +429,6 @@ public:
    * @return true: the calling DBM is a superset of Y, 
    * false: otherwise */
   bool operator >= (const DBM &Y){
-    
-    
     /* Change constraint comparison order:
      * 1. First, check all single-clock lower bound constraints.
      * 2. Second, check all single-clock upper bound constraints.
@@ -472,7 +467,6 @@ public:
    * @param Y (&) The right DBM
    * @return true: the calling DBM equals Y, false: otherwise. */
   bool operator == (const DBM &Y) const {
-    
      /* Change constraint comparison order:
      * 1. First, check all single-clock lower bound constraints.
      * 2. Second, check all single-clock upper bound constraints.
@@ -511,7 +505,6 @@ public:
    * @note This method assumes that the calling DBM and Y have the same
    * number of clocks. */ 
   int relation(const DBM &Y){
-    
     /* Should we check for same number of clocks (?)
      * Currently, the code does not. */
     bool gt = true;
@@ -834,7 +827,6 @@ public:
    * @note This only works when the timed automaton is "diagonal-free,"
    * or does not have any clock difference constraints in the automaton. */
   void bound(const int maxc){
-    
     // Is this method correct (?) Should it also be loosening 
     // clock differences based on single clock constraints?
     for (short int i = 1; i < nClocks; i++){
@@ -1003,7 +995,6 @@ public:
 	 * is in canonical form.
    * @return true: this clock zone is empty, false: otherwise. */
   bool emptiness() const{
-    
 		/* O(n) version. This assumes that the DBM is in canonical form.
 		 * an O(n^2) version was previously used to handle overflow possibilities
 		 * from a model with different semantics. */
@@ -1118,6 +1109,7 @@ public:
 		bool isAllImplicit=true;
 		if(this->emptiness()) {
 		  os << "EMPTY";
+		  return;
 		}
 		for(short int i = 0; i < nClocks; i++){
 			for(short int j = 0; j < nClocks; j++){

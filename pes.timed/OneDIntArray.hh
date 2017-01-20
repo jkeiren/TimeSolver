@@ -23,7 +23,6 @@ public:
    * for the array.
    * @return [Constructor]. */
   OneDIntArray(const short int numElements) : Generic1DArray(numElements, sizeof(short int)) {}
-  
   /** Copy Constructor for constant objects.
    * @param Y (&) The reference to the object to copy.
    * @return [Constructor]. */
@@ -88,7 +87,6 @@ protected:
     return (*p);                                       
   }
 
-
   /** Retrieves a reference for the element specified at the given index.
    * This is a protected method because it eliminates bounds checking to improve
    * performance.
@@ -104,8 +102,7 @@ protected:
     short int *p = (short int*) &(storage[offset]);
     // Dereference p
     return (*p);
-  }
-  
+  }  
 };
 
 #endif  //ONEDINTARRAY_H
