@@ -98,12 +98,17 @@ pes.tab.cc pes.tab.hh: pes.y
 
 check:
 	$(MAKE) -C $(TEST_DIR) check
+
+checktool:
+	../TATest.py
+	
+checkall: check checktool
  
 clean:
 	-echo "Removing all object files!"
 	-rm -f demo *.o
 	-echo "Removing intermediate C files!"
-	-rm -f pes.lex.c pes.tab.c 
+	-rm -f pes.lex.cc pes.tab.cc
 	-echo "Removing intermediate header files!"
 	-rm -f pes.tab.hh
 	-echo "Removing other parser-generated files!"
