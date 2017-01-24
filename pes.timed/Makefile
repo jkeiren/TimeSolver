@@ -99,7 +99,7 @@ pes.tab.cc pes.tab.hh: pes.y
 check:
 	$(MAKE) -C $(TEST_DIR) check
 
-checktool:
+checktool: demo
 	../TATest.py
 	
 checkall: check checktool
