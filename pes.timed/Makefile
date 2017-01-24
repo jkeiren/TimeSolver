@@ -98,6 +98,11 @@ pes.tab.cc pes.tab.hh: pes.y
 
 check:
 	$(MAKE) -C $(TEST_DIR) check
+
+checktool:
+	../TATest.py
+	
+checkall: check checktool
  
 clean:
 	-echo "Removing all object files!"
