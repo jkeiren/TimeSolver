@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """Script to perform end-to-end tests on the examples"""
 
-import io
-import os
-import subprocess
 import difflib
-import sys
+import io
+import gzip
+import os
 import re
+import subprocess
+import sys
 
 # These paths are relative to the directory in which this script is stored.
 # We make sure we are in the appropriate directory in the __main__ at the
@@ -25,7 +26,7 @@ def compare(expectedFileName, given):
     """Compare the output in the file with name expectedFileName to the
     string given"""
     
-    with open(expectedFileName, 'r') as f:
+    with gzip.open(expectedFileName, 'rt') as f:
         expectedFile = filterTimes(f.readlines())
         givenLines = filterTimes(given.splitlines(keepends = True))
         
@@ -43,11 +44,11 @@ def runTestCase(dirName, fileName, overwrite = False):
     True, the expected output is overwritten. If overwrite is False, the output
     is compared to the file in which the expected output is stored."""
     ret = subprocess.run([EXECUTABLE, "-d", os.path.join(dirName,fileName)], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines = True)
-    resultFile = fileName + ".expectedout"
+    resultFile = fileName + ".expectedout.gz"
 
     if overwrite:
-        f = open(os.path.join(dirName,resultFile), 'w')
-        f.write(ret.stdout)
+        with gzip.open(os.path.join(dirName,resultFile), 'wt') as f:
+          f.write(ret.stdout)
         result = True
         print('[{0}] {1}/{2}'.format('\033[33mGENERATE\033[39m', dirName, resultFile))
     else:
@@ -63,7 +64,7 @@ def traverseTestCases(rootDir, overwrite = False):
     for dirName, subdirList, fileList in os.walk(rootDir):
         for fname in fileList:
             # Skip expected output files
-            if os.path.splitext(fname)[1] == ".expectedout" or fname[0] == '.':
+            if os.path.splitext(fname)[1] == ".gz" or fname[0] == '.':
                 continue
             count += 1
             res = runTestCase(dirName, fname, overwrite)
