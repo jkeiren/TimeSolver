@@ -721,10 +721,10 @@ public:
   Transition(ExprNode * const destParent, const ExprNode * const leftExprIn,
              ExprNode * const rightExprIn, const bool isDestOnLeft,
              const SubstList * const dest, const ClockSet * const reset,
-             const vector<pair<short int, short int> > * const clockAssignments) :
+             const std::vector<std::pair<short int, short int> > * const clockAssignments) :
   destPar(destParent),
   isDestLeft(isDestOnLeft),
-  clockAssignmentList(clockAssignments == 0?NULL:new vector<pair<short int, short int> >(*clockAssignments)),
+  clockAssignmentList(clockAssignments == 0?NULL:new std::vector<std::pair<short int, short int> >(*clockAssignments)),
   leftExpr(leftExprIn),
   rightExpr(rightExprIn),
   destList(dest),
@@ -782,7 +782,7 @@ public:
   /** Retrieve the list of clock assignments stored by this transition.
   * @return the vector containing the ordered list of clock assignments
   * that occur on the edge of this transition. */
-  const vector<pair<short int, short int> > * getAssignmentVector() const {
+  const std::vector<std::pair<short int, short int> > * getAssignmentVector() const {
     return clockAssignmentList;
   }
 
@@ -855,7 +855,7 @@ private:
    * sequentially, the list is assumed to have no clock swaps
    * (i.e. no conflicts in clock assignments). By construction,
    * the innermost assignments are at the back. */
-  const vector<pair<short int, short int> > * clockAssignmentList;
+  const std::vector<std::pair<short int, short int> > * clockAssignmentList;
 
   /** The enabling conditions of the transition. */
   const ExprNode *leftExpr;
@@ -942,7 +942,7 @@ public:
   ~Sequent(){
     delete st;
     // Iterate Through and Delete every element of ds
-    for(vector<DBM *>::iterator it = ds.begin();
+    for(std::vector<DBM *>::iterator it = ds.begin();
         it != ds.end(); it++) {
       DBM *ls = (*it);
       delete ls;
@@ -973,18 +973,18 @@ public:
    * Each element in ds is combined with the location state (st)
    * and the right hand expression (e) to form a proof sequent
    * in the proof tree. */
-  vector<DBM*> ds;
+  std::vector<DBM*> ds;
 
   /** The placeholder sequent parent to this sequent in the proof tree;
    * this is used  to quickly access backpointers. A sequent either has a parent
    * with a placeholder (parSequentPlace) or a parent without a
    * placeholder (parSequent). */
-  vector<SequentPlace *> parSequentPlace;
+  std::vector<SequentPlace *> parSequentPlace;
   /** The sequent parent to this sequent in the proof tree; this is used
    * to quickly access backpointers. A sequent either has a parent
    * with a placeholder (parSequentPlace) or a parent without a
    * placeholder (parSequent). */
-  vector<Sequent *> parSequent;
+  std::vector<Sequent *> parSequent;
 
 
 protected:
@@ -1050,7 +1050,7 @@ public:
   ~SequentPlace(){
     delete st;
     // Iterate Through and Delete every element of ds
-    for(vector<pair<DBM*, DBMList *> >::iterator it = ds.begin();
+    for(std::vector<std::pair<DBM*, DBMList *> >::iterator it = ds.begin();
         it != ds.end(); it++) {
       DBM *ls = (*it).first;
       DBMList * lsList = (*it).second;
@@ -1085,18 +1085,18 @@ public:
    * Each element in ds is combined with the location state (st)
    * and the right hand expression (e) to form a proof sequent
    * in the proof tree. */
-  vector<pair<DBM*, DBMList* > > ds;
+  std::vector<std::pair<DBM*, DBMList* > > ds;
 
   /** The placeholder sequent parent to this sequent in the proof tree;
    * this is used  to quickly access backpointers. A sequent either has a parent
    * with a placeholder (parSequentPlace) or a parent without a
    * placeholder (parSequent). */
-  vector<SequentPlace *> parSequentPlace;
+  std::vector<SequentPlace *> parSequentPlace;
   /** The sequent parent to this sequent in the proof tree; this is used
    * to quickly access backpointers. A sequent either has a parent
    * with a placeholder (parSequentPlace) or a parent without a
    * placeholder (parSequent). */
-  vector<Sequent *> parSequent;
+  std::vector<Sequent *> parSequent;
 
 
 protected:
@@ -1121,7 +1121,7 @@ protected:
  * @param av (*) the pointer to the vector of clock assignments.
  * @return None. When finished, av is changed to be the vector of
  * clock assignments.  */
-void makeAssignmentList(const ExprNode * const e, vector<pair<short int, short int> > * av);
+void makeAssignmentList(const ExprNode * const e, std::vector<std::pair<short int, short int> > * av);
 
 /** Adds a clock with a desired string label
  * to the current list of all clocks.
@@ -1136,7 +1136,7 @@ int add_clock(const char *s);
  * -1: otherwise (s is not a clock). */
 int lookup_clock(const char *s);
 
-const std::vector<string>& get_clock_strings();
+const std::vector<std::string>& get_clock_strings();
 
 /** Prints out the list of clocks with their labels
  * and current values.
@@ -1188,7 +1188,7 @@ int add_predicate(const char *s, const int i);
  * @param parity The desired parity: true = gfp, false = lfp.
  * @return true:if successful (found the predicate expression),
  * false:otherwise. */
-bool set_parity_block(const string& name, const int block, const bool parity);
+bool set_parity_block(const std::string& name, const int block, const bool parity);
 
 /** Adds an an equation, with its variable name and right hand side, to
  * the list of equations. This list links predicate variable expressions

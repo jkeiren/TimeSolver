@@ -7,6 +7,8 @@
 #include "proof_data.hh"
 #include "proof.hh"
 
+using namespace std;
+
 #define DEBUG true
 
 /** The prover function to prove whether a sequent is true or false.

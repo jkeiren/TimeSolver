@@ -17,10 +17,10 @@ protected:
   /** First we declare variables for the timed automaton that we are proving
    * things about.
    */
-  const vector<ExprNode *>& invs;
+  const std::vector<ExprNode *>& invs;
   /** This is the list of transitions of the state machine
    * from the automata/PES description. */
-  const vector<Transition *> * const transList;
+  const std::vector<Transition *> * const transList;
 
 
   bool currParityGfp;
@@ -131,8 +131,8 @@ protected:
   bool newSequent;
 
 public:
-  prover(const vector<ExprNode *>& a_invs,
-         const vector<Transition *> * const a_transList,
+  prover(const std::vector<ExprNode *>& a_invs,
+         const std::vector<Transition *> * const a_transList,
          bool a_currParityGfp, bool a_prevParityGfp, bool a_useCaching,
          int a_predicateInd, int a_nHash, bool debug, int MAXC,
          int nbits, int seqStSize, int aSize) :
@@ -235,33 +235,33 @@ public:
   void printTabledSequents(std::ostream& os) const
   {
     /* If in DEBUG Mode, print out list of Tabled Sequents */
-    os << endl;
-    os << "##--Debug Info: Tabled Sequents===============" << endl;
-    os << "----GFP Cached Sequents---------" << endl;
+    os << std::endl;
+    os << "##--Debug Info: Tabled Sequents===============" << std::endl;
+    os << "----GFP Cached Sequents---------" << std::endl;
     Xlist_pGFP.print_Xlist(os);
-    // os << "Number of GFP Sequents Tabled: " endl;
-    os << endl;
-    os << "----LFP Cached Sequents---------" << endl;
+    // os << "Number of GFP Sequents Tabled: " std::endl;
+    os << std::endl;
+    os << "----LFP Cached Sequents---------" << std::endl;
     Xlist_pLFP.print_Xlist(os);
-    os << endl;
-    os << "----Known False Cached Sequents---------" << endl;
+    os << std::endl;
+    os << "----Known False Cached Sequents---------" << std::endl;
     Xlist_false.print_Xlist(os);
-    os << endl;
-    os << "----Known True Cached Sequents---------" << endl;
+    os << std::endl;
+    os << "----Known True Cached Sequents---------" << std::endl;
     Xlist_true.print_Xlist(os);
-    os << endl;
-    os << "##--Debug Info: Tabled Placeholder Sequents==========" << endl;
-    os << "----GFP Placeholder Cached Sequents---------" << endl;
+    os << std::endl;
+    os << "##--Debug Info: Tabled Placeholder Sequents==========" << std::endl;
+    os << "----GFP Placeholder Cached Sequents---------" << std::endl;
     Xlist_pGFP_ph.print_Xlist(os);
-    // os << "Number of GFP Sequents Tabled: " endl;
-    os << endl;
-    os << "----LFP Placeholder Cached Sequents---------" << endl;
+    // os << "Number of GFP Sequents Tabled: " std::endl;
+    os << std::endl;
+    os << "----LFP Placeholder Cached Sequents---------" << std::endl;
     Xlist_pLFP_ph.print_Xlist(os);
-    os << endl;
-    os << "----Known False (Placeholder) Cached Sequents---------" << endl;
+    os << std::endl;
+    os << "----Known False (Placeholder) Cached Sequents---------" << std::endl;
     Xlist_false_ph.print_Xlist(os);
-    os << endl;
-    os << "----Known True (Placeholder) Cached Sequents---------" << endl;
+    os << std::endl;
+    os << "----Known True (Placeholder) Cached Sequents---------" << std::endl;
     Xlist_true_ph.print_Xlist(os);
   }
 
@@ -508,7 +508,7 @@ protected:
     }
     DBM *m = new DBM(*lhs);
     DBMList *mp = new DBMList(*lhsPlace);
-    pair <DBM *, DBMList *> p (m, mp);
+    std::pair <DBM *, DBMList *> p (m, mp);
     s->ds.push_back(p);
     return false;
   }
@@ -567,7 +567,7 @@ protected:
     DBM *m = new DBM(*lhs);
     /* I would like this to be NULL, but it is checked in the program */
     DBMList *mp = new DBMList(*EMPTY);
-    pair <DBM *, DBMList *> p (m,mp);
+    std::pair <DBM *, DBMList *> p (m,mp);
     s->ds.push_back(p);
     return false;
   }
@@ -589,8 +589,8 @@ protected:
    * placeholder sequents to purge.
    * @return true: something was purged; false: otherwise (nothing was
    * purged).*/
-  bool look_for_and_purge_rhs_backStack(const vector<Sequent *> * const initialPtr,
-                                        const vector<SequentPlace *> * const initialPlacePtr)
+  bool look_for_and_purge_rhs_backStack(const std::vector<Sequent *> * const initialPtr,
+                                        const std::vector<SequentPlace *> * const initialPlacePtr)
   {
     bool madeChange = false;
 
@@ -599,8 +599,8 @@ protected:
     /* Now iterate until the vector sequentQueue is empty,
      * purging backpointers and adding relevant ones in the queue */
     /* For now, implement purging with deques instead of vectors */
-    deque <Sequent *> purgeSeqQueue(initialPtr->begin(), initialPtr->end());
-    deque <SequentPlace *> purgeSeqPlaceQueue(initialPlacePtr->begin(), initialPlacePtr->end());
+    std::deque <Sequent *> purgeSeqQueue(initialPtr->begin(), initialPtr->end());
+    std::deque <SequentPlace *> purgeSeqPlaceQueue(initialPlacePtr->begin(), initialPlacePtr->end());
 
     while(!(purgeSeqPlaceQueue.empty())) {
 
@@ -627,12 +627,12 @@ protected:
       if( b2 || b2b) {
         madeChange = true;
         // Now add sequents
-        for(vector<Sequent *>::iterator it = tp->parSequent.begin();
+        for(std::vector<Sequent *>::iterator it = tp->parSequent.begin();
             it != tp->parSequent.end(); it++) {
           purgeSeqQueue.push_back(*it);
 
         }
-        for(vector<SequentPlace *>::iterator it = tp->parSequentPlace.begin();
+        for(std::vector<SequentPlace *>::iterator it = tp->parSequentPlace.begin();
             it != tp->parSequentPlace.end(); it++) {
           purgeSeqPlaceQueue.push_back(*it);
 
@@ -668,12 +668,12 @@ protected:
       if(b1 || b1b) {
         madeChange = true;
         // Now add sequents
-        for(vector<Sequent *>::iterator it = t->parSequent.begin();
+        for(std::vector<Sequent *>::iterator it = t->parSequent.begin();
             it != t->parSequent.end(); it++) {
           purgeSeqQueue.push_back(*it);
 
         }
-        for(vector<SequentPlace *>::iterator it = t->parSequentPlace.begin();
+        for(std::vector<SequentPlace *>::iterator it = t->parSequentPlace.begin();
             it != t->parSequentPlace.end(); it++) {
           purgeSeqPlaceQueue.push_back(*it);
 
@@ -710,7 +710,7 @@ protected:
 
     retPlaceDBM->makeEmpty();
     /* Iterate through each DBM of phi2Place and union the results. */
-    vector<DBM *> * phi2PlaceList = phi2Place->getDBMList();
+    std::vector<DBM *> * phi2PlaceList = phi2Place->getDBMList();
     DBMList compPhi1(*phi1Place);
     !compPhi1;
     compPhi1.cf();

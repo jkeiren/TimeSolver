@@ -48,7 +48,7 @@ inline bool comp_ph_invs(const ExprNode& e, const SubstList &sublist)
               comp_ph_invs(*(e.getRight()), sublist));
       break; }
     default: {
-      cerr << "Not a valid condition" <<endl;
+      std::cerr << "Not a valid condition" <<std::endl;
       exit(1); }
   }
   return false;
@@ -68,11 +68,11 @@ inline bool comp_ph_invs(const ExprNode& e, const SubstList &sublist)
  * @param sub (*) The discrete state (location variable assignment)
  * of the sequent.
  * @return true: the model has a non-vacuous invariant; false: otherwise. */
-inline bool invs_chk(const vector<ExprNode *>& invs, DBM * const lhs, const SubstList& sub){
+inline bool invs_chk(const std::vector<ExprNode *>& invs, DBM * const lhs, const SubstList& sub){
   bool outRes = false;
   if (invs.empty()) return false;
   for (int i=0; i < sub.nElements(); i++){
-    for (vector<ExprNode*>::const_iterator it = invs.begin(); it != invs.end(); ++it){
+    for (std::vector<ExprNode*>::const_iterator it = invs.begin(); it != invs.end(); ++it){
       if (comp_ph_invs(*(*it), sub)) {
         (*lhs) & (*(*it)->dbm()) ;
         outRes = true;
@@ -95,10 +95,10 @@ inline bool invs_chk(const vector<ExprNode *>& invs, DBM * const lhs, const Subs
  * @param sub (*) The discrete state (location variable assignment)
  * of the sequent.
  * @return true: the DBMList is changed; false: otherwise. */
-inline bool invs_chk(const vector<ExprNode *>& invs, DBMList * const lhs, const SubstList& sub){
+inline bool invs_chk(const std::vector<ExprNode *>& invs, DBMList * const lhs, const SubstList& sub){
   bool outRes = false;
   if (invs.empty()) return false;
-  vector<DBM *> * lList = lhs->getDBMList();
+  std::vector<DBM *> * lList = lhs->getDBMList();
   for(unsigned int i = 0; i < lList->size(); i++) {
     bool temp = invs_chk(invs, (*lList)[i], sub);
     outRes = temp || outRes;
@@ -175,7 +175,7 @@ inline bool comp_ph(DBM * const ph, const ExprNode& e, const SubstList& sublist)
               comp_ph(ph, *(e.getRight()), sublist));
       break; }
     default: {
-      cerr << "Not a valid condition" <<endl;
+      std::cerr << "Not a valid condition" <<std::endl;
       exit(1); }
   }
   return false;
@@ -246,7 +246,7 @@ inline bool comp_ph_exist(DBM * const ph, const ExprNode& e, const SubstList& su
               comp_ph_exist(ph, *(e.getRight()), sublist));
       break; }
     default: {
-      cerr << "Not a valid condition" <<endl;
+      std::cerr << "Not a valid condition" <<std::endl;
       exit(1); }
   }
   return false;
@@ -336,7 +336,7 @@ inline bool comp_ph_exist_place(DBM * const ph, DBMList * const place,
               comp_ph_exist_place(ph, place, *(e.getRight()), sublist));
       break; }
     default: {
-      cerr << "Not a valid condition" <<endl;
+      std::cerr << "Not a valid condition" <<std::endl;
       exit(1); }
   }
   return false;
@@ -413,7 +413,7 @@ inline bool comp_ph_all_place(DBM * const ph, DBMList * const place,
               comp_ph_all_place(ph, place, *(e.getRight()), sublist));
       break; }
     default: {
-      cerr << "Not a valid condition" <<endl;
+      std::cerr << "Not a valid condition" <<std::endl;
       exit(1); }
   }
   return false;

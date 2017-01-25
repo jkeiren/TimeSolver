@@ -401,7 +401,7 @@ public:
    * @return None. */
   void print_Xlist(std::ostream& os) const {
     int totNumSeq = 0;
-    os << "\t--For Each Sequence, Premise sets separated by \";\" --" << endl;
+    os << "\t--For Each Sequence, Premise sets separated by \";\" --" << std::endl;
     for(int i = 0; i < predicateInd*(nbits+1); i++){
       for(typename stack::const_iterator it = Xlist[i].begin(); it != Xlist[i].end(); it++){
         int conseqNumSeq = 0;
@@ -416,13 +416,13 @@ public:
         print_ExprNode((*it)->rhs(), os);
 
         os << " (" << conseqNumSeq;
-        string tempStr;
+        std::string tempStr;
         (conseqNumSeq == 1) ? (tempStr = "Premise") : (tempStr = "Premises" );
         os << " "<< tempStr << " for this Consequent)";
-        os << endl;
+        os << std::endl;
       }
     }
-    os << "Total Number of Sequents: " << totNumSeq << endl;
+    os << "Total Number of Sequents: " << totNumSeq << std::endl;
   }
 
 };
