@@ -90,7 +90,7 @@ public:
     }
     return;
   }
-  
+
   /** Returns a reference of the element at the specified index.
    * This function returns a reference to the original copy,
    * not a deep copy.
@@ -104,7 +104,7 @@ public:
     // Return address of desired element:
     return &(storage[index * eltSize]);
   }
-  
+
   /** Performs a bitwise comparison of the storage of
    * both arrays.
    * @param Y (&) The second Generic1DArray to compare to.
@@ -112,8 +112,8 @@ public:
   bool operator == (const Generic1DArray & Y){
     for (int i = 0; i < (quantity >>1); i++) {
       if ((int *)&(storage[i << 2]) != (int *)&(Y.storage[i << 2])) {
-	     	return false;
-	    }
+        return false;
+      }
     }
     // Check the last bit
     if ((quantity & 0x1) == 1) {

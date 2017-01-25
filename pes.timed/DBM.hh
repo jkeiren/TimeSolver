@@ -263,95 +263,95 @@ public:
   DBM(const DBM &Y): OneDIntArray(Y){ nClocks = Y.nClocks; isCf = Y.isCf;}
 
   /** Tell the object that it is not in canonical form.
-   * Call this method whenever changing the DBM's value from the outside. 
+   * Call this method whenever changing the DBM's value from the outside.
    * Otherwise, cf() will fail to convert the DBM to canonical form.
    * @return None */
   void setIsCfFalse() {
     isCf = false;
   }
-  
+
   /** Returns whether this DBM is in canonical form or not.
    * @return true: the DBM is in canonical form; false: otherwise. */
   bool isInCf() const {
     return isCf;
   }
-  
+
   /** The public method is used to read a value of a
    * specific constraint in the DBM. This method performs out of bounds checks
    * on row and col.
    * @param row The first clock, or the row clock, with 0 being the first row.
-   * @param col The second clock, or the column clock, 
+   * @param col The second clock, or the column clock,
    * with 0 being the first column.
    * @return The value of the upper bound constraint on row - col. */
   short int operator() (const short int row, const short int col) const {
     //Indexes are zero based
     /* Give out of bounds check for public method */
-    if (row < 0 || row >= nClocks || col >= nClocks || col < 0){  
+    if (row < 0 || row >= nClocks || col >= nClocks || col < 0){
       // I added that col < 0 to check for the third bound.
       std::cerr << "nClocks : " << nClocks << " row : "<<row << " col : "
       << col <<std::endl;
       std::cerr <<  "operator() index out of bounds" <<std::endl; exit(-1);
     }
-    
+
     // Offsets to one dimentional array
-    short int index = (row * nClocks) + col;         
+    short int index = (row * nClocks) + col;
     short int offset = index * sizeof(short int);
     short int *p = (short int*) &(storage[offset]);
     // Dereference p
-    return (*p);                                        
+    return (*p);
   }
-  
+
   /** The public method is used to write a value to a
    * specific constraint in the DBM (it can also read as well). Out of bounds
    * checks are performed.
    * @param row The first clock, or the row clock, with 0 being the first row.
-   * @param col The second clock, or the column clock, 
+   * @param col The second clock, or the column clock,
    * with 0 being the first column.
    * @param val The new 13-bit value for the upper bound of row - col.
    * @return None*/
-	void addConstraint(const short int row, const short int col, const short int val) {
+  void addConstraint(const short int row, const short int col, const short int val) {
     // Use Version of operator() that allows for a reference
     // But avoid additional method invocation.
     /* Give out of bounds check for public method */
-		if (row < 0 || row >= nClocks || col >= nClocks || col < 0){  
+    if (row < 0 || row >= nClocks || col >= nClocks || col < 0){
       // I added that col < 0 to check for the third bound.
       std::cerr << "nClocks : " << nClocks << " row : "<<row << " col : "
       << col <<std::endl;
       std::cerr <<  "operator() index out of bounds" <<std::endl; exit(-1);
     }
-    
+
     // Offsets to one dimentional array
-    short int index = (row * nClocks) + col;         
+    short int index = (row * nClocks) + col;
     short int offset = index * sizeof(short int);
     short int *p = (short int*) &(storage[offset]);
     // Dereference p and make assignment
     *p = val;
-    
-		isCf = false;
-    return;                                       
-    
-	}
-  
+
+    isCf = false;
+    return;
+
+  }
+
   /* Returns if the constraint row - col is implicit.
-   * Here, an "implicit constraint" means that row - col is not 
+   * Here, an "implicit constraint" means that row - col is not
    * a constraint. This does not determine if this constraint
    * is encoded by other constraints in the structure.
    * @param row The first clock, or the row clock, with 0 being the first row.
-   * @param col The second clock, or the column clock, 
+   * @param col The second clock, or the column clock,
    * with 0 being the first column.
-   * @return true: the constraint is implicit (no constraint), 
+   * @return true: the constraint is implicit (no constraint),
    * false: otherwise */
   bool isConstraintImplicit(const short int row, const short int col) const {
     if(row == 0 || row == col) {
-      return (this->operatorRead(row,col)) == 0x1; 
+      return (this->operatorRead(row,col)) == 0x1;
     }
     else {
       return (this->operatorRead(row,col)) == (0xFFF << 1);
     }
-  
+
   }
-  
-  /** Performs a deep copy of the DBM.  The DBM calling this method is changed.  
+
+  /** Performs a deep copy of the DBM.  The DBM calling this method is changed.
    * Preserves canonical form.
    * @param Y (&) The object to copy.
    * @return A reference to the copied object, which is the LHS object. */
@@ -359,32 +359,32 @@ public:
     quantity = Y.quantity;
     nClocks = Y.nClocks;
     memcpy(storage, Y.storage, quantity * sizeof(short int));
-    
+
     isCf = Y.isCf;
-    return *this;	
+    return *this;
   }
-  
-  /** Intersects two DBMs by performing the constraint-by-constraint 
+
+  /** Intersects two DBMs by performing the constraint-by-constraint
    * intersections of the DBM. This method does not require DBMs to be in
-   * canonical form, and does not preserve canonical form of the DBM. The 
+   * canonical form, and does not preserve canonical form of the DBM. The
    * calling DBM is changed.
    * @param Y (&) The DBM to intersect
    * @return The reference to the intersected DBM (which is the now changed
-   * calling DBM). */     
+   * calling DBM). */
   DBM & operator & (const DBM &Y){
     /* Should we check for same number of clocks (?)
      * Currently, the code does not. */
     for(short int i = 0; i < nClocks; i++) {
       for(short int j = 0; j < nClocks; j++) {
-        this->operatorWrite(i,j) = (this->operatorRead(i,j) < Y.operatorRead(i,j)) ? 
+        this->operatorWrite(i,j) = (this->operatorRead(i,j) < Y.operatorRead(i,j)) ?
         this->operatorRead(i,j) : Y.operatorRead(i,j) ;
       }
     }
     isCf = false;
     return *this;
   }
-  
-  /** Performs subset checks; 
+
+  /** Performs subset checks;
    * X <= Y if and only if all the constraints of X are at least
    * as tight as Y. (This also assumes that X and Y have the same
    * number of clocks). Since each entry is only an upper bound, this
@@ -418,15 +418,15 @@ public:
          }
       }
     }
-    
+
     return true;
   }
-  
+
   /** Performs superset checks; X >= Y if and only
    * Y <= X.  This method requires that (*this), the calling DBM,
-   * is in canonical form.   
+   * is in canonical form.
    * @param Y (&) The right DBM.
-   * @return true: the calling DBM is a superset of Y, 
+   * @return true: the calling DBM is a superset of Y,
    * false: otherwise */
   bool operator >= (const DBM &Y){
     /* Change constraint comparison order:
@@ -454,13 +454,13 @@ public:
          }
       }
     }
-    
+
     return true;
   }
-  
+
   /** Performs equality checks;
    * X == Y if and only if all the constraints of X are the same as
-   * the constraints as Y. 
+   * the constraints as Y.
    * (This also assumes that X and Y have the same
    * number of clocks). Both (*this), the calling DBM, and Y must be
    * in canonical form.
@@ -492,18 +492,18 @@ public:
          }
       }
     }
-  
+
     return true;
   }
-  
-  /** Checks and returns the relation comparing the calling DBM 
-   * to Y. 
+
+  /** Checks and returns the relation comparing the calling DBM
+   * to Y.
    * @param Y (&) The right DBM.
-   * @return An integer specifying the comparison between the 
+   * @return An integer specifying the comparison between the
    * calling DBM (X) and the input DBM (Y).  0: X incomparable to Y,
    * 1: X <= Y,  2: X >= Y,  3: X == Y.
    * @note This method assumes that the calling DBM and Y have the same
-   * number of clocks. */ 
+   * number of clocks. */
   int relation(const DBM &Y){
     /* Should we check for same number of clocks (?)
      * Currently, the code does not. */
@@ -513,55 +513,55 @@ public:
       for(short int j = 0; j < nClocks; j++){
         gt = gt && (this->operatorRead(i,j) >= Y.operatorRead(i,j));
         lt = lt && (this->operatorRead(i,j) <= Y.operatorRead(i,j));
-      }	 
+      }
     }
     if(gt && lt) return 3;
     if(gt) return 2;
     if(lt) return 1;
     return 0;
   }
-  
-  
-  
-  /** Performs the time successor operator; 
+
+
+
+  /** Performs the time successor operator;
    * sets the upper bound constraints on all individual clocks (except
    * the zero clock) to (infinity, <).
-	 * This method preserves canonical form.
+   * This method preserves canonical form.
    * @return The reference to the changed calling DBM. */
   DBM & suc(){
-    
+
     // We start i at 1 because (0,0) isn't a clock
     for(short int i = 1; i < nClocks; i++) {
       this->operatorWrite(i,0) = (0xFFF << 1);
     }
     return *this;
   }
-	
-  /** The time predecessor operator; returns the clock zone where 
+
+  /** The time predecessor operator; returns the clock zone where
    * consisting of all valuations that can elapse
    * (with possibly elapse 0) to the input zone.
    * This method does not preserve canonical form.
    * @return a reference to the modified DBM (which is the called DBM).*/
   DBM & pre(){
-    /* i is 0 to be all lower bounds, 0 is fine since the clock (0,0) is 
-		 * always <= 0. */
-		/* This version, the version that does not preserve canonical form
-		 * is used due to a typo in a paper describing a version that does
-		 * preserve canonical form. */
+    /* i is 0 to be all lower bounds, 0 is fine since the clock (0,0) is
+     * always <= 0. */
+    /* This version, the version that does not preserve canonical form
+     * is used due to a typo in a paper describing a version that does
+     * preserve canonical form. */
     for(short int i = 0; i < nClocks; i++){
       this->operatorWrite(0,i) = 0x1;
-    }	  
+    }
     isCf = false;
     return *this;
   }
-  
+
   /** Reset a single clock, specified by x, to 0.
    * The final DBM is in canonical form.
    * @param x The clock to reset to 0.
    * @return The reference to the changed, calling resulting DBM. */
   DBM & reset(const short int x){
     /* Do out of bounds checking now instead of in methods */
-    if (x < 0 || x >= nClocks){  
+    if (x < 0 || x >= nClocks){
       std::cerr << "nClocks : " << nClocks << " x : "<< x <<std::endl;
       std::cerr <<  "reset(x) clock index out of bounds" <<std::endl; exit(-1);
     }
@@ -574,10 +574,10 @@ public:
         this->operatorWrite(x,i) = this->operatorRead(0,i);
         this->operatorWrite(i,x) = this->operatorRead(i,0);
       }
-    }	  
+    }
     return *this;
   }
-  
+
   /** Resets all the clocks in the given clock set to $0$.
    * The final DBM is in canonical form.
    * @param rs (*) The set of clocks to reset to 0.
@@ -587,13 +587,13 @@ public:
      * all the specified clocks to reset to
      * 0. */
     for(int i = 1; i < nClocks; i++) {
-      if (rs->getc(i)) { 
+      if (rs->getc(i)) {
         this->reset(i);
       }
     }
     return *this;
   }
-  
+
   /** Assign the current value to clock y to clock x (x := y). This
    * "resets" the clock x to the value of clock y.
    * @param x The clock to change the value of
@@ -601,7 +601,7 @@ public:
    * @return The reference to the changed, calling resulting DBM. */
   DBM &reset(const short int x, const short int y){
     /* Do out of bounds checking now instead of in methods */
-    if (x < 0 || x >= nClocks || y >= nClocks || y < 0){  
+    if (x < 0 || x >= nClocks || y >= nClocks || y < 0){
       std::cerr << "nClocks : " << nClocks << " x : "<< x << " y : "
       << y <<std::endl;
       std::cerr <<  "reset(x,y) clock indices out of bounds" <<std::endl; exit(-1);
@@ -610,7 +610,7 @@ public:
       if (i != x) {
         this->operatorWrite(x,i) = this->operatorRead(y,i);
         this->operatorWrite(i,x) = this->operatorRead(i,y);
-      }	 
+      }
     /* The following two lines are not needed:
      * 	this->operatorWrite(x,y) = 0x1;
      * 	this->operatorWrite(y,x) = 0x1;
@@ -619,10 +619,10 @@ public:
     isCf = false;
     return *this;
   }
-  
-  /** Compute the reset predecessor operator, which gives DBM[x |-> 0].  
+
+  /** Compute the reset predecessor operator, which gives DBM[x |-> 0].
    * This method computes
-   * the clock zone z', such that z'[x := 0] = DBM (z' becomes our DBM 
+   * the clock zone z', such that z'[x := 0] = DBM (z' becomes our DBM
    * after x is reset to 0). The DBM needs to be in canonical form before
    * calling this method, and the resulting DBM may not be in canonical form
    * after this operation.
@@ -630,13 +630,13 @@ public:
    * @return The reference to the modified DBM. */
   DBM &preset(const short int x){
     /* Do out of bounds checking now instead of in methods */
-    if (x < 0 || x >= nClocks){  
+    if (x < 0 || x >= nClocks){
       std::cerr << "nClocks : " << nClocks << " x : "<< x <<std::endl;
       std::cerr <<  "reset(x) clock index out of bounds" <<std::endl; exit(-1);
     }
-    
+
     /* Do an emptiness check. If x=0 is not a valid valuation,
-     * then return the emptyset. 
+     * then return the emptyset.
      * Assumption made: for single clocks, there is never a negative
      * constant used*/
     int tempIntG = this->operatorRead(0,x);
@@ -657,47 +657,47 @@ public:
       isCf = false;
       return *this;
     }
-    
+
     // If here, the preset is not empty
-    
-		// Now flush out difference constraints since they
-		// are reset by x
+
+    // Now flush out difference constraints since they
+    // are reset by x
     for(short int i=1; i<nClocks; i++){
-      if(i == x) { 
-        continue; 
+      if(i == x) {
+        continue;
       }
       this->operatorWrite(x,i) = 0xFFF << 1;
       this->operatorWrite(i,x) = this->operatorRead(i,0);
-    }	  
+    }
     this->operatorWrite(x,0) = 0xFFF << 1;
-		this->operatorWrite(0,x) = 0x1;
+    this->operatorWrite(0,x) = 0x1;
     isCf = false;
     return *this;
   }
-  
-  /** Compute the reset predecessor operator, which gives DBM[x |-> 0].  
+
+  /** Compute the reset predecessor operator, which gives DBM[x |-> 0].
    * This method computes
-   * the clock zone z', such that z'[PRS := 0] = DBM (z' becomes our DBM 
-   * after all clocks in our set PRS are reset to 0). 
+   * the clock zone z', such that z'[PRS := 0] = DBM (z' becomes our DBM
+   * after all clocks in our set PRS are reset to 0).
    * The DBM needs to be in canonical form before
    * calling this method, and the resulting DBM may not be in canonical form
    * after this operation.
    * @param prs (*) The set of clocks just reset (after the predecessor zone).
    * @return The reference to the modified DBM. */
   DBM &preset(const ClockSet * const prs){
-    
+
     /* Handle clock difference constraints first. This
      * allows us to use the single-clock constraints
      * already in the DBM */
     for(int i = 1; i < nClocks; i++) {
       for(int j = 1; j < nClocks; j++) {
         if(i == j) { continue; }
-        /* In all conditions, handle constraint (i,j) here. 
+        /* In all conditions, handle constraint (i,j) here.
          * Constraint (j,i) is handled later. */
         if (prs->getc(i) && prs->getc(j)) {
           /* Note that if we are here for constraint (i,j),
            * we will get here in constraint (j,i) */
-           
+
           int tempInt = this->operatorRead(i,j);
           if((tempInt >> 1) < 0 || ((tempInt >> 1) == 0 && (tempInt & 0x1) == 0)) {
             // Make an empty DBM
@@ -724,8 +724,8 @@ public:
         }
         // Do nothing if neither clock is reset
       }
-		}
-		/* Handle Single clock constraints last. */
+    }
+    /* Handle Single clock constraints last. */
     for(int i = 1; i < nClocks; i++) {
       if(prs->getc(i)) {
         int tempIntG = this->operatorRead(0,i);
@@ -748,21 +748,21 @@ public:
           isCf = false;
           return *this;
         }
-       
+
         this->operatorWrite(i,0) = 0xFFF << 1;
         this->operatorWrite(0,i) = 0x1;
-        
+
       }
     }
-		isCf = false;
-		return *this;
+    isCf = false;
+    return *this;
   }
-  
+
   /** Compute the reset predecessor operator after the assignment
-   * of x to y, which gives DBM[x |-> y].  
+   * of x to y, which gives DBM[x |-> y].
    * This method computes
-   * the clock zone z', such that z'[x := y] = DBM (z' becomes our DBM 
-   * after x is assigned to the current value of y). 
+   * the clock zone z', such that z'[x := y] = DBM (z' becomes our DBM
+   * after x is assigned to the current value of y).
    * The DBM needs to be in canonical form before
    * calling this method, and the resulting DBM may not be in canonical form
    * after this operation.
@@ -771,47 +771,47 @@ public:
    * @return The reference to the modified DBM. */
   DBM &preset(const short int x, const short int y){
     /* Do out of bounds checking now instead of in methods */
-    if (x < 0 || x >= nClocks || y >= nClocks || y < 0){  
+    if (x < 0 || x >= nClocks || y >= nClocks || y < 0){
       std::cerr << "nClocks : " << nClocks << " x : "<< x << " y : "
       << y <<std::endl;
       std::cerr <<  "reset(x,y) clock indices out of bounds" <<std::endl; exit(-1);
     }
     /* Now compute the preset by relaxing constraints on clock $x$ */
       // Now flush out difference constraints since they
-		// are reset by x
-		/* First check that it is a valid assignment, and make empty otherwise */
+    // are reset by x
+    /* First check that it is a valid assignment, and make empty otherwise */
     for(short int i = 0; i < nClocks; i++) {
       if(i==y || i == x) { continue; }
-		  if(this->operatorRead(i,x) < this->operatorRead(i,y)) {
-		    // Make an empty DBM
+      if(this->operatorRead(i,x) < this->operatorRead(i,y)) {
+        // Make an empty DBM
         this->operatorWrite(i,0) = 0;
         this->operatorWrite(0,i) = 0;
         this->operatorWrite(0,0) = 0;
         isCf = false;
         return *this;
-		  }
-		  if(this->operatorRead(x,i) < this->operatorRead(y,i)) {
-		    // Make an empty DBM
+      }
+      if(this->operatorRead(x,i) < this->operatorRead(y,i)) {
+        // Make an empty DBM
         this->operatorWrite(i,0) = 0;
         this->operatorWrite(0,i) = 0;
         this->operatorWrite(0,0) = 0;
         isCf = false;
         return *this;
-		  }
-		}
+      }
+    }
     for(short int i=1; i<nClocks; i++){
       if(i == x) { continue; }
       this->operatorWrite(x,i) = 0xFFF << 1;
       this->operatorWrite(i,x) = this->operatorRead(i,0);
-    }	  
+    }
     this->operatorWrite(x,0) = 0xFFF << 1;
-		this->operatorWrite(0,x) = 0x1;
+    this->operatorWrite(0,x) = 0x1;
     isCf = false;
     return *this;
   }
-  
 
-	
+
+
   /** Normalizes the DBM with respect to the specified
    * constant maxc. This method relaxes all constraints
    * outside the maximum constant max.
@@ -821,19 +821,19 @@ public:
    * automaton or in the formula. This method normalizes a DBM
    * and provides a finite number of coarse states, allowing
    * for termination after a finite number of states.
-	 * The resulting DBM may or may not be in canonical form.
+   * The resulting DBM may or may not be in canonical form.
    * @param maxc The maximum constant.
-   * @return none 
+   * @return none
    * @note This only works when the timed automaton is "diagonal-free,"
    * or does not have any clock difference constraints in the automaton. */
   void bound(const int maxc){
-    // Is this method correct (?) Should it also be loosening 
+    // Is this method correct (?) Should it also be loosening
     // clock differences based on single clock constraints?
     for (short int i = 1; i < nClocks; i++){
       short int iRow = (this->operatorRead(i,0) >> 1);
-      /* Sets any individual upper bound clock constraint 
+      /* Sets any individual upper bound clock constraint
        * that exceeds the const maxc
-       * to infinity, and sets all clock differences involving 
+       * to infinity, and sets all clock differences involving
        * that clock as the higher clock to infinity */
       if (iRow != 0xFFF && iRow > maxc){
         this->operatorWrite(i,0) = (0xFFF << 1);
@@ -843,38 +843,38 @@ public:
           }
         }
       }
-      /* Sets any clock with a lower bound constraint 
+      /* Sets any clock with a lower bound constraint
        * with a lower bound value greater than maxc (that
        * has a max value less than -maxc) to maxc (if not
-       * already loosened by an upper-bound constraint) and 
+       * already loosened by an upper-bound constraint) and
        * loosens the relevant clock-difference constraints */
       if (-(this->operatorRead(0,i) >> 1) > maxc){
         for(short int j = 0; j < nClocks; j++){
           if (j != i) {
             if (this->operatorRead(j,0) >> 1 == 0xFFF) {
-              this->operatorWrite(j,i) = (0xFFF << 1); 
-              
+              this->operatorWrite(j,i) = (0xFFF << 1);
+
             }
             else {
               this->operatorWrite(j,i) = ((this->operatorRead(j,0) >> 1) - maxc) << 1;
             }
-          }    
+          }
         }
 
-      }   
+      }
     }
     /* Now loosen all the clock-difference constraints
      * that have not already been loosened by single-clock
-     * constraints.  This takes all clock pairs 
-     * that are not infinity (not yet loosened) but 
-		 * looser than the largest clock constant and bounds them
-     * with the maximum constraint maxc in both directions, 
-		 * relaxing the bounds. */
+     * constraints.  This takes all clock pairs
+     * that are not infinity (not yet loosened) but
+     * looser than the largest clock constant and bounds them
+     * with the maximum constraint maxc in both directions,
+     * relaxing the bounds. */
     for (short int i = 1; i < nClocks; i++){
       for (short int j = 1; j < nClocks; j++){
         if((i != j) && ((this->operatorRead(i,j) >> 1) != 0xFFF) ){
           if ((this->operatorRead(i,j) >> 1) > maxc)
-            this->operatorWrite(i,j) = (maxc << 1);  
+            this->operatorWrite(i,j) = (maxc << 1);
           if (-(this->operatorRead(i,j) >> 1) > maxc)
           /* Considered correction to
            *  this->operatorWrite(i,j) = ((-maxc) << 1);
@@ -883,35 +883,35 @@ public:
            * of negative binary numbers) and due
            * to potentially losing the sign bit,
            * this remains unchanged. */
-            this->operatorWrite(i,j) = -((maxc) << 1);  
-        }       
+            this->operatorWrite(i,j) = -((maxc) << 1);
+        }
       }
     }
     isCf = false;
   }
-  
+
   /** Converts the calling DBM to its canonical form, or
    * its shortest path closure. This method is
    * equivalent to computing all-pairs shortest path on the DBM,
-   * if treated as a directed graph.  Canonical form allows a universal 
+   * if treated as a directed graph.  Canonical form allows a universal
    * representation that makes other operators easier.
-   * @return None 
+   * @return None
    * @note This implementation is the Floyd-Warshall Algorithm
    * for all pairs shortest paths.*/
   void cf(){
-    
+
     /* Check that the DBM is in Canonical Form, and
      * do nothing if it is */
     if(isCf){
       return;
     }
-    
-		/* Don't you need to initialize all D(i,i) to (0, \leq) (?)
-		 * Answer:  For this method, yes.  However, if matrices
-		 * are initialized properly to $(0, \leq)$, those
-		 * diagonal cells may never be changed and hence
-		 * this algorithm will still work correctly. */
-    
+
+    /* Don't you need to initialize all D(i,i) to (0, \leq) (?)
+     * Answer:  For this method, yes.  However, if matrices
+     * are initialized properly to $(0, \leq)$, those
+     * diagonal cells may never be changed and hence
+     * this algorithm will still work correctly. */
+
     int val;
     short int origVal;
     short int wholeVal_ik;
@@ -934,26 +934,26 @@ public:
           wholeVal_ik = this->operatorRead(i,k);
           wholeVal_kj = this->operatorRead(k,j);
           wholeVal_ij = this->operatorRead(i,j);
-          /* Postive overflow potential here: 
-           * how to we deal with it? 
+          /* Postive overflow potential here:
+           * how to we deal with it?
            * One option: check for >= 0xFFF instead
            * of 0xFFF, but that fixes nothing. */
-          if((wholeVal_ik >> 1) == 0xFFF || 
+          if((wholeVal_ik >> 1) == 0xFFF ||
              (wholeVal_kj >> 1) == 0xFFF)
             val = 0xFFF;
-          else    
-            val = (wholeVal_ik >> 1) 
+          else
+            val = (wholeVal_ik >> 1)
             + (wholeVal_kj >> 1);
           // Changed code to fix operator when value == added
-					// with a possible change in constraint   
-					origVal = wholeVal_ij >> 1;
-          if(val <= origVal ){ 
+          // with a possible change in constraint
+          origVal = wholeVal_ij >> 1;
+          if(val <= origVal ){
             /* Correction by Peter Fontana to check for negative overflow */
-            if(val < origVal) { // val < so take only those operators 
-							// Make D(i,j) = D(i, k) + D(k, j)
-							this->operatorWrite(i,j) = (val << 1)
-							// Gets the < or <= operator correct
-							+ ((wholeVal_ik & 0x1) & (wholeVal_kj & 0x1)) ;
+            if(val < origVal) { // val < so take only those operators
+              // Make D(i,j) = D(i, k) + D(k, j)
+              this->operatorWrite(i,j) = (val << 1)
+              // Gets the < or <= operator correct
+              + ((wholeVal_ik & 0x1) & (wholeVal_kj & 0x1)) ;
             }
             /* Correction by Peter Fontana to improve
              * performance */
@@ -961,59 +961,59 @@ public:
               /* Take out infinity comparison and see what happens ...  * Note: it slows performance, so keep non-overflow
                * check in. */
               this->operatorWrite(i,j) = (val << 1)
-							+ ((wholeVal_ik & 0x1) & (wholeVal_kj & 0x1) &
-							   (wholeVal_ij & 0x1)) ;
-						}      // value stays d(i,j) otherwise
-						
+              + ((wholeVal_ik & 0x1) & (wholeVal_kj & 0x1) &
+                 (wholeVal_ij & 0x1)) ;
+            }      // value stays d(i,j) otherwise
+
           }      // value stays d(i,j) otherwise
-				}
+        }
       }
     }
-    
-   
+
+
     isCf = true; // the DBM is now in Canonical Form
-    
+
   }
-	
-	/** This method changes this DBM to the empty DBM. This is used for 
-	 * performance enhancements to save constructors to remake a DBM
-	 * when a DBM is decided to become empty. The returned DBM
-	 * is in canonical form.
-	 * @return [None] */
-	void makeEmpty() {
-	  for(short int i = 0; i < nClocks; i++){
+
+  /** This method changes this DBM to the empty DBM. This is used for
+   * performance enhancements to save constructors to remake a DBM
+   * when a DBM is decided to become empty. The returned DBM
+   * is in canonical form.
+   * @return [None] */
+  void makeEmpty() {
+    for(short int i = 0; i < nClocks; i++){
       for(short int j = 0; j < nClocks; j++){
         this->operatorWrite(i,j) = 0x0;
-      } 
+      }
     }
-	  isCf = true;
-	  return;
-	}
-	
-	/** This checks if DBM represents an empty region
-	 * or the empty clock zone. This method assumes the DBM
-	 * is in canonical form.
+    isCf = true;
+    return;
+  }
+
+  /** This checks if DBM represents an empty region
+   * or the empty clock zone. This method assumes the DBM
+   * is in canonical form.
    * @return true: this clock zone is empty, false: otherwise. */
   bool emptiness() const{
-		/* O(n) version. This assumes that the DBM is in canonical form.
-		 * an O(n^2) version was previously used to handle overflow possibilities
-		 * from a model with different semantics. */
-		for(int i = 0; i < nClocks; i++) {
-    	short int rv = this->operatorRead(i,i);
-			if( ((rv >> 1) < 0) || 
-			(((rv >> 1) == 0) && ((rv&0x1) == 0)) ) {
-				return true;
-			}
-		}
+    /* O(n) version. This assumes that the DBM is in canonical form.
+     * an O(n^2) version was previously used to handle overflow possibilities
+     * from a model with different semantics. */
+    for(int i = 0; i < nClocks; i++) {
+      short int rv = this->operatorRead(i,i);
+      if( ((rv >> 1) < 0) ||
+      (((rv >> 1) == 0) && ((rv&0x1) == 0)) ) {
+        return true;
+      }
+    }
 
-		return false; 
-    	
+    return false;
+
   }
-  
+
   /** Method that determines if the DBM has an upper bound constraint.
    * This is used to use internal methods that avoid bounds checking
-   * for faster performance. 
-   * @return true: the DBM has a single-clock upper bound constraint, false: 
+   * for faster performance.
+   * @return true: the DBM has a single-clock upper bound constraint, false:
    * otherwise. */
   bool hasUpperConstraint() const {
     for(int i = 1; i < nClocks; i++) {
@@ -1024,15 +1024,15 @@ public:
     }
     return false;
   }
-  
+
   /** This converts all finite constraints
    * to <=, making all inequalities non strict by loosening
-   * < to <=.  
+   * < to <=.
    * The DBM calling this method is changed.
    * @return None*/
   void closure(){
     for(short int i = 0; i < nClocks; i++)
-      for(short int j = 0; j < nClocks; j++){ 
+      for(short int j = 0; j < nClocks; j++){
         if (i==j) {
           continue;
         }
@@ -1041,15 +1041,15 @@ public:
         }
       }
   }
-  
+
   /** This converts all finite constraints
    * to <, making all inequalities strict by tightening
-   * <= to <.  
+   * <= to <.
    * The DBM calling this method is changed.
    * @return None*/
   void closureRev(){
     for(short int i = 0; i < nClocks; i++)
-      for(short int j = 0; j < nClocks; j++){ 
+      for(short int j = 0; j < nClocks; j++){
         if (i==j) {
           continue;
         }
@@ -1058,15 +1058,15 @@ public:
         }
       }
   }
-  
+
   /** This converts all finite upper-bound constraints
    * to <, making all inequalities strict by tightening
-   * <= to <, excluding single clock lower-bounds.  
+   * <= to <, excluding single clock lower-bounds.
    * The DBM calling this method is changed.
    * @return None*/
   void predClosureRev(){
     for(short int i = 1; i < nClocks; i++)
-      for(short int j = 0; j < nClocks; j++){ 
+      for(short int j = 0; j < nClocks; j++){
         if (i==j) {
           continue;
         }
@@ -1075,134 +1075,134 @@ public:
         }
       }
   }
-  
+
   /** Prints out the DBM in (#, op) matrix format.
    * The # is the integer bound for the constraint,
    * and op is based on the fourth bit. 0: <, 1: <=
    * @return None */
   void print(std::ostream& os) const{
-		for(short int i = 0; i < nClocks; i++){
-			for(short int j = 0; j < nClocks; j++){
-				short int val = this->operatorRead(i,j) >> 1;
-				short int type = this->operatorRead(i,j) & 0x1;
-				if (type == 1){
-					if (val == 0xFFF) 
-						os << "(" << "+inf" << "," << "<=)\t";
-					else
-						os << "( " << val << "," << "<= )\t";
-				}else{
-					if (val == 0xFFF) 
-						os << "(" << "+inf" << "," << "<)\t";
-					else
-						os << "( " << val << "," << "<  )\t";
-				}	  
-			}
+    for(short int i = 0; i < nClocks; i++){
+      for(short int j = 0; j < nClocks; j++){
+        short int val = this->operatorRead(i,j) >> 1;
+        short int type = this->operatorRead(i,j) & 0x1;
+        if (type == 1){
+          if (val == 0xFFF)
+            os << "(" << "+inf" << "," << "<=)\t";
+          else
+            os << "( " << val << "," << "<= )\t";
+        }else{
+          if (val == 0xFFF)
+            os << "(" << "+inf" << "," << "<)\t";
+          else
+            os << "( " << val << "," << "<  )\t";
+        }
+      }
             os << std::endl;
-		}
-	}
-	
-	/** Print the DBM, more compactly, as a list of constraints. The constraints
-	 * are printed in the order they appear in the matrix.
-	 * @return none */
+    }
+  }
+
+  /** Print the DBM, more compactly, as a list of constraints. The constraints
+   * are printed in the order they appear in the matrix.
+   * @return none */
   void print_constraint(std::ostream& os, const std::vector<std::string>& clock_strings) const{
-		bool end = false;
-		bool isAllImplicit=true;
-		if(this->emptiness()) {
-		  os << "EMPTY";
-		  return;
-		}
-		for(short int i = 0; i < nClocks; i++){
-			for(short int j = 0; j < nClocks; j++){
-				if(i==j) { 
-				  continue;
-				}
-				short int val = this->operatorRead(i,j) >> 1;
-				if (val == 0xFFF) {
-					continue; 
-				}
-				short int type = this->operatorRead(i,j) & 0x1;
-				if(i==0 && val == 0 && type == 1) {
+    bool end = false;
+    bool isAllImplicit=true;
+    if(this->emptiness()) {
+      os << "EMPTY";
+      return;
+    }
+    for(short int i = 0; i < nClocks; i++){
+      for(short int j = 0; j < nClocks; j++){
+        if(i==j) {
+          continue;
+        }
+        short int val = this->operatorRead(i,j) >> 1;
+        if (val == 0xFFF) {
+          continue;
+        }
+        short int type = this->operatorRead(i,j) & 0x1;
+        if(i==0 && val == 0 && type == 1) {
             continue;
         }
         isAllImplicit=false;
-				if(end) { 
-				  os <<",";
-				}
-				if(i != 0 && j!=0){
-					//os << "x" << (i);
+        if(end) {
+          os <<",";
+        }
+        if(i != 0 && j!=0){
+          //os << "x" << (i);
           os << clock_strings[i];
-					os << "-";
-					//os << "x" << (j);
+          os << "-";
+          //os << "x" << (j);
           os << clock_strings[j];
-				}else if (i == 0){
-					os << clock_strings[j];
-					if (type == 1) os << ">=" << -val ;
-					else os << ">" << -val ;
-					end = true;
-					continue;
-				}else if (j == 0){
-					os << clock_strings[i];
-				}
-				
-				if (type == 1) {
-					os << "<=" << val ;
-				}
-				else {
-					os << "<" << val ;
-				}
-				end = true;
-			}
-		}
-		if(isAllImplicit) {
-		  os << "INFTY";
-		}
-	}
-	
-	/** Prints out the constraints in the DBM, omitting
-	 * implicit constraints (such as x_1 >= 0). Here,
-	 * implicit constraints are inequalities that do not
-	 * constrain any values. This does not omit constraints
-	 * that can be derived from other constraints.
-	 * @return None */
+        }else if (i == 0){
+          os << clock_strings[j];
+          if (type == 1) os << ">=" << -val ;
+          else os << ">" << -val ;
+          end = true;
+          continue;
+        }else if (j == 0){
+          os << clock_strings[i];
+        }
+
+        if (type == 1) {
+          os << "<=" << val ;
+        }
+        else {
+          os << "<" << val ;
+        }
+        end = true;
+      }
+    }
+    if(isAllImplicit) {
+      os << "INFTY";
+    }
+  }
+
+  /** Prints out the constraints in the DBM, omitting
+   * implicit constraints (such as x_1 >= 0). Here,
+   * implicit constraints are inequalities that do not
+   * constrain any values. This does not omit constraints
+   * that can be derived from other constraints.
+   * @return None */
   void print_ExplicitConstraint(std::ostream& os, const std::vector<std::string>& clock_strings) const{
-		bool end = false;
-		for(short int i = 0; i < nClocks; i++){
-			for(short int j = 0; j < nClocks; j++){
-				if(i==j) continue;
-				short int val = this->operatorRead(i,j) >> 1;
-				if (val == 0xFFF)  {
-					continue; 
-				}
-				short int type = this->operatorRead(i,j) & 0x1;
-				if(i == 0 && val == 0x0 && type == 0x1) {
-				  continue;
-				}
-				if(end) os <<","; 
-				if(i != 0 && j!=0){
-					os << clock_strings[i];
-					os << "-";
-					os << clock_strings[j];
-				}else if (i == 0){
-					os << clock_strings[j];;
-					if (type == 1) os << ">=" << -val ;
-					else os << ">" << -val ;
-					end = true;
-					continue;
-				}else if (j == 0){
-					os << clock_strings[i];
-				}
-				
-				if (type == 1) {
-					os << "<=" << val ;
-				}
-				else {
-					os << "<" << val ;
-				}
-				end = true;
-			}
-		}
-	}
-	
+    bool end = false;
+    for(short int i = 0; i < nClocks; i++){
+      for(short int j = 0; j < nClocks; j++){
+        if(i==j) continue;
+        short int val = this->operatorRead(i,j) >> 1;
+        if (val == 0xFFF)  {
+          continue;
+        }
+        short int type = this->operatorRead(i,j) & 0x1;
+        if(i == 0 && val == 0x0 && type == 0x1) {
+          continue;
+        }
+        if(end) os <<",";
+        if(i != 0 && j!=0){
+          os << clock_strings[i];
+          os << "-";
+          os << clock_strings[j];
+        }else if (i == 0){
+          os << clock_strings[j];;
+          if (type == 1) os << ">=" << -val ;
+          else os << ">" << -val ;
+          end = true;
+          continue;
+        }else if (j == 0){
+          os << clock_strings[i];
+        }
+
+        if (type == 1) {
+          os << "<=" << val ;
+        }
+        else {
+          os << "<" << val ;
+        }
+        end = true;
+      }
+    }
+  }
+
 };
 
 /** Stream operator for DBMLists */

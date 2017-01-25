@@ -857,7 +857,7 @@ protected:
     badVals.cf();
     badVals.pre();
     badVals.cf();
-    // At this point, we have the bad valuations. Now intersect their 
+    // At this point, we have the bad valuations. Now intersect their
     // complement
     !badVals;
     badVals.cf();
@@ -869,23 +869,23 @@ protected:
     if(retPlaceDBM->emptiness()) {
       return retPlaceDBM;
     }
-    // Do one more containmnet check. If this does not work, 
+    // Do one more containmnet check. If this does not work,
     // then the placeholder is empty
     succLHS = *lhs;
     succLHS.suc();
-    
+
     // leave conseq unchanged, since that placeholder did not shrink
     succPrem = *lhs;
     succPrem & *retPlaceDBM;
     succPrem.cf();
     succPrem.suc();
-    
-    succLHS.cf(); 
+
+    succLHS.cf();
     succPrem.cf();
     // use previously solved place, not new one for right hand side
     if(conseq >= succPrem) {
       return retPlaceDBM;
-    } 
+    }
     retPlaceDBM->makeEmpty();
     return retPlaceDBM;
   }

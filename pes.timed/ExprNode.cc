@@ -36,8 +36,8 @@ vector <string> clock_strings;
 map <string, int> atomic;
 /** A vector of strings, mapping the position of the atomic to its string */
 vector <string> atomic_strings;
-/** A Hash table of ints storing integer 
- * substituations for atomic variables. 
+/** A Hash table of ints storing integer
+ * substituations for atomic variables.
  * This maps atomic ids to atomic values.  0 is the default value.
  * This map represents the initial "state" of the model*/
 map <int, int> InitSub;
@@ -59,7 +59,7 @@ const vector<string>& get_clock_strings()
  * of the vector.
  * @param e (*) the pointer to the expression of clock assignments.
  * @param av (*) the pointer to the vector of clock assignments.
- * @return None. When finished, av is changed to be the vector of 
+ * @return None. When finished, av is changed to be the vector of
  * clock assignments.  */
 void makeAssignmentList(const ExprNode * const e, vector<pair<short int,short int> > * av) {
   pair<short int,short int> p;
@@ -68,7 +68,7 @@ void makeAssignmentList(const ExprNode * const e, vector<pair<short int,short in
       p.first=e->getAtomic();
       p.second=e->getIntVal();
       av->push_back(p);
-      makeAssignmentList(e->getExpr(), av); 
+      makeAssignmentList(e->getExpr(), av);
       break;
     case BOOL: // terminal node
       break;
@@ -218,14 +218,14 @@ int add_predicate(const char *s, const int i)
   string name(s);
   predicates.insert(make_pair(name, (new ExprNode(PREDICATE, s, i))));
   return 1;
-} 
+}
 
 /** Sets or changes the parity and the block number of a given
  * predicate ExprNode in the list of predicates.
  * @param name The key to look up the ExprNode in the ExprNode list
  * @param block The desired block number of the equation (predicate expression)
  * @param parity The desired parity: true = gfp, false = lfp.
- * @return true:if successful (found the predicate expression), 
+ * @return true:if successful (found the predicate expression),
  * false:otherwise. */
 bool set_parity_block(const string& name, const int block, const bool parity)
 {
@@ -234,10 +234,10 @@ bool set_parity_block(const string& name, const int block, const bool parity)
     (*it).second->set_Parity(parity);
     (*it).second->set_Block(block);
     return true;
-  }   
+  }
   else
     return false;
-  
+
 }
 
 /** Adds an an equation, with its variable name and right hand side, to
@@ -245,7 +245,7 @@ bool set_parity_block(const string& name, const int block, const bool parity)
  * with their right hand side equations. This separation of
  * predicates from equations provides a clean
  * way to terminate a predicate expression terminated due to circularity
- * and a clean way to delete expressions. 
+ * and a clean way to delete expressions.
  * @param block The block number for the equation.
  * @param parity The equation's parity: true = gfp, false = lfp.
  * @param s (*) The equation label.
@@ -294,7 +294,7 @@ ExprNode * lookup_equation(const char *s)
     return NULL;
 }
 
-/** Prints out an error if it occurs during the parsing process. 
+/** Prints out an error if it occurs during the parsing process.
  * This method is only used in the parser.
  * @param s (*) The error string to print out.
  * @return None */
@@ -310,13 +310,13 @@ yyerror(char *s)
 
 
 /** Prints out the list of predicate variables (without their right hand
- * side equations).  
+ * side equations).
  * @return 1 when done. */
 void print_predicates(std::ostream& os)
 {
   map <string, ExprNode *>::iterator it;
-  for (it = predicates.begin(); it != predicates.end(); it++){    
-    os << (*it).first << "  "; 
+  for (it = predicates.begin(); it != predicates.end(); it++){
+    os << (*it).first << "  ";
     os << "ind: " << ((*it).second)->getIntVal() << "  ";
   }
 }
@@ -348,7 +348,7 @@ void print_sequent(std::ostream& os, const int step, const bool retVal, const DB
   }
   os << "\t";
   print_ExprNodeType(op, os);
-  
+
   os << endl;
 }
 
@@ -379,7 +379,7 @@ void print_sequentCheck(std::ostream& os, const int step, const bool retVal, con
   }
   os << "\t";
   print_ExprNodeType(op, os);
-  
+
   os << endl;
 }
 
@@ -401,9 +401,9 @@ void print_sequent_place(std::ostream& os, const int step, const bool retVal, co
     lhs->print_constraint(os, clock_strings) ;
   }
   if (place != NULL) {
-  	os << " plhold: {";
-  	place->print_constraint(os, clock_strings);
-  	os << "}";
+    os << " plhold: {";
+    place->print_constraint(os, clock_strings);
+    os << "}";
   }
   if (sub != NULL) {
     os << ", ";
@@ -439,9 +439,9 @@ void print_sequent_placeCheck(std::ostream& os, const int step, const bool retVa
     lhs->print_constraint(os, clock_strings) ;
   }
   if (place != NULL) {
-  	os << " plhold: {";
-  	place->print_constraint(os, clock_strings);
-  	os << "}";
+    os << " plhold: {";
+    place->print_constraint(os, clock_strings);
+    os << "}";
   }
   if (sub != NULL) {
     os << ", ";
@@ -465,7 +465,7 @@ void print_ExprNode(const ExprNode * const e, std::ostream& os)
 {
   switch (e->getOpType()){
     case PREDICATE:
-      os << e->getPredicate() ; 
+      os << e->getPredicate() ;
       break;
     case FORALL:
       os << "FORALL.[";
@@ -474,7 +474,7 @@ void print_ExprNode(const ExprNode * const e, std::ostream& os)
       break;
     case EXISTS:
       os << "EXISTS.[";
-      print_ExprNode(e->getQuant(), os); 
+      print_ExprNode(e->getQuant(), os);
       os << "]";
       break;
     case FORALL_REL:
@@ -503,23 +503,23 @@ void print_ExprNode(const ExprNode * const e, std::ostream& os)
       break;
     case AND:
       os << "(";
-      print_ExprNode(e->getLeft(), os); 
+      print_ExprNode(e->getLeft(), os);
       os << " AND ";
-      print_ExprNode(e->getRight(), os); 
+      print_ExprNode(e->getRight(), os);
       os << ")";
       break;
     case OR:
       os << "(";
-      print_ExprNode(e->getLeft(), os); 
+      print_ExprNode(e->getLeft(), os);
       os << " OR ";
-      print_ExprNode(e->getRight(), os); 
+      print_ExprNode(e->getRight(), os);
       os << ")";
       break;
     case OR_SIMPLE:
       os << "(";
-      print_ExprNode(e->getLeft(), os); 
+      print_ExprNode(e->getLeft(), os);
       os << " OR_S ";
-      print_ExprNode(e->getRight(), os); 
+      print_ExprNode(e->getRight(), os);
       os << ")";
       break;
     case IMPLY:
@@ -778,7 +778,7 @@ void print_ExprNodeTypePlace(const opType op, std::ostream& os)
 
 
 /** Prints the contents of the SubstList.  -1 is considered
- * to be empty. 
+ * to be empty.
  * @param os (&) The output stream to print the output to
  * @return none. */
 void SubstList::print(std::ostream &os) const {
@@ -805,12 +805,12 @@ void printBinary(std::ostream& os, const int val) {
     if (val & (1 << i))
       os <<"1";
     else os <<"0";
-  }   
+  }
 }
 
 /** Prints out the fed in expression node to the fed in
  * output stream with a specified indentation (which doesn't seem
- * to be used: used in printing of transitions. 
+ * to be used: used in printing of transitions.
  * @param e (*) The ExprNode to print out.
  * @param os (&) The type of output stream to print the output to.
  * @return none */
@@ -819,7 +819,7 @@ void print_ExprNodeTrans(const ExprNode * const e, std::ostream& os)
   if(e != NULL) {
     switch (e->getOpType()){
       case PREDICATE:
-        os << e->getPredicate() ; 
+        os << e->getPredicate() ;
         break;
       case FORALL:
         os << "FORALL.[";
@@ -828,7 +828,7 @@ void print_ExprNodeTrans(const ExprNode * const e, std::ostream& os)
         break;
       case EXISTS:
         os << "EXISTS.[";
-        print_ExprNodeTrans(e->getQuant(), os); 
+        print_ExprNodeTrans(e->getQuant(), os);
         os << "]";
         break;
       case FORALL_REL:
@@ -856,22 +856,22 @@ void print_ExprNodeTrans(const ExprNode * const e, std::ostream& os)
         os << "]";
         break;
       case AND:
-        print_ExprNodeTrans(e->getLeft(), os); 
+        print_ExprNodeTrans(e->getLeft(), os);
         os << " && ";
-        print_ExprNodeTrans(e->getRight(), os); 
+        print_ExprNodeTrans(e->getRight(), os);
         break;
       case OR:
         os << "(";
-        print_ExprNodeTrans(e->getLeft(), os); 
+        print_ExprNodeTrans(e->getLeft(), os);
         os << " OR ";
-        print_ExprNodeTrans(e->getRight(), os); 
+        print_ExprNodeTrans(e->getRight(), os);
         os << ")";
         break;
       case OR_SIMPLE:
         os << "(";
-        print_ExprNodeTrans(e->getLeft(), os); 
+        print_ExprNodeTrans(e->getLeft(), os);
         os << " OR_S ";
-        print_ExprNodeTrans(e->getRight(), os); 
+        print_ExprNodeTrans(e->getRight(), os);
         os << ")";
         break;
       case IMPLY:

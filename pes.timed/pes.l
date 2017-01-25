@@ -30,7 +30,7 @@ void do_comment();
 
 /* Marcros for certain symbol (Token) types. */
 
-/** Instead of using token IDs, # define ___ is dealt 
+/** Instead of using token IDs, # define ___ is dealt
  * within the set of rules . */
 
 
@@ -110,25 +110,25 @@ yyCOMM2  \/\/{yyCHAR}*
   return TOK_INT;
 }
 
-{yyID_C} { SAVELAST;  
+{yyID_C} { SAVELAST;
   //yylval.strVal = strdup(yytext);
   yylval.strVal = strdup(yytext);
-  return TOK_ID_PREDICATE ; 
+  return TOK_ID_PREDICATE ;
 }
 
-{yyID_S} { SAVELAST;   
+{yyID_S} { SAVELAST;
   yylval.strVal = strdup(yytext);
-  return TOK_ID_CLOCK ; 
+  return TOK_ID_CLOCK ;
 }
 
-{yyID_U} { SAVELAST;  
+{yyID_U} { SAVELAST;
   yylval.strVal = strdup(yytext);
-  return TOK_ID_ATOMIC ; 
+  return TOK_ID_ATOMIC ;
 }
 
-{yyCONST} { SAVELAST;  
+{yyCONST} { SAVELAST;
   yylval.strVal = strdup(yytext);
-  return TOK_ID_CONST ; 
+  return TOK_ID_CONST ;
 }
 
 {yyCOMM1} {
@@ -138,14 +138,14 @@ yyCOMM2  \/\/{yyCHAR}*
 {yyCHAR}  {
   yylval.strVal = yytext;
   return TOK_SYNTAX_ERROR;
-}    
+}
 
 %%
 
 
 /* Methods that are defined in the C File. */
 
-/** Token yywrap here as dummy function. 
+/** Token yywrap here as dummy function.
  * @return 1. */
 inline int yywrap(void) {
   return 1;
@@ -192,8 +192,8 @@ void do_comment()
  * This method is used to give values to tokens lexed as strings. This
  * method assumes that the next input is an string.
  * @return The string value of the input being read in. */
-char * install_ID() 
+char * install_ID()
 {
-  return yytext;   
+  return yytext;
 }
 

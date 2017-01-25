@@ -313,9 +313,9 @@ public:
         it--;
         *madeEmpty = true;
       }
-      
+
     }
-    
+
     return foundSequent;
   }
 
@@ -385,9 +385,9 @@ public:
 
         // Reset matched to delete only other matched purges
         matched = false;
-        
+
       }
-      
+
     }
     // sequent not in list and thus no purging occurred.
     return foundMatch;

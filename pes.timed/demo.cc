@@ -427,15 +427,15 @@ int main(int argc, char** argv){
   atomic.clear();
   clocks.clear();
   InitSub.clear();
-  
+
   // delete other parts
   delete sublist;
-  
+
   // Close File for good file handling
   fclose(yyin);
-  
+
   cout << "==--End of Program Execution-----------------------==" << endl;
-  
+
   return 0;
 }
 
