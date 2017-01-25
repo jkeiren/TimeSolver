@@ -75,11 +75,14 @@ all: demo check
 doc: demo *.hh *.cc
 	doxygen pes-timed_Doxyfile
 
-demo:	pes.tab.o pes.lex.o ExprNode.o demo.o proof.o proof_data.o
-	$(CXX) $(CXXFLAGS) pes.lex.o pes.tab.o ExprNode.o demo.o proof.o proof_data.o $(LDFLAGS) -o demo
+demo:	pes.tab.o pes.lex.o ExprNode.o demo.o proof.o
+	$(CXX) $(CXXFLAGS) pes.lex.o pes.tab.o ExprNode.o demo.o proof.o $(LDFLAGS) -o demo
 
 demo.o: demo.cc DBM.hh ExprNode.hh DBMList.hh
 	$(CXX) $(CXXFLAGS) -c demo.cc $(INCL_PATH)
+	
+proof.o:	proof.cc proof.hh proof_data.hh
+	$(CXX) $(CXXFLAGS) -c proof.cc $(INCL_PATH)
 
 proof.o: proof.cc proof.hh
 	$(CXX) $(CXXFLAGS) -c proof.cc $(INCL_PATH)
