@@ -15,8 +15,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-using namespace std;
-
 /** An array structure used to store a one-dimensional array of
  * various data primitives.
  * @author Dezhuang Zhang and Peter Fontana.
@@ -82,12 +80,13 @@ public:
    * @return None. When completed, the array will be changed.*/
   void add(const void* element, const short int inx) {
     if (inx < 0 || inx >= quantity) {
-      cerr << "Generic1DArray add - index out of bounds " << endl;
+      std::cerr << "Generic1DArray add - index out of bounds " << std::endl;
       exit(-1);
     }
     memcpy(&(storage[inx * eltSize]), element, eltSize);
     if(!storage) {
-      cerr << "memcpy error - add Generic1DArray" <<endl; exit(-1);
+      std::cerr << "memcpy error - add Generic1DArray" << std::endl;
+      exit(-1);
     }
     return;
   }

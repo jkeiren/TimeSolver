@@ -14,8 +14,6 @@
 #include <vector>
 #include "DBM.hh"
 
-using namespace std;
-
 /** The Difference Bound Matrix List (DBMList) class; a list
  * (union) of matrices implementation for a union of clock zones. 
  * The DBMList is a vector of DBMs. The implementation is such that
@@ -42,7 +40,7 @@ private:
 	
 	/** The list of DBMs; the set of valuations represented is
 	 * dbmListVec[0] || dbmListVec[1] || ... || dbmListVec[listSize-1]. */
-	vector<DBM *> * dbmListVec;
+    std::vector<DBM *> * dbmListVec;
   
   /** Private method that returns the complement of a DBM. This uses
    * the (simple) method of performing a DBM that is the union of all
@@ -118,7 +116,7 @@ public:
   /** Return the vector of DBMs. Utilized by other methods to access
    * the DBMs, often to iterate through each DBM.
    * @return The vector storing the DBMs in the DBMList. */
-  vector<DBM *> * getDBMList() const {
+  std::vector<DBM *> * getDBMList() const {
     return dbmListVec;
   }
   
@@ -133,7 +131,7 @@ public:
    * @return [Constructor] */
   DBMList(const short int numClocks) {
     nClocks = numClocks;
-    dbmListVec = new vector<DBM *>;
+    dbmListVec = new std::vector<DBM *>;
     dbmListVec->push_back(new DBM(numClocks));
     isCf = false;
   }
@@ -144,7 +142,7 @@ public:
    * @return [Constructor] */
   DBMList(const DBM &Y) {
     nClocks = Y.nClocks;
-    dbmListVec = new vector<DBM *>;
+    dbmListVec = new std::vector<DBM *>;
     DBM * tDBM = new DBM(Y);
     dbmListVec->push_back(tDBM);
     isCf = Y.isInCf();
@@ -158,8 +156,8 @@ public:
     nClocks = Y.nClocks;
     // Vector constructor makes a deep copy of the pointers (not of the objects 
     // that the pointers point to). Make a deep copy of the DBM objects here
-    vector <DBM *> * currList = Y.getDBMList();
-    dbmListVec = new vector<DBM *>;
+    std::vector <DBM *> * currList = Y.getDBMList();
+    dbmListVec = new std::vector<DBM *>;
     for(unsigned int i = 0; i < currList->size(); i++) {
       DBM *tD =(*currList)[i];
       dbmListVec->push_back(new DBM(*tD));
@@ -171,7 +169,7 @@ public:
    * @return [Destructor]. */
   ~DBMList() {
     if(dbmListVec != NULL) {
-      for(vector<DBM *>::iterator it=dbmListVec->begin(); it != dbmListVec->end(); it++)
+      for(std::vector<DBM *>::iterator it=dbmListVec->begin(); it != dbmListVec->end(); it++)
       {
         DBM *tD = *it;
         delete tD;
@@ -190,7 +188,7 @@ public:
     isCf = false;
     /* Do I also need to set isCf = false for internal DBMs?
      * I believe I do. */
-    for(vector<DBM *>::iterator it=dbmListVec->begin(); it != dbmListVec->end(); it++)
+    for(std::vector<DBM *>::iterator it=dbmListVec->begin(); it != dbmListVec->end(); it++)
     {
       DBM * tD = *it;
       tD->setIsCfFalse();
@@ -218,7 +216,7 @@ public:
    * @param Y (&) The DBMList to add to the list of DBMs. 
    * @return None. */
   void addDBMList(const DBMList &Y) {
-    for(vector<DBM *>::iterator it=(Y.dbmListVec)->begin(); it != (Y.dbmListVec)->end(); it++)
+    for(std::vector<DBM *>::iterator it=(Y.dbmListVec)->begin(); it != (Y.dbmListVec)->end(); it++)
     {
       addDBM(*(*it));
     }
@@ -243,16 +241,16 @@ public:
       *((*dbmListVec)[0]) = *((*(Y.getDBMList()))[0]);
     }
     else {
-      vector<DBM *> * tempList = dbmListVec;
+      std::vector<DBM *> * tempList = dbmListVec;
       // Vector constructor makes a deep copy of the pointers (not of the objects 
       // that the pointers point to). Make a deep copy of the DBM objects here
-      vector <DBM *> * currList = Y.getDBMList();
-      dbmListVec = new vector<DBM *>;
+      std::vector <DBM *> * currList = Y.getDBMList();
+      dbmListVec = new std::vector<DBM *>;
       for(unsigned int i = 0; i < currList->size(); i++) {
         dbmListVec->push_back(new DBM( *((*currList)[i])));
       }
 
-      for(vector<DBM *>::iterator it=tempList->begin(); it != tempList->end(); it++)
+      for(std::vector<DBM *>::iterator it=tempList->begin(); it != tempList->end(); it++)
       {
         DBM *tD = *it;
         delete tD;
@@ -291,11 +289,11 @@ public:
    * @return The complemented DBMList, given as a DBMList. */
   DBMList & operator!(){
     if(dbmListVec->size() == 1) {
-      vector<DBM *> * tempList = dbmListVec;
+      std::vector<DBM *> * tempList = dbmListVec;
       DBMList * myTempList = (this->complementDBM(*((*dbmListVec)[0])) );
       dbmListVec = myTempList->getDBMList();
       // Now clean up DBMs used
-      for(vector<DBM *>::iterator it=tempList->begin(); it != tempList->end(); it++)
+      for(std::vector<DBM *>::iterator it=tempList->begin(); it != tempList->end(); it++)
       {
         DBM *tD = *it;
         delete tD;
@@ -307,17 +305,17 @@ public:
       delete myTempList;
     }
     else {
-      vector <DBM *> *tempList = dbmListVec;
-      vector<DBMList *> dbmVec;
+      std::vector <DBM *> *tempList = dbmListVec;
+      std::vector<DBMList *> dbmVec;
       for(unsigned int i = 0; i < dbmListVec->size(); i++) {
         DBMList * outputList = complementDBM(*((*dbmListVec)[i]));
         dbmVec.push_back(outputList);
       }
       // Vector constructor makes a deep copy of the pointers (not of the objects 
       // that the pointers point to). Make a deep copy of the DBM objects here
-      vector <DBM *> * currList = (dbmVec[0])->getDBMList();
+      std::vector <DBM *> * currList = (dbmVec[0])->getDBMList();
       
-      dbmListVec = new vector<DBM *>;
+      dbmListVec = new std::vector<DBM *>;
       for(unsigned int i = 0; i < currList->size(); i++) {
         DBM * myDBM = new DBM( *((*currList)[i]));
         dbmListVec->push_back(myDBM);
@@ -327,7 +325,7 @@ public:
         *this & *(dbmVec[j]); 
       }
       // Now delete tempList
-      for(vector<DBM *>::iterator it=tempList->begin(); it != tempList->end(); it++)
+      for(std::vector<DBM *>::iterator it=tempList->begin(); it != tempList->end(); it++)
       {
         DBM *tD = *it;
         delete tD;
@@ -335,7 +333,7 @@ public:
       tempList->clear();
       delete tempList;
       /* Delete dbmVec */
-       for(vector<DBMList *>::iterator it=dbmVec.begin(); it != dbmVec.end(); it++)
+       for(std::vector<DBMList *>::iterator it=dbmVec.begin(); it != dbmVec.end(); it++)
       {
         DBMList *tD = *it;
         delete tD;
@@ -393,16 +391,16 @@ public:
       return *this;
     }
     if(dbmListVec->size() == 1) {
-      vector<DBM *> * tempList = dbmListVec;
+      std::vector<DBM *> * tempList = dbmListVec;
       // Vector constructor makes a deep copy of the pointers (not of the objects 
       // that the pointers point to). Make a deep copy of the DBM objects here
-      vector <DBM *> * currList = Y.getDBMList();
-      dbmListVec = new vector<DBM *>;
+      std::vector <DBM *> * currList = Y.getDBMList();
+      dbmListVec = new std::vector<DBM *>;
       for(unsigned int i = 0; i < currList->size(); i++) {
         dbmListVec->push_back(new DBM( *((*currList)[i])));
       }
       for(unsigned int i = 0; i < Y.dbmListVec->size(); i++) {
-        /* Since the vector of DBMs stores the pointers
+        /* Since the std::vector of DBMs stores the pointers
         * hopefully this updates the vector for the correct DBMs */
         DBM * tD = (*dbmListVec)[i];
         *tD & *((*tempList)[0]);
@@ -410,7 +408,7 @@ public:
       }
       // We have to delete element by element
       // Now delete tempList
-      for(vector<DBM *>::iterator it=tempList->begin(); it != tempList->end(); it++)
+      for(std::vector<DBM *>::iterator it=tempList->begin(); it != tempList->end(); it++)
       {
         DBM *tD = *it;
         delete tD;
@@ -420,8 +418,8 @@ public:
     }
     else {
       /* Iterate through Y dbmListVec times */
-      vector<DBM *> * tempList = dbmListVec;
-      dbmListVec = new vector<DBM *>;
+      std::vector<DBM *> * tempList = dbmListVec;
+      dbmListVec = new std::vector<DBM *>;
       for(unsigned int i = 0; i < tempList->size(); i++) {
         for(unsigned int j = 0; j < Y.dbmListVec->size(); j++) {
           /* Since the vector of DBMs stores the pointers
@@ -433,7 +431,7 @@ public:
       }
       // We have to delete element by element
       // Now delete tempList
-      for(vector<DBM *>::iterator it=tempList->begin(); it != tempList->end(); it++)
+      for(std::vector<DBM *>::iterator it=tempList->begin(); it != tempList->end(); it++)
       {
         DBM *tD = *it;
         delete tD;
@@ -928,14 +926,14 @@ public:
    * @return None */
   void print(std::ostream& os) const{
 	  int dInd = 0;
-		for(vector<DBM *>::iterator it = dbmListVec->begin();  
+        for(std::vector<DBM *>::iterator it = dbmListVec->begin();
 		  it != dbmListVec->end(); it++) {
-		  os << "DBMList DBM " << dInd << endl;
+          os << "DBMList DBM " << dInd << std::endl;
 		  DBM *tD = *it;
 		  tD->print(os);
 		  dInd++;  
 		}
-		os << endl;
+        os << std::endl;
 	}
 	
 	/** Print the DBMList, more compactly, as a list of DBMs printed
@@ -943,8 +941,8 @@ public:
 	 * are printed in the order they appear in each matrix, and the DBMs are
 	 * separated by || (without line breaks).
 	 * @return none */
-  void print_constraint(std::ostream& os, const std::vector<string>& clock_strings) const{
-		for(vector<DBM *>::iterator it = dbmListVec->begin();  
+  void print_constraint(std::ostream& os, const std::vector<std::string>& clock_strings) const{
+        for(std::vector<DBM *>::iterator it = dbmListVec->begin();
 		  it != dbmListVec->end(); it++) {
 		  DBM *tD = *it;
 		  tD->print_constraint(os, clock_strings);
@@ -961,8 +959,8 @@ public:
 	 * that can be derived from other constraints. The output format
 	 * is the same as for print_constraint().
 	 * @return None */
-  void print_ExplicitConstraint(std::ostream& os, const std::vector<string>& clock_strings) const{
-    for(vector<DBM *>::iterator it = dbmListVec->begin();  
+  void print_ExplicitConstraint(std::ostream& os, const std::vector<std::string>& clock_strings) const{
+    for(std::vector<DBM *>::iterator it = dbmListVec->begin();
         it != dbmListVec->end(); it++) {
       DBM *tD = *it;
       tD->print_ExplicitConstraint(os, clock_strings);

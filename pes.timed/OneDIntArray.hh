@@ -41,7 +41,7 @@ public:
     /* We might want a private method that does not use bounds checks
      * In order to improve performance. */
     if (index < 0 || index >= quantity) {   
-      cerr << "OneDIntArray operator[] - out of bounds." <<endl;
+      std::cerr << "OneDIntArray operator[] - out of bounds." << std::endl;
       exit(-1);
     }
     return operatorAccess(index);
@@ -59,7 +59,7 @@ public:
     /* We might want a private method that does not use bounds checks
      * In order to improve performance. */
     if (index < 0 || index >= quantity) {
-      cerr << "OneDIntArray operator[] - out of bounds." <<endl;
+      std::cerr << "OneDIntArray operator[] - out of bounds." << std::endl;
       exit(-1);
     }
     short int offset = index * sizeof(short int);

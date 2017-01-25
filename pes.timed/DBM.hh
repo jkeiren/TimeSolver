@@ -13,8 +13,6 @@
 #include <vector>
 #include "OneDIntArray.hh"
 
-using namespace std;
-
 /** A bitwise vector representing clocks in the Clock Set.
  * Values are stored as bits, and Clock Sets are used in clock resets.
  * @author Peter Fontana, Dezhuang Zhang, and Rance Cleaveland. 
@@ -231,7 +229,8 @@ public:
    * @param col The second clock in constraint.
    * @param val The value constraining the upper bound of row - col.
    * @return [Constructor] */
-  DBM(const int numClocks, const short int row, const short int col, const short int val)  : OneDIntArray(numClocks * numClocks), nClocks(numClocks) {
+  DBM(const int numClocks, const short int row, const short int col, const short int val)
+      : OneDIntArray(numClocks * numClocks), nClocks(numClocks) {
     for(short int i = 0; i < nClocks; i++){
       for(short int j = 0; j < nClocks; j++){
       /* 0x1 means (0, <=) , since the left 3-bits
@@ -262,6 +261,7 @@ public:
    * @param Y (&) The object to copy.
    * @return [Constructor] */
   DBM(const DBM &Y): OneDIntArray(Y){ nClocks = Y.nClocks; isCf = Y.isCf;}
+
   /** Tell the object that it is not in canonical form.
    * Call this method whenever changing the DBM's value from the outside. 
    * Otherwise, cf() will fail to convert the DBM to canonical form.
@@ -288,9 +288,9 @@ public:
     /* Give out of bounds check for public method */
     if (row < 0 || row >= nClocks || col >= nClocks || col < 0){  
       // I added that col < 0 to check for the third bound.
-      cerr << "nClocks : " << nClocks << " row : "<<row << " col : " 
-      << col <<endl;
-      cerr <<  "operator() index out of bounds" <<endl; exit(-1);
+      std::cerr << "nClocks : " << nClocks << " row : "<<row << " col : "
+      << col <<std::endl;
+      std::cerr <<  "operator() index out of bounds" <<std::endl; exit(-1);
     }
     
     // Offsets to one dimentional array
@@ -315,9 +315,9 @@ public:
     /* Give out of bounds check for public method */
 		if (row < 0 || row >= nClocks || col >= nClocks || col < 0){  
       // I added that col < 0 to check for the third bound.
-      cerr << "nClocks : " << nClocks << " row : "<<row << " col : " 
-      << col <<endl;
-      cerr <<  "operator() index out of bounds" <<endl; exit(-1);
+      std::cerr << "nClocks : " << nClocks << " row : "<<row << " col : "
+      << col <<std::endl;
+      std::cerr <<  "operator() index out of bounds" <<std::endl; exit(-1);
     }
     
     // Offsets to one dimentional array
@@ -562,8 +562,8 @@ public:
   DBM & reset(const short int x){
     /* Do out of bounds checking now instead of in methods */
     if (x < 0 || x >= nClocks){  
-      cerr << "nClocks : " << nClocks << " x : "<< x <<endl;
-      cerr <<  "reset(x) clock index out of bounds" <<endl; exit(-1);
+      std::cerr << "nClocks : " << nClocks << " x : "<< x <<std::endl;
+      std::cerr <<  "reset(x) clock index out of bounds" <<std::endl; exit(-1);
     }
     for(short int i = 0; i < nClocks; i++){
       /* Code Fix: do not change (x,x), since
@@ -602,9 +602,9 @@ public:
   DBM &reset(const short int x, const short int y){
     /* Do out of bounds checking now instead of in methods */
     if (x < 0 || x >= nClocks || y >= nClocks || y < 0){  
-      cerr << "nClocks : " << nClocks << " x : "<< x << " y : " 
-      << y <<endl;
-      cerr <<  "reset(x,y) clock indices out of bounds" <<endl; exit(-1);
+      std::cerr << "nClocks : " << nClocks << " x : "<< x << " y : "
+      << y <<std::endl;
+      std::cerr <<  "reset(x,y) clock indices out of bounds" <<std::endl; exit(-1);
     }
     for(short int i = 0; i < nClocks; i++)
       if (i != x) {
@@ -631,8 +631,8 @@ public:
   DBM &preset(const short int x){
     /* Do out of bounds checking now instead of in methods */
     if (x < 0 || x >= nClocks){  
-      cerr << "nClocks : " << nClocks << " x : "<< x <<endl;
-      cerr <<  "reset(x) clock index out of bounds" <<endl; exit(-1);
+      std::cerr << "nClocks : " << nClocks << " x : "<< x <<std::endl;
+      std::cerr <<  "reset(x) clock index out of bounds" <<std::endl; exit(-1);
     }
     
     /* Do an emptiness check. If x=0 is not a valid valuation,
@@ -772,9 +772,9 @@ public:
   DBM &preset(const short int x, const short int y){
     /* Do out of bounds checking now instead of in methods */
     if (x < 0 || x >= nClocks || y >= nClocks || y < 0){  
-      cerr << "nClocks : " << nClocks << " x : "<< x << " y : " 
-      << y <<endl;
-      cerr <<  "reset(x,y) clock indices out of bounds" <<endl; exit(-1);
+      std::cerr << "nClocks : " << nClocks << " x : "<< x << " y : "
+      << y <<std::endl;
+      std::cerr <<  "reset(x,y) clock indices out of bounds" <<std::endl; exit(-1);
     }
     /* Now compute the preset by relaxing constraints on clock $x$ */
       // Now flush out difference constraints since they
@@ -1097,14 +1097,14 @@ public:
 						os << "( " << val << "," << "<  )\t";
 				}	  
 			}
-			os << endl;
+            os << std::endl;
 		}
 	}
 	
 	/** Print the DBM, more compactly, as a list of constraints. The constraints
 	 * are printed in the order they appear in the matrix.
 	 * @return none */
-  void print_constraint(std::ostream& os, const std::vector<string>& clock_strings) const{
+  void print_constraint(std::ostream& os, const std::vector<std::string>& clock_strings) const{
 		bool end = false;
 		bool isAllImplicit=true;
 		if(this->emptiness()) {
@@ -1164,7 +1164,7 @@ public:
 	 * constrain any values. This does not omit constraints
 	 * that can be derived from other constraints.
 	 * @return None */
-  void print_ExplicitConstraint(std::ostream& os, const std::vector<string>& clock_strings) const{
+  void print_ExplicitConstraint(std::ostream& os, const std::vector<std::string>& clock_strings) const{
 		bool end = false;
 		for(short int i = 0; i < nClocks; i++){
 			for(short int j = 0; j < nClocks; j++){
