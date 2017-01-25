@@ -1,4 +1,4 @@
-# pes.timed
+# TimeSolver
 
 June 19, 2009
 
