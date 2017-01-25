@@ -70,16 +70,16 @@ TEST_DIR = test
 .PHONY: default
 default: all
 
-all: demo check
+all: timesolver-ta check
 
-doc: demo *.hh *.cc
+doc: timesolver-ta *.hh *.cc
 	doxygen pes-timed_Doxyfile
 
-demo:	pes.tab.o pes.lex.o ExprNode.o demo.o
-	$(CXX) $(CXXFLAGS) pes.lex.o pes.tab.o ExprNode.o demo.o $(LDFLAGS) -o demo
+timesolver-ta:	pes.tab.o pes.lex.o ExprNode.o timesolver-ta.o
+	$(CXX) $(CXXFLAGS) pes.lex.o pes.tab.o ExprNode.o timesolver-ta.o $(LDFLAGS) -o timesolver-ta
 
-demo.o: demo.cc DBM.hh ExprNode.hh DBMList.hh
-	$(CXX) $(CXXFLAGS) -c demo.cc $(INCL_PATH)
+timesolver-ta.o: timesolver-ta.cc DBM.hh ExprNode.hh DBMList.hh
+	$(CXX) $(CXXFLAGS) -c timesolver-ta.cc $(INCL_PATH)
 
 ExprNode.o: ExprNode.cc ExprNode.hh DBM.hh
 	$(CXX) $(CXXFLAGS) -c ExprNode.cc $(INCL_PATH)
@@ -106,7 +106,7 @@ checkall: check checktool
  
 clean:
 	-echo "Removing all object files!"
-	-rm -f demo *.o
+	-rm -f timesolver-ta *.o
 	-echo "Removing intermediate C files!"
 	-rm -f pes.lex.cc pes.tab.cc
 	-echo "Removing intermediate header files!"
@@ -117,6 +117,6 @@ clean:
 	-rm -rf doc/DoxygenOutput/html
 	-rm -rf doc/DoxygenOutput/latex
 	-echo "Removing other tool-generated files!"
-	-rm -rf demo.dSYM
+	-rm -rf timesolver-ta.dSYM
 	-rm -f gmon.out
 	$(MAKE) -C $(TEST_DIR) clean
