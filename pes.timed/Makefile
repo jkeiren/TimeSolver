@@ -84,9 +84,6 @@ demo.o: demo.cc DBM.hh ExprNode.hh DBMList.hh
 proof.o:	proof.cc proof.hh proof_data.hh
 	$(CXX) $(CXXFLAGS) -c proof.cc $(INCL_PATH)
 
-proof.o: proof.cc proof.hh
-	$(CXX) $(CXXFLAGS) -c proof.cc $(INCL_PATH)
-	
 ExprNode.o: ExprNode.cc ExprNode.hh DBM.hh
 	$(CXX) $(CXXFLAGS) -c ExprNode.cc $(INCL_PATH)
 

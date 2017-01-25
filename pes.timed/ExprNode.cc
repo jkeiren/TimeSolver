@@ -299,7 +299,9 @@ ExprNode * lookup_equation(const char *s)
  * @param s (*) The error string to print out.
  * @return None */
 void
-yyerror(char *s)
+yyerror(bool debug, std::vector<Transition *> *transList,
+        std::vector<ExprNode*>& invs, int& MAXC, std::string& start_predicate,
+        int& predicateInd, DBM*& InitC, char *s)
 {
   cerr << " line " << yyline << ": ";
   if (s == NULL) cerr << "syntax error";

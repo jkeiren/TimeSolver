@@ -38,7 +38,11 @@
   }
   char lastToken[1024];
 
-  extern void yyerror(char *s);
+  extern void yyerror(bool debug, std::vector<Transition *> *transList,
+                      std::vector<ExprNode*>& invs, int& MAXC,
+                      std::string& start_predicate, int& predicateInd,
+                      DBM*& InitC,
+                      char *s);
   extern int yylex();
   extern SubstList * add_subst(SubstList *, char*, int );
   extern int add_clock(const char *s);
@@ -50,31 +54,26 @@
   extern ExprNode * lookup_predicate(const char *s);
   extern ExprNode * lookup_equation(const char *s);
   extern int yyline;
-  char * start_predicate;
   extern int spaceDimension;
-
   extern void print_clocks(std::ostream&);
   extern void print_atomic(std::ostream&);
   extern void print_predicates(std::ostream&);
 
   extern map <string, int> clocks;
   extern map <string, int> atomic;
-  vector <ExprNode *> invs;
   map <string, int> defcons;
-  extern int MAXC;
-  extern DBM * InitC;
-  extern bool debug;
-  /** The list of transitions of the state machine
-   * from the timed automaton and/or PES description. */
-  vector<Transition *> * transList;
 
-  /** A global variable that both counts the number
-   * of predicates (predicate variables) as well as gives
-   * each predicate variable a hashing index. Used to
-   * separate sequent storage to give each predicate
-   * variable its own bin(s). */
-  int predicateInd = 0;
-  %}
+ %}
+
+  // Parameters for the parser.
+  // TODO: clean up by providing a simple structure/class interface.
+%parse-param {bool debug}
+%parse-param {std::vector<Transition *> *transList}
+%parse-param {std::vector<ExprNode *>& invs}
+%parse-param {int& MAXC}
+%parse-param {std::string& start_predicate}
+%parse-param {int& predicateInd}
+%parse-param {DBM*& InitC}
 
 %start pes
 
