@@ -32,9 +32,7 @@ int spaceDimension;
 bidirectional_map <string, int> clocks;
 /** A Hash table of Atomic values used to store predicate
  * and/or control variable ids */
-map <string, int> atomic;
-/** A vector of strings, mapping the position of the atomic to its string */
-vector <string> atomic_strings;
+bidirectional_map <string, int> atomic;
 /** A Hash table of ints storing integer
  * substituations for atomic variables.
  * This maps atomic ids to atomic values.  0 is the default value.
@@ -109,37 +107,21 @@ const string& lookup_clock_name(const unsigned int n)
   return clocks.reverse_at(n);
 }
 
+static inline
+void print_map(std::ostream& os, const std::map<std::string, int> m)
+{
+  for(auto it = m.begin(); it != m.end(); ++it)
+  {
+    os << it->first << ":" << it->second << "  ";
+  }
+}
+
 /** Prints out the list of clocks with their labels
  * and current values.
  * @return 1 when done. */
 void print_clocks(std::ostream& os)
 {
-  const std::map<std::string, int> left = clocks.left();
-  map <string, int>::const_iterator it;
-  for (it = left.begin(); it != left.end(); it++)
-    os << (*it).first <<":"<< (*it).second <<"  ";
-}
-
-/** Insert an atomic variable with label s
- * into the list of atomic variables and give it an id.
- * This gives the atomic variable the default value of 0.
- * @param s (*) The label for the atomic value.
- * @return 1 when done. */
-int add_atomic(const char *s)
-{
-  string name(s);
-  int idx = atomic.size();
-  atomic.insert(make_pair(name, idx));
-#if PRINT_INTERNAL_NAMES
-  std::stringstream ss;
-  ss << "p" << idx;
-  atomic_strings.push_back(ss.str());
-#else
-  atomic_strings.push_back(name);
-  assert(atomic_strings[idx] == name);
-#endif
-  InitSub.insert(make_pair(idx, 0));
-  return 1;
+  print_map(os, clocks.left());
 }
 
 /** Insert an atomic variable with label s and initial value
@@ -152,17 +134,19 @@ int add_atomicv(const char *s, const int v)
 {
   string name(s);
   int idx = atomic.size();
-  atomic.insert(make_pair(name, idx));
-#if PRINT_INTERNAL_NAMES
-  std::stringstream ss;
-  ss << "p" << idx;
-  atomic_strings.push_back(ss.str());
-#else
-  atomic_strings.push_back(name);
-  assert(atomic_strings[idx] == name);
-#endif
+  atomic.insert(name, idx);
   InitSub.insert(make_pair(idx, v));
   return 1;
+}
+
+/** Insert an atomic variable with label s
+ * into the list of atomic variables and give it an id.
+ * This gives the atomic variable the default value of 0.
+ * @param s (*) The label for the atomic value.
+ * @return 1 when done. */
+int add_atomic(const char *s)
+{
+  return add_atomicv(s, 0);
 }
 
 /** Try to find the value of the atomic variable with label s
@@ -173,18 +157,20 @@ int add_atomicv(const char *s, const int v)
 int lookup_atomic(const char *s)
 {
   string name(s);
-  map<string, int>::iterator it = atomic.find(name);
-  if (it != atomic.end())
-    return (*it).second;
-  else
+  try
+  {
+    return atomic.at(name);
+  }
+  catch (std::runtime_error&)
+  {
     return -1;
+  }
 }
 
 /** Lookup the name of the atomic with id n */
 const string& lookup_atomic_name(const unsigned int n)
 {
-  assert(n < atomic_strings.size());
-  return atomic_strings[n];
+  return atomic.reverse_at(n);
 }
 
 /** Prints out the list of atomic variables with their
@@ -192,9 +178,7 @@ const string& lookup_atomic_name(const unsigned int n)
  * @return 1 when done. */
 void print_atomic(std::ostream& os)
 {
-  map <string, int>::iterator it;
-  for (it = atomic.begin(); it != atomic.end(); it++)
-    os << (*it).first << ":" << (*it).second << "  ";
+  print_map(os, atomic.left());
 }
 
 /** Adds an empty PREDICATE expression to the list of
