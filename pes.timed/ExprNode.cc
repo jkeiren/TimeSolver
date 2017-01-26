@@ -11,6 +11,7 @@
 #include <string>
 #include <sstream>
 #include <map>
+#include "bidirectional_map.hh"
 #include "ExprNode.hh"
 
 #define PRINT_INTERNAL_NAMES false
@@ -28,11 +29,9 @@ int numErrs;
 int spaceDimension;
 
 /** A Hash Table of clocks used to store the clocks (clock IDs). */
-map <string, int> clocks;
+bidirectional_map <string, int> clocks;
 /** A Hash table of Atomic values used to store predicate
  * and/or control variable ids */
-/** A vector of strings, mapping clock ids to their strings */
-vector <string> clock_strings;
 map <string, int> atomic;
 /** A vector of strings, mapping the position of the atomic to its string */
 vector <string> atomic_strings;
@@ -47,11 +46,6 @@ map <string, ExprNode *> predicates;
 /** A Hash table storing a list of PES, with their labels
  * and their expressions. */
 map <string, ExprNode *> equations;
-
-const vector<string>& get_clock_strings()
-{
-  return clock_strings;
-}
 
 /** Assuming that e is a chain of ASSIGN expressions (possibly ending
  * with a BOOL expression, this converts that expression to an ordered
@@ -84,21 +78,9 @@ void makeAssignmentList(const ExprNode * const e, vector<pair<short int,short in
  * @return 1:when finished. */
 int add_clock(const char *s)
 {
-  if(clock_strings.empty())
-  {
-    clock_strings.push_back("<DUMMY>");
-  }
   string name(s);
   int idx = clocks.size() + 1;
-  clocks.insert(make_pair(name,idx));
-  #if PRINT_INTERNAL_NAMES
-  std::stringstream ss;
-  ss << "x" << idx;
-  clock_strings.push_back(ss.str());
-  #else
-  clock_strings.push_back(name);
-  assert(clock_strings[idx] == name);
-  #endif
+  clocks.insert(name,idx);
   spaceDimension = clocks.size() + 1;
   return 1;
 }
@@ -111,18 +93,20 @@ int add_clock(const char *s)
 int lookup_clock(const char *s)
 {
   string name(s);
-  map<string, int>::iterator it = clocks.find(name);
-  if (it != clocks.end())
-    return (*it).second;
-  else
+  try
+  {
+    return clocks.at(name);
+  }
+  catch(std::runtime_error& )
+  {
     return -1;
+  }
 }
 
 /** Lookup the name of the clock with id n */
 const string& lookup_clock_name(const unsigned int n)
 {
-  assert(n < clock_strings.size());
-  return clock_strings[n];
+  return clocks.reverse_at(n);
 }
 
 /** Prints out the list of clocks with their labels
@@ -130,8 +114,9 @@ const string& lookup_clock_name(const unsigned int n)
  * @return 1 when done. */
 void print_clocks(std::ostream& os)
 {
-  map <string, int>::iterator it;
-  for (it = clocks.begin(); it != clocks.end(); it++)
+  const std::map<std::string, int> left = clocks.left();
+  map <string, int>::const_iterator it;
+  for (it = left.begin(); it != left.end(); it++)
     os << (*it).first <<":"<< (*it).second <<"  ";
 }
 
@@ -338,7 +323,7 @@ void print_sequent(std::ostream& os, const int step, const bool retVal, const DB
                    const ExprNode * const rhs, const SubstList * const sub, const opType op){
   os << "seq#" << step << "  " <<retVal << "  ";
   if (lhs != NULL) {
-    lhs->print_constraint(os, clock_strings) ;
+    lhs->print_constraint(os, clocks) ;
   }
   if (sub != NULL) {
     os << ", ";
@@ -369,7 +354,7 @@ void print_sequentCheck(std::ostream& os, const int step, const bool retVal, con
                         const DBMList * const rhsList, const SubstList * const sub, const opType op){
   os << "seq#" << step << "  " <<retVal << "  ";
   if (lhs != NULL) {
-    lhs->print_constraint(os, clock_strings) ;
+    lhs->print_constraint(os, clocks) ;
   }
   if (sub != NULL) {
     os << ", ";
@@ -377,7 +362,7 @@ void print_sequentCheck(std::ostream& os, const int step, const bool retVal, con
   }
   os << "\t|-  " ;
   if (rhsList != NULL) {
-    rhsList->print_constraint(os, clock_strings);
+    rhsList->print_constraint(os, clocks);
   }
   os << "\t";
   print_ExprNodeType(op, os);
@@ -400,11 +385,11 @@ void print_sequent_place(std::ostream& os, const int step, const bool retVal, co
                          const SubstList * const sub, const opType op){
   os << "seq#" << step << "  " <<retVal << "  ";
   if (lhs != NULL) {
-    lhs->print_constraint(os, clock_strings) ;
+    lhs->print_constraint(os, clocks) ;
   }
   if (place != NULL) {
     os << " plhold: {";
-    place->print_constraint(os, clock_strings);
+    place->print_constraint(os, clocks);
     os << "}";
   }
   if (sub != NULL) {
@@ -438,11 +423,11 @@ void print_sequent_placeCheck(std::ostream& os, const int step, const bool retVa
                               const SubstList * const sub, const opType op){
   os << "seq#" << step << "  " <<retVal << "  ";
   if (lhs != NULL) {
-    lhs->print_constraint(os, clock_strings) ;
+    lhs->print_constraint(os, clocks) ;
   }
   if (place != NULL) {
     os << " plhold: {";
-    place->print_constraint(os, clock_strings);
+    place->print_constraint(os, clocks);
     os << "}";
   }
   if (sub != NULL) {
@@ -451,7 +436,7 @@ void print_sequent_placeCheck(std::ostream& os, const int step, const bool retVa
   }
   os << "\t|-  " ;
   if (rhsList != NULL) {
-    rhsList->print_constraint(os, clock_strings);
+    rhsList->print_constraint(os, clocks);
   }
   os << "\t";
   print_ExprNodeTypePlace(op, os);
@@ -542,7 +527,7 @@ void print_ExprNode(const ExprNode * const e, std::ostream& os)
       os << e->getIntVal();
       break;
     case CONSTRAINT:
-      e->dbm()->print_constraint(os, clock_strings);
+      e->dbm()->print_constraint(os, clocks);
       break;
     case ATOMIC:
       os << lookup_atomic_name(e->getAtomic());
@@ -892,7 +877,7 @@ void print_ExprNodeTrans(const ExprNode * const e, std::ostream& os)
         os << e->getIntVal();
         break;
       case CONSTRAINT:
-        e->dbm()->print_constraint(os, clock_strings);
+        e->dbm()->print_constraint(os, clocks);
         break;
       case ATOMIC:
         os << lookup_atomic_name(e->getAtomic());

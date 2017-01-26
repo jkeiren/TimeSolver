@@ -942,11 +942,11 @@ public:
    * are printed in the order they appear in each matrix, and the DBMs are
    * separated by || (without line breaks).
    * @return none */
-  void print_constraint(std::ostream& os, const std::vector<std::string>& clock_strings) const{
+  void print_constraint(std::ostream& os, const bidirectional_map<std::string, int>& clocks) const{
         for(std::vector<DBM *>::iterator it = dbmListVec->begin();
       it != dbmListVec->end(); it++) {
       DBM *tD = *it;
-      tD->print_constraint(os, clock_strings);
+      tD->print_constraint(os, clocks);
       if( (it+1) != dbmListVec->end()) {
         os << " || ";
       }

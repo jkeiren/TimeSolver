@@ -54,7 +54,7 @@ extern int yyparse(bool debug, std::vector<Transition *> *transList,
 /** A Hash Table of clocks used to store the clocks,
  * mapping string symbols to clock indices. 
  * @see ExprNode.cc */
-extern map <string, int > clocks;
+extern bidirectional_map<std::string, int> clocks;
 /** A Hash table of Atomic values used to store discrete state
  * variables, mapping string names to id values. 
  * @see ExprNode.cc. */

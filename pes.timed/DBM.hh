@@ -12,6 +12,7 @@
 #include <iostream>
 #include <vector>
 #include "OneDIntArray.hh"
+#include "bidirectional_map.hh"
 
 /** A bitwise vector representing clocks in the Clock Set.
  * Values are stored as bits, and Clock Sets are used in clock resets.
@@ -1104,7 +1105,7 @@ public:
   /** Print the DBM, more compactly, as a list of constraints. The constraints
    * are printed in the order they appear in the matrix.
    * @return none */
-  void print_constraint(std::ostream& os, const std::vector<std::string>& clock_strings) const{
+  void print_constraint(std::ostream& os, const bidirectional_map<std::string, int>& clocks) const{
     bool end = false;
     bool isAllImplicit=true;
     if(this->emptiness()) {
@@ -1130,18 +1131,18 @@ public:
         }
         if(i != 0 && j!=0){
           //os << "x" << (i);
-          os << clock_strings[i];
+          os << clocks.reverse_at(i);
           os << "-";
           //os << "x" << (j);
-          os << clock_strings[j];
+          os << clocks.reverse_at(j);
         }else if (i == 0){
-          os << clock_strings[j];
+          os << clocks.reverse_at(j);
           if (type == 1) os << ">=" << -val ;
           else os << ">" << -val ;
           end = true;
           continue;
         }else if (j == 0){
-          os << clock_strings[i];
+          os << clocks.reverse_at(i);
         }
 
         if (type == 1) {
