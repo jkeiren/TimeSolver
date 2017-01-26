@@ -153,6 +153,14 @@ int add_atomicv(const char *s, const int v)
   string name(s);
   int idx = atomic.size();
   atomic.insert(make_pair(name, idx));
+#if PRINT_INTERNAL_NAMES
+  std::stringstream ss;
+  ss << "p" << idx;
+  atomic_strings.push_back(ss.str());
+#else
+  atomic_strings.push_back(name);
+  assert(atomic_strings[idx] == name);
+#endif
   InitSub.insert(make_pair(idx, v));
   return 1;
 }
