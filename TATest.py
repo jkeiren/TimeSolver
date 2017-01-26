@@ -12,14 +12,14 @@ import sys
 # These paths are relative to the directory in which this script is stored.
 # We make sure we are in the appropriate directory in the __main__ at the
 # bottom of this file.
-EXECUTABLE = "pes.timed/demo"
+EXECUTABLE = "pes.timed/timesolver-ta"
 TEST_SUITE_DIR = "examples/CorrectnessTestSuite"
 
 def filterTimes(lines):
     """Filter times from the output. This data is variable, so should not be
        taken into account in the comparison."""
     
-    invalid = re.compile(r"(running|Program|start|end) (t|T)(ime)")
+    invalid = re.compile(r"(running|Program|start|end) (t|T)(ime)|demo|timesolver")
     return list(filter(lambda x: invalid.search(x) == None, lines))
 
 def compare(expectedFileName, given):

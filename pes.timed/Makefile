@@ -102,7 +102,7 @@ pes.tab.cc pes.tab.hh: pes.y
 check:
 	$(MAKE) -C $(TEST_DIR) check
 
-checktool: demo
+checktool: timesolver-ta
 	../TATest.py
 	
 checkall: check checktool
