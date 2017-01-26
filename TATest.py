@@ -46,12 +46,21 @@ def runTestCase(dirName, fileName, overwrite = False):
     try:
         ret = subprocess.run([EXECUTABLE, "-d", os.path.join(dirName,fileName)], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines = True, check=True)
         resultFile = fileName + ".expectedout.gz"
-
+        resultPath = os.path.join(dirName,resultFile)
+        
+        # Check whether the file exists. If it exists, compare the result, and
+        # do not overwrite if the content is the same
         if overwrite:
-            with gzip.open(os.path.join(dirName,resultFile), 'wt') as f:
-              f.write(ret.stdout)
-            result = True
-            print('[{0}] {1}/{2}'.format('\033[33mGENERATE\033[39m', dirName, resultFile))
+            result = None
+            if os.path.exists(resultPath):
+                result = compare(resultPath, ret.stdout)
+                
+            if result:
+                print('[{0}] {1}/{2}'.format('\033[32mKEEP\033[39m', dirName, resultFile))
+            else:
+                with gzip.open(os.path.join(dirName,resultFile), 'wt') as f:
+                    f.write(ret.stdout)
+                    print('[{0}] {1}/{2}'.format('\033[33mGENERATE\033[39m', dirName, resultFile))
         else:
             result = compare(os.path.join(dirName,resultFile), ret.stdout)
             print('[{0}] {1}/{2}'.format('\033[32mOK\033[39m' if result else '\033[31mFAILED\033[39m', dirName, fileName))
