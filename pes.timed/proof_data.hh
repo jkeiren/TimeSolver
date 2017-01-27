@@ -9,6 +9,7 @@
 #include "DBM.hh"
 #include "DBMList.hh"
 #include "ExprNode.hh"
+#include "sequent.hh"
 
 //FIXME
 extern bidirectional_map<std::string, int> clocks;

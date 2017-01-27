@@ -9,6 +9,7 @@
 
 %{
 #include "ExprNode.hh"
+#include "transition.hh"
 #include <string>
 #include <iostream>
 #include "pes.tab.hh"

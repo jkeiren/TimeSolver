@@ -9,6 +9,7 @@
 
 #include "DBM.hh"
 #include "ExprNode.hh"
+#include "transition.hh"
 #include "comp_ph.hh"
 
 class prover

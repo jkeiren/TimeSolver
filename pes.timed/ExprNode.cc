@@ -18,11 +18,6 @@
 
 using namespace std;
 
-/** A variable representing the line number. */
-extern  int yyline;
-/** The number of errors (syntax or otherwise) in the expressions.
- * I believe the inital value is 0. */
-int numErrs;
 /** The number of clocks in the timed automata, including the dummy
  * "zero clocks". Hence, a DBM with n clocks has spaceDimension value n + 1
  * (the first clock is the zero clock). */
@@ -270,23 +265,6 @@ ExprNode * lookup_equation(const char *s)
   else
     return NULL;
 }
-
-/** Prints out an error if it occurs during the parsing process.
- * This method is only used in the parser.
- * @param s (*) The error string to print out.
- * @return None */
-void
-yyerror(bool debug, std::vector<Transition *> *transList,
-        std::vector<ExprNode*>& invs, int& MAXC, std::string& start_predicate,
-        int& predicateInd, DBM*& InitC, char *s)
-{
-  cerr << " line " << yyline << ": ";
-  if (s == NULL) cerr << "syntax error";
-  else cerr << s;
-  cerr << endl;
-  numErrs++;
-}
-
 
 /** Prints out the list of predicate variables (without their right hand
  * side equations).
@@ -923,24 +901,6 @@ void print_ExprNodeTrans(const ExprNode * const e, std::ostream& os)
         os << "UnableWaitInf";
         break;
     }
-  }
-}
-
-/** Prints out the transition to the desired output stream.
- * The typical output stream is os.
- * @param t (*) The transition to print.
- * @param os (&) The type of output stream to print the output to.
- * @return none */
-void print_Transition(const Transition * const t, std::ostream& os)
-{
-  const ExprNode * leftExpr = t->getLeftExpr();
-  const ExprNode * rightExpr = t->getRightExpr();
-  if(leftExpr != NULL) {
-    print_ExprNodeTrans(leftExpr, os);
-  }
-  os << "->";
-  if(rightExpr != NULL) {
-    print_ExprNodeTrans(rightExpr, os);
   }
 }
 

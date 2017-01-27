@@ -42,6 +42,11 @@ using namespace std;
  * for the lexer.
  * @see pes.l and pes.lex.c (lexer files). */
 extern FILE *yyin;
+/** A variable representing the line number. */
+extern  int yyline;
+/** The number of errors (syntax or otherwise) in the expressions.
+ * I believe the inital value is 0. */
+int numErrs;
 /** The method that parses the lexed file
  * and creates the ExprNode objects.
  * @return 0 if successful, 1 if syntax error,
@@ -50,6 +55,22 @@ extern FILE *yyin;
 extern int yyparse(bool debug, std::vector<Transition *> *transList,
                    std::vector<ExprNode*>& invs, int& MAXC,
                    std::string& start_predicate, int& predicateInd, DBM*& InitC);
+
+/** Prints out an error if it occurs during the parsing process.
+ * This method is only used in the parser.
+ * @param s (*) The error string to print out.
+ * @return None */
+void
+yyerror(bool debug, std::vector<Transition *> *transList,
+        std::vector<ExprNode*>& invs, int& MAXC, std::string& start_predicate,
+        int& predicateInd, DBM*& InitC, char *s)
+{
+  std::cerr << " line " << yyline << ": ";
+  if (s == NULL) cerr << "syntax error";
+  else std::cerr << s;
+  std::cerr << endl;
+  numErrs++;
+}
 
 /** A Hash Table of clocks used to store the clocks,
  * mapping string symbols to clock indices. 

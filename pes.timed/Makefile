@@ -81,7 +81,7 @@ timesolver-ta:	pes.tab.o pes.lex.o ExprNode.o proof.o timesolver-ta.o
 timesolver-ta.o: timesolver-ta.cc DBM.hh ExprNode.hh DBMList.hh
 	$(CXX) $(CXXFLAGS) -c timesolver-ta.cc $(INCL_PATH)
 	
-proof.o:	proof.cc proof.hh proof_data.hh
+proof.o:	proof.cc proof.hh proof_data.hh transition.hh ExprNode.hh
 	$(CXX) $(CXXFLAGS) -c proof.cc $(INCL_PATH)
 
 ExprNode.o: ExprNode.cc ExprNode.hh DBM.hh

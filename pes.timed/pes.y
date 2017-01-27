@@ -25,8 +25,10 @@
   #include <iostream>
   #include <vector>
   #include "ExprNode.hh"
+  #include "transition.hh"
   #include "OneDIntArray.hh"
   #include "DBM.hh"
+
 
   using namespace std;
 
