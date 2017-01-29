@@ -47,6 +47,7 @@
                       bidirectional_map<std::string, int>* declared_atomic,
                       std::map<std::string, ExprNode*>* declared_predicates,
                       std::map<int,int>* InitSub,
+                      std::map<std::string, ExprNode*>* equations,
                       char *s);
   extern int yylex();
   extern SubstList * add_subst(SubstList *, char*, int );
@@ -70,6 +71,7 @@
 %parse-param {bidirectional_map<std::string, int>* declared_atomic}
 %parse-param {std::map<std::string, ExprNode*>* declared_predicates}
 %parse-param {std::map<int, int>* InitSub}
+%parse-param {std::map<std::string, ExprNode*>* equations}
 
 %start pes
 
@@ -731,14 +733,14 @@ equation {  }
 equation:
 TOK_INT TOK_COLON TOK_NU TOK_ID_PREDICATE TOK_ASSIGN expr
 {
-  if (add_equation($1,true,$4,$6, declared_predicates)== 0) {
+  if (add_equation($1,true,$4,$6, declared_predicates, equations)== 0) {
     errPrtExit("predicate vairable not declared");
   }
   delete $4;
 }
 |TOK_INT TOK_COLON TOK_MU TOK_ID_PREDICATE TOK_ASSIGN expr
 {
-  if (add_equation($1, false,$4,$6, declared_predicates)== 0) {
+  if (add_equation($1, false,$4,$6, declared_predicates, equations)== 0) {
     errPrtExit("predicate vairbale not declared");
   }
   delete $4;

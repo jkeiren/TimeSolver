@@ -838,7 +838,9 @@ bool set_parity_block(const std::string& name, const int block, const bool parit
  * @param s (*) The equation label.
  * @param e (*) The expression of the RHS of the equation.
  * @return 1 if successful in doing so and 0 otherwise. */
-int add_equation(const int block, const bool parity, const char *s, ExprNode *e, std::map<std::string, ExprNode*>* declared_predicates);
+int add_equation(const int block, const bool parity, const char *s, ExprNode *e,
+                 std::map<std::string, ExprNode*>* declared_predicates,
+                 std::map<std::string, ExprNode*>* equations);
 
 /** Looks up a predicate with label s and returns the expression in
  * the list if it is there and NULL otherwise.
@@ -853,7 +855,7 @@ ExprNode * lookup_predicate(const char *s, std::map<std::string, ExprNode*>* dec
  * @param s (*) The label of the equation.
  * @return The Expression (a reference) if found in the list, or NULL if not
  * found in the list of equations. */
-ExprNode * lookup_equation(const char *s);
+ExprNode * lookup_equation(const char *s, std::map<std::string, ExprNode*>* equations);
 
 /** Prints out the list of predicate variables (without their right hand
  * side equations).

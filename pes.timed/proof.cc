@@ -39,7 +39,7 @@ bool prover::do_proof(int step, DBM * const lhs, const ExprNode * const rhs, Sub
   switch(rhs->getOpType()){
     case PREDICATE:{
 
-      ExprNode *e = lookup_equation(rhs->getPredicate());
+      ExprNode *e = lookup_equation(rhs->getPredicate(), equations);
       if (e == NULL){
         cerr << "open predicate variable found: "<< rhs->getPredicate()<<endl;
         exit(-1);
@@ -1281,7 +1281,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
   switch(rhs->getOpType()){
     case PREDICATE:{
 
-      ExprNode *e = lookup_equation(rhs->getPredicate());
+      ExprNode *e = lookup_equation(rhs->getPredicate(), equations);
       if (e == NULL){
         cerr << "open predicate variable found: "<< rhs->getPredicate()<<endl;
         exit(-1);

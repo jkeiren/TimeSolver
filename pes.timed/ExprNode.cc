@@ -23,10 +23,6 @@ using namespace std;
  * (the first clock is the zero clock). */
 int spaceDimension;
 
-/** A Hash table storing a list of PES, with their labels
- * and their expressions. */
-map <string, ExprNode *> equations;
-
 /** Assuming that e is a chain of ASSIGN expressions (possibly ending
  * with a BOOL expression, this converts that expression to an ordered
  * list of clock assignments. The innermost assignments are at the back
@@ -210,11 +206,13 @@ bool set_parity_block(const string& name, const int block, const bool parity, st
  * @param s (*) The equation label.
  * @param e (*) The expression of the RHS of the equation.
  * @return 1 if successful in doing so and 0 otherwise. */
-int add_equation(const int block, const bool parity, const char *s, ExprNode *e, std::map<std::string, ExprNode*>* declared_predicates)
+int add_equation(const int block, const bool parity, const char *s, ExprNode *e,
+                 std::map<std::string, ExprNode*>* declared_predicates,
+                 std::map<std::string, ExprNode*>* equations)
 {
   string name(s);
   if(set_parity_block(name, block, parity, declared_predicates)){
-    equations.insert(make_pair(name, e));
+    equations->insert(make_pair(name, e));
     return 1;
   }
   else
@@ -243,11 +241,12 @@ ExprNode * lookup_predicate(const char *s, std::map<std::string, ExprNode*>* dec
  * @param s (*) The label of the equation.
  * @return The Expression (a reference) if found in the list, or NULL if not
  * found in the list of equations. */
-ExprNode * lookup_equation(const char *s)
+ExprNode * lookup_equation(const char *s,
+                           std::map<std::string, ExprNode*>* equations)
 {
   string name(s);
-  map<string, ExprNode *>::iterator it = equations.find(name);
-  if (it != equations.end())
+  map<string, ExprNode *>::iterator it = equations->find(name);
+  if (it != equations->end())
     return (*it).second;
   else
     return NULL;

@@ -58,7 +58,8 @@ extern int yyparse(bool debug, std::vector<Transition *> *transList,
                    bidirectional_map<std::string, int>* declared_clocks,
                    bidirectional_map<std::string, int>* declared_atomic,
                    std::map<std::string,ExprNode*>* declared_predicates,
-                   std::map<int,int>* InitSub);
+                   std::map<int,int>* InitSub,
+                   std::map<std::string, ExprNode*>* equations);
 
 /** Prints out an error if it occurs during the parsing process.
  * This method is only used in the parser.
@@ -70,7 +71,7 @@ yyerror(bool /*debug*/, std::vector<Transition *>* /*transList*/,
         int& /*predicateInd*/, DBM*& /*InitC*/, bidirectional_map<std::string, int>* /*declared_clocks*/,
         bidirectional_map<std::string, int>* /* declared_atomic*/,
         std::map<std::string, ExprNode*>*,
-        std::map<int,int>*, char *s)
+        std::map<int,int>*, std::map<std::string, ExprNode*>*, char *s)
 {
   std::cerr << " line " << yyline << ": ";
   if (s == NULL) cerr << "syntax error";
@@ -78,11 +79,6 @@ yyerror(bool /*debug*/, std::vector<Transition *>* /*transList*/,
   std::cerr << endl;
   numErrs++;
 }
-
-/** A Hash table storing a list of PES variables, with their 
- * string labels
- * and the right hand side expressions in their equations. */
-extern map <string, ExprNode *> equations;
 
 /** This represents the number of clocks in the timed automata, which
  * is referred to the number of dimensions (the space) of the automata.
@@ -274,6 +270,10 @@ int main(int argc, char** argv){
    * @see ExprNode.cc */
   std::map <int, int>* InitSub = new std::map<int,int>();
 
+  /** A Hash table storing a list of PES, with their labels
+   * and their expressions. */
+  std::map <std::string, ExprNode *>* equations = new std::map<std::string, ExprNode*>() ;
+
   /* Read and lex the input file to tokens for the parser to use. */
   yyin = fopen(opt.input_filename.c_str(), "r");
   if (!yyin) {
@@ -286,7 +286,7 @@ int main(int argc, char** argv){
    * (usually). */
   int parseError = yyparse(opt.debug, transList, invs, MAXC, start_predicate,
                            predicateInd, InitC, declared_clocks, declared_atomic,
-                           declared_predicates, InitSub);
+                           declared_predicates, InitSub, equations);
   
   if(parseError) {
     cout << endl << "**Syntax Error: Error Parsing file.**" << endl << endl;
@@ -388,7 +388,7 @@ int main(int argc, char** argv){
   prover p(invs, transList,
            currParityGfp,prevParityGfp,opt.useCaching,predicateInd,opt.nHash,
            opt.debug, MAXC, opt.nbits, opt.seqStSize, opt.aSize, declared_clocks,
-           declared_predicates);
+           declared_predicates, equations);
   
   if (InitC != NULL) {
 		InitC->setIsCfFalse();
@@ -452,11 +452,14 @@ int main(int argc, char** argv){
   invs.clear();
   
   // Do Extra Work to delete Dynamically Allocated Elements
-	for(map<string, ExprNode *>::iterator it = equations.begin(); 
-     	it != equations.end(); it++) {
+  for(map<string, ExprNode *>::iterator it = equations->begin();
+      it != equations->end(); it++) {
     ExprNode *ls = (*it).second;
     delete ls;
   }
+  equations->clear();
+  delete equations;
+
   // Do Extra Work to delete Dynamically Allocated Elements
   // Delete the predicates here since the ExprNode Destructor
   // Does not traverse predicates to make sure of no inconsistencies.
@@ -471,7 +474,6 @@ int main(int argc, char** argv){
   }
   declared_predicates->clear();
   delete declared_predicates;
-  equations.clear();
   
   /* Delete Transitions in transition list */
   for(vector<Transition *>::iterator it = transList->begin();

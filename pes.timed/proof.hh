@@ -67,6 +67,9 @@ protected:
   /** Pointer to the list of declared predicates */
   std::map<std::string, ExprNode*>* declared_predicates;
 
+  /** Pointer to the list of defined equations */
+  std::map<std::string, ExprNode*>* equations;
+
   /** XList_pGFP (XList) is an array of stacks, where each stack
    * is an array of sequents that
    * keeps track of all possible GFP Sequents
@@ -144,7 +147,8 @@ public:
          int a_predicateInd, int a_nHash, bool debug, int MAXC,
          int nbits, int seqStSize, int aSize,
          bidirectional_map<std::string, int>* dc,
-         std::map<std::string, ExprNode*>* dp) :
+         std::map<std::string, ExprNode*>* dp,
+         std::map<std::string, ExprNode*>* eqs) :
   invs(a_invs),
   transList(a_transList),
   currParityGfp(a_currParityGfp),
@@ -159,6 +163,7 @@ public:
   seqStSize(seqStSize),
   declared_clocks(dc),
   declared_predicates(dp),
+  equations(eqs),
   Xlist_pGFP(aSize, nbits, predicateInd*nHash, seqStSize, predicateInd, newSequent),
   Xlist_pLFP(aSize, nbits, predicateInd*nHash, seqStSize, predicateInd, newSequent),
   Xlist_true(aSize, nbits, predicateInd*nHash, seqStSize, predicateInd, newSequent),
