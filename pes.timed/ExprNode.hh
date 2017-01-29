@@ -783,7 +783,8 @@ void print_clocks(std::ostream& os, bidirectional_map <std::string, int>* declar
  * This gives the atomic variable the default value of 0.
  * @param s (*) The label for the atomic value.
  * @return 1 when done. */
-int add_atomic(const char *s, bidirectional_map<std::string, int>* declared_atomic);
+int add_atomic(const char *s, bidirectional_map<std::string, int>* declared_atomic,
+               std::map<int,int>* InitSub);
 
 /** Insert an atomic variable with label s and initial value
  * v into the list of atomic variables and give it an id.
@@ -791,7 +792,8 @@ int add_atomic(const char *s, bidirectional_map<std::string, int>* declared_atom
  * @param s (*) The label for the atomic value.
  * @param v The value of the atomic variable labeled by s.
  * @return 1 when done. */
-int add_atomicv(const char *s, const int v, bidirectional_map<std::string, int>* declared_atomic);
+int add_atomicv(const char *s, const int v, bidirectional_map<std::string, int>* declared_atomic,
+                std::map<int,int>* InitSub);
 
 /** Try to find the value of the atomic variable with label s
  * in the atomic list.

@@ -46,6 +46,7 @@
                       DBM*& InitC, bidirectional_map<std::string, int>* declared_clocks,
                       bidirectional_map<std::string, int>* declared_atomic,
                       std::map<std::string, ExprNode*>* declared_predicates,
+                      std::map<int,int>* InitSub,
                       char *s);
   extern int yylex();
   extern SubstList * add_subst(SubstList *, char*, int );
@@ -68,6 +69,7 @@
 %parse-param {bidirectional_map<std::string, int>* declared_clocks}
 %parse-param {bidirectional_map<std::string, int>* declared_atomic}
 %parse-param {std::map<std::string, ExprNode*>* declared_predicates}
+%parse-param {std::map<int, int>* InitSub}
 
 %start pes
 
@@ -626,31 +628,31 @@ TOK_ATOMIC TOK_COLON TOK_LBRACE atomic_list TOK_RBRACE
 atomic_list: /* empty */
 {/*do nothing*/}
 /* These parts initially give the proposition value 0. */
-| TOK_ID_ATOMIC { add_atomic($1, declared_atomic) ; delete $1;}
+| TOK_ID_ATOMIC { add_atomic($1, declared_atomic, InitSub) ; delete $1;}
 | TOK_ID_ATOMIC TOK_LPAREN TOK_INT TOK_RPAREN
 {
   /* Here the atomic number has the number of values
    * in () - they are for the reader, and can
    * can be ignored by the program. */
-  add_atomic($1, declared_atomic) ;
+  add_atomic($1, declared_atomic, InitSub) ;
   delete $1;
 }
-| atomic_list TOK_COMMA TOK_ID_ATOMIC { add_atomic($3, declared_atomic); delete $3; }
+| atomic_list TOK_COMMA TOK_ID_ATOMIC { add_atomic($3, declared_atomic, InitSub); delete $3; }
 | atomic_list TOK_COMMA TOK_ID_ATOMIC TOK_LPAREN TOK_INT TOK_RPAREN {
   /* Here the atomic number has the number of values
    * in () - they are for the reader, and can
    * can be ignored by the program. */
-  add_atomic($3, declared_atomic);
+  add_atomic($3, declared_atomic, InitSub);
   delete $3;
 }
 /* These next two parts give the atomic the specified
  * initial value */
 | TOK_ID_ATOMIC TOK_ASSIGN TOK_INT
-{ add_atomicv($1,$3, declared_atomic);
+{ add_atomicv($1,$3, declared_atomic, InitSub);
   delete $1;
 }
 | atomic_list TOK_COMMA TOK_ID_ATOMIC TOK_ASSIGN TOK_INT
-{ add_atomicv($3,$5, declared_atomic);
+{ add_atomicv($3,$5, declared_atomic, InitSub);
   delete $3;
 };
 

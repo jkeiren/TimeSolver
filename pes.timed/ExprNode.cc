@@ -23,12 +23,6 @@ using namespace std;
  * (the first clock is the zero clock). */
 int spaceDimension;
 
-/** A Hash table of ints storing integer
- * substituations for atomic variables.
- * This maps atomic ids to atomic values.  0 is the default value.
- * This map represents the initial "state" of the model*/
-map <int, int> InitSub;
-
 /** A Hash table storing a list of PES, with their labels
  * and their expressions. */
 map <string, ExprNode *> equations;
@@ -118,12 +112,12 @@ void print_clocks(std::ostream& os, bidirectional_map <string, int>* declared_cl
  * @param s (*) The label for the atomic value.
  * @param v The value of the atomic variable labeled by s.
  * @return 1 when done. */
-int add_atomicv(const char *s, const int v, bidirectional_map<std::string, int>* declared_atomic)
+int add_atomicv(const char *s, const int v, bidirectional_map<std::string, int>* declared_atomic, std::map<int,int>* InitSub)
 {
   string name(s);
   int idx = declared_atomic->size();
   declared_atomic->insert(name, idx);
-  InitSub.insert(make_pair(idx, v));
+  InitSub->insert(make_pair(idx, v));
   return 1;
 }
 
@@ -132,9 +126,9 @@ int add_atomicv(const char *s, const int v, bidirectional_map<std::string, int>*
  * This gives the atomic variable the default value of 0.
  * @param s (*) The label for the atomic value.
  * @return 1 when done. */
-int add_atomic(const char *s, bidirectional_map<std::string, int>* declared_atomic)
+int add_atomic(const char *s, bidirectional_map<std::string, int>* declared_atomic, std::map<int,int>* InitSub)
 {
-  return add_atomicv(s, 0, declared_atomic);
+  return add_atomicv(s, 0, declared_atomic, InitSub);
 }
 
 /** Try to find the value of the atomic variable with label s
