@@ -14,3 +14,15 @@
 *.xcuserstate
 *.pbxproj
 *.sty
+pes.lex.cc
+pes.tab.cc
+pes.tab.hh
+timesolver-ta
+pes.timed/TimeSolver.config
+pes.timed/TimeSolver.creator
+pes.timed/TimeSolver.creator.user
+pes.timed/TimeSolver.files
+pes.timed/TimeSolver.includes
+pes.timed/test/dbmlisttest
+pes.timed/test/dbmtest
+pes.timed/test/gtest_main.a
