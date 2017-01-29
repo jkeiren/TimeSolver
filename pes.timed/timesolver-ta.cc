@@ -45,7 +45,7 @@ extern FILE *yyin;
 /** A variable representing the line number. */
 extern  int yyline;
 /** The number of errors (syntax or otherwise) in the expressions.
- * I believe the inital value is 0. */
+ * I believe the initial value is 0. */
 int numErrs;
 /** The method that parses the lexed file
  * and creates the ExprNode objects.
@@ -59,7 +59,8 @@ extern int yyparse(bool debug, std::vector<Transition *> *transList,
                    bidirectional_map<std::string, int>* declared_atomic,
                    std::map<std::string,ExprNode*>* declared_predicates,
                    std::map<int,int>* InitSub,
-                   std::map<std::string, ExprNode*>* equations);
+                   std::map<std::string, ExprNode*>* equations,
+                   int* spaceDimension);
 
 /** Prints out an error if it occurs during the parsing process.
  * This method is only used in the parser.
@@ -71,7 +72,7 @@ yyerror(bool /*debug*/, std::vector<Transition *>* /*transList*/,
         int& /*predicateInd*/, DBM*& /*InitC*/, bidirectional_map<std::string, int>* /*declared_clocks*/,
         bidirectional_map<std::string, int>* /* declared_atomic*/,
         std::map<std::string, ExprNode*>*,
-        std::map<int,int>*, std::map<std::string, ExprNode*>*, char *s)
+        std::map<int,int>*, std::map<std::string, ExprNode*>*, int*, char *s)
 {
   std::cerr << " line " << yyline << ": ";
   if (s == NULL) cerr << "syntax error";
@@ -79,12 +80,6 @@ yyerror(bool /*debug*/, std::vector<Transition *>* /*transList*/,
   std::cerr << endl;
   numErrs++;
 }
-
-/** This represents the number of clocks in the timed automata, which
- * is referred to the number of dimensions (the space) of the automata.
- * This number includes the dummy "zero" clock.
- * @see ExprNode.cc*/
-extern int spaceDimension;
 
 /** Prints out the "help" info for the user or
  * the information that is displayed when the
@@ -274,6 +269,12 @@ int main(int argc, char** argv){
    * and their expressions. */
   std::map <std::string, ExprNode *>* equations = new std::map<std::string, ExprNode*>() ;
 
+  /** This represents the number of clocks in the timed automata, which
+   * is referred to the number of dimensions (the space) of the automata.
+   * This number includes the dummy "zero" clock.
+   * @see ExprNode.cc*/
+  int spaceDimension;
+
   /* Read and lex the input file to tokens for the parser to use. */
   yyin = fopen(opt.input_filename.c_str(), "r");
   if (!yyin) {
@@ -286,7 +287,7 @@ int main(int argc, char** argv){
    * (usually). */
   int parseError = yyparse(opt.debug, transList, invs, MAXC, start_predicate,
                            predicateInd, InitC, declared_clocks, declared_atomic,
-                           declared_predicates, InitSub, equations);
+                           declared_predicates, InitSub, equations, &spaceDimension);
   
   if(parseError) {
     cout << endl << "**Syntax Error: Error Parsing file.**" << endl << endl;
@@ -388,7 +389,7 @@ int main(int argc, char** argv){
   prover p(invs, transList,
            currParityGfp,prevParityGfp,opt.useCaching,predicateInd,opt.nHash,
            opt.debug, MAXC, opt.nbits, opt.seqStSize, opt.aSize, declared_clocks,
-           declared_predicates, equations);
+           &spaceDimension, declared_predicates, equations);
   
   if (InitC != NULL) {
 		InitC->setIsCfFalse();

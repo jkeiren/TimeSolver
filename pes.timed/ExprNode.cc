@@ -18,11 +18,6 @@
 
 using namespace std;
 
-/** The number of clocks in the timed automata, including the dummy
- * "zero clocks". Hence, a DBM with n clocks has spaceDimension value n + 1
- * (the first clock is the zero clock). */
-int spaceDimension;
-
 /** Assuming that e is a chain of ASSIGN expressions (possibly ending
  * with a BOOL expression, this converts that expression to an ordered
  * list of clock assignments. The innermost assignments are at the back
@@ -52,12 +47,12 @@ void makeAssignmentList(const ExprNode * const e, vector<pair<short int,short in
  * to the current list of all clocks.
  * @param s (*) The string that is the clock label.
  * @return 1:when finished. */
-int add_clock(const char *s, bidirectional_map <string, int>* declared_clocks)
+int add_clock(const char *s, bidirectional_map <string, int>* declared_clocks, int* spaceDimension)
 {
   string name(s);
   int idx = declared_clocks->size() + 1;
   declared_clocks->insert(name,idx);
-  spaceDimension = declared_clocks->size() + 1;
+  *spaceDimension = declared_clocks->size() + 1;
   return 1;
 }
 

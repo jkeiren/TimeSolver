@@ -35,11 +35,6 @@ enum opType {FORALL, EXISTS, FORALL_REL, EXISTS_REL, OR, OR_SIMPLE, AND, IMPLY, 
   BOOL, ATOMIC, PREDICATE, RESET, SUBLIST, ATOMIC_NOT, ATOMIC_LT, ATOMIC_GT,
   ATOMIC_LE, ATOMIC_GE, ASSIGN, REPLACE, ALLACT, EXISTACT, ABLEWAITINF, UNABLEWAITINF};
 
-/** The dimension of the clock space (number of clocks).
- * This number includes the dummy "zero" clock. */
-extern int spaceDimension;
-
-
 /** A Substitution list, functioning as both the location component
  * of a sequent and a mechanism to change location (via variable assignments).
  * The SubstList stores the location (discrete state) using variable form,
@@ -762,7 +757,7 @@ void makeAssignmentList(const ExprNode * const e, std::vector<std::pair<short in
  * to the current list of all clocks.
  * @param s (*) The string that is the clock label.
  * @return 1:when finished. */
-int add_clock(const char *s, bidirectional_map <std::string, int>* declared_clocks);
+int add_clock(const char *s, bidirectional_map <std::string, int>* declared_clocks, int* spaceDimension);
 
 /** Determines if a clock with label s is already in
  * the list of clocks and gets its index if it is.

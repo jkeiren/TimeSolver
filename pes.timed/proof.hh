@@ -64,6 +64,9 @@ protected:
   /** Pointer to the list of declared clocks */
   bidirectional_map<std::string, int>* declared_clocks;
 
+  /** Space dimension; invariant: declared_clocks.size() + 1 == *spaceDimension */
+  int* spaceDimension;
+
   /** Pointer to the list of declared predicates */
   std::map<std::string, ExprNode*>* declared_predicates;
 
@@ -147,6 +150,7 @@ public:
          int a_predicateInd, int a_nHash, bool debug, int MAXC,
          int nbits, int seqStSize, int aSize,
          bidirectional_map<std::string, int>* dc,
+         int* sD,
          std::map<std::string, ExprNode*>* dp,
          std::map<std::string, ExprNode*>* eqs) :
   invs(a_invs),
@@ -162,6 +166,7 @@ public:
   nbits(nbits),
   seqStSize(seqStSize),
   declared_clocks(dc),
+  spaceDimension(sD),
   declared_predicates(dp),
   equations(eqs),
   Xlist_pGFP(aSize, nbits, predicateInd*nHash, seqStSize, predicateInd, newSequent),
@@ -180,8 +185,8 @@ public:
      * canonical form (low performance cost now,
      * ease of comparisons later). */
 
-    EMPTY = new DBM(spaceDimension, declared_clocks);
-    for (int i=1; i<spaceDimension; i++){
+    EMPTY = new DBM(*spaceDimension, declared_clocks);
+    for (int i=1; i<*spaceDimension; i++){
       EMPTY->addConstraint(i,0, 0);
       EMPTY->addConstraint(0,i, 0);
     }
@@ -190,7 +195,7 @@ public:
     /* This is initialized to be the largest (loosest)
      * possible DBM
      * @see DBM Constructor (Default Constructor). */
-    INFTYDBM = new DBM(spaceDimension, declared_clocks);
+    INFTYDBM = new DBM(*spaceDimension, declared_clocks);
     INFTYDBM->cf();
 
     retPlaceDBM = new DBMList(*INFTYDBM);

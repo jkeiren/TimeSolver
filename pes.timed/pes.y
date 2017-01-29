@@ -48,11 +48,11 @@
                       std::map<std::string, ExprNode*>* declared_predicates,
                       std::map<int,int>* InitSub,
                       std::map<std::string, ExprNode*>* equations,
+                      int* spaceDimension,
                       char *s);
   extern int yylex();
   extern SubstList * add_subst(SubstList *, char*, int );
   extern int yyline;
-  extern int spaceDimension;
 
   map <string, int> defcons;
 
@@ -72,6 +72,7 @@
 %parse-param {std::map<std::string, ExprNode*>* declared_predicates}
 %parse-param {std::map<int, int>* InitSub}
 %parse-param {std::map<std::string, ExprNode*>* equations}
+%parse-param {int* spaceDimension}
 
 %start pes
 
@@ -606,11 +607,11 @@ TOK_CLOCKS TOK_COLON TOK_LBRACE clocks_list TOK_RBRACE
  * list of clocks. */
 clocks_list:
 TOK_ID_CLOCK
-{ add_clock($1, declared_clocks) ;
+{ add_clock($1, declared_clocks, spaceDimension) ;
   delete $1;
 }
 | clocks_list TOK_COMMA TOK_ID_CLOCK
-{ add_clock($3, declared_clocks);
+{ add_clock($3, declared_clocks, spaceDimension);
   delete $3;
 };
 
@@ -971,7 +972,7 @@ TOK_TRUE { $$ = new ExprNode(BOOL, true, declared_clocks, declared_atomic); }
 constraints:
 TOK_ID_CLOCK TOK_GE TOK_INT
 {
-  $$ = new DBM(spaceDimension, declared_clocks);
+  $$ = new DBM(*spaceDimension, declared_clocks);
   MAXC = (MAXC < $3) ? $3 : MAXC ;
   int x = lookup_clock($1, declared_clocks);
   if ( x!= -1){
@@ -984,7 +985,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_GE TOK_ID_CONST
 {
-  $$ = new DBM(spaceDimension, declared_clocks);
+  $$ = new DBM(*spaceDimension, declared_clocks);
   map<string, int>::iterator it = defcons.find($3);
   if (it == defcons.end()) {
     errPrtExit("macro not defined");
@@ -1003,7 +1004,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_GT TOK_INT
 {
-  $$ = new DBM(spaceDimension, declared_clocks);
+  $$ = new DBM(*spaceDimension, declared_clocks);
   MAXC = (MAXC < $3) ? $3 : MAXC ;
   int x = lookup_clock($1, declared_clocks);;
   if ( x!= -1){
@@ -1016,7 +1017,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_GT TOK_ID_CONST
 {
-  $$ = new DBM(spaceDimension, declared_clocks);
+  $$ = new DBM(*spaceDimension, declared_clocks);
   map<string, int>::iterator it = defcons.find($3);
   if (it == defcons.end()) {
     errPrtExit("macro not defined");
@@ -1035,7 +1036,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_LE TOK_INT
 {
-  $$ = new DBM(spaceDimension, declared_clocks);
+  $$ = new DBM(*spaceDimension, declared_clocks);
   MAXC = (MAXC < $3) ? $3 : MAXC ;
   int x = lookup_clock($1, declared_clocks);;
   if ( x!= -1){
@@ -1048,7 +1049,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_LE TOK_ID_CONST
 {
-  $$ = new DBM(spaceDimension, declared_clocks);
+  $$ = new DBM(*spaceDimension, declared_clocks);
   map<string, int>::iterator it = defcons.find($3);
   if (it == defcons.end()) {
     errPrtExit("macro not defined");
@@ -1067,7 +1068,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_LT TOK_INT
 {
-  $$ = new DBM(spaceDimension, declared_clocks);
+  $$ = new DBM(*spaceDimension, declared_clocks);
   MAXC = (MAXC < $3) ? $3 : MAXC ;
   int x = lookup_clock($1, declared_clocks);;
   if ( x!= -1){
@@ -1080,7 +1081,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_LT TOK_ID_CONST
 {
-  $$ = new DBM(spaceDimension, declared_clocks);
+  $$ = new DBM(*spaceDimension, declared_clocks);
   map<string, int>::iterator it = defcons.find($3);
   if (it == defcons.end()) {
     errPrtExit("macro not defined");
@@ -1099,7 +1100,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_EQ TOK_INT
 {
-  $$ = new DBM(spaceDimension, declared_clocks);
+  $$ = new DBM(*spaceDimension, declared_clocks);
   MAXC = (MAXC < $3) ? $3 : MAXC ;
   int x = lookup_clock($1, declared_clocks);;
   if ( x!= -1){
@@ -1113,7 +1114,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_EQ TOK_ID_CONST
 {
-  $$ = new DBM(spaceDimension, declared_clocks);
+  $$ = new DBM(*spaceDimension, declared_clocks);
   map<string, int>::iterator it = defcons.find($3);
   if (it == defcons.end()) {
     errPrtExit("macro not defined");
@@ -1133,7 +1134,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_MINUS TOK_ID_CLOCK TOK_GE TOK_INT
 {
-  $$ = new DBM(spaceDimension, declared_clocks);
+  $$ = new DBM(*spaceDimension, declared_clocks);
   MAXC = (MAXC < $5) ? $5 : MAXC ;
   int x = lookup_clock($1, declared_clocks);;
   int y = lookup_clock($3, declared_clocks);;
@@ -1148,7 +1149,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_MINUS TOK_ID_CLOCK TOK_GT TOK_INT
 {
-  $$ = new DBM(spaceDimension, declared_clocks);
+  $$ = new DBM(*spaceDimension, declared_clocks);
   MAXC = (MAXC < $5) ? $5 : MAXC ;
   int x = lookup_clock($1, declared_clocks);;
   int y = lookup_clock($3, declared_clocks);;
@@ -1163,7 +1164,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_MINUS TOK_ID_CLOCK TOK_LE TOK_INT
 {
-  $$ = new DBM(spaceDimension, declared_clocks);
+  $$ = new DBM(*spaceDimension, declared_clocks);
   MAXC = (MAXC < $5) ? $5 : MAXC ;
   int x = lookup_clock($1, declared_clocks);;
   int y = lookup_clock($3, declared_clocks);;
@@ -1178,7 +1179,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_MINUS TOK_ID_CLOCK TOK_LT TOK_INT
 {
-  $$ = new DBM(spaceDimension, declared_clocks);
+  $$ = new DBM(*spaceDimension, declared_clocks);
   MAXC = (MAXC < $5) ? $5 : MAXC ;
   int x = lookup_clock($1, declared_clocks);;
   int y = lookup_clock($3, declared_clocks);;
@@ -1193,7 +1194,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_MINUS TOK_ID_CLOCK TOK_EQ TOK_INT
 {
-  $$ = new DBM(spaceDimension, declared_clocks);
+  $$ = new DBM(*spaceDimension, declared_clocks);
   MAXC = (MAXC < $5) ? $5 : MAXC ;
   int x = lookup_clock($1, declared_clocks);;
   int y = lookup_clock($3, declared_clocks);;
