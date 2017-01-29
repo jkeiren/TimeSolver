@@ -43,25 +43,24 @@
   extern void yyerror(bool debug, std::vector<Transition *> *transList,
                       std::vector<ExprNode*>& invs, int& MAXC,
                       std::string& start_predicate, int& predicateInd,
-                      DBM*& InitC,
+                      DBM*& InitC, bidirectional_map<std::string, int>* declared_clocks,
                       char *s);
   extern int yylex();
   extern SubstList * add_subst(SubstList *, char*, int );
-  extern int add_clock(const char *s);
+  extern int add_clock(const char *s, bidirectional_map<std::string, int>*);
   extern int add_atomic(const char *s);
   extern int add_atomicv(const char *s, const int i);
   extern int add_predicate(const char *s, const int i);
   extern int add_equation(const int block, const bool parity, const char *s, ExprNode *);
-  extern int lookup_clock(const char *s);
+  extern int lookup_clock(const char *s, bidirectional_map<std::string, int>*);
   extern ExprNode * lookup_predicate(const char *s);
   extern ExprNode * lookup_equation(const char *s);
   extern int yyline;
   extern int spaceDimension;
-  extern void print_clocks(std::ostream&);
+  extern void print_clocks(std::ostream&, bidirectional_map<std::string, int>*);
   extern void print_atomic(std::ostream&);
   extern void print_predicates(std::ostream&);
 
-  extern map <string, int> clocks;
   extern map <string, int> atomic;
   map <string, int> defcons;
 
@@ -76,6 +75,7 @@
 %parse-param {std::string& start_predicate}
 %parse-param {int& predicateInd}
 %parse-param {DBM*& InitC}
+%parse-param {bidirectional_map<std::string, int>* declared_clocks}
 
 %start pes
 
@@ -193,11 +193,11 @@ trans_left_list TOK_IMPLY trans_dest_list_top trans_reset_list_top trans_replace
     delete tempExprC;
   }
   else if($3==NULL && $5==NULL) {
-    rightExpr = new ExprNode(RESET, NULL, $4);
+    rightExpr = new ExprNode(RESET, NULL, $4, declared_clocks);
     parExpr = rightExpr;
   }
   else if($4==NULL && $5==NULL) {
-    rightExpr = new ExprNode(SUBLIST, NULL, $3);
+    rightExpr = new ExprNode(SUBLIST, NULL, $3, declared_clocks);
     parExpr = rightExpr;
   }
   else if($3 == NULL) {
@@ -208,7 +208,7 @@ trans_left_list TOK_IMPLY trans_dest_list_top trans_reset_list_top trans_replace
       currExpr = currExpr->getExpr();
     }
     ExprNode *tempExprC = currExpr->getExpr();
-    ExprNode *tempExpr = new ExprNode(RESET, NULL, $4);
+    ExprNode *tempExpr = new ExprNode(RESET, NULL, $4, declared_clocks);
     currExpr->setExprDestLeft(tempExpr);
     parExpr = tempExpr;
     delete tempExprC;
@@ -223,7 +223,7 @@ trans_left_list TOK_IMPLY trans_dest_list_top trans_reset_list_top trans_replace
       currExpr = currExpr->getExpr();
     }
     ExprNode *tempExprC = currExpr->getExpr();
-    ExprNode *tempExpr = new ExprNode(SUBLIST, NULL, $3);
+    ExprNode *tempExpr = new ExprNode(SUBLIST, NULL, $3, declared_clocks);
     currExpr->setExprDestLeft(tempExpr);
     parExpr = tempExpr;
     delete tempExprC;
@@ -231,9 +231,9 @@ trans_left_list TOK_IMPLY trans_dest_list_top trans_reset_list_top trans_replace
 
   }
   else if($5 == NULL) {
-    ExprNode *tempExpr = new ExprNode(SUBLIST, NULL, $3);
+    ExprNode *tempExpr = new ExprNode(SUBLIST, NULL, $3, declared_clocks);
     parExpr = tempExpr;
-    rightExpr = new ExprNode(RESET, tempExpr, $4);
+    rightExpr = new ExprNode(RESET, tempExpr, $4, declared_clocks);
   }
   else {
     /* Iterate through the assignment expression
@@ -243,8 +243,8 @@ trans_left_list TOK_IMPLY trans_dest_list_top trans_reset_list_top trans_replace
       currExpr = currExpr->getExpr();
     }
     ExprNode *tempExprC = currExpr->getExpr();
-    ExprNode *tempExpr = new ExprNode(SUBLIST, NULL, $3);
-    ExprNode *aboveTempExpr = new ExprNode(RESET, tempExpr, $4);
+    ExprNode *tempExpr = new ExprNode(SUBLIST, NULL, $3, declared_clocks);
+    ExprNode *aboveTempExpr = new ExprNode(RESET, tempExpr, $4, declared_clocks);
     currExpr->setExprDestLeft(aboveTempExpr);
     parExpr = tempExpr;
     delete tempExprC;
@@ -285,11 +285,11 @@ trans_left_list TOK_IMPLY trans_dest_list_top trans_reset_list_top trans_replace
     delete tempExprC;
   }
   else if($4==NULL && $6==NULL) {
-    rightExpr = new ExprNode(RESET, NULL, $5);
+    rightExpr = new ExprNode(RESET, NULL, $5, declared_clocks);
     parExpr = rightExpr;
   }
   else if($5==NULL && $6==NULL) {
-    rightExpr = new ExprNode(SUBLIST, NULL, $4);
+    rightExpr = new ExprNode(SUBLIST, NULL, $4, declared_clocks);
     parExpr = rightExpr;
   }
   else if($4 == NULL) {
@@ -300,7 +300,7 @@ trans_left_list TOK_IMPLY trans_dest_list_top trans_reset_list_top trans_replace
       currExpr = currExpr->getExpr();
     }
     ExprNode *tempExprC = currExpr->getExpr();
-    ExprNode *tempExpr = new ExprNode(RESET, NULL, $5);
+    ExprNode *tempExpr = new ExprNode(RESET, NULL, $5, declared_clocks);
     currExpr->setExprDestLeft(tempExpr);
     parExpr = tempExpr;
     delete tempExprC;
@@ -315,7 +315,7 @@ trans_left_list TOK_IMPLY trans_dest_list_top trans_reset_list_top trans_replace
       currExpr = currExpr->getExpr();
     }
     ExprNode *tempExprC = currExpr->getExpr();
-    ExprNode *tempExpr = new ExprNode(SUBLIST, NULL, $4);
+    ExprNode *tempExpr = new ExprNode(SUBLIST, NULL, $4, declared_clocks);
     currExpr->setExprDestLeft(tempExpr);
     parExpr = tempExpr;
     delete tempExprC;
@@ -323,9 +323,9 @@ trans_left_list TOK_IMPLY trans_dest_list_top trans_reset_list_top trans_replace
 
   }
   else if($6 == NULL) {
-    ExprNode *tempExpr = new ExprNode(SUBLIST, NULL, $4);
+    ExprNode *tempExpr = new ExprNode(SUBLIST, NULL, $4, declared_clocks);
     parExpr = tempExpr;
-    rightExpr = new ExprNode(RESET, tempExpr, $5);
+    rightExpr = new ExprNode(RESET, tempExpr, $5, declared_clocks);
   }
   else {
     /* Iterate through the assignment expression
@@ -335,8 +335,8 @@ trans_left_list TOK_IMPLY trans_dest_list_top trans_reset_list_top trans_replace
       currExpr = currExpr->getExpr();
     }
     ExprNode *tempExprC = currExpr->getExpr();
-    ExprNode *tempExpr = new ExprNode(SUBLIST, NULL, $4);
-    ExprNode *aboveTempExpr = new ExprNode(RESET, tempExpr, $5);
+    ExprNode *tempExpr = new ExprNode(SUBLIST, NULL, $4, declared_clocks);
+    ExprNode *aboveTempExpr = new ExprNode(RESET, tempExpr, $5, declared_clocks);
     currExpr->setExprDestLeft(aboveTempExpr);
     parExpr = tempExpr;
     delete tempExprC;
@@ -356,7 +356,7 @@ trans_left_list TOK_IMPLY trans_dest_list_top trans_reset_list_top trans_replace
 trans_left_list: /* must be nonempty */
 TOK_LPAREN TOK_RPAREN /* Empty left expression indicated by () */
 {
-    $$ = new ExprNode(BOOL, true);
+    $$ = new ExprNode(BOOL, true, declared_clocks);
 }
 | TOK_LPAREN trans_source_list TOK_RPAREN /* State constraints only */
 {
@@ -364,12 +364,12 @@ TOK_LPAREN TOK_RPAREN /* Empty left expression indicated by () */
 }
 | TOK_LPAREN guard_list TOK_RPAREN /* Guards only */
 {
-  $$ = new ExprNode(CONSTRAINT, $2);
+  $$ = new ExprNode(CONSTRAINT, $2, declared_clocks);
 }
 | TOK_LPAREN trans_source_list TOK_COMMA guard_list TOK_RPAREN
 /* State and clock constraints */
 {
-  $$ = new ExprNode(AND, $2, new ExprNode(CONSTRAINT, $4));
+  $$ = new ExprNode(AND, $2, new ExprNode(CONSTRAINT, $4, declared_clocks), declared_clocks);
 };
 
 
@@ -380,11 +380,11 @@ trans_atomic
 }
 | trans_source_list TOK_AND trans_source_list
 {
-   $$ = new ExprNode(AND, $1, $3);
+   $$ = new ExprNode(AND, $1, $3, declared_clocks);
 }
 | trans_source_list TOK_OR trans_source_list
 {
-   $$ = new ExprNode(OR, $1, $3);
+   $$ = new ExprNode(OR, $1, $3, declared_clocks);
 }
 | TOK_LPAREN trans_source_list TOK_RPAREN
 {
@@ -397,7 +397,7 @@ TOK_ID_ATOMIC TOK_LT TOK_INT
   int x = lookup_atomic($1);
   if( x != -1) {
 
-    $$ = new ExprNode(ATOMIC_LT, x, $3);
+    $$ = new ExprNode(ATOMIC_LT, x, $3, declared_clocks);
   }
   else {
     errPrtExit("control variable not declared");
@@ -408,7 +408,7 @@ TOK_ID_ATOMIC TOK_LT TOK_INT
 {
   int x = lookup_atomic($1);
   if( x != -1) {
-    $$ = new ExprNode(ATOMIC_GT, x, $3);
+    $$ = new ExprNode(ATOMIC_GT, x, $3, declared_clocks);
   }
   else {
     errPrtExit("control variable not declared");
@@ -419,7 +419,7 @@ TOK_ID_ATOMIC TOK_LT TOK_INT
 {
   int x = lookup_atomic($1);
   if( x != -1) {
-    $$ = new ExprNode(ATOMIC_LE, x, $3);
+    $$ = new ExprNode(ATOMIC_LE, x, $3, declared_clocks);
   }
   else {
     errPrtExit("control variable not declared");
@@ -430,7 +430,7 @@ TOK_ID_ATOMIC TOK_LT TOK_INT
 {
   int x = lookup_atomic($1);
   if( x != -1) {
-    $$ = new ExprNode(ATOMIC_GE, x, $3);
+    $$ = new ExprNode(ATOMIC_GE, x, $3, declared_clocks);
   }
   else {
     errPrtExit("control variable not declared");
@@ -441,7 +441,7 @@ TOK_ID_ATOMIC TOK_LT TOK_INT
 {
   int x = lookup_atomic($1);
   if( x != -1) {
-    $$ = new ExprNode(ATOMIC, x, $3);
+    $$ = new ExprNode(ATOMIC, x, $3, declared_clocks);
   }
   else {
     errPrtExit("control variable not declared");
@@ -452,7 +452,7 @@ TOK_ID_ATOMIC TOK_LT TOK_INT
 {
   int x = lookup_atomic($1);
   if( x != -1) {
-    $$ = new ExprNode(ATOMIC_NOT, x, $3);
+    $$ = new ExprNode(ATOMIC_NOT, x, $3, declared_clocks);
   }
   else {
     errPrtExit("control variable not declared");
@@ -513,9 +513,9 @@ trans_reset_list_top : /*empty */ {$$ = NULL;}
 trans_reset_list: /* cannot be empty */
 TOK_ID_CLOCK
 {
-  int x = lookup_clock($1);
+  int x = lookup_clock($1, declared_clocks);
   if ( x != -1){
-    $$ = new ClockSet(x, clocks.size());
+    $$ = new ClockSet(x, declared_clocks->size());
   }
   else {
     errPrtExit("clock variable not defined");
@@ -524,7 +524,7 @@ TOK_ID_CLOCK
 }
 |trans_reset_list TOK_COMMA TOK_ID_CLOCK
 {
-  int x = lookup_clock($3);
+  int x = lookup_clock($3, declared_clocks);
   if ( x!= -1){
     $$ = ($1)->addclock(x);
   }
@@ -540,17 +540,17 @@ trans_replace_list_top: /* empty */ {$$ = NULL;}
 trans_replace_list: /* cannot be empty */
 TOK_LBRACK TOK_ID_CLOCK TOK_ASSIGN TOK_ID_CLOCK TOK_RBRACK
 {
-  short int x = lookup_clock($2);
-  short int y = lookup_clock($4);
-  $$ = new ExprNode(ASSIGN, new ExprNode(BOOL,true),x,y);
+  short int x = lookup_clock($2, declared_clocks);
+  short int y = lookup_clock($4, declared_clocks);
+  $$ = new ExprNode(ASSIGN, new ExprNode(BOOL,true, declared_clocks),x,y, declared_clocks);
   delete $2;
   delete $4;
 }
 |trans_replace_list TOK_COMMA TOK_LBRACK TOK_ID_CLOCK TOK_ASSIGN TOK_ID_CLOCK TOK_RBRACK
 {
-  short int x = lookup_clock($4);
-  short int y = lookup_clock($6);
-  $$ = new ExprNode(ASSIGN, $1, x, y);
+  short int x = lookup_clock($4, declared_clocks);
+  short int y = lookup_clock($6, declared_clocks);
+  $$ = new ExprNode(ASSIGN, $1, x, y, declared_clocks);
   delete $4;
   delete $6;
 };
@@ -601,7 +601,7 @@ TOK_CLOCKS TOK_COLON TOK_LBRACE clocks_list TOK_RBRACE
 {
   if(debug){
     cout << "clocks declared: ";
-    print_clocks(cout);
+    print_clocks(cout, declared_clocks);
     cout << endl;
   }
 };
@@ -610,11 +610,11 @@ TOK_CLOCKS TOK_COLON TOK_LBRACE clocks_list TOK_RBRACE
  * list of clocks. */
 clocks_list:
 TOK_ID_CLOCK
-{ add_clock($1) ;
+{ add_clock($1, declared_clocks) ;
   delete $1;
 }
 | clocks_list TOK_COMMA TOK_ID_CLOCK
-{ add_clock($3);
+{ add_clock($3, declared_clocks);
   delete $3;
 };
 
@@ -757,9 +757,9 @@ expr:
 /** The ( ) requirement for FORALL and EXISTS
  * is used to eliminate shift-reduce conflicts. */
 TOK_FORALL TOK_TIME TOK_LPAREN expr TOK_RPAREN
-{ $$ = new ExprNode(FORALL, $4); }
+{ $$ = new ExprNode(FORALL, $4, declared_clocks); }
 |TOK_EXISTS TOK_TIME TOK_LPAREN expr TOK_RPAREN
-{ $$ = new ExprNode(EXISTS,$4); }
+{ $$ = new ExprNode(EXISTS,$4, declared_clocks); }
 |TOK_FORALL TOK_TIME TOK_LPAREN TOK_LBRACE exprProp TOK_RBRACE TOK_RPAREN
 { $$ = $5; }
 |TOK_EXISTS TOK_TIME TOK_LPAREN TOK_LBRACE exprProp TOK_RBRACE TOK_RPAREN
@@ -770,7 +770,7 @@ TOK_FORALL TOK_TIME TOK_LPAREN expr TOK_RPAREN
 {
   /* For now, let the operator handle the simplification rather than
    * using a simplified form for atomic propositions */
-  $$ = new ExprNode(FORALL_REL, $5, $9);
+  $$ = new ExprNode(FORALL_REL, $5, $9, declared_clocks);
 }
 /* Simplified EXISTS_REL when relativized expression involves only
  * atomic proposition. */
@@ -778,25 +778,25 @@ TOK_FORALL TOK_TIME TOK_LPAREN expr TOK_RPAREN
 {
   /* For now, let the operator handle the simplification rather than
    * using a simplified form for atomic propositions */
-  $$ = new ExprNode(EXISTS_REL, $5, $9);
+  $$ = new ExprNode(EXISTS_REL, $5, $9, declared_clocks);
 }
 | TOK_FORALL TOK_TIME_REL TOK_LBRACK expr TOK_RBRACK TOK_LPAREN expr TOK_RPAREN
 {
-  $$ = new ExprNode(FORALL_REL, $4, $7);
+  $$ = new ExprNode(FORALL_REL, $4, $7, declared_clocks);
 }
 |TOK_EXISTS TOK_TIME_REL TOK_LBRACK expr TOK_RBRACK TOK_LPAREN expr TOK_RPAREN
 {
 
-  $$ = new ExprNode(EXISTS_REL, $4, $7);
+  $$ = new ExprNode(EXISTS_REL, $4, $7, declared_clocks);
 }
 |TOK_ALLACT TOK_LPAREN expr TOK_RPAREN
-{ $$ = new ExprNode(ALLACT, $3); }
+{ $$ = new ExprNode(ALLACT, $3, declared_clocks); }
 |TOK_EXISTACT TOK_LPAREN expr TOK_RPAREN
-{ $$ = new ExprNode(EXISTACT,$3); }
+{ $$ = new ExprNode(EXISTACT,$3, declared_clocks); }
 |expr TOK_OR expr
-{ $$ = new ExprNode(OR, $1, $3); }
+{ $$ = new ExprNode(OR, $1, $3, declared_clocks); }
 |expr TOK_OR_SIMPLE expr
-{ $$ = new ExprNode(OR_SIMPLE, $1, $3); }
+{ $$ = new ExprNode(OR_SIMPLE, $1, $3, declared_clocks); }
 |expr TOK_AND expr
 {
   /* Since both expressions are constraints,
@@ -806,27 +806,27 @@ TOK_FORALL TOK_TIME TOK_LPAREN expr TOK_RPAREN
     DBM * newDBM = new DBM(*($1->dbm()));
     *newDBM & *($3->dbm());
     newDBM->cf();
-    $$ = new ExprNode(CONSTRAINT, newDBM);
+    $$ = new ExprNode(CONSTRAINT, newDBM, declared_clocks);
     delete $1;
     delete $3;
 
   }
   else{
-    $$ = new ExprNode(AND, $1, $3);
+    $$ = new ExprNode(AND, $1, $3, declared_clocks);
   }
 }
 | TOK_LBRACE exprProp TOK_RBRACE TOK_OR expr
-{ $$ = new ExprNode(OR_SIMPLE, $2, $5); }
+{ $$ = new ExprNode(OR_SIMPLE, $2, $5, declared_clocks); }
 /** Creates an IMPLY.  Note that this has some restrictions
  * for the user so that expressions are well formed.
  * The program does not check for these restrictions; it
  * just produces the expression. */
 |expr TOK_IMPLY expr
-{ $$ = new ExprNode(IMPLY, $1, $3); }
+{ $$ = new ExprNode(IMPLY, $1, $3, declared_clocks); }
 |constraints
 {
   $1->cf();
-  $$ = new ExprNode(CONSTRAINT, $1);
+  $$ = new ExprNode(CONSTRAINT, $1, declared_clocks);
 }
 |TOK_ID_PREDICATE
 {
@@ -840,24 +840,24 @@ TOK_FORALL TOK_TIME TOK_LPAREN expr TOK_RPAREN
 { $$ = $1; }
 |TOK_ABLEWAITINF
 {
-  $$ = new ExprNode(ABLEWAITINF, true);
+  $$ = new ExprNode(ABLEWAITINF, true, declared_clocks);
 }
 |TOK_UNABLEWAITINF
 {
-  $$ = new ExprNode(UNABLEWAITINF, false);
+  $$ = new ExprNode(UNABLEWAITINF, false, declared_clocks);
 }
 /** This segment is the resets, substitutions
  * of atomic proposition values, and assignments
  * of clocks to the value of other clocks. */
 |expr TOK_LBRACK reset TOK_RBRACK
-{ $$ = new ExprNode(RESET, $1, $3); }
+{ $$ = new ExprNode(RESET, $1, $3, declared_clocks); }
 |expr TOK_LBRACK sublist TOK_RBRACK
-{ $$ = new ExprNode(SUBLIST, $1, $3); }
+{ $$ = new ExprNode(SUBLIST, $1, $3, declared_clocks); }
 |expr TOK_LBRACK TOK_ID_CLOCK TOK_ASSIGN TOK_ID_CLOCK TOK_RBRACK
 {
-  short int x = lookup_clock($3);
-  short int y = lookup_clock($5);
-  $$ = new ExprNode(ASSIGN, $1, x, y);
+  short int x = lookup_clock($3, declared_clocks);
+  short int y = lookup_clock($5, declared_clocks);
+  $$ = new ExprNode(ASSIGN, $1, x, y, declared_clocks);
   delete $3;
   delete $5;
 }
@@ -865,7 +865,7 @@ TOK_FORALL TOK_TIME TOK_LPAREN expr TOK_RPAREN
 {
   short int x = lookup_atomic($3);
   short int y = lookup_atomic($5);
-  $$ = new ExprNode(REPLACE, $1, x, y);
+  $$ = new ExprNode(REPLACE, $1, x, y, declared_clocks);
   delete $3;
   delete $5;
 }
@@ -878,13 +878,13 @@ TOK_FORALL TOK_TIME TOK_LPAREN expr TOK_RPAREN
 exprProp:
 atomicProp { $$ = $1;};
 | exprProp TOK_OR exprProp
-{ $$ = new ExprNode(OR, $1, $3); }
+{ $$ = new ExprNode(OR, $1, $3, declared_clocks); }
 | exprProp TOK_OR_SIMPLE exprProp
-{ $$ = new ExprNode(OR_SIMPLE, $1, $3); }
+{ $$ = new ExprNode(OR_SIMPLE, $1, $3, declared_clocks); }
 | exprProp TOK_AND exprProp
 {
 
-  $$ = new ExprNode(AND, $1, $3);
+  $$ = new ExprNode(AND, $1, $3, declared_clocks);
 
 }
 |TOK_LPAREN exprProp TOK_RPAREN  { $$ = $2 ;}
@@ -892,15 +892,15 @@ atomicProp { $$ = $1;};
 
 /* Just atomic propositions */
 atomicProp:
-TOK_TRUE { $$ = new ExprNode(BOOL, true); }
-|TOK_FALSE { $$ = new ExprNode(BOOL, false); }
+TOK_TRUE { $$ = new ExprNode(BOOL, true, declared_clocks); }
+|TOK_FALSE { $$ = new ExprNode(BOOL, false, declared_clocks); }
 /* This next segment of clauses represents the constraints
  * on the atomic (control) propositions. */
 |TOK_ID_ATOMIC TOK_LT TOK_INT
 {
   int x = lookup_atomic($1);
   if( x != -1) {
-    $$ = new ExprNode(ATOMIC_LT, x, $3);
+    $$ = new ExprNode(ATOMIC_LT, x, $3, declared_clocks);
   }
   else {
     errPrtExit("control variable not declared");
@@ -911,7 +911,7 @@ TOK_TRUE { $$ = new ExprNode(BOOL, true); }
 {
   int x = lookup_atomic($1);
   if( x != -1) {
-    $$ = new ExprNode(ATOMIC_GT, x, $3);
+    $$ = new ExprNode(ATOMIC_GT, x, $3, declared_clocks);
   }
   else {
     errPrtExit("control variable not declared");
@@ -922,7 +922,7 @@ TOK_TRUE { $$ = new ExprNode(BOOL, true); }
 {
   int x = lookup_atomic($1);
   if( x != -1) {
-    $$ = new ExprNode(ATOMIC_LE, x, $3);
+    $$ = new ExprNode(ATOMIC_LE, x, $3, declared_clocks);
   }
   else {
     errPrtExit("control variable not declared");
@@ -933,7 +933,7 @@ TOK_TRUE { $$ = new ExprNode(BOOL, true); }
 {
   int x = lookup_atomic($1);
   if( x != -1) {
-    $$ = new ExprNode(ATOMIC_GE, x, $3);
+    $$ = new ExprNode(ATOMIC_GE, x, $3, declared_clocks);
   }
   else {
     errPrtExit("control variable not declared");
@@ -944,7 +944,7 @@ TOK_TRUE { $$ = new ExprNode(BOOL, true); }
 {
   int x = lookup_atomic($1);
   if( x != -1) {
-    $$ = new ExprNode(ATOMIC, x, $3);
+    $$ = new ExprNode(ATOMIC, x, $3, declared_clocks);
   }
   else {
     errPrtExit("control variable not declared");
@@ -955,7 +955,7 @@ TOK_TRUE { $$ = new ExprNode(BOOL, true); }
 {
   int x = lookup_atomic($1);
   if( x != -1) {
-    $$ = new ExprNode(ATOMIC_NOT, x, $3);
+    $$ = new ExprNode(ATOMIC_NOT, x, $3, declared_clocks);
   }
   else {
     errPrtExit("control variable not declared");
@@ -975,9 +975,9 @@ TOK_TRUE { $$ = new ExprNode(BOOL, true); }
 constraints:
 TOK_ID_CLOCK TOK_GE TOK_INT
 {
-  $$ = new DBM(spaceDimension);
+  $$ = new DBM(spaceDimension, declared_clocks);
   MAXC = (MAXC < $3) ? $3 : MAXC ;
-  int x = lookup_clock($1);
+  int x = lookup_clock($1, declared_clocks);
   if ( x!= -1){
     $$->addConstraint(0, x, ((-$3) <<1) + 1);
   }
@@ -988,14 +988,14 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_GE TOK_ID_CONST
 {
-  $$ = new DBM(spaceDimension);
+  $$ = new DBM(spaceDimension, declared_clocks);
   map<string, int>::iterator it = defcons.find($3);
   if (it == defcons.end()) {
     errPrtExit("macro not defined");
   }
   int v = (*it).second;
   MAXC = (MAXC < v) ? v : MAXC ;
-  int x = lookup_clock($1);
+  int x = lookup_clock($1, declared_clocks);;
   if ( x!= -1){
     $$->addConstraint(0, x, ((-v) <<1) + 1);
   }
@@ -1007,9 +1007,9 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_GT TOK_INT
 {
-  $$ = new DBM(spaceDimension);
+  $$ = new DBM(spaceDimension, declared_clocks);
   MAXC = (MAXC < $3) ? $3 : MAXC ;
-  int x = lookup_clock($1);
+  int x = lookup_clock($1, declared_clocks);;
   if ( x!= -1){
     $$->addConstraint(0, x, (-$3) <<1);
   }
@@ -1020,14 +1020,14 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_GT TOK_ID_CONST
 {
-  $$ = new DBM(spaceDimension);
+  $$ = new DBM(spaceDimension, declared_clocks);
   map<string, int>::iterator it = defcons.find($3);
   if (it == defcons.end()) {
     errPrtExit("macro not defined");
   }
   int v = (*it).second;
   MAXC = (MAXC < v) ? v : MAXC ;
-  int x = lookup_clock($1);
+  int x = lookup_clock($1, declared_clocks);;
   if ( x!= -1){
     $$->addConstraint(0, x, (-v) <<1);
   }
@@ -1039,9 +1039,9 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_LE TOK_INT
 {
-  $$ = new DBM(spaceDimension);
+  $$ = new DBM(spaceDimension, declared_clocks);
   MAXC = (MAXC < $3) ? $3 : MAXC ;
-  int x = lookup_clock($1);
+  int x = lookup_clock($1, declared_clocks);;
   if ( x!= -1){
     $$->addConstraint(x, 0, ($3 <<1) + 1);
   }
@@ -1052,14 +1052,14 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_LE TOK_ID_CONST
 {
-  $$ = new DBM(spaceDimension);
+  $$ = new DBM(spaceDimension, declared_clocks);
   map<string, int>::iterator it = defcons.find($3);
   if (it == defcons.end()) {
     errPrtExit("macro not defined");
   }
   int v = (*it).second;
   MAXC = (MAXC < v) ? v : MAXC ;
-  int x = lookup_clock($1);
+  int x = lookup_clock($1, declared_clocks);;
   if ( x!= -1){
     $$->addConstraint(x, 0, (v <<1) + 1);
   }
@@ -1071,9 +1071,9 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_LT TOK_INT
 {
-  $$ = new DBM(spaceDimension);
+  $$ = new DBM(spaceDimension, declared_clocks);
   MAXC = (MAXC < $3) ? $3 : MAXC ;
-  int x = lookup_clock($1);
+  int x = lookup_clock($1, declared_clocks);;
   if ( x!= -1){
     $$->addConstraint(x, 0, ($3 <<1));
   }
@@ -1084,14 +1084,14 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_LT TOK_ID_CONST
 {
-  $$ = new DBM(spaceDimension);
+  $$ = new DBM(spaceDimension, declared_clocks);
   map<string, int>::iterator it = defcons.find($3);
   if (it == defcons.end()) {
     errPrtExit("macro not defined");
   }
   int v = (*it).second;
   MAXC = (MAXC < v) ? v : MAXC ;
-  int x = lookup_clock($1);
+  int x = lookup_clock($1, declared_clocks);;
   if ( x!= -1){
     $$->addConstraint(x, 0, (v <<1));
   }
@@ -1103,9 +1103,9 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_EQ TOK_INT
 {
-  $$ = new DBM(spaceDimension);
+  $$ = new DBM(spaceDimension, declared_clocks);
   MAXC = (MAXC < $3) ? $3 : MAXC ;
-  int x = lookup_clock($1);
+  int x = lookup_clock($1, declared_clocks);;
   if ( x!= -1){
     $$->addConstraint(x, 0, ($3 <<1) + 1);
     $$->addConstraint(0, x, ((-$3) <<1) + 1);
@@ -1117,14 +1117,14 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_EQ TOK_ID_CONST
 {
-  $$ = new DBM(spaceDimension);
+  $$ = new DBM(spaceDimension, declared_clocks);
   map<string, int>::iterator it = defcons.find($3);
   if (it == defcons.end()) {
     errPrtExit("macro not defined");
   }
   int v = (*it).second;
   MAXC = (MAXC < v) ? v : MAXC ;
-  int x = lookup_clock($1);
+  int x = lookup_clock($1, declared_clocks);;
   if ( x!= -1){
     $$->addConstraint(x, 0, (v <<1) + 1);
     $$->addConstraint(0, x, ((-v) <<1) + 1);
@@ -1137,10 +1137,10 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_MINUS TOK_ID_CLOCK TOK_GE TOK_INT
 {
-  $$ = new DBM(spaceDimension);
+  $$ = new DBM(spaceDimension, declared_clocks);
   MAXC = (MAXC < $5) ? $5 : MAXC ;
-  int x = lookup_clock($1);
-  int y = lookup_clock($3);
+  int x = lookup_clock($1, declared_clocks);;
+  int y = lookup_clock($3, declared_clocks);;
   if ( x != -1 && y != -1) {
     $$->addConstraint(y, x, ((-$5) <<1) + 1);
   }
@@ -1152,10 +1152,10 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_MINUS TOK_ID_CLOCK TOK_GT TOK_INT
 {
-  $$ = new DBM(spaceDimension);
+  $$ = new DBM(spaceDimension, declared_clocks);
   MAXC = (MAXC < $5) ? $5 : MAXC ;
-  int x = lookup_clock($1);
-  int y = lookup_clock($3);
+  int x = lookup_clock($1, declared_clocks);;
+  int y = lookup_clock($3, declared_clocks);;
   if ( x != -1 && y != -1) {
     $$->addConstraint(y, x, (-$5) <<1);
   }
@@ -1167,10 +1167,10 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_MINUS TOK_ID_CLOCK TOK_LE TOK_INT
 {
-  $$ = new DBM(spaceDimension);
+  $$ = new DBM(spaceDimension, declared_clocks);
   MAXC = (MAXC < $5) ? $5 : MAXC ;
-  int x = lookup_clock($1);
-  int y = lookup_clock($3);
+  int x = lookup_clock($1, declared_clocks);;
+  int y = lookup_clock($3, declared_clocks);;
   if ( x != -1 && y != -1) {
     $$->addConstraint(x, y, ($5 <<1) + 1);
   }
@@ -1182,10 +1182,10 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_MINUS TOK_ID_CLOCK TOK_LT TOK_INT
 {
-  $$ = new DBM(spaceDimension);
+  $$ = new DBM(spaceDimension, declared_clocks);
   MAXC = (MAXC < $5) ? $5 : MAXC ;
-  int x = lookup_clock($1);
-  int y = lookup_clock($3);
+  int x = lookup_clock($1, declared_clocks);;
+  int y = lookup_clock($3, declared_clocks);;
   if ( x != -1 && y != -1) {
     $$->addConstraint(x, y, ($5 <<1));
   }
@@ -1197,10 +1197,10 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_MINUS TOK_ID_CLOCK TOK_EQ TOK_INT
 {
-  $$ = new DBM(spaceDimension);
+  $$ = new DBM(spaceDimension, declared_clocks);
   MAXC = (MAXC < $5) ? $5 : MAXC ;
-  int x = lookup_clock($1);
-  int y = lookup_clock($3);
+  int x = lookup_clock($1, declared_clocks);;
+  int y = lookup_clock($3, declared_clocks);;
   if ( x != -1 && y != -1){
     $$->addConstraint(x, y, ($5 <<1) + 1);
     $$->addConstraint(y, x, ((-$5) <<1) + 1);
@@ -1216,9 +1216,9 @@ TOK_ID_CLOCK TOK_GE TOK_INT
  * as a ClockSet object. */
 reset:      TOK_ID_CLOCK
 {
-  int x = lookup_clock($1);
+  int x = lookup_clock($1, declared_clocks);;
   if ( x != -1){
-    $$ = new ClockSet(x, clocks.size());
+    $$ = new ClockSet(x, declared_clocks->size());
   }
   else {
     errPrtExit("clock variable not defined");
@@ -1227,7 +1227,7 @@ reset:      TOK_ID_CLOCK
 }
 |TOK_ID_CLOCK TOK_COMMA reset
 {
-  int x = lookup_clock($1);
+  int x = lookup_clock($1, declared_clocks);;
   if ( x!= -1){
     $$ = ($3)->addclock(x);
   }

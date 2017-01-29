@@ -163,6 +163,7 @@ public:
  * @date November 2, 2013 */
 class ExprNode {
 public:
+
   /** Constructor for one-child expressions with
    * opType = {FORALL, EXISTS, ALLACT, EXISTACT}.
    * @param o The logical operator/constraint type.
@@ -170,7 +171,9 @@ public:
    * @note Using this constructor with an opType value other than one of
    * the values given above may result in program errors.
    * @return [Constructor]. */
-  ExprNode(const opType o, ExprNode * q) : op(o), left(q){
+  ExprNode(const opType o, ExprNode * q, bidirectional_map<std::string, int>* cs)
+    : op(o), left(q), declared_clocks(cs)
+  {
     right = NULL;
     constraint = NULL;
     cset = NULL;
@@ -186,7 +189,9 @@ public:
    * @note Using this constructor with an opType value other than one of
    * the values given above may result in program errors.
    * @return [Constructor]. */
-  ExprNode(const opType o, ExprNode * l, ExprNode *r) :op(o), left(l), right(r){
+  ExprNode(const opType o, ExprNode * l, ExprNode *r, bidirectional_map<std::string, int>* cs)
+    : op(o), left(l), right(r), declared_clocks(cs)
+  {
     constraint = NULL;
     predicate = NULL;
     cset = NULL;
@@ -200,7 +205,9 @@ public:
    * @note Using this constructor with an opType value other than one of
    * the values given above may result in program errors.
    * @return [Constructor]. */
-  ExprNode(const opType o, DBM *c) : op(o){
+  ExprNode(const opType o, DBM *c, bidirectional_map<std::string, int>* cs)
+    : op(o), declared_clocks(cs)
+  {
     left = NULL;
     right = NULL;
     predicate = NULL;
@@ -219,7 +226,9 @@ public:
    * @note Using this constructor with an opType value other than one of
    * the values given above may result in program errors.
    * @return [Constructor]. */
-  ExprNode(const opType o, const bool bv) : op(o), b(bv){
+  ExprNode(const opType o, const bool bv, bidirectional_map<std::string, int>* cs)
+    : op(o), b(bv), declared_clocks(cs)
+  {
     left = NULL;
     right = NULL;
     predicate = NULL;
@@ -244,7 +253,9 @@ public:
    * @note Using this constructor with an opType value other than one of
    * the values given above may result in program errors.
    * @return [Constructor]. */
-  ExprNode(const opType o, const int a, const int i) : op(o), atomic(a), intVal(i){
+  ExprNode(const opType o, const int a, const int i, bidirectional_map<std::string, int>* cs)
+    : op(o), atomic(a), intVal(i), declared_clocks(cs)
+  {
     left = NULL;
     right = NULL;
     predicate = NULL;
@@ -270,7 +281,9 @@ public:
    * @note Using this constructor with an opType value other than one of
    * the values given above may result in program errors.
    * @return [Constructor]. */
-  ExprNode(const opType o, const int a, const int i, DBM *c) : op(o), atomic(a), intVal(i), constraint(c){
+  ExprNode(const opType o, const int a, const int i, DBM *c, bidirectional_map<std::string, int>* cs)
+    : op(o), atomic(a), intVal(i), constraint(c), declared_clocks(cs)
+  {
     left = NULL;
     right = NULL;
     predicate = NULL;
@@ -286,7 +299,9 @@ public:
    * @note Using this constructor with an opType value other than one of
    * the values given above may result in program errors.
    * @return [Constructor]. */
-  ExprNode(const opType o, const char * a, const int i) : op(o), predicate(a), intVal(i){
+  ExprNode(const opType o, const char * a, const int i, bidirectional_map<std::string, int>* cs)
+    : op(o), predicate(a), intVal(i), declared_clocks(cs)
+  {
     left = NULL;
     right = NULL;
     cset = NULL;
@@ -303,7 +318,9 @@ public:
    * @note Using this constructor with an opType value other than one of
    * the values given above may result in program errors.
    * @return [Constructor]. */
-  ExprNode(const opType o, ExprNode *l, ClockSet *s) : op(o), left(l), cset(s){
+  ExprNode(const opType o, ExprNode *l, ClockSet *s, bidirectional_map<std::string, int>* cs)
+    : op(o), left(l), cset(s), declared_clocks(cs)
+  {
     right = NULL;
     predicate = NULL;
     constraint = NULL;
@@ -322,7 +339,9 @@ public:
    * @note Using this constructor with an opType value other than one of
    * the values given above may result in program errors.
    * @return [Constructor]. */
-  ExprNode(const opType o, ExprNode *l, SubstList *s) : op(o), left(l), subst(s){
+  ExprNode(const opType o, ExprNode *l, SubstList *s, bidirectional_map<std::string, int>* cs)
+    : op(o), left(l), subst(s), declared_clocks(cs)
+  {
     right = NULL;
     predicate = NULL;
     cset = NULL;
@@ -344,7 +363,10 @@ public:
    * @note Using this constructor with an opType value other than one of
    * the values given above may result in program errors.
    * @return [Constructor]. */
-  ExprNode(const opType o, ExprNode *l, const short int cx, const short int cy) : op(o), left(l), atomic(cx), intVal(cy){
+  ExprNode(const opType o, ExprNode *l, const short int cx, const short int cy,
+           bidirectional_map<std::string, int>* cs)
+    : op(o), left(l), atomic(cx), intVal(cy), declared_clocks(cs)
+  {
     right = NULL;
     predicate = NULL;
     cset = NULL;
@@ -360,6 +382,7 @@ public:
    * @return [Constructor]. */
   ExprNode(const ExprNode & E)  {
     op = E.op;
+    declared_clocks = E.declared_clocks;
     if(E.op != PREDICATE) {
       if(E.constraint != NULL) {
         constraint = new DBM(*(E.constraint));
@@ -688,6 +711,10 @@ protected:
    * giving values to propositions (or control values).  Possibly empty. */
   SubstList *subst;
 
+  // FIXME
+  public:
+  /** Pointer to the globally declared clocks */
+  bidirectional_map<std::string, int>* declared_clocks;
 
 };
 

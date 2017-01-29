@@ -140,7 +140,7 @@ private:
 	 * This provides a quick a 1-bit check that avoids needless 
 	 * work to convert something already in cf() to cf(). */
 	bool isCf;
-  
+
   /** The private method is used to read a value of a
    * specific constraint in the DBM. This method
    * is private to provide a method without bounds checks. The class is 
@@ -185,10 +185,14 @@ private:
   }
   
 protected:
+
 public:
   /** The Number of clocks in the space for the DBM. This
    * number includes the "zero clock." */
   short int nClocks;
+
+  /** Pointer to the globally declared clocks */
+  bidirectional_map<std::string, int>* declared_clocks;
   
   /** Default Constructor for a DBM; creates an initial DBM
    * representing no constraint: the diagonal and the left column are 
@@ -198,8 +202,9 @@ public:
    * "zero clock". Hence, there are numClocks - 1 actual clocks 
    * with 1 "zero" clock.
    * @return [Constructor] */
-  DBM(const short int numClocks)
-  : OneDIntArray(numClocks * numClocks), nClocks(numClocks) {
+  DBM(const short int numClocks, bidirectional_map<std::string, int>* cs = NULL)
+  : OneDIntArray(numClocks * numClocks), nClocks(numClocks), declared_clocks(cs)
+  {
     for(short int i = 0; i < nClocks; i++){
       for(short int j = 0; j < nClocks; j++){
         /* Here 0xFFF << 1 = 0xFFF0 is the  
@@ -230,8 +235,10 @@ public:
    * @param col The second clock in constraint.
    * @param val The value constraining the upper bound of row - col.
    * @return [Constructor] */
-  DBM(const int numClocks, const short int row, const short int col, const short int val)
-      : OneDIntArray(numClocks * numClocks), nClocks(numClocks) {
+  DBM(const int numClocks, const short int row, const short int col, const short int val,
+      bidirectional_map<std::string, int>* cs = NULL)
+      : OneDIntArray(numClocks * numClocks), nClocks(numClocks), declared_clocks(cs)
+  {
     for(short int i = 0; i < nClocks; i++){
       for(short int j = 0; j < nClocks; j++){
       /* 0x1 means (0, <=) , since the left 3-bits
@@ -261,7 +268,12 @@ public:
   /** Copy Constructor for DBMs.
    * @param Y (&) The object to copy.
    * @return [Constructor] */
-  DBM(const DBM &Y): OneDIntArray(Y){ nClocks = Y.nClocks; isCf = Y.isCf;}
+  DBM(const DBM &Y): OneDIntArray(Y)
+  {
+    nClocks = Y.nClocks;
+    isCf = Y.isCf;
+    declared_clocks = Y.declared_clocks;
+  }
 
   /** Tell the object that it is not in canonical form.
    * Call this method whenever changing the DBM's value from the outside.
@@ -1105,7 +1117,7 @@ public:
   /** Print the DBM, more compactly, as a list of constraints. The constraints
    * are printed in the order they appear in the matrix.
    * @return none */
-  void print_constraint(std::ostream& os, const bidirectional_map<std::string, int>& clocks) const{
+  void print_constraint(std::ostream& os) const{
     bool end = false;
     bool isAllImplicit=true;
     if(this->emptiness()) {
@@ -1131,18 +1143,18 @@ public:
         }
         if(i != 0 && j!=0){
           //os << "x" << (i);
-          os << clocks.reverse_at(i);
+          os << declared_clocks->reverse_at(i);
           os << "-";
           //os << "x" << (j);
-          os << clocks.reverse_at(j);
+          os << declared_clocks->reverse_at(j);
         }else if (i == 0){
-          os << clocks.reverse_at(j);
+          os << declared_clocks->reverse_at(j);
           if (type == 1) os << ">=" << -val ;
           else os << ">" << -val ;
           end = true;
           continue;
         }else if (j == 0){
-          os << clocks.reverse_at(i);
+          os << declared_clocks->reverse_at(i);
         }
 
         if (type == 1) {

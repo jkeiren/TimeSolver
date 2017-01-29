@@ -42,6 +42,8 @@ private:
    * dbmListVec[0] || dbmListVec[1] || ... || dbmListVec[listSize-1]. */
   std::vector<DBM *> * dbmListVec;
 
+  bidirectional_map<std::string, int>* declared_clocks;
+
   /** Private method that returns the complement of a DBM. This uses
    * the (simple) method of performing a DBM that is the union of all
    * the negated constraints of the DBM. This method is private
@@ -50,7 +52,7 @@ private:
    * @return The complemented DBM, given as a DBMList. */
   DBMList * complementDBM(const DBM &Y) {
     if(Y.emptiness()) {
-      DBMList * newList = new DBMList(Y.nClocks);
+      DBMList * newList = new DBMList(Y.nClocks, Y.declared_clocks);
       return newList;
     }
     /* Check for infinity DBM */
@@ -66,7 +68,7 @@ private:
             tempCons = 0;
           }
           short int constraintVal = ((-(tempVal >> 1)) << 1) + tempCons;
-          DBM *tempDBM = new DBM(nClocks,j,i, constraintVal);
+          DBM *tempDBM = new DBM(nClocks,j,i, constraintVal, declared_clocks);
           if(myList == NULL) {
             myList = new DBMList(*tempDBM);
           }
@@ -80,7 +82,7 @@ private:
     }
     if(hasAConstraint == false) {
       // Set to Empty DBM
-      DBM * emptyDBM = new DBM(Y.nClocks);
+      DBM * emptyDBM = new DBM(Y.nClocks, Y.declared_clocks);
 
       for (int i=1; i<Y.nClocks; i++){
         emptyDBM->addConstraint(i,0, 0);
@@ -129,10 +131,12 @@ public:
    * "zero clock". Hence, there are numClocks - 1 actual clocks
    * with 1 "zero" clock.
    * @return [Constructor] */
-  DBMList(const short int numClocks) {
+  DBMList(const short int numClocks, bidirectional_map<std::string, int>* cs)
+    : declared_clocks(cs)
+  {
     nClocks = numClocks;
     dbmListVec = new std::vector<DBM *>;
-    dbmListVec->push_back(new DBM(numClocks));
+    dbmListVec->push_back(new DBM(numClocks, cs));
     isCf = false;
   }
 
@@ -146,6 +150,7 @@ public:
     DBM * tDBM = new DBM(Y);
     dbmListVec->push_back(tDBM);
     isCf = Y.isInCf();
+    declared_clocks = Y.declared_clocks;
 
   }
 
@@ -163,6 +168,7 @@ public:
       dbmListVec->push_back(new DBM(*tD));
     }
     isCf = Y.isCf;
+    declared_clocks = Y.declared_clocks;
   }
 
   /** Destructor; deletes each DBM in the DBMList and then deletes the vector.
@@ -942,11 +948,11 @@ public:
    * are printed in the order they appear in each matrix, and the DBMs are
    * separated by || (without line breaks).
    * @return none */
-  void print_constraint(std::ostream& os, const bidirectional_map<std::string, int>& clocks) const{
+  void print_constraint(std::ostream& os) const{
         for(std::vector<DBM *>::iterator it = dbmListVec->begin();
       it != dbmListVec->end(); it++) {
       DBM *tD = *it;
-      tD->print_constraint(os, clocks);
+      tD->print_constraint(os);
       if( (it+1) != dbmListVec->end()) {
         os << " || ";
       }

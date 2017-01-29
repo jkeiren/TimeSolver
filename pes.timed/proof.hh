@@ -61,6 +61,9 @@ protected:
    * especially when multiple predicate variables exist. */
   int seqStSize;
 
+  /** Pointer to the list of declared clocks */
+  bidirectional_map<std::string, int>* declared_clocks;
+
   /** XList_pGFP (XList) is an array of stacks, where each stack
    * is an array of sequents that
    * keeps track of all possible GFP Sequents
@@ -136,7 +139,8 @@ public:
          const std::vector<Transition *> * const a_transList,
          bool a_currParityGfp, bool a_prevParityGfp, bool a_useCaching,
          int a_predicateInd, int a_nHash, bool debug, int MAXC,
-         int nbits, int seqStSize, int aSize) :
+         int nbits, int seqStSize, int aSize,
+         bidirectional_map<std::string, int>* dc) :
   invs(a_invs),
   transList(a_transList),
   currParityGfp(a_currParityGfp),
@@ -149,6 +153,7 @@ public:
   MAXC(MAXC),
   nbits(nbits),
   seqStSize(seqStSize),
+  declared_clocks(dc),
   Xlist_pGFP(aSize, nbits, predicateInd*nHash, seqStSize, predicateInd, newSequent),
   Xlist_pLFP(aSize, nbits, predicateInd*nHash, seqStSize, predicateInd, newSequent),
   Xlist_true(aSize, nbits, predicateInd*nHash, seqStSize, predicateInd, newSequent),
@@ -165,7 +170,7 @@ public:
      * canonical form (low performance cost now,
      * ease of comparisons later). */
 
-    EMPTY = new DBM(spaceDimension);
+    EMPTY = new DBM(spaceDimension, declared_clocks);
     for (int i=1; i<spaceDimension; i++){
       EMPTY->addConstraint(i,0, 0);
       EMPTY->addConstraint(0,i, 0);
@@ -175,7 +180,7 @@ public:
     /* This is initialized to be the largest (loosest)
      * possible DBM
      * @see DBM Constructor (Default Constructor). */
-    INFTYDBM = new DBM(spaceDimension);
+    INFTYDBM = new DBM(spaceDimension, declared_clocks);
     INFTYDBM->cf();
 
     retPlaceDBM = new DBMList(*INFTYDBM);

@@ -54,16 +54,17 @@ int numErrs;
  * @see pes.y pes.tab.h and pes.tab.c (parser files). */
 extern int yyparse(bool debug, std::vector<Transition *> *transList,
                    std::vector<ExprNode*>& invs, int& MAXC,
-                   std::string& start_predicate, int& predicateInd, DBM*& InitC);
+                   std::string& start_predicate, int& predicateInd, DBM*& InitC,
+                   bidirectional_map<std::string, int>* declared_clocks);
 
 /** Prints out an error if it occurs during the parsing process.
  * This method is only used in the parser.
  * @param s (*) The error string to print out.
  * @return None */
 void
-yyerror(bool debug, std::vector<Transition *> *transList,
-        std::vector<ExprNode*>& invs, int& MAXC, std::string& start_predicate,
-        int& predicateInd, DBM*& InitC, char *s)
+yyerror(bool /*debug*/, std::vector<Transition *>* /*transList*/,
+        std::vector<ExprNode*>& /*invs*/, int& /*MAXC*/, std::string& /*start_predicate*/,
+        int& /*predicateInd*/, DBM*& /*InitC*/, bidirectional_map<std::string, int>* /*declared_clocks*/, char *s)
 {
   std::cerr << " line " << yyline << ": ";
   if (s == NULL) cerr << "syntax error";
@@ -72,10 +73,6 @@ yyerror(bool debug, std::vector<Transition *> *transList,
   numErrs++;
 }
 
-/** A Hash Table of clocks used to store the clocks,
- * mapping string symbols to clock indices. 
- * @see ExprNode.cc */
-extern bidirectional_map<std::string, int> clocks;
 /** A Hash table of Atomic values used to store discrete state
  * variables, mapping string names to id values. 
  * @see ExprNode.cc. */
@@ -268,6 +265,8 @@ int main(int argc, char** argv){
    * if one is provided by the parser. */
   DBM *InitC;
 
+  bidirectional_map<std::string, int>* declared_clocks = new bidirectional_map<std::string,int>();
+
   /* Read and lex the input file to tokens for the parser to use. */
   yyin = fopen(opt.input_filename.c_str(), "r");
   if (!yyin) {
@@ -279,7 +278,7 @@ int main(int argc, char** argv){
    * Returns 0 if successful, 1 for Syntax Error, and 2 for out of Memory 
    * (usually). */
   int parseError = yyparse(opt.debug, transList, invs, MAXC, start_predicate,
-                           predicateInd, InitC);
+                           predicateInd, InitC, declared_clocks);
   
   if(parseError) {
     cout << endl << "**Syntax Error: Error Parsing file.**" << endl << endl;
@@ -326,7 +325,7 @@ int main(int argc, char** argv){
    * the current DBM if an inital one is
    * not provided. 
    * This DBM sets all clocks equal to 0. */
-  DBM *dbm = new DBM(spaceDimension);
+  DBM *dbm = new DBM(spaceDimension, declared_clocks);
   for (int i=0; i<spaceDimension; i++) {
     dbm->addConstraint(i,0, 0x1);
   }
@@ -380,7 +379,7 @@ int main(int argc, char** argv){
    * to prove or disprove the specification. */
   prover p(invs, transList,
            currParityGfp,prevParityGfp,opt.useCaching,predicateInd,opt.nHash,
-           opt.debug, MAXC, opt.nbits, opt.seqStSize, opt.aSize);
+           opt.debug, MAXC, opt.nbits, opt.seqStSize, opt.aSize, declared_clocks);
   
   if (InitC != NULL) {
 		InitC->setIsCfFalse();
@@ -477,7 +476,8 @@ int main(int argc, char** argv){
 
   // Clear Maps to free up dynamic memory
   atomic.clear();
-  clocks.clear();
+  declared_clocks->clear();
+  delete declared_clocks;
   InitSub.clear();
 
   // delete other parts

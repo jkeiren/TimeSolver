@@ -370,7 +370,7 @@ bool prover::do_proof(int step, DBM * const lhs, const ExprNode * const rhs, Sub
             print_sequentCheck(cout, step - 1, retVal, lhs, retPlaceDBM, sub, rhs->getOpType());
             cout <<"----(Valid) Placeholder indicates no time elapse is needed (Check Only)-----" << endl
             << "----With Placeholder := {";
-            retPlaceDBM->print_constraint(cout, clocks);
+            retPlaceDBM->print_constraint(cout);
             cout << "} ----"<< endl << endl;
 
           }
@@ -390,7 +390,7 @@ bool prover::do_proof(int step, DBM * const lhs, const ExprNode * const rhs, Sub
 #if DEBUG
           if (debug) {
             cout <<"----() Relativization \\phi_1 placeholder obtained as {";
-            phi1Place.print_constraint(cout, clocks);
+            phi1Place.print_constraint(cout);
             cout << "} ----"<< endl << endl;
 
           }
@@ -409,7 +409,7 @@ bool prover::do_proof(int step, DBM * const lhs, const ExprNode * const rhs, Sub
 #if DEBUG
           if (debug) {
             cout <<"----() Formula \\phi_2 placeholder obtained as {";
-            phi2Place.print_constraint(cout, clocks);
+            phi2Place.print_constraint(cout);
             cout << "} ----"<< endl << endl;
 
           }
@@ -451,7 +451,7 @@ bool prover::do_proof(int step, DBM * const lhs, const ExprNode * const rhs, Sub
             if (debug) {
               print_sequentCheck(cout, step - 1, retVal, &phb, fPlace, sub, rhs->getOpType());
               cout <<"----() FORALL (of FORALL_REL) Placeholder Check obtained  FA Placeholder := {";
-              forallPlace.print_constraint(cout, clocks);
+              forallPlace.print_constraint(cout);
               cout <<"} ----" << endl << endl;
             }
 #endif
@@ -473,7 +473,7 @@ bool prover::do_proof(int step, DBM * const lhs, const ExprNode * const rhs, Sub
 #if DEBUG
             if(debug) {
               cout <<"----() FORALL Rel Exists predCheck placeholder obtained as := {";
-              retPlaceDBM->print_constraint(cout, clocks);
+              retPlaceDBM->print_constraint(cout);
               cout << "} ----"<< endl << endl;
             }
 #endif
@@ -503,7 +503,7 @@ bool prover::do_proof(int step, DBM * const lhs, const ExprNode * const rhs, Sub
                 print_sequentCheck(cout, step - 1, retVal, lhs, retPlaceDBM, sub, rhs->getOpType());
 
                 cout <<"----() FORALL Rel Exists placeholder after time elapse check is := {";
-                retPlaceDBM->print_constraint(cout, clocks);
+                retPlaceDBM->print_constraint(cout);
                 cout << "} ----"<< endl << endl;
               }
 #endif
@@ -542,7 +542,7 @@ bool prover::do_proof(int step, DBM * const lhs, const ExprNode * const rhs, Sub
             if (debug) {
               print_sequentCheck(cout, step - 1, retVal, lhs, retPlaceDBM, sub, rhs->getOpType());
               cout <<"----() Final FORALL REL Placeholder is := {";
-              retPlaceDBM->print_constraint(cout, clocks);
+              retPlaceDBM->print_constraint(cout);
               cout << "} ----"<< endl << endl;
             }
 #endif
@@ -604,7 +604,7 @@ bool prover::do_proof(int step, DBM * const lhs, const ExprNode * const rhs, Sub
         if(retVal) {
           cout <<"----(Valid) Placeholder Check Passed (Check Only)-----" << endl
           << "----With Placeholder := {";
-          retPlaceDBM->print_constraint(cout, clocks);
+          retPlaceDBM->print_constraint(cout);
           cout << "} ----"<< endl << endl;
 
         }
@@ -673,7 +673,7 @@ bool prover::do_proof(int step, DBM * const lhs, const ExprNode * const rhs, Sub
 #if DEBUG
       if(debug) {
         cout <<"----() Placeholder of times where \\phi_1 is true----- {";
-        phi1Place.print_constraint(cout, clocks);
+        phi1Place.print_constraint(cout);
         cout << "} ----"<< endl << endl;
       }
 #endif
@@ -714,13 +714,13 @@ bool prover::do_proof(int step, DBM * const lhs, const ExprNode * const rhs, Sub
             if(retVal) {
               cout <<"----(Valid) Time Elapse not required and placeholder spans lhs; hence, formula is true-----" << endl
               << "----With resulting Placeholder := {";
-              phi2Place->print_constraint(cout, clocks);
+              phi2Place->print_constraint(cout);
               cout << "} ----"<< endl << endl;
             }
             else {
               cout <<"----(Invalid) While Time Elapse not required, placeholder is not large enough-----" << endl
               << "----With resulting Placeholder := {";
-              phi2Place->print_constraint(cout, clocks);
+              phi2Place->print_constraint(cout);
               cout << "} ----"<< endl << endl;
             }
 
@@ -744,7 +744,7 @@ bool prover::do_proof(int step, DBM * const lhs, const ExprNode * const rhs, Sub
         if(debug) {
           cout <<"----(Invalid) Relativization placeholder failed-----" << endl
           << "----With resulting Placeholder := {";
-          retPlaceDBM->print_constraint(cout, clocks);
+          retPlaceDBM->print_constraint(cout);
           cout << "} ----"<< endl << endl;
         }
 #endif
@@ -762,7 +762,7 @@ bool prover::do_proof(int step, DBM * const lhs, const ExprNode * const rhs, Sub
         print_sequent_place(std::cout, step - 1,  retVal, &phb, phi2PredPlace, rhs->getLeft(), sub, rhs->getOpType());
         cout <<"----(Valid) Relativization Placeholder Check Passed (Check Only)-----" << endl
         << "----With resulting Placeholder := {";
-        retPlaceDBM->print_constraint(cout, clocks);
+        retPlaceDBM->print_constraint(cout);
         cout << "} ----"<< endl << endl;
       }
 #endif
@@ -789,7 +789,7 @@ bool prover::do_proof(int step, DBM * const lhs, const ExprNode * const rhs, Sub
         if(retVal) {
           cout <<"----(Valid) Last Placeholder Check Passed (Check Only)-----" << endl
           << "----With Placeholder := {";
-          retPlaceDBM->print_constraint(cout, clocks);
+          retPlaceDBM->print_constraint(cout);
           cout << "} ----"<< endl << endl;
 
         }
@@ -861,7 +861,7 @@ bool prover::do_proof(int step, DBM * const lhs, const ExprNode * const rhs, Sub
               print_Transition(tempT, cout);
               cout << " cannot be taken; entering invariant is false." << endl;
               cout << "\tExtra invariant condition: ";
-              invCons.print_constraint(cout, clocks);
+              invCons.print_constraint(cout);
               cout << endl;
             }
 #endif
@@ -888,7 +888,7 @@ bool prover::do_proof(int step, DBM * const lhs, const ExprNode * const rhs, Sub
           print_Transition(tempT, cout);
           cout << endl;
           cout << "\tExtra invariant condition: ";
-          invCons.print_constraint(cout, clocks);
+          invCons.print_constraint(cout);
           cout << endl;
         }
 #endif
@@ -986,7 +986,7 @@ bool prover::do_proof(int step, DBM * const lhs, const ExprNode * const rhs, Sub
                 print_Transition(tempT, cout);
                 cout << " cannot be taken; entering invariant is false." << endl;
                 cout << "\tExtra invariant condition: ";
-                invCons.print_constraint(cout, clocks);
+                invCons.print_constraint(cout);
                 cout << endl;
               }
 #endif
@@ -1586,9 +1586,9 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
         // Check Debugging Here to make sure it is giving the right output
         print_sequentCheck(cout, step - 1, retVal, lhs, place, sub, rhs->getOpType());
         cout << "Left Placeholder of OR (P): ";
-        leftPlace.print_constraint(cout, clocks);
+        leftPlace.print_constraint(cout);
         cout << "\nRight Placeholder of OR (P): ";
-        retPlaceDBM->print_constraint(cout, clocks);
+        retPlaceDBM->print_constraint(cout);
         cout << endl;
       }
 #endif
@@ -1618,7 +1618,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
 #if DEBUG
       if(debug) {
         cout << "Final Placeholder of OR (P): ";
-        retPlaceDBM->print_constraint(cout, clocks);
+        retPlaceDBM->print_constraint(cout);
         cout << endl << endl;
       }
 #endif
@@ -1721,7 +1721,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
           if(retVal) {
             cout <<"----(Valid) Placeholder Check Passed-----" << endl
             <<"--With Placeholder := {";
-            retPlaceDBM->print_constraint(cout, clocks);
+            retPlaceDBM->print_constraint(cout);
             cout <<"} ----" << endl << endl;
           }
           else {
@@ -1812,7 +1812,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
             if(retVal) {
               cout <<"----(Valid) FORALL (FORALL_REL) Placeholder Check Passed-----" << endl
               <<"--With Placeholder := {";
-              retPlaceDBM->print_constraint(cout, clocks);
+              retPlaceDBM->print_constraint(cout);
               cout <<"} ----" << endl << endl;
             }
             else {
@@ -1833,7 +1833,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
             print_sequentCheck(cout, step - 1, retVal, lhs, retPlaceDBM, sub, rhs->getOpType());
             cout <<"----(Valid) EXISTS (in FORALL_REL) Placeholder indicates no time elapse is needed (Check Only)-----" << endl
             << "----With Placeholder := {";
-            retPlaceDBM->print_constraint(cout, clocks);
+            retPlaceDBM->print_constraint(cout);
             cout << "} ----"<< endl << endl;
 
           }
@@ -1868,7 +1868,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
               if(retVal) {
                 cout <<"----(Valid) Placeholder Check Passed-----" << endl
                 <<"--With Placeholder := {";
-                retPlaceDBM->print_constraint(cout, clocks);
+                retPlaceDBM->print_constraint(cout);
                 cout <<"} ----" << endl << endl;
               }
               else {
@@ -1890,7 +1890,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
 #if DEBUG
           if (debug) {
             cout <<"----() Relativization \\phi_1 placeholder obtained as {";
-            phi1Place.print_constraint(cout, clocks);
+            phi1Place.print_constraint(cout);
             cout << "} ----"<< endl << endl;
 
           }
@@ -1909,7 +1909,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
 #if DEBUG
           if (debug) {
             cout <<"----() Formula \\phi_2 placeholder obtained as {";
-            phi2Place.print_constraint(cout, clocks);
+            phi2Place.print_constraint(cout);
             cout << "} ----"<< endl << endl;
 
           }
@@ -1953,7 +1953,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
             if (debug) {
               print_sequentCheck(cout, step - 1, retVal, &phb, fPlace, sub, rhs->getOpType());
               cout <<"----() FORALL (of FORALL_REL) Placeholder Check obtained  FA Placeholder := {";
-              forallPlace.print_constraint(cout, clocks);
+              forallPlace.print_constraint(cout);
               cout <<"} ----" << endl << endl;
             }
 #endif
@@ -1975,7 +1975,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
 #if DEBUG
             if(debug) {
               cout <<"----() FORALL Rel Exists placeholder obtained as := {";
-              retPlaceDBM->print_constraint(cout, clocks);
+              retPlaceDBM->print_constraint(cout);
               cout << "} ----"<< endl << endl;
             }
 #endif
@@ -2003,7 +2003,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
                 print_sequentCheck(cout, step - 1, retVal, lhs, retPlaceDBM, sub, rhs->getOpType());
 
                 cout <<"----() FORALL Rel Exists placeholder after time elapse check is := {";
-                retPlaceDBM->print_constraint(cout, clocks);
+                retPlaceDBM->print_constraint(cout);
                 cout << "} ----"<< endl << endl;
               }
 #endif
@@ -2040,7 +2040,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
 #if DEBUG
           if(debug) {
             cout << "Final Placeholder of FORALL_REL (P): ";
-            retPlaceDBM->print_constraint(cout, clocks);
+            retPlaceDBM->print_constraint(cout);
             cout << endl << endl;
           }
 #endif
@@ -2095,7 +2095,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
         if(retVal) {
           cout <<"----(Valid) Placeholder Check Passed-----" << endl
           <<"--With Placeholder := {";
-          retPlaceDBM->print_constraint(cout, clocks);
+          retPlaceDBM->print_constraint(cout);
           cout <<"} ----" << endl << endl;
         }
         else {
@@ -2160,7 +2160,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
 #if DEBUG
       if(debug) {
         cout <<"----() Placeholder of times where \\phi_1 is true----- {";
-        phi1Place.print_constraint(cout, clocks);
+        phi1Place.print_constraint(cout);
         cout << "} ----"<< endl << endl;
       }
 #endif
@@ -2200,13 +2200,13 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
             if(retVal) {
               cout <<"----(Valid) Time Elapse not required and placeholder spans lhs; hence, formula is true-----" << endl
               << "----With resulting Placeholder := {";
-              phi2Place->print_constraint(cout, clocks);
+              phi2Place->print_constraint(cout);
               cout << "} ----"<< endl << endl;
             }
             else {
               cout <<"----(Invalid) While Time Elapse not required, placeholder is not large enough-----" << endl
               << "----With resulting Placeholder := {";
-              phi2Place->print_constraint(cout, clocks);
+              phi2Place->print_constraint(cout);
               cout << "} ----"<< endl << endl;
             }
 
@@ -2230,7 +2230,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
         if(debug) {
           cout <<"----(Invalid) Relativization placeholder failed-----" << endl
           << "----With resulting Placeholder := {";
-          retPlaceDBM->print_constraint(cout, clocks);
+          retPlaceDBM->print_constraint(cout);
           cout << "} ----"<< endl << endl;
         }
 #endif
@@ -2248,7 +2248,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
         print_sequent_place(std::cout, step - 1,  retVal, &phb, phi2PredPlace, rhs->getLeft(), sub, rhs->getOpType());
         cout <<"----(Valid) Relativization Placeholder Check Passed (Check Only)-----" << endl
         << "----With resulting Placeholder := {";
-        retPlaceDBM->print_constraint(cout, clocks);
+        retPlaceDBM->print_constraint(cout);
         cout << "} ----"<< endl << endl;
       }
 #endif
@@ -2279,7 +2279,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
         if(retVal) {
           cout <<"----(Valid) Final Placeholder Check Passed-----" << endl
           <<"--With Placeholder := {";
-          retPlaceDBM->print_constraint(cout, clocks);
+          retPlaceDBM->print_constraint(cout);
           cout <<"} ----" << endl << endl;
         }
         else {
@@ -2377,7 +2377,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
                 print_Transition(tempT, cout);
                 cout << " cannot be taken; entering invariant is false." << endl;
                 cout << "\tExtra invariant condition: ";
-                invPlace.print_constraint(cout, clocks);
+                invPlace.print_constraint(cout);
                 cout << endl;
               }
 #endif
@@ -2542,7 +2542,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
 #if DEBUG
       if(debug) {
         cout << "\t --- end of ALLACT. Returned plhold: ";
-        retPlaceDBM->print_constraint(cout, clocks);
+        retPlaceDBM->print_constraint(cout);
         cout << endl;
       }
 #endif
@@ -2615,7 +2615,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
                 print_Transition(tempT, cout);
                 cout << " cannot be taken; entering invariant is false." << endl;
                 cout << "\tExtra invariant condition: ";
-                invCons.print_constraint(cout, clocks);
+                invCons.print_constraint(cout);
                 cout << endl;
               }
 #endif
@@ -2646,7 +2646,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
           print_Transition(tempT, cout);
           cout << endl;
           cout << "\tExtra invariant condition: ";
-          invCons.print_constraint(cout, clocks);
+          invCons.print_constraint(cout);
           cout << endl;
         }
 #endif
@@ -2684,7 +2684,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
 #if DEBUG
       if(debug) {
         cout << "\t --- end of EXISTACT. Returned plhold: ";
-        retPlaceDBM->print_constraint(cout, clocks);
+        retPlaceDBM->print_constraint(cout);
         cout << endl;
       }
 #endif
@@ -2730,7 +2730,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
         if (debug && !retVal) {
           cout << "---(Valid, Placeholder) Leaf DBM (CONSTRAINT) Reached and Placeholder Computed----" << endl <<
           "----Placeholder := {";
-          retPlaceDBM->print_constraint(cout, clocks);
+          retPlaceDBM->print_constraint(cout);
           cout << "}----" << endl << endl;
         }
 #endif
@@ -2759,7 +2759,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
         if (debug && retVal) {
           cout << "---(Valid, Placeholder) Leaf DBM (CONSTRAINT) Reached and Placeholder Computed----" << endl <<
           "----Placeholder := {";
-          retPlaceDBM->print_constraint(cout, clocks);
+          retPlaceDBM->print_constraint(cout);
           cout << "}----" << endl << endl;
         }
         if (debug && !retVal) {
@@ -2929,7 +2929,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
           if(retVal) {
             cout <<"----(Valid) Placeholder Check Passed-----" << endl
             <<"--With Placeholder := {";
-            retPlaceDBM->print_constraint(cout, clocks);
+            retPlaceDBM->print_constraint(cout);
             cout <<"} ----" << endl << endl;
           }
           else {
@@ -2975,7 +2975,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
           if(retVal) {
             cout <<"----(Valid) Placeholder Check Passed-----" << endl
             <<"--With Placeholder := {";
-            retPlaceDBM->print_constraint(cout, clocks);
+            retPlaceDBM->print_constraint(cout);
             cout <<"} ----" << endl << endl;
           }
           else {

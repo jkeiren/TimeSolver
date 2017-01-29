@@ -11,9 +11,6 @@
 #include "ExprNode.hh"
 #include "sequent.hh"
 
-//FIXME
-extern bidirectional_map<std::string, int> clocks;
-
 /** Now define a stack of placeholder sequents.
  * Idea: Instead of intersecting the sequent with the placeholder,
  * store the sequents with placeholders separately. */
@@ -84,9 +81,9 @@ protected:
   /** print the elements pointed to by the components of p */
   void print_DBMset_elt(std::ostream& os, const std::pair<const DBM * const, const DBMList * const>& p) const
   {
-    p.first->print_constraint(os, clocks);
+    p.first->print_constraint(os);
     os << ", plhold: ";
-    p.second->print_constraint(os, clocks);
+    p.second->print_constraint(os);
   }
 
   /** delete the elements pointed to by the components of p */
@@ -104,7 +101,7 @@ protected:
   /** print the element pointed to by p */
   void print_DBMset_elt(std::ostream& os, const DBM * const p) const
   {
-    p->print_constraint(os, clocks);
+    p->print_constraint(os);
   }
 
   /** delete the element pointed to by p */
