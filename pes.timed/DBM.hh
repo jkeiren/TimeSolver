@@ -192,7 +192,7 @@ public:
   short int nClocks;
 
   /** Pointer to the globally declared clocks */
-  bidirectional_map<std::string, int>* declared_clocks;
+  const bidirectional_map<std::string, int>* declared_clocks;
   
   /** Default Constructor for a DBM; creates an initial DBM
    * representing no constraint: the diagonal and the left column are 
@@ -202,7 +202,7 @@ public:
    * "zero clock". Hence, there are numClocks - 1 actual clocks 
    * with 1 "zero" clock.
    * @return [Constructor] */
-  DBM(const short int numClocks, bidirectional_map<std::string, int>* cs = NULL)
+  DBM(const short int numClocks, const bidirectional_map<std::string, int>* cs = NULL)
   : OneDIntArray(numClocks * numClocks), nClocks(numClocks), declared_clocks(cs)
   {
     for(short int i = 0; i < nClocks; i++){
@@ -236,7 +236,7 @@ public:
    * @param val The value constraining the upper bound of row - col.
    * @return [Constructor] */
   DBM(const int numClocks, const short int row, const short int col, const short int val,
-      bidirectional_map<std::string, int>* cs = NULL)
+      const bidirectional_map<std::string, int>* cs = NULL)
       : OneDIntArray(numClocks * numClocks), nClocks(numClocks), declared_clocks(cs)
   {
     for(short int i = 0; i < nClocks; i++){

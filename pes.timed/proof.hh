@@ -7,6 +7,7 @@
 #ifndef PROOF_HH
 #define PROOF_HH
 
+#include "pes.hh"
 #include "DBM.hh"
 #include "ExprNode.hh"
 #include "transition.hh"
@@ -15,14 +16,7 @@
 class prover
 {
 protected:
-  /** First we declare variables for the timed automaton that we are proving
-   * things about.
-   */
-  const std::vector<ExprNode *>& invs;
-  /** This is the list of transitions of the state machine
-   * from the automata/PES description. */
-  const std::vector<Transition *> * const transList;
-
+  const pes& input_pes;
 
   bool currParityGfp;
   bool prevParityGfp;
@@ -61,17 +55,8 @@ protected:
    * especially when multiple predicate variables exist. */
   int seqStSize;
 
-  /** Pointer to the list of declared clocks */
-  bidirectional_map<std::string, int>* declared_clocks;
-
   /** Space dimension; invariant: declared_clocks.size() + 1 == *spaceDimension */
   int* spaceDimension;
-
-  /** Pointer to the list of declared predicates */
-  std::map<std::string, ExprNode*>* declared_predicates;
-
-  /** Pointer to the list of defined equations */
-  std::map<std::string, ExprNode*>* equations;
 
   /** XList_pGFP (XList) is an array of stacks, where each stack
    * is an array of sequents that
@@ -144,17 +129,12 @@ protected:
   bool newSequent;
 
 public:
-  prover(const std::vector<ExprNode *>& a_invs,
-         const std::vector<Transition *> * const a_transList,
+  prover(const pes& a_input_pes,
          bool a_currParityGfp, bool a_prevParityGfp, bool a_useCaching,
          int a_predicateInd, int a_nHash, bool debug, int MAXC,
          int nbits, int seqStSize, int aSize,
-         bidirectional_map<std::string, int>* dc,
-         int* sD,
-         std::map<std::string, ExprNode*>* dp,
-         std::map<std::string, ExprNode*>* eqs) :
-  invs(a_invs),
-  transList(a_transList),
+         int* sD) :
+  input_pes(a_input_pes),
   currParityGfp(a_currParityGfp),
   prevParityGfp(a_prevParityGfp),
   useCaching(a_useCaching),
@@ -165,10 +145,7 @@ public:
   MAXC(MAXC),
   nbits(nbits),
   seqStSize(seqStSize),
-  declared_clocks(dc),
   spaceDimension(sD),
-  declared_predicates(dp),
-  equations(eqs),
   Xlist_pGFP(aSize, nbits, predicateInd*nHash, seqStSize, predicateInd, newSequent),
   Xlist_pLFP(aSize, nbits, predicateInd*nHash, seqStSize, predicateInd, newSequent),
   Xlist_true(aSize, nbits, predicateInd*nHash, seqStSize, predicateInd, newSequent),
@@ -185,7 +162,7 @@ public:
      * canonical form (low performance cost now,
      * ease of comparisons later). */
 
-    EMPTY = new DBM(*spaceDimension, declared_clocks);
+    EMPTY = new DBM(*spaceDimension, &(input_pes.clocks()));
     for (int i=1; i<*spaceDimension; i++){
       EMPTY->addConstraint(i,0, 0);
       EMPTY->addConstraint(0,i, 0);
@@ -195,7 +172,7 @@ public:
     /* This is initialized to be the largest (loosest)
      * possible DBM
      * @see DBM Constructor (Default Constructor). */
-    INFTYDBM = new DBM(*spaceDimension, declared_clocks);
+    INFTYDBM = new DBM(*spaceDimension, &(input_pes.clocks()));
     INFTYDBM->cf();
 
     retPlaceDBM = new DBMList(*INFTYDBM);
@@ -631,7 +608,7 @@ protected:
       bool b2 = false;
       bool b2b = false;
 
-      pInd = lookup_predicate(tp->rhs()->getPredicate(), declared_predicates)->getIntVal() - 1;
+      pInd = lookup_predicate(tp->rhs()->getPredicate(), &(input_pes.predicates()))->getIntVal() - 1;
       /* Note: Purging parent sequents still ignores clock states. */
 
       /* Now purge the sequent and the DBM from all lists.
@@ -673,7 +650,7 @@ protected:
       bool b1 = false;
       bool b1b = false;
 
-      pInd = lookup_predicate(t->rhs()->getPredicate(), declared_predicates)->getIntVal() - 1;
+      pInd = lookup_predicate(t->rhs()->getPredicate(), &(input_pes.predicates()))->getIntVal() - 1;
       /* Note: Purging parent sequents still ignores clock states */
 
       /* Now purge the sequent and the DBM from all lists.

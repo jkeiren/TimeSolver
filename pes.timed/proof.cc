@@ -39,14 +39,14 @@ bool prover::do_proof(int step, DBM * const lhs, const ExprNode * const rhs, Sub
   switch(rhs->getOpType()){
     case PREDICATE:{
 
-      ExprNode *e = lookup_equation(rhs->getPredicate(), equations);
+      ExprNode *e = lookup_equation(rhs->getPredicate(), &(input_pes.equations()));
       if (e == NULL){
         cerr << "open predicate variable found: "<< rhs->getPredicate()<<endl;
         exit(-1);
       }
 
       // Get Predicate Index for Hashing
-      int pInd = lookup_predicate(rhs->getPredicate(), declared_predicates)->getIntVal() - 1;
+      int pInd = lookup_predicate(rhs->getPredicate(), &(input_pes.predicates()))->getIntVal() - 1;
       prevParityGfp = currParityGfp;
       currParityGfp = rhs->get_Parity();
       lhs->cf();
@@ -315,7 +315,7 @@ bool prover::do_proof(int step, DBM * const lhs, const ExprNode * const rhs, Sub
        * allowing multiple branches of AND and OR to have the same lhs. */
       DBM ph(*lhs);
       ph.suc();
-      invs_chk(invs, &ph, *sub);
+      invs_chk(input_pes.invariants(), &ph, *sub);
 
       retVal = do_proof(step, &ph, rhs->getQuant(), sub);
       break;}
@@ -334,7 +334,7 @@ bool prover::do_proof(int step, DBM * const lhs, const ExprNode * const rhs, Sub
       ph.suc();
 
       DBMList * tPlace = new DBMList(*INFTYDBM);
-      invs_chk(invs, tPlace, *sub);
+      invs_chk(input_pes.invariants(), tPlace, *sub);
       retPlaceDBM = do_proof_place(step, &ph, tPlace,
                                    rhs->getLeft(), sub);
       // Reset place parent to NULL
@@ -354,7 +354,7 @@ bool prover::do_proof(int step, DBM * const lhs, const ExprNode * const rhs, Sub
          * allowing multiple branches of AND and OR to have the same lhs. */
         DBM ph(*lhs);
         ph.suc();
-        invs_chk(invs, &ph, *sub);
+        invs_chk(input_pes.invariants(), &ph, *sub);
 
         retVal = do_proof(step, &ph, rhs->getRight(), sub);
       }
@@ -433,7 +433,7 @@ bool prover::do_proof(int step, DBM * const lhs, const ExprNode * const rhs, Sub
              * nor everything. */
 
             DBMList invCompPlace(*INFTYDBM);
-            bool hasInv = invs_chk(invs, &invCompPlace, *sub);
+            bool hasInv = invs_chk(input_pes.invariants(), &invCompPlace, *sub);
             if(hasInv) {
               invCompPlace.cf();
               !invCompPlace;
@@ -573,7 +573,7 @@ bool prover::do_proof(int step, DBM * const lhs, const ExprNode * const rhs, Sub
       /* The proper derivation for EXISTS is to incorporate the invariant
        * in the placeholder, and not the LHS. */
       DBMList tPlace(*INFTYDBM);
-      invs_chk(invs, &tPlace, *sub);
+      invs_chk(input_pes.invariants(), &tPlace, *sub);
 
       retPlaceDBM = do_proof_place(step, &ph, &tPlace,
                                    rhs->getQuant(), sub);
@@ -625,7 +625,7 @@ bool prover::do_proof(int step, DBM * const lhs, const ExprNode * const rhs, Sub
       DBM phb(ph);
 
       DBMList * tPlace = new DBMList(*INFTYDBM);
-      invs_chk(invs, tPlace, *sub);
+      invs_chk(input_pes.invariants(), tPlace, *sub);
 
       retPlaceDBM = do_proof_place(step, &ph, tPlace,
                                    rhs->getRight(), sub);
@@ -812,8 +812,8 @@ bool prover::do_proof(int step, DBM * const lhs, const ExprNode * const rhs, Sub
         cout << "\t Proving ALLACT Transitions:----\n" << endl;
       }
 #endif
-      for(vector<Transition *>::const_iterator it = transList->begin();
-          it != transList->end(); it++ ) {
+      for(vector<Transition *>::const_iterator it = input_pes.transitions().begin();
+          it != input_pes.transitions().end(); it++ ) {
         Transition * tempT = *it;
         /* Obtain the entire ExprNode and prove it */
         DBM tempLHS(*lhs);
@@ -833,7 +833,7 @@ bool prover::do_proof(int step, DBM * const lhs, const ExprNode * const rhs, Sub
         /* Now check the invariant */
         DBM invCons(*INFTYDBM);
         const SubstList * sl = tempT->getEnteringLocation(sub);
-        bool isInv = invs_chk(invs, &invCons, *sl);
+        bool isInv = invs_chk(input_pes.invariants(), &invCons, *sl);
         delete sl;
         if(isInv) {
           invCons.cf();
@@ -926,8 +926,8 @@ bool prover::do_proof(int step, DBM * const lhs, const ExprNode * const rhs, Sub
       /* Use placeholders to split rules */
       bool emptyPartialPlace = true;
       DBMList * partialPlace;
-      for(vector<Transition *>::const_iterator it = transList->begin();
-          it != transList->end(); it++ ) {
+      for(vector<Transition *>::const_iterator it = input_pes.transitions().begin();
+          it != input_pes.transitions().end(); it++ ) {
         Transition * tempT = *it;
 
         /* Obtain the entire ExprNode and prove it */
@@ -954,7 +954,7 @@ bool prover::do_proof(int step, DBM * const lhs, const ExprNode * const rhs, Sub
         /* Now check the invariant */
         DBM invCons(*INFTYDBM);
         const SubstList * sl = tempT->getEnteringLocation(sub);
-        bool isInv = invs_chk(invs, &invCons, *sl);
+        bool isInv = invs_chk(input_pes.invariants(), &invCons, *sl);
         delete sl;
         if(isInv) {
           invCons.cf();
@@ -1208,7 +1208,7 @@ bool prover::do_proof(int step, DBM * const lhs, const ExprNode * const rhs, Sub
       lhs->cf();
       DBM ph(*lhs);
       ph.suc();
-      invs_chk(invs, &ph, *sub);
+      invs_chk(input_pes.invariants(), &ph, *sub);
       ph.cf();
       /* Time can diverge if and only if there are no upper bound
        * constraints in the successor */
@@ -1226,7 +1226,7 @@ bool prover::do_proof(int step, DBM * const lhs, const ExprNode * const rhs, Sub
       lhs->cf();
       DBM ph(*lhs);
       ph.suc();
-      invs_chk(invs, &ph, *sub);
+      invs_chk(input_pes.invariants(), &ph, *sub);
       ph.cf();
       /* Time cannot diverge if and only if there is an upper bound
        * constraint in the successor */
@@ -1281,14 +1281,14 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
   switch(rhs->getOpType()){
     case PREDICATE:{
 
-      ExprNode *e = lookup_equation(rhs->getPredicate(), equations);
+      ExprNode *e = lookup_equation(rhs->getPredicate(), &(input_pes.equations()));
       if (e == NULL){
         cerr << "open predicate variable found: "<< rhs->getPredicate()<<endl;
         exit(-1);
       }
 
       // Get Predicate Index for Hashing
-      int pInd = lookup_predicate(rhs->getPredicate(), declared_predicates)->getIntVal() - 1;
+      int pInd = lookup_predicate(rhs->getPredicate(), &(input_pes.predicates()))->getIntVal() - 1;
 
       prevParityGfp = currParityGfp;
       currParityGfp = rhs->get_Parity();
@@ -1687,7 +1687,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
         /* Note; we union retPlaceDBM with the complement of the invariant.
          * should we do this if retPlaceDBM is nonempty? */
         DBMList invCompPlace(*INFTYDBM);
-        bool hasInv = invs_chk(invs, &invCompPlace, *sub);
+        bool hasInv = invs_chk(input_pes.invariants(), &invCompPlace, *sub);
         if(hasInv) {
           invCompPlace.cf();
           !invCompPlace;
@@ -1751,7 +1751,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
       ph.suc();
 
       DBMList * tPlace = new DBMList(*INFTYDBM);
-      invs_chk(invs, tPlace, *sub);
+      invs_chk(input_pes.invariants(), tPlace, *sub);
       retPlaceDBM = do_proof_place(step, &ph, tPlace,
                                    rhs->getLeft(), sub);
       retPlaceDBM->cf();
@@ -1778,7 +1778,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
            */
 
           DBMList invCompPlace(*INFTYDBM);
-          bool hasInv = invs_chk(invs, &invCompPlace, *sub);
+          bool hasInv = invs_chk(input_pes.invariants(), &invCompPlace, *sub);
           if(hasInv) {
             invCompPlace.cf();
             !invCompPlace;
@@ -1935,7 +1935,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
 
             DBMList invCompPlace(*INFTYDBM);
             // Do I worry about the invariants here?
-            bool hasInv = invs_chk(invs, &invCompPlace, *sub);
+            bool hasInv = invs_chk(input_pes.invariants(), &invCompPlace, *sub);
             if(hasInv) {
               invCompPlace.cf();
               !invCompPlace;
@@ -2060,7 +2060,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
       ph.suc();
       // The invariant goes into the placeholder, not the left hand side
       DBMList tPlace(*INFTYDBM);
-      invs_chk(invs, &tPlace, *sub);
+      invs_chk(input_pes.invariants(), &tPlace, *sub);
 
       //DBMList * tempPlace = new DBMList(*retPlaceDBM);
       retPlaceDBM = do_proof_place(step, &ph, &tPlace,
@@ -2116,7 +2116,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
       DBM phb(ph);
 
       DBMList * tPlace = new DBMList(*INFTYDBM);
-      invs_chk(invs, tPlace, *sub);
+      invs_chk(input_pes.invariants(), tPlace, *sub);
 
       retPlaceDBM = do_proof_place(step, &ph, tPlace,
                                    rhs->getRight(), sub);
@@ -2313,8 +2313,8 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
        * so that we only need to give a non-convex placeholder when finished */
       vector<DBMList * > transPlaceHolders;
       bool emptyRetPlace = false;
-      for(vector<Transition *>::const_iterator it = transList->begin();
-          it != transList->end(); it++ ) {
+      for(vector<Transition *>::const_iterator it = input_pes.transitions().begin();
+          it != input_pes.transitions().end(); it++ ) {
         Transition * tempT = *it;
 
         /* Obtain the entire ExprNode and prove it */
@@ -2342,7 +2342,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
         DBM invPlace(*INFTYDBM);
         SubstList tSub(*sub);
         const SubstList * sl = tempT->getEnteringLocation(&tSub);
-        bool isInv = invs_chk(invs, &invPlace, *sl);
+        bool isInv = invs_chk(input_pes.invariants(), &invPlace, *sl);
         delete sl;
         if(isInv) {
           invPlace.cf();
@@ -2558,8 +2558,8 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
         cout << "\t Proving EXISTACT Transitions:----\n" << endl;
       }
 #endif
-      for(vector<Transition *>::const_iterator it = transList->begin();
-          it != transList->end(); it++ ) {
+      for(vector<Transition *>::const_iterator it = input_pes.transitions().begin();
+          it != input_pes.transitions().end(); it++ ) {
         Transition * tempT = *it;
 
         /* Obtain the entire ExprNode and prove it */
@@ -2583,7 +2583,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
         DBM invCons(*INFTYDBM);
         SubstList tSub(*sub);
         const SubstList * sl = tempT->getEnteringLocation(&tSub);
-        bool isInv = invs_chk(invs, &invCons, *sl);
+        bool isInv = invs_chk(input_pes.invariants(), &invCons, *sl);
         delete sl;
         if(isInv) {
           invCons.cf();
@@ -2996,7 +2996,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
       ph & *place;
       ph.cf();
       ph.suc();
-      invs_chk(invs, &ph, *sub);
+      invs_chk(input_pes.invariants(), &ph, *sub);
       ph.cf();
       /* Time can diverge if and only if there are no upper bound
        * constraints in the successor. By design of succ() and invariants,
@@ -3026,7 +3026,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
       ph & *place;
       ph.cf();
       ph.suc();
-      invs_chk(invs, &ph, *sub);
+      invs_chk(input_pes.invariants(), &ph, *sub);
       ph.cf();
       /* Time canot diverge if and only if there is an upper bound
        * constraint in the successor. By design of succ() and invariants,

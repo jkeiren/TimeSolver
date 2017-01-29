@@ -220,7 +220,7 @@ int add_equation(const int block, const bool parity, const char *s, ExprNode *e,
  * @param s (*) The label of the predicate to look up.
  * @return The reference to the Expression that the predicate is if in the
  * list and NULL otherwise. */
-ExprNode * lookup_predicate(const char *s, std::map<std::string, ExprNode*>* declared_predicates)
+ExprNode * lookup_predicate(const char *s, const std::map<std::string, ExprNode*>* declared_predicates)
 {
   string name(s);
   map<string, ExprNode *>::const_iterator it = declared_predicates->find(name);
@@ -237,10 +237,10 @@ ExprNode * lookup_predicate(const char *s, std::map<std::string, ExprNode*>* dec
  * @return The Expression (a reference) if found in the list, or NULL if not
  * found in the list of equations. */
 ExprNode * lookup_equation(const char *s,
-                           std::map<std::string, ExprNode*>* equations)
+                           const std::map<std::string, ExprNode*>* equations)
 {
   string name(s);
-  map<string, ExprNode *>::iterator it = equations->find(name);
+  map<string, ExprNode *>::const_iterator it = equations->find(name);
   if (it != equations->end())
     return (*it).second;
   else
@@ -250,9 +250,9 @@ ExprNode * lookup_equation(const char *s,
 /** Prints out the list of predicate variables (without their right hand
  * side equations).
  * @return 1 when done. */
-void print_predicates(std::ostream& os, std::map<std::string, ExprNode*>* declared_predicates)
+void print_predicates(std::ostream& os, const std::map<std::string, ExprNode*>* declared_predicates)
 {
-  map <string, ExprNode *>::iterator it;
+  map <string, ExprNode *>::const_iterator it;
   for (it = declared_predicates->begin(); it != declared_predicates->end(); it++){
     os << (*it).first << "  ";
     os << "ind: " << ((*it).second)->getIntVal() << "  ";

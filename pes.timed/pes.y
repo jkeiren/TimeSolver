@@ -1,5 +1,4 @@
 
-
 %{ 
   /* Doxygen does not read pes.y; it reads the files pes.y generates:
    * pes.tab.h and pes.tab.c. Doxygen comments are included in pes.y. */
@@ -56,6 +55,8 @@
   map <string, int> defcons;
 
  %}
+
+
 
   // Parameters for the parser.
   // TODO: clean up by providing a simple structure/class interface.

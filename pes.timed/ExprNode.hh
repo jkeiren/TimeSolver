@@ -842,7 +842,7 @@ int add_equation(const int block, const bool parity, const char *s, ExprNode *e,
  * @param s (*) The label of the predicate to look up.
  * @return The reference to the Expression that the predicate is if in the
  * list and NULL otherwise. */
-ExprNode * lookup_predicate(const char *s, std::map<std::string, ExprNode*>* declared_predicates);
+ExprNode * lookup_predicate(const char *s, const std::map<std::string, ExprNode*>* declared_predicates);
 
 /** Tries to find the RHS expression of an equation with a given predicate
  * variable label,
@@ -850,12 +850,12 @@ ExprNode * lookup_predicate(const char *s, std::map<std::string, ExprNode*>* dec
  * @param s (*) The label of the equation.
  * @return The Expression (a reference) if found in the list, or NULL if not
  * found in the list of equations. */
-ExprNode * lookup_equation(const char *s, std::map<std::string, ExprNode*>* equations);
+ExprNode * lookup_equation(const char *s, const std::map<std::string, ExprNode*>* equations);
 
 /** Prints out the list of predicate variables (without their right hand
  * side equations).
  * @return 1 when done. */
-void print_predicates(std::ostream& os, std::map<std::string, ExprNode*>* declared_predicates);
+void print_predicates(std::ostream& os, const std::map<std::string, ExprNode*>* declared_predicates);
 
 /** Prints out a sequent in a proof tree.
  * @param step The tree level (sequent step) of the sequent (0 is root).

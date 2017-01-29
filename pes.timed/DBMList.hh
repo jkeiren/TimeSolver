@@ -42,7 +42,7 @@ private:
    * dbmListVec[0] || dbmListVec[1] || ... || dbmListVec[listSize-1]. */
   std::vector<DBM *> * dbmListVec;
 
-  bidirectional_map<std::string, int>* declared_clocks;
+  const bidirectional_map<std::string, int>* declared_clocks;
 
   /** Private method that returns the complement of a DBM. This uses
    * the (simple) method of performing a DBM that is the union of all
@@ -131,7 +131,7 @@ public:
    * "zero clock". Hence, there are numClocks - 1 actual clocks
    * with 1 "zero" clock.
    * @return [Constructor] */
-  DBMList(const short int numClocks, bidirectional_map<std::string, int>* cs)
+  DBMList(const short int numClocks, const bidirectional_map<std::string, int>* cs)
     : declared_clocks(cs)
   {
     nClocks = numClocks;
