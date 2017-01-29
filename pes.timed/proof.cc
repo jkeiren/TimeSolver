@@ -46,7 +46,7 @@ bool prover::do_proof(int step, DBM * const lhs, const ExprNode * const rhs, Sub
       }
 
       // Get Predicate Index for Hashing
-      int pInd = (lookup_predicate(rhs->getPredicate()))->getIntVal() - 1;
+      int pInd = lookup_predicate(rhs->getPredicate(), declared_predicates)->getIntVal() - 1;
       prevParityGfp = currParityGfp;
       currParityGfp = rhs->get_Parity();
       lhs->cf();
@@ -1288,7 +1288,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
       }
 
       // Get Predicate Index for Hashing
-      int pInd = (lookup_predicate(rhs->getPredicate()))->getIntVal() - 1;
+      int pInd = lookup_predicate(rhs->getPredicate(), declared_predicates)->getIntVal() - 1;
 
       prevParityGfp = currParityGfp;
       currParityGfp = rhs->get_Parity();

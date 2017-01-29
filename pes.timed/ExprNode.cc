@@ -23,17 +23,12 @@ using namespace std;
  * (the first clock is the zero clock). */
 int spaceDimension;
 
-/** A Hash table of Atomic values used to store predicate
- * and/or control variable ids */
-bidirectional_map <string, int> atomic;
 /** A Hash table of ints storing integer
  * substituations for atomic variables.
  * This maps atomic ids to atomic values.  0 is the default value.
  * This map represents the initial "state" of the model*/
 map <int, int> InitSub;
-/** A Hash table storing the list of declared predicates,
- * matching their label with their expression. */
-map <string, ExprNode *> predicates;
+
 /** A Hash table storing a list of PES, with their labels
  * and their expressions. */
 map <string, ExprNode *> equations;
@@ -123,11 +118,11 @@ void print_clocks(std::ostream& os, bidirectional_map <string, int>* declared_cl
  * @param s (*) The label for the atomic value.
  * @param v The value of the atomic variable labeled by s.
  * @return 1 when done. */
-int add_atomicv(const char *s, const int v)
+int add_atomicv(const char *s, const int v, bidirectional_map<std::string, int>* declared_atomic)
 {
   string name(s);
-  int idx = atomic.size();
-  atomic.insert(name, idx);
+  int idx = declared_atomic->size();
+  declared_atomic->insert(name, idx);
   InitSub.insert(make_pair(idx, v));
   return 1;
 }
@@ -137,9 +132,9 @@ int add_atomicv(const char *s, const int v)
  * This gives the atomic variable the default value of 0.
  * @param s (*) The label for the atomic value.
  * @return 1 when done. */
-int add_atomic(const char *s)
+int add_atomic(const char *s, bidirectional_map<std::string, int>* declared_atomic)
 {
-  return add_atomicv(s, 0);
+  return add_atomicv(s, 0, declared_atomic);
 }
 
 /** Try to find the value of the atomic variable with label s
@@ -147,12 +142,12 @@ int add_atomic(const char *s)
  * @param s (*) The label for the atomic value to look up.
  * @return the value of the atomic label if found or -1 if it is
  * not in the list. */
-int lookup_atomic(const char *s)
+int lookup_atomic(const char *s, bidirectional_map<std::string, int>* declared_atomic)
 {
   string name(s);
   try
   {
-    return atomic.at(name);
+    return declared_atomic->at(name);
   }
   catch (std::runtime_error&)
   {
@@ -161,17 +156,17 @@ int lookup_atomic(const char *s)
 }
 
 /** Lookup the name of the atomic with id n */
-const string& lookup_atomic_name(const unsigned int n)
+const string& lookup_atomic_name(const unsigned int n, bidirectional_map<std::string, int>* declared_atomic)
 {
-  return atomic.reverse_at(n);
+  return declared_atomic->reverse_at(n);
 }
 
 /** Prints out the list of atomic variables with their
  * labels (ids) and values.
  * @return 1 when done. */
-void print_atomic(std::ostream& os)
+void print_atomic(std::ostream& os, bidirectional_map<std::string, int>* declared_atomic)
 {
-  print_map(os, atomic.left());
+  print_map(os, declared_atomic->left());
 }
 
 /** Adds an empty PREDICATE expression to the list of
@@ -183,10 +178,10 @@ void print_atomic(std::ostream& os)
  * @param s The label of the predicate to add.
  * @param i The integer index of the predicate.
  * @return 1 when done. */
-int add_predicate(const char *s, const int i)
+int add_predicate(const char *s, const int i, std::map<std::string, ExprNode*>* declared_predicates)
 {
   string name(s);
-  predicates.insert(make_pair(name, (new ExprNode(PREDICATE, s, i, NULL)))); //FIXME
+  declared_predicates->insert(make_pair(name, (new ExprNode(PREDICATE, s, i, NULL, NULL)))); //FIXME
   return 1;
 }
 
@@ -197,10 +192,10 @@ int add_predicate(const char *s, const int i)
  * @param parity The desired parity: true = gfp, false = lfp.
  * @return true:if successful (found the predicate expression),
  * false:otherwise. */
-bool set_parity_block(const string& name, const int block, const bool parity)
+bool set_parity_block(const string& name, const int block, const bool parity, std::map<std::string, ExprNode*>* declared_predicates)
 {
-  map<string, ExprNode *>::iterator it = predicates.find(name);
-  if (it != predicates.end()){
+  map<string, ExprNode *>::iterator it = declared_predicates->find(name);
+  if (it != declared_predicates->end()){
     (*it).second->set_Parity(parity);
     (*it).second->set_Block(block);
     return true;
@@ -221,10 +216,10 @@ bool set_parity_block(const string& name, const int block, const bool parity)
  * @param s (*) The equation label.
  * @param e (*) The expression of the RHS of the equation.
  * @return 1 if successful in doing so and 0 otherwise. */
-int add_equation(const int block, const bool parity, const char *s, ExprNode *e)
+int add_equation(const int block, const bool parity, const char *s, ExprNode *e, std::map<std::string, ExprNode*>* declared_predicates)
 {
   string name(s);
-  if(set_parity_block(name, block, parity)){
+  if(set_parity_block(name, block, parity, declared_predicates)){
     equations.insert(make_pair(name, e));
     return 1;
   }
@@ -238,11 +233,11 @@ int add_equation(const int block, const bool parity, const char *s, ExprNode *e)
  * @param s (*) The label of the predicate to look up.
  * @return The reference to the Expression that the predicate is if in the
  * list and NULL otherwise. */
-ExprNode * lookup_predicate(const char *s)
+ExprNode * lookup_predicate(const char *s, std::map<std::string, ExprNode*>* declared_predicates)
 {
   string name(s);
-  map<string, ExprNode *>::iterator it = predicates.find(name);
-  if (it != predicates.end())
+  map<string, ExprNode *>::const_iterator it = declared_predicates->find(name);
+  if (it != declared_predicates->end())
     return (*it).second;
   else
     return NULL;
@@ -267,10 +262,10 @@ ExprNode * lookup_equation(const char *s)
 /** Prints out the list of predicate variables (without their right hand
  * side equations).
  * @return 1 when done. */
-void print_predicates(std::ostream& os)
+void print_predicates(std::ostream& os, std::map<std::string, ExprNode*>* declared_predicates)
 {
   map <string, ExprNode *>::iterator it;
-  for (it = predicates.begin(); it != predicates.end(); it++){
+  for (it = declared_predicates->begin(); it != declared_predicates->end(); it++){
     os << (*it).first << "  ";
     os << "ind: " << ((*it).second)->getIntVal() << "  ";
   }
@@ -490,7 +485,7 @@ void print_ExprNode(const ExprNode * const e, std::ostream& os)
       break;
     case REPLACE:
       print_ExprNode(e->getExpr(), os);
-      os << lookup_atomic_name(e->getAtomic());
+      os << lookup_atomic_name(e->getAtomic(), e->declared_atomic);
       os << ":=";
       os << e->getIntVal();
       break;
@@ -498,32 +493,32 @@ void print_ExprNode(const ExprNode * const e, std::ostream& os)
       e->dbm()->print_constraint(os);
       break;
     case ATOMIC:
-      os << lookup_atomic_name(e->getAtomic());
+      os << lookup_atomic_name(e->getAtomic(), e->declared_atomic);
       os << "==";
       os << e->getIntVal();
       break;
     case ATOMIC_NOT:
-      os << lookup_atomic_name(e->getAtomic());
+      os << lookup_atomic_name(e->getAtomic(), e->declared_atomic);
       os << "!=";
       os << e->getIntVal();
       break;
     case ATOMIC_LT:
-      os << lookup_atomic_name(e->getAtomic());
+      os << lookup_atomic_name(e->getAtomic(), e->declared_atomic);
       os << "<";
       os << e->getIntVal();
       break;
     case ATOMIC_GT:
-      os << lookup_atomic_name(e->getAtomic());
+      os << lookup_atomic_name(e->getAtomic(), e->declared_atomic);
       os << ">";
       os << e->getIntVal();
       break;
     case ATOMIC_LE:
-      os << lookup_atomic_name(e->getAtomic());
+      os << lookup_atomic_name(e->getAtomic(), e->declared_atomic);
       os << "<=";
       os << e->getIntVal();
       break;
     case ATOMIC_GE:
-      os << lookup_atomic_name(e->getAtomic());
+      os << lookup_atomic_name(e->getAtomic(), e->declared_atomic);
       os << ">=";
       os << e->getIntVal();
       break;
@@ -743,7 +738,7 @@ void SubstList::print(std::ostream &os) const {
     if (this->at(i) != -1){
       if(end) os <<",";
       //os << "p" << i;
-      os << lookup_atomic_name(i);
+      os << lookup_atomic_name(i, declared_atomic);
       os <<"=" << this->at(i);
       end = true;
     }
@@ -840,7 +835,7 @@ void print_ExprNodeTrans(const ExprNode * const e, std::ostream& os)
         break;
       case REPLACE:
         print_ExprNodeTrans(e->getExpr(), os);
-        os << lookup_atomic_name(e->getAtomic());
+        os << lookup_atomic_name(e->getAtomic(), e->declared_atomic);
         os << ":=";
         os << e->getIntVal();
         break;
@@ -848,32 +843,32 @@ void print_ExprNodeTrans(const ExprNode * const e, std::ostream& os)
         e->dbm()->print_constraint(os);
         break;
       case ATOMIC:
-        os << lookup_atomic_name(e->getAtomic());
+        os << lookup_atomic_name(e->getAtomic(), e->declared_atomic);
         os << "==";
         os << e->getIntVal();
         break;
       case ATOMIC_NOT:
-        os << lookup_atomic_name(e->getAtomic());
+        os << lookup_atomic_name(e->getAtomic(), e->declared_atomic);
         os << "!=";
         os << e->getIntVal();
         break;
       case ATOMIC_LT:
-        os << lookup_atomic_name(e->getAtomic());
+        os << lookup_atomic_name(e->getAtomic(), e->declared_atomic);
         os << "<";
         os << e->getIntVal();
         break;
       case ATOMIC_GT:
-        os << lookup_atomic_name(e->getAtomic());
+        os << lookup_atomic_name(e->getAtomic(), e->declared_atomic);
         os << ">";
         os << e->getIntVal();
         break;
       case ATOMIC_LE:
-        os << lookup_atomic_name(e->getAtomic());
+        os << lookup_atomic_name(e->getAtomic(), e->declared_atomic);
         os << "<=";
         os << e->getIntVal();
         break;
       case ATOMIC_GE:
-        os << lookup_atomic_name(e->getAtomic());
+        os << lookup_atomic_name(e->getAtomic(), e->declared_atomic);
         os << ">=";
         os << e->getIntVal();
         break;

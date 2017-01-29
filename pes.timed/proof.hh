@@ -64,6 +64,9 @@ protected:
   /** Pointer to the list of declared clocks */
   bidirectional_map<std::string, int>* declared_clocks;
 
+  /** Pointer to the list of declared predicates */
+  std::map<std::string, ExprNode*>* declared_predicates;
+
   /** XList_pGFP (XList) is an array of stacks, where each stack
    * is an array of sequents that
    * keeps track of all possible GFP Sequents
@@ -140,7 +143,8 @@ public:
          bool a_currParityGfp, bool a_prevParityGfp, bool a_useCaching,
          int a_predicateInd, int a_nHash, bool debug, int MAXC,
          int nbits, int seqStSize, int aSize,
-         bidirectional_map<std::string, int>* dc) :
+         bidirectional_map<std::string, int>* dc,
+         std::map<std::string, ExprNode*>* dp) :
   invs(a_invs),
   transList(a_transList),
   currParityGfp(a_currParityGfp),
@@ -154,6 +158,7 @@ public:
   nbits(nbits),
   seqStSize(seqStSize),
   declared_clocks(dc),
+  declared_predicates(dp),
   Xlist_pGFP(aSize, nbits, predicateInd*nHash, seqStSize, predicateInd, newSequent),
   Xlist_pLFP(aSize, nbits, predicateInd*nHash, seqStSize, predicateInd, newSequent),
   Xlist_true(aSize, nbits, predicateInd*nHash, seqStSize, predicateInd, newSequent),
@@ -616,7 +621,7 @@ protected:
       bool b2 = false;
       bool b2b = false;
 
-      pInd = (lookup_predicate(tp->rhs()->getPredicate()))->getIntVal() - 1;
+      pInd = lookup_predicate(tp->rhs()->getPredicate(), declared_predicates)->getIntVal() - 1;
       /* Note: Purging parent sequents still ignores clock states. */
 
       /* Now purge the sequent and the DBM from all lists.
@@ -658,7 +663,7 @@ protected:
       bool b1 = false;
       bool b1b = false;
 
-      pInd = (lookup_predicate(t->rhs()->getPredicate()))->getIntVal() - 1;
+      pInd = lookup_predicate(t->rhs()->getPredicate(), declared_predicates)->getIntVal() - 1;
       /* Note: Purging parent sequents still ignores clock states */
 
       /* Now purge the sequent and the DBM from all lists.

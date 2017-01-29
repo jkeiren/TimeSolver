@@ -8,6 +8,7 @@
 #ifndef EXPR_NODE_H
 #define EXPR_NODE_H
 
+#include <cassert>
 #include "DBM.hh"
 #include "DBMList.hh"
 #include <fstream>
@@ -51,6 +52,9 @@ extern int spaceDimension;
  * @version 1.2
  * @date November 2, 2013 */
 class SubstList: public OneDIntArray{
+protected:
+    bidirectional_map<std::string, int>* declared_atomic;
+
 public:
   /** Constructor. Initializes all variables to -1 except the specified
    * index, whose value is initialized to val.
@@ -59,7 +63,8 @@ public:
    * @param val The value to initialize the specified variable to.
    * @param numElements The number of variables (the size of the list).
    * @return [Constructor]. */
-  SubstList(const int index, const int val, const int numElements) : OneDIntArray(numElements) {
+  SubstList(const int index, const int val, const int numElements, bidirectional_map<std::string, int>* as)
+    : OneDIntArray(numElements), declared_atomic(as) {
     for(int i = 0; i < numElements; i++)
       this->operatorAccess(i) = -1;
     this->operatorAccess(index) = val;
@@ -69,7 +74,8 @@ public:
    * state.
    * @param numElements The number of variables (the size of the list).
    * @return [Constructor]. */
-  SubstList(const int numElements) : OneDIntArray(numElements) {
+  SubstList(const int numElements, bidirectional_map<std::string, int>* as)
+    : OneDIntArray(numElements), declared_atomic(as) {
     for(int i = 0; i < numElements; i++)
       this->operatorAccess(i) = 0;
   };
@@ -83,7 +89,10 @@ public:
    * SubstList to get values from.
    * @param st2 (*) The pointer to the second SubstList to get values from.
    * @return [Constructor]. */
-  SubstList(const SubstList * const st1, const SubstList * const st2) : OneDIntArray(st1->quantity){
+  SubstList(const SubstList * const st1, const SubstList * const st2)
+    : OneDIntArray(st1->quantity){
+    assert(st1->declared_atomic == st2->declared_atomic);
+    declared_atomic = st1->declared_atomic;
     for(int i = 0; i < quantity; i++){
       if(st1->operatorAccess(i) != -1)
         this->operatorAccess(i) = st1->operatorAccess(i);
@@ -95,7 +104,9 @@ public:
   /** Copy Constructor.
    * @param Y (&) The object to copy.
    * @return [Constructor]. */
-  SubstList(const SubstList &Y) : OneDIntArray(Y){};
+  SubstList(const SubstList &Y)
+    : OneDIntArray(Y), declared_atomic(Y.declared_atomic)
+  {};
 
   /** Destructor.  Does nothing.
    * @return [Destructor]. */
@@ -171,8 +182,9 @@ public:
    * @note Using this constructor with an opType value other than one of
    * the values given above may result in program errors.
    * @return [Constructor]. */
-  ExprNode(const opType o, ExprNode * q, bidirectional_map<std::string, int>* cs)
-    : op(o), left(q), declared_clocks(cs)
+  ExprNode(const opType o, ExprNode * q, bidirectional_map<std::string, int>* cs,
+           bidirectional_map<std::string, int>* as)
+    : op(o), left(q), declared_clocks(cs), declared_atomic(as)
   {
     right = NULL;
     constraint = NULL;
@@ -189,8 +201,9 @@ public:
    * @note Using this constructor with an opType value other than one of
    * the values given above may result in program errors.
    * @return [Constructor]. */
-  ExprNode(const opType o, ExprNode * l, ExprNode *r, bidirectional_map<std::string, int>* cs)
-    : op(o), left(l), right(r), declared_clocks(cs)
+  ExprNode(const opType o, ExprNode * l, ExprNode *r, bidirectional_map<std::string, int>* cs,
+           bidirectional_map<std::string, int>* as)
+    : op(o), left(l), right(r), declared_clocks(cs), declared_atomic(as)
   {
     constraint = NULL;
     predicate = NULL;
@@ -205,8 +218,9 @@ public:
    * @note Using this constructor with an opType value other than one of
    * the values given above may result in program errors.
    * @return [Constructor]. */
-  ExprNode(const opType o, DBM *c, bidirectional_map<std::string, int>* cs)
-    : op(o), declared_clocks(cs)
+  ExprNode(const opType o, DBM *c, bidirectional_map<std::string, int>* cs,
+           bidirectional_map<std::string, int>* as)
+    : op(o), declared_clocks(cs), declared_atomic(as)
   {
     left = NULL;
     right = NULL;
@@ -226,8 +240,9 @@ public:
    * @note Using this constructor with an opType value other than one of
    * the values given above may result in program errors.
    * @return [Constructor]. */
-  ExprNode(const opType o, const bool bv, bidirectional_map<std::string, int>* cs)
-    : op(o), b(bv), declared_clocks(cs)
+  ExprNode(const opType o, const bool bv, bidirectional_map<std::string, int>* cs,
+           bidirectional_map<std::string, int>* as)
+    : op(o), b(bv), declared_clocks(cs), declared_atomic(as)
   {
     left = NULL;
     right = NULL;
@@ -253,8 +268,9 @@ public:
    * @note Using this constructor with an opType value other than one of
    * the values given above may result in program errors.
    * @return [Constructor]. */
-  ExprNode(const opType o, const int a, const int i, bidirectional_map<std::string, int>* cs)
-    : op(o), atomic(a), intVal(i), declared_clocks(cs)
+  ExprNode(const opType o, const int a, const int i, bidirectional_map<std::string, int>* cs,
+           bidirectional_map<std::string, int>* as)
+    : op(o), atomic(a), intVal(i), declared_clocks(cs), declared_atomic(as)
   {
     left = NULL;
     right = NULL;
@@ -281,8 +297,9 @@ public:
    * @note Using this constructor with an opType value other than one of
    * the values given above may result in program errors.
    * @return [Constructor]. */
-  ExprNode(const opType o, const int a, const int i, DBM *c, bidirectional_map<std::string, int>* cs)
-    : op(o), atomic(a), intVal(i), constraint(c), declared_clocks(cs)
+  ExprNode(const opType o, const int a, const int i, DBM *c, bidirectional_map<std::string, int>* cs,
+           bidirectional_map<std::string, int>* as)
+    : op(o), atomic(a), intVal(i), constraint(c), declared_clocks(cs), declared_atomic(as)
   {
     left = NULL;
     right = NULL;
@@ -299,8 +316,9 @@ public:
    * @note Using this constructor with an opType value other than one of
    * the values given above may result in program errors.
    * @return [Constructor]. */
-  ExprNode(const opType o, const char * a, const int i, bidirectional_map<std::string, int>* cs)
-    : op(o), predicate(a), intVal(i), declared_clocks(cs)
+  ExprNode(const opType o, const char * a, const int i, bidirectional_map<std::string, int>* cs,
+           bidirectional_map<std::string, int>* as)
+    : op(o), predicate(a), intVal(i), declared_clocks(cs), declared_atomic(as)
   {
     left = NULL;
     right = NULL;
@@ -318,8 +336,9 @@ public:
    * @note Using this constructor with an opType value other than one of
    * the values given above may result in program errors.
    * @return [Constructor]. */
-  ExprNode(const opType o, ExprNode *l, ClockSet *s, bidirectional_map<std::string, int>* cs)
-    : op(o), left(l), cset(s), declared_clocks(cs)
+  ExprNode(const opType o, ExprNode *l, ClockSet *s, bidirectional_map<std::string, int>* cs,
+           bidirectional_map<std::string, int>* as)
+    : op(o), left(l), cset(s), declared_clocks(cs), declared_atomic(as)
   {
     right = NULL;
     predicate = NULL;
@@ -339,8 +358,9 @@ public:
    * @note Using this constructor with an opType value other than one of
    * the values given above may result in program errors.
    * @return [Constructor]. */
-  ExprNode(const opType o, ExprNode *l, SubstList *s, bidirectional_map<std::string, int>* cs)
-    : op(o), left(l), subst(s), declared_clocks(cs)
+  ExprNode(const opType o, ExprNode *l, SubstList *s, bidirectional_map<std::string, int>* cs,
+           bidirectional_map<std::string, int>* as)
+    : op(o), left(l), subst(s), declared_clocks(cs), declared_atomic(as)
   {
     right = NULL;
     predicate = NULL;
@@ -364,8 +384,9 @@ public:
    * the values given above may result in program errors.
    * @return [Constructor]. */
   ExprNode(const opType o, ExprNode *l, const short int cx, const short int cy,
-           bidirectional_map<std::string, int>* cs)
-    : op(o), left(l), atomic(cx), intVal(cy), declared_clocks(cs)
+           bidirectional_map<std::string, int>* cs,
+           bidirectional_map<std::string, int>* as)
+    : op(o), left(l), atomic(cx), intVal(cy), declared_clocks(cs), declared_atomic(as)
   {
     right = NULL;
     predicate = NULL;
@@ -383,6 +404,7 @@ public:
   ExprNode(const ExprNode & E)  {
     op = E.op;
     declared_clocks = E.declared_clocks;
+    declared_atomic = E.declared_atomic;
     if(E.op != PREDICATE) {
       if(E.constraint != NULL) {
         constraint = new DBM(*(E.constraint));
@@ -716,6 +738,9 @@ protected:
   /** Pointer to the globally declared clocks */
   bidirectional_map<std::string, int>* declared_clocks;
 
+  /** Pointer to the globally declared atomics*/
+  bidirectional_map<std::string, int>* declared_atomic;
+
 };
 
 /* These next set of functions are global and
@@ -737,28 +762,28 @@ void makeAssignmentList(const ExprNode * const e, std::vector<std::pair<short in
  * to the current list of all clocks.
  * @param s (*) The string that is the clock label.
  * @return 1:when finished. */
-int add_clock(const char *s);
+int add_clock(const char *s, bidirectional_map <std::string, int>* declared_clocks);
 
 /** Determines if a clock with label s is already in
  * the list of clocks and gets its index if it is.
  * @param s (*) The label to search for
  * @return the int value of the clock index: if it is in the list;
  * -1: otherwise (s is not a clock). */
-int lookup_clock(const char *s);
+int lookup_clock(const char *s, bidirectional_map <std::string, int>* declared_clocks);
 
 const std::vector<std::string>& get_clock_strings();
 
 /** Prints out the list of clocks with their labels
  * and current values.
  * @return 1 when done. */
-int print_clocks();
+void print_clocks(std::ostream& os, bidirectional_map <std::string, int>* declared_clocks);
 
 /** Insert an atomic variable with label s
  * into the list of atomic variables and give it an id.
  * This gives the atomic variable the default value of 0.
  * @param s (*) The label for the atomic value.
  * @return 1 when done. */
-int add_atomic(const char *s);
+int add_atomic(const char *s, bidirectional_map<std::string, int>* declared_atomic);
 
 /** Insert an atomic variable with label s and initial value
  * v into the list of atomic variables and give it an id.
@@ -766,19 +791,19 @@ int add_atomic(const char *s);
  * @param s (*) The label for the atomic value.
  * @param v The value of the atomic variable labeled by s.
  * @return 1 when done. */
-int add_atomicv(const char *s, const int i);
+int add_atomicv(const char *s, const int v, bidirectional_map<std::string, int>* declared_atomic);
 
 /** Try to find the value of the atomic variable with label s
  * in the atomic list.
  * @param s (*) The label for the atomic value to look up.
  * @return the value of the atomic label if found or -1 if it is
  * not in the list. */
-int lookup_atomic(const char *s);
+int lookup_atomic(const char *s, bidirectional_map<std::string, int>* declared_atomic);
 
 /** Prints out the list of atomic variables with their
  * labels (ids) and values.
  * @return 1 when done. */
-int print_atomic();
+void print_atomic(std::ostream& os, bidirectional_map<std::string, int>* declared_atomic);
 
 /** Adds an empty PREDICATE expression to the list of
  * predicates. This list is later used to conjunct
@@ -789,7 +814,7 @@ int print_atomic();
  * @param s The label of the predicate to add.
  * @param i The integer index of the predicate.
  * @return 1 when done. */
-int add_predicate(const char *s, const int i);
+int add_predicate(const char *s, const int i, std::map<std::string, ExprNode*>* declared_predicates);
 
 /** Sets or changes the parity and the block number of a given
  * predicate ExprNode in the list of predicates.
@@ -798,7 +823,7 @@ int add_predicate(const char *s, const int i);
  * @param parity The desired parity: true = gfp, false = lfp.
  * @return true:if successful (found the predicate expression),
  * false:otherwise. */
-bool set_parity_block(const std::string& name, const int block, const bool parity);
+bool set_parity_block(const std::string& name, const int block, const bool parity, std::map<std::string, ExprNode*>* declared_predicates);
 
 /** Adds an an equation, with its variable name and right hand side, to
  * the list of equations. This list links predicate variable expressions
@@ -811,16 +836,14 @@ bool set_parity_block(const std::string& name, const int block, const bool parit
  * @param s (*) The equation label.
  * @param e (*) The expression of the RHS of the equation.
  * @return 1 if successful in doing so and 0 otherwise. */
-int add_equation(const int block, const bool parity, const char *s, ExprNode *e);
-
-
+int add_equation(const int block, const bool parity, const char *s, ExprNode *e, std::map<std::string, ExprNode*>* declared_predicates);
 
 /** Looks up a predicate with label s and returns the expression in
  * the list if it is there and NULL otherwise.
  * @param s (*) The label of the predicate to look up.
  * @return The reference to the Expression that the predicate is if in the
  * list and NULL otherwise. */
-ExprNode * lookup_predicate(const char *s);
+ExprNode * lookup_predicate(const char *s, std::map<std::string, ExprNode*>* declared_predicates);
 
 /** Tries to find the RHS expression of an equation with a given predicate
  * variable label,
@@ -833,7 +856,7 @@ ExprNode * lookup_equation(const char *s);
 /** Prints out the list of predicate variables (without their right hand
  * side equations).
  * @return 1 when done. */
-void print_predicates(std::ostream& os);
+void print_predicates(std::ostream& os, std::map<std::string, ExprNode*>* declared_predicates);
 
 /** Prints out a sequent in a proof tree.
  * @param step The tree level (sequent step) of the sequent (0 is root).
