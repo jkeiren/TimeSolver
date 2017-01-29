@@ -51,7 +51,6 @@
                       int* spaceDimension,
                       char *s);
   extern int yylex();
-  extern SubstList * add_subst(SubstList *, char*, int );
   extern int yyline;
 
   map <string, int> defcons;

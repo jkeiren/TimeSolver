@@ -232,7 +232,6 @@ int main(int argc, char** argv){
   /** The string label of the starting predicate, which
    * should be label the root ExprNode of the expression tree.
    * @see pes.y and pes.tab.c (parser files). */
-  //extern char * start_predicate;
   std::string start_predicate;
 
   /** A global variable that both counts the number
