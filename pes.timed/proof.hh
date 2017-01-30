@@ -42,11 +42,6 @@ protected:
    * when storing discrete states. */
   int nbits;
 
-  /** Public variable that stores the number of hashing bins.
-   * used for ease of locating the proper bin for each sequent,
-   * especially when multiple predicate variables exist. */
-  int seqStSize;
-
   /** XList_pGFP (XList) is an array of stacks, where each stack
    * is an array of sequents that
    * keeps track of all possible GFP Sequents
@@ -121,7 +116,7 @@ public:
   prover(const pes& a_input_pes,
          bool a_currParityGfp, bool a_prevParityGfp, bool a_useCaching,
          int a_nHash, bool debug, int MAXC,
-         int nbits, int seqStSize, int aSize) :
+         int nbits) :
   input_pes(a_input_pes),
   currParityGfp(a_currParityGfp),
   prevParityGfp(a_prevParityGfp),
@@ -131,15 +126,14 @@ public:
   numLocations(1),
   MAXC(MAXC),
   nbits(nbits),
-  seqStSize(seqStSize),
-  Xlist_pGFP(aSize, nbits, input_pes.predicates().size()*nHash, seqStSize, input_pes.predicates().size(), newSequent),
-  Xlist_pLFP(aSize, nbits, input_pes.predicates().size()*nHash, seqStSize, input_pes.predicates().size(), newSequent),
-  Xlist_true(aSize, nbits, input_pes.predicates().size()*nHash, seqStSize, input_pes.predicates().size(), newSequent),
-  Xlist_false(aSize, nbits, input_pes.predicates().size()*nHash, seqStSize, input_pes.predicates().size(), newSequent),
-  Xlist_pGFP_ph(aSize, nbits, input_pes.predicates().size()*nHash, seqStSize, input_pes.predicates().size(), newSequent),
-  Xlist_pLFP_ph(aSize, nbits, input_pes.predicates().size()*nHash, seqStSize, input_pes.predicates().size(), newSequent),
-  Xlist_true_ph(aSize, nbits, input_pes.predicates().size()*nHash, seqStSize, input_pes.predicates().size(), newSequent),
-  Xlist_false_ph(aSize, nbits, input_pes.predicates().size()*nHash, seqStSize, input_pes.predicates().size(), newSequent)
+  Xlist_pGFP(input_pes.atomic().size(), nbits, input_pes.predicates().size()*nHash, nHash, input_pes.predicates().size(), newSequent),
+  Xlist_pLFP(input_pes.atomic().size(), nbits, input_pes.predicates().size()*nHash, nHash, input_pes.predicates().size(), newSequent),
+  Xlist_true(input_pes.atomic().size(), nbits, input_pes.predicates().size()*nHash, nHash, input_pes.predicates().size(), newSequent),
+  Xlist_false(input_pes.atomic().size(), nbits, input_pes.predicates().size()*nHash, nHash, input_pes.predicates().size(), newSequent),
+  Xlist_pGFP_ph(input_pes.atomic().size(), nbits, input_pes.predicates().size()*nHash, nHash, input_pes.predicates().size(), newSequent),
+  Xlist_pLFP_ph(input_pes.atomic().size(), nbits, input_pes.predicates().size()*nHash, nHash, input_pes.predicates().size(), newSequent),
+  Xlist_true_ph(input_pes.atomic().size(), nbits, input_pes.predicates().size()*nHash, nHash, input_pes.predicates().size(), newSequent),
+  Xlist_false_ph(input_pes.atomic().size(), nbits, input_pes.predicates().size()*nHash, nHash, input_pes.predicates().size(), newSequent)
 
   {
     /* Initialize DBMs. The initial constructor

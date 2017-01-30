@@ -14,8 +14,6 @@
 #include "bidirectional_map.hh"
 #include "ExprNode.hh"
 
-#define PRINT_INTERNAL_NAMES false
-
 using namespace std;
 
 /** Assuming that e is a chain of ASSIGN expressions (possibly ending
