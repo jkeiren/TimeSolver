@@ -55,9 +55,6 @@ protected:
    * especially when multiple predicate variables exist. */
   int seqStSize;
 
-  /** Space dimension; invariant: declared_clocks.size() + 1 == *spaceDimension */
-  int* spaceDimension;
-
   /** XList_pGFP (XList) is an array of stacks, where each stack
    * is an array of sequents that
    * keeps track of all possible GFP Sequents
@@ -132,8 +129,7 @@ public:
   prover(const pes& a_input_pes,
          bool a_currParityGfp, bool a_prevParityGfp, bool a_useCaching,
          int a_predicateInd, int a_nHash, bool debug, int MAXC,
-         int nbits, int seqStSize, int aSize,
-         int* sD) :
+         int nbits, int seqStSize, int aSize) :
   input_pes(a_input_pes),
   currParityGfp(a_currParityGfp),
   prevParityGfp(a_prevParityGfp),
@@ -145,7 +141,6 @@ public:
   MAXC(MAXC),
   nbits(nbits),
   seqStSize(seqStSize),
-  spaceDimension(sD),
   Xlist_pGFP(aSize, nbits, predicateInd*nHash, seqStSize, predicateInd, newSequent),
   Xlist_pLFP(aSize, nbits, predicateInd*nHash, seqStSize, predicateInd, newSequent),
   Xlist_true(aSize, nbits, predicateInd*nHash, seqStSize, predicateInd, newSequent),
@@ -162,8 +157,8 @@ public:
      * canonical form (low performance cost now,
      * ease of comparisons later). */
 
-    EMPTY = new DBM(*spaceDimension, &(input_pes.clocks()));
-    for (int i=1; i<*spaceDimension; i++){
+    EMPTY = new DBM(input_pes.spaceDimension(), input_pes.clocks());
+    for (int i=1; i<input_pes.spaceDimension(); i++){
       EMPTY->addConstraint(i,0, 0);
       EMPTY->addConstraint(0,i, 0);
     }
@@ -172,7 +167,7 @@ public:
     /* This is initialized to be the largest (loosest)
      * possible DBM
      * @see DBM Constructor (Default Constructor). */
-    INFTYDBM = new DBM(*spaceDimension, &(input_pes.clocks()));
+    INFTYDBM = new DBM(input_pes.spaceDimension(), input_pes.clocks());
     INFTYDBM->cf();
 
     retPlaceDBM = new DBMList(*INFTYDBM);

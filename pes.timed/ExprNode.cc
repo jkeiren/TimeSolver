@@ -43,41 +43,10 @@ void makeAssignmentList(const ExprNode * const e, vector<pair<short int,short in
 
 }
 
-/** Adds a clock with a desired string label
- * to the current list of all clocks.
- * @param s (*) The string that is the clock label.
- * @return 1:when finished. */
-int add_clock(const char *s, bidirectional_map <string, int>* declared_clocks, int* spaceDimension)
-{
-  string name(s);
-  int idx = declared_clocks->size() + 1;
-  declared_clocks->insert(name,idx);
-  *spaceDimension = declared_clocks->size() + 1;
-  return 1;
-}
-
-/** Determines if a clock with label s is already in
- * the list of clocks and gets its index if it is.
- * @param s (*) The label to search for
- * @return the int value of the clock index: if it is in the list;
- * -1: otherwise (s is not a clock). */
-int lookup_clock(const char *s, bidirectional_map <string, int>* declared_clocks)
-{
-  string name(s);
-  try
-  {
-    return declared_clocks->at(name);
-  }
-  catch(std::runtime_error& )
-  {
-    return -1;
-  }
-}
-
 /** Lookup the name of the clock with id n */
-const string& lookup_clock_name(const unsigned int n, bidirectional_map <string, int>* declared_clocks)
+const string& lookup_clock_name(const unsigned int n, const bidirectional_map <string, int>& declared_clocks)
 {
-  return declared_clocks->reverse_at(n);
+  return declared_clocks.reverse_at(n);
 }
 
 static inline
@@ -87,14 +56,6 @@ void print_map(std::ostream& os, const std::map<std::string, int> m)
   {
     os << it->first << ":" << it->second << "  ";
   }
-}
-
-/** Prints out the list of clocks with their labels
- * and current values.
- * @return 1 when done. */
-void print_clocks(std::ostream& os, bidirectional_map <string, int>* declared_clocks)
-{
-  print_map(os, declared_clocks->left());
 }
 
 /** Insert an atomic variable with label s and initial value
@@ -141,7 +102,7 @@ int lookup_atomic(const char *s, bidirectional_map<std::string, int>* declared_a
 }
 
 /** Lookup the name of the atomic with id n */
-const string& lookup_atomic_name(const unsigned int n, bidirectional_map<std::string, int>* declared_atomic)
+const string& lookup_atomic_name(const unsigned int n, const bidirectional_map<std::string, int>* declared_atomic)
 {
   return declared_atomic->reverse_at(n);
 }
@@ -163,10 +124,12 @@ void print_atomic(std::ostream& os, bidirectional_map<std::string, int>* declare
  * @param s The label of the predicate to add.
  * @param i The integer index of the predicate.
  * @return 1 when done. */
-int add_predicate(const char *s, const int i, std::map<std::string, ExprNode*>* declared_predicates)
+int add_predicate(const char *s, const int i, std::map<std::string, ExprNode*>* declared_predicates,
+                  const bidirectional_map<std::string, int>& declared_clocks,
+                  const bidirectional_map<std::string, int>* atomic)
 {
   string name(s);
-  declared_predicates->insert(make_pair(name, (new ExprNode(PREDICATE, s, i, NULL, NULL)))); //FIXME
+  declared_predicates->insert(make_pair(name, (new ExprNode(PREDICATE, s, i, declared_clocks, atomic)))); //FIXME
   return 1;
 }
 

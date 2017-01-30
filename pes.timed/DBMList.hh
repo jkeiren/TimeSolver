@@ -42,7 +42,7 @@ private:
    * dbmListVec[0] || dbmListVec[1] || ... || dbmListVec[listSize-1]. */
   std::vector<DBM *> * dbmListVec;
 
-  const bidirectional_map<std::string, int>* declared_clocks;
+  const bidirectional_map<std::string, int>& declared_clocks;
 
   /** Private method that returns the complement of a DBM. This uses
    * the (simple) method of performing a DBM that is the union of all
@@ -131,7 +131,7 @@ public:
    * "zero clock". Hence, there are numClocks - 1 actual clocks
    * with 1 "zero" clock.
    * @return [Constructor] */
-  DBMList(const short int numClocks, const bidirectional_map<std::string, int>* cs)
+  DBMList(const short int numClocks, const bidirectional_map<std::string, int>& cs)
     : declared_clocks(cs)
   {
     nClocks = numClocks;
@@ -144,21 +144,25 @@ public:
    * DBM.
    * @param Y (&) The object to copy.
    * @return [Constructor] */
-  DBMList(const DBM &Y) {
-    nClocks = Y.nClocks;
+  DBMList(const DBM &Y)
+    :  declared_clocks(Y.declared_clocks),
+      nClocks(Y.nClocks)
+  {
     dbmListVec = new std::vector<DBM *>;
     DBM * tDBM = new DBM(Y);
     dbmListVec->push_back(tDBM);
     isCf = Y.isInCf();
-    declared_clocks = Y.declared_clocks;
 
   }
 
   /** Copy Constructor for DBMLists, copying a DBMList.
    * @param Y (&) The object to copy.
    * @return [Constructor] */
-  DBMList(const DBMList &Y) {
-    nClocks = Y.nClocks;
+  DBMList(const DBMList &Y)
+    : isCf(Y.isCf),
+      declared_clocks(Y.declared_clocks),
+      nClocks(Y.nClocks)
+  {
     // Vector constructor makes a deep copy of the pointers (not of the objects
     // that the pointers point to). Make a deep copy of the DBM objects here
     std::vector <DBM *> * currList = Y.getDBMList();
@@ -167,8 +171,6 @@ public:
       DBM *tD =(*currList)[i];
       dbmListVec->push_back(new DBM(*tD));
     }
-    isCf = Y.isCf;
-    declared_clocks = Y.declared_clocks;
   }
 
   /** Destructor; deletes each DBM in the DBMList and then deletes the vector.

@@ -68,14 +68,62 @@ class pes
     pes()
     {}
 
-    bidirectional_map<std::string, int>& clocks()
+    /** Destructor assumes all invariants have been newed, and that the memory
+     *  can be freed. */
+    ~pes()
+    {
+      _clocks.clear();
+
+      // Delete all allocated invariants
+      for(std::vector<ExprNode *>::iterator it = _invariants.begin();
+          it != _invariants.end(); it++) {
+        delete *it;
+      }
+      _invariants.clear();
+      _transitions.clear();
+    }
+
+    /** All clocks declared in this PES */
+    const bidirectional_map<std::string, int>& clocks() const
     {
       return _clocks;
     }
 
-    const bidirectional_map<std::string, int>& clocks() const
+    /** Number of clocks, including the implicit 0 clock x0 */
+    int spaceDimension() const
     {
-      return _clocks;
+      return _clocks.size() + 1;
+    }
+
+    /** Add clock with name @name */
+    int add_clock(const std::string& name)
+    {
+      int idx = _clocks.size() + 1;
+      _clocks.insert(name, idx);
+      return idx;
+    }
+
+    /** Find the index of clock with name @name */
+    int lookup_clock(const std::string& name) const
+    {
+      try
+      {
+        return _clocks.at(name);
+      }
+      catch(std::runtime_error& )
+      {
+        return -1;
+      }
+    }
+
+    /** Print all clocks to @os */
+    void print_clocks(std::ostream& os) const
+    {
+      const std::map<std::string, int> m(_clocks.left());
+      for(std::map<std::string, int>::const_iterator it = m.begin(); it != m.end(); ++it)
+      {
+        os << it->first << ":" << it->second << "  ";
+      }
     }
 
     bidirectional_map<std::string, int>& atomic()
@@ -113,24 +161,24 @@ class pes
       return _equations;
     }
 
-    std::vector<ExprNode*>& invariants()
-    {
-      return _invariants;
-    }
-
     const std::vector<ExprNode*>& invariants() const
     {
       return _invariants;
     }
 
-    std::vector<Transition*>& transitions()
+    void add_invariant(ExprNode* inv)
     {
-      return _transitions;
+      _invariants.push_back(inv);
     }
 
     const std::vector<Transition*>& transitions() const
     {
       return _transitions;
+    }
+
+    void add_transition(Transition* t)
+    {
+      _transitions.push_back(t);
     }
 };
 

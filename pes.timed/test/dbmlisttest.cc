@@ -6,14 +6,14 @@
 // l1b
 DBM testDBM3()
 {
-    DBM testDBM3(3, 0, 1, (-1 << 1) + 1);
+    DBM testDBM3(3, 0, 1, (-1 << 1) + 1, make_c3());
     return testDBM3;
 }
 
 // l3a
 DBM testDBM4()
 {
-    DBM testDBM4(3);
+    DBM testDBM4(3, make_c3());
     testDBM4.addConstraint(1,0, (3 << 1) + 1);
     testDBM4.addConstraint(2,0, (3 << 1) + 1);
     return testDBM4;
@@ -22,7 +22,7 @@ DBM testDBM4()
 // l3b
 DBM testDBM5()
 {
-    DBM testDBM5(3);
+    DBM testDBM5(3, make_c3());
     testDBM5.addConstraint(1,0, (4 << 1));
     testDBM5.addConstraint(2,0, (4 << 1));
     testDBM5.addConstraint(0,1, (-2 << 1) + 1);
@@ -33,7 +33,7 @@ DBM testDBM5()
 // l3c
 DBM testDBM6()
 {
-    DBM testDBM6(3);
+    DBM testDBM6(3, make_c3());
     testDBM6.addConstraint(2,1, (0 << 1) );
     return testDBM6;
 }
@@ -41,7 +41,7 @@ DBM testDBM6()
 // l4a
 DBM testDBM7()
 {
-    DBM testDBM7(3);
+    DBM testDBM7(3, make_c3());
     testDBM7.addConstraint(1,0, (1 << 1));
     testDBM7.addConstraint(0,1, (-2 << 1) + 1);
     return testDBM7;
@@ -50,7 +50,7 @@ DBM testDBM7()
 // d2a
 DBM testDBM8()
 {
-    DBM testDBM8(3);
+    DBM testDBM8(3, make_c3());
     testDBM8.addConstraint(0,1, (-1 << 1) + 1);
     testDBM8.cf();
     return testDBM8;
@@ -59,7 +59,7 @@ DBM testDBM8()
 // d2b
 DBM testDBM9()
 {
-    DBM testDBM9(3);
+    DBM testDBM9(3, make_c3());
     testDBM9.addConstraint(1,0, (1 << 1));
     testDBM9.cf();
     return testDBM9;
@@ -76,7 +76,7 @@ DBMList testDBMList1()
 // list1
 DBMList testDBMList3()
 {
-    DBMList testDBMList3(3);
+    DBMList testDBMList3(3, make_c3());
     DBM test3(testDBM3());
     testDBMList3.addDBM(test3);
     return testDBMList3;
@@ -143,7 +143,7 @@ TEST(DBMListTest, CanonicalDBMList3)
     DBMList canonical = testDBMList3();
     canonical.cf();
 
-    DBMList expected(3);
+    DBMList expected(3, make_c3());
     EXPECT_EQ(expected, canonical);
 }
 
@@ -161,7 +161,7 @@ TEST(DBMListTest, CanonicalDBMList5)
     DBMList canonical = testDBMList5();
     canonical.cf();
 
-    DBM testDBM4cf(3);
+    DBM testDBM4cf(3, make_c3());
     testDBM4cf.addConstraint(0,0, 0x1);
     testDBM4cf.addConstraint(0,1, 0x1);
     testDBM4cf.addConstraint(0,2, 0x1);
@@ -171,7 +171,7 @@ TEST(DBMListTest, CanonicalDBMList5)
     testDBM4cf.addConstraint(2,0, (3 << 1) + 1);
     testDBM4cf.addConstraint(2,1, (3 << 1) + 1);
     testDBM4cf.addConstraint(2,2, 0x1);
-    DBM testDBM5cf(3);
+    DBM testDBM5cf(3, make_c3());
     testDBM5cf.addConstraint(0,0, 0x1);
     testDBM5cf.addConstraint(0,1, (-2 << 1) + 1);
     testDBM5cf.addConstraint(0,2, (-2 << 1) + 1);
@@ -181,7 +181,7 @@ TEST(DBMListTest, CanonicalDBMList5)
     testDBM5cf.addConstraint(2,0, (4 << 1));
     testDBM5cf.addConstraint(2,1, (2 << 1));
     testDBM5cf.addConstraint(2,2, 0x1);
-    DBM testDBM6cf(3);
+    DBM testDBM6cf(3, make_c3());
     testDBM6cf.addConstraint(0,0, 0x1);
     testDBM6cf.addConstraint(0,1, 0x0);
     testDBM6cf.addConstraint(0,2, 0x1);
@@ -345,7 +345,7 @@ TEST(DBMListTest, CopyAndIntersectSelf)
 {
     DBMList list5 = testDBMList5();
     DBMList list6 = testDBMList6();
-    DBMList* list5copy = new DBMList(3);
+    DBMList* list5copy = new DBMList(3, make_c3());
     *list5copy = list5;
 
     EXPECT_TRUE(list5 <= *list5copy);

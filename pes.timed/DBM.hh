@@ -192,7 +192,7 @@ public:
   short int nClocks;
 
   /** Pointer to the globally declared clocks */
-  const bidirectional_map<std::string, int>* declared_clocks;
+  const bidirectional_map<std::string, int>& declared_clocks;
   
   /** Default Constructor for a DBM; creates an initial DBM
    * representing no constraint: the diagonal and the left column are 
@@ -202,7 +202,7 @@ public:
    * "zero clock". Hence, there are numClocks - 1 actual clocks 
    * with 1 "zero" clock.
    * @return [Constructor] */
-  DBM(const short int numClocks, const bidirectional_map<std::string, int>* cs = NULL)
+  DBM(const short int numClocks, const bidirectional_map<std::string, int>& cs)
   : OneDIntArray(numClocks * numClocks), nClocks(numClocks), declared_clocks(cs)
   {
     for(short int i = 0; i < nClocks; i++){
@@ -236,7 +236,7 @@ public:
    * @param val The value constraining the upper bound of row - col.
    * @return [Constructor] */
   DBM(const int numClocks, const short int row, const short int col, const short int val,
-      const bidirectional_map<std::string, int>* cs = NULL)
+      const bidirectional_map<std::string, int>& cs)
       : OneDIntArray(numClocks * numClocks), nClocks(numClocks), declared_clocks(cs)
   {
     for(short int i = 0; i < nClocks; i++){
@@ -268,12 +268,12 @@ public:
   /** Copy Constructor for DBMs.
    * @param Y (&) The object to copy.
    * @return [Constructor] */
-  DBM(const DBM &Y): OneDIntArray(Y)
-  {
-    nClocks = Y.nClocks;
-    isCf = Y.isCf;
-    declared_clocks = Y.declared_clocks;
-  }
+  DBM(const DBM &Y)
+    : OneDIntArray(Y),
+      isCf(Y.isCf),
+      nClocks(Y.nClocks),
+      declared_clocks(Y.declared_clocks)
+  {}
 
   /** Tell the object that it is not in canonical form.
    * Call this method whenever changing the DBM's value from the outside.
@@ -1143,18 +1143,18 @@ public:
         }
         if(i != 0 && j!=0){
           //os << "x" << (i);
-          os << declared_clocks->reverse_at(i);
+          os << declared_clocks.reverse_at(i);
           os << "-";
           //os << "x" << (j);
-          os << declared_clocks->reverse_at(j);
+          os << declared_clocks.reverse_at(j);
         }else if (i == 0){
-          os << declared_clocks->reverse_at(j);
+          os << declared_clocks.reverse_at(j);
           if (type == 1) os << ">=" << -val ;
           else os << ">" << -val ;
           end = true;
           continue;
         }else if (j == 0){
-          os << declared_clocks->reverse_at(i);
+          os << declared_clocks.reverse_at(i);
         }
 
         if (type == 1) {
