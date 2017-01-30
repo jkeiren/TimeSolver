@@ -22,14 +22,6 @@ protected:
   bool prevParityGfp;
   bool useCaching;
 
-  /** Variable for the predicate
-   * index to represent a counter on the number
-   * of predicates to allow for hashing of sequents
-   * to bin by predicate label/index.
-   * By the time it reaches the demo.cc file, predicateInd's
-   * value is the number of predicate variables. */
-  int predicateInd;
-
   /* The size of the Hash table of Sequents: nBits + 1 */
   int  nHash;
 
@@ -128,27 +120,26 @@ protected:
 public:
   prover(const pes& a_input_pes,
          bool a_currParityGfp, bool a_prevParityGfp, bool a_useCaching,
-         int a_predicateInd, int a_nHash, bool debug, int MAXC,
+         int a_nHash, bool debug, int MAXC,
          int nbits, int seqStSize, int aSize) :
   input_pes(a_input_pes),
   currParityGfp(a_currParityGfp),
   prevParityGfp(a_prevParityGfp),
   useCaching(a_useCaching),
-  predicateInd(a_predicateInd),
   nHash(a_nHash),
   debug(debug),
   numLocations(1),
   MAXC(MAXC),
   nbits(nbits),
   seqStSize(seqStSize),
-  Xlist_pGFP(aSize, nbits, predicateInd*nHash, seqStSize, predicateInd, newSequent),
-  Xlist_pLFP(aSize, nbits, predicateInd*nHash, seqStSize, predicateInd, newSequent),
-  Xlist_true(aSize, nbits, predicateInd*nHash, seqStSize, predicateInd, newSequent),
-  Xlist_false(aSize, nbits, predicateInd*nHash, seqStSize, predicateInd, newSequent),
-  Xlist_pGFP_ph(aSize, nbits, predicateInd*nHash, seqStSize, predicateInd, newSequent),
-  Xlist_pLFP_ph(aSize, nbits, predicateInd*nHash, seqStSize, predicateInd, newSequent),
-  Xlist_true_ph(aSize, nbits, predicateInd*nHash, seqStSize, predicateInd, newSequent),
-  Xlist_false_ph(aSize, nbits, predicateInd*nHash, seqStSize, predicateInd, newSequent)
+  Xlist_pGFP(aSize, nbits, input_pes.predicates().size()*nHash, seqStSize, input_pes.predicates().size(), newSequent),
+  Xlist_pLFP(aSize, nbits, input_pes.predicates().size()*nHash, seqStSize, input_pes.predicates().size(), newSequent),
+  Xlist_true(aSize, nbits, input_pes.predicates().size()*nHash, seqStSize, input_pes.predicates().size(), newSequent),
+  Xlist_false(aSize, nbits, input_pes.predicates().size()*nHash, seqStSize, input_pes.predicates().size(), newSequent),
+  Xlist_pGFP_ph(aSize, nbits, input_pes.predicates().size()*nHash, seqStSize, input_pes.predicates().size(), newSequent),
+  Xlist_pLFP_ph(aSize, nbits, input_pes.predicates().size()*nHash, seqStSize, input_pes.predicates().size(), newSequent),
+  Xlist_true_ph(aSize, nbits, input_pes.predicates().size()*nHash, seqStSize, input_pes.predicates().size(), newSequent),
+  Xlist_false_ph(aSize, nbits, input_pes.predicates().size()*nHash, seqStSize, input_pes.predicates().size(), newSequent)
 
   {
     /* Initialize DBMs. The initial constructor
@@ -603,7 +594,7 @@ protected:
       bool b2 = false;
       bool b2b = false;
 
-      pInd = lookup_predicate(tp->rhs()->getPredicate(), &(input_pes.predicates()))->getIntVal() - 1;
+      pInd = input_pes.lookup_predicate(tp->rhs()->getPredicate())->getIntVal() - 1;
       /* Note: Purging parent sequents still ignores clock states. */
 
       /* Now purge the sequent and the DBM from all lists.
@@ -645,7 +636,7 @@ protected:
       bool b1 = false;
       bool b1b = false;
 
-      pInd = lookup_predicate(t->rhs()->getPredicate(), &(input_pes.predicates()))->getIntVal() - 1;
+      pInd = input_pes.lookup_predicate(t->rhs()->getPredicate())->getIntVal() - 1;
       /* Note: Purging parent sequents still ignores clock states */
 
       /* Now purge the sequent and the DBM from all lists.

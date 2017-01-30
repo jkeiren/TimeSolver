@@ -68,19 +68,40 @@ class pes
     pes()
     {}
 
-    /** Destructor assumes all invariants have been newed, and that the memory
-     *  can be freed. */
+    /** Destructor assumes all predicates and invariants have been newed,
+     * and that the memory can be freed. */
     ~pes()
     {
-      _clocks.clear();
+    }
 
+    /** Explicit function to free data structures that have been malloc'ed in the
+     *  parser. This is to avoid double frees */
+    void free_all_pointers()
+    {
       // Delete all allocated invariants
       for(std::vector<ExprNode *>::iterator it = _invariants.begin();
           it != _invariants.end(); it++) {
         delete *it;
       }
-      _invariants.clear();
-      _transitions.clear();
+
+      // Delete Transitions in transition list
+      for(std::vector<Transition*>::iterator it = _transitions.begin();
+        it != _transitions.end(); ++it)
+      {
+        delete *it;
+      }
+
+      // Delete equations
+      for(std::map<std::string, ExprNode*>::iterator it = _equations.begin();
+          it != _equations.end(); it++) {
+        delete (it->second);
+      }
+
+      // Delete all predicates
+      for(std::map<std::string, ExprNode *>::iterator it = _predicates.begin();
+          it != _predicates.end(); it++) {
+        delete (it->second);
+      }
     }
 
     /** All clocks declared in this PES */
@@ -110,7 +131,7 @@ class pes
       {
         return _clocks.at(name);
       }
-      catch(std::runtime_error& )
+      catch(std::out_of_range& )
       {
         return -1;
       }
@@ -126,19 +147,51 @@ class pes
       }
     }
 
-    bidirectional_map<std::string, int>& atomic()
+    const bidirectional_map<std::string, int>& atomic() const
     {
       return _atomic;
     }
 
-    std::map <int,int>& initially()
+    /** Insert an atomic variable with label s and initial value
+     * v into the list of atomic variables and give it an id.
+     * This method gives the atomic variable the use-specified value i.
+     * @param s The label for the atomic value.
+     * @param v The value of the atomic variable labeled by name, default 0.
+     * @return 1 when done. */
+    int add_atomic(const char* s, const int v = 0)
     {
-      return _initially;
+      std::string name(s);
+      int idx = _atomic.size();
+      _atomic.insert(name, idx);
+      _initially.insert(std::make_pair(idx, v));
+      return 1;
     }
 
-    std::map <std::string, ExprNode*>& predicates()
+    int lookup_atomic(const std::string& name) const
     {
-      return _predicates;
+      try
+      {
+        return _atomic.at(name);
+      }
+      catch (std::out_of_range&)
+      {
+        return -1;
+      }
+    }
+
+    /** Print all atomic variables to @os */
+    void print_atomic(std::ostream& os) const
+    {
+      const std::map<std::string, int> m(_atomic.left());
+      for(std::map<std::string, int>::const_iterator it = m.begin(); it != m.end(); ++it)
+      {
+        os << it->first << ":" << it->second << "  ";
+      }
+    }
+
+    const std::map <int,int>& initially() const
+    {
+      return _initially;
     }
 
     const std::map <std::string, ExprNode*>& predicates() const
@@ -146,19 +199,122 @@ class pes
       return _predicates;
     }
 
+    /** Adds an empty PREDICATE expression to the list of
+     * predicates. This list is later used to conjunct
+     * equation expressions to these PREDICATE variables, providing a clean
+     * way to terminate a predicate expression terminated due to circularity.
+     * @note This method is only used in the parser (pes.y)
+     * when forming ExprNode trees.
+     * @param name The label of the predicate to add.
+     * @param i The integer index of the predicate.
+     * @return 1 when done. */
+    int add_predicate(const char* s)
+    {
+      std::string name(s);
+      int i = _predicates.size();
+      ExprNode* pred = new ExprNode(PREDICATE, s, i, _clocks, _atomic);
+      _predicates.insert(std::make_pair(name, pred));
+      return 1;
+    }
+
+    /** Looks up a predicate with label s and returns the expression in
+     * the list if it is there and NULL otherwise.
+     * @param s (*) The label of the predicate to look up.
+     * @return The reference to the Expression that the predicate is if in the
+     * list and NULL otherwise. */
+    ExprNode* lookup_predicate(const std::string& name) const
+    {
+      std::map<std::string, ExprNode *>::const_iterator it = _predicates.find(name);
+      if (it != _predicates.end())
+      {
+        return it->second;
+      }
+      else
+      {
+        return nullptr;
+      }
+    }
+
+    /** Prints out the list of predicate variables (without their right hand
+     * side equations) to @os. */
+    void print_predicates(std::ostream& os) const
+    {
+      for (std::map <std::string, ExprNode *>::const_iterator it = _predicates.begin();
+           it != _predicates.end(); ++it){
+        os << it->first << "  ";
+        os << "ind: " << (it->second)->getIntVal() << "  ";
+      }
+    }
+
     std::string& start_predicate()
     {
       return _start_predicate;
     }
 
-    std::map<std::string, ExprNode*>& equations()
+    /** Sets or changes the parity and the block number of a given
+     * predicate ExprNode in the list of predicates.
+     * @param name The key to look up the ExprNode in the ExprNode list
+     * @param block The desired block number of the equation (predicate expression)
+     * @param parity The desired parity: true = gfp, false = lfp.
+     * @return true:if successful (found the predicate expression),
+     * false:otherwise. */
+    bool set_parity_block(const std::string& name, const int block, const bool parity)
     {
-      return _equations;
+      std::map<std::string, ExprNode*>::const_iterator it = _predicates.find(name);
+      if (it != _predicates.end()){
+        it->second->set_Parity(parity);
+        it->second->set_Block(block);
+        return true;
+      }
+      else
+      {
+        return false;
+      }
     }
 
     const std::map<std::string, ExprNode*>& equations() const
     {
       return _equations;
+    }
+
+    /** Adds an an equation, with its variable name and right hand side, to
+     * the list of equations. This list links predicate variable expressions
+     * with their right hand side equations. This separation of
+     * predicates from equations provides a clean
+     * way to terminate a predicate expression terminated due to circularity
+     * and a clean way to delete expressions.
+     * @param block The block number for the equation.
+     * @param parity The equation's parity: true = gfp, false = lfp.
+     * @param name The equation label.
+     * @param e (*) The expression of the RHS of the equation.
+     * @return 1 if successful in doing so and 0 otherwise. */
+    bool add_equation(const int block, const bool parity, const std::string& name, ExprNode *e)
+    {
+      if(set_parity_block(name, block, parity)){
+        _equations.insert(make_pair(name, e));
+        return true;
+      }
+      else
+        return false;
+    }
+
+    /** Tries to find the RHS expression of an equation with a given predicate
+     * variable label,
+     * and returns the equation, or NULL if there is no such equation.
+     * @param s (*) The label of the equation.
+     * @return The Expression (a reference) if found in the list, or NULL if not
+     * found in the list of equations. */
+    ExprNode* lookup_equation(const std::string& name) const
+    {
+      std::map<std::string, ExprNode*>::const_iterator it = _equations.find(name);
+      if (it != _equations.end())
+      {
+        return it->second;
+      }
+      else
+      {
+        return nullptr;
+      }
     }
 
     const std::vector<ExprNode*>& invariants() const

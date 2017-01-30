@@ -20,7 +20,7 @@ CXXFLAGS_VALGRIND = -g3
 
 LDFLAGS_ALL =
 LDFLAGS_PROFILE = -pg -O
-LDFLAGS_DEBUG =
+LDFLAGS_DEBUG = -g
 LDFLAGS_VALGRIND =
 
 # Assume sane defaults from the environment, and we add to this.
@@ -78,25 +78,25 @@ doc: timesolver-ta *.hh *.cc
 timesolver-ta:	pes.tab.o pes.lex.o ExprNode.o proof.o timesolver-ta.o
 	$(CXX) $(CXXFLAGS) pes.lex.o pes.tab.o ExprNode.o proof.o timesolver-ta.o $(LDFLAGS) -o timesolver-ta
 
-timesolver-ta.o: timesolver-ta.cc DBM.hh ExprNode.hh DBMList.hh
+timesolver-ta.o: timesolver-ta.cc DBM.hh ExprNode.hh DBMList.hh proof_data.hh proof.hh pes.hh
 	$(CXX) $(CXXFLAGS) -c timesolver-ta.cc $(INCL_PATH)
 	
-proof.o:	proof.cc proof.hh proof_data.hh transition.hh ExprNode.hh
+proof.o:	proof.cc proof.hh proof_data.hh transition.hh ExprNode.hh DBM.hh comp_ph.hh pes.hh
 	$(CXX) $(CXXFLAGS) -c proof.cc $(INCL_PATH)
 
-ExprNode.o: ExprNode.cc ExprNode.hh DBM.hh
+ExprNode.o: ExprNode.cc ExprNode.hh DBM.hh DBMList.hh bidirectional_map.hh
 	$(CXX) $(CXXFLAGS) -c ExprNode.cc $(INCL_PATH)
 
 pes.lex.o: pes.lex.cc
 	$(CXX) $(CXXFLAGS) -c pes.lex.cc $(INCL_PATH) 
 
-pes.lex.cc: pes.l
+pes.lex.cc: pes.l ExprNode.hh transition.hh pes.tab.hh
 	$(FLEX) -p -8 -Ce -opes.lex.cc pes.l
 
-pes.tab.o: pes.tab.cc pes.tab.hh DBM.hh ExprNode.hh
+pes.tab.o: pes.tab.cc pes.tab.hh DBM.hh
 	$(CXX) $(CXXFLAGS) -c pes.tab.cc $(INCL_PATH)
 
-pes.tab.cc pes.tab.hh: pes.y
+pes.tab.cc pes.tab.hh: pes.y pes.hh ExprNode.hh transition.hh OneDIntArray.hh bidirectional_map.hh
 	$(BISON) -t -d -v -o pes.tab.cc pes.y
 
 check:

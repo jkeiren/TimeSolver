@@ -40,13 +40,7 @@
   }
   char lastToken[1024];
 
-  extern void yyerror(bool debug, pes& input_pes, int& MAXC,
-                      int& predicateInd, DBM*& InitC,
-                      bidirectional_map<std::string, int>* declared_atomic,
-                      std::map<std::string, ExprNode*>* declared_predicates,
-                      std::map<int,int>* InitSub,
-                      std::map<std::string, ExprNode*>* equations,
-                      char *s);
+  extern void yyerror(bool debug, pes& input_pes, int& MAXC, DBM*& InitC, char *s);
   extern int yylex();
   extern int yyline;
 
@@ -61,12 +55,7 @@
 %parse-param {bool debug}
 %parse-param {pes& input_pes}
 %parse-param {int& MAXC}
-%parse-param {int& predicateInd}
 %parse-param {DBM*& InitC}
-%parse-param {bidirectional_map<std::string, int>* declared_atomic}
-%parse-param {std::map<std::string, ExprNode*>* declared_predicates}
-%parse-param {std::map<int, int>* InitSub}
-%parse-param {std::map<std::string, ExprNode*>* equations}
 
 %start pes
 
@@ -184,11 +173,11 @@ trans_left_list TOK_IMPLY trans_dest_list_top trans_reset_list_top trans_replace
     delete tempExprC;
   }
   else if($3==NULL && $5==NULL) {
-    rightExpr = new ExprNode(RESET, NULL, $4, input_pes.clocks(), declared_atomic);
+    rightExpr = new ExprNode(RESET, NULL, $4, input_pes.clocks(), input_pes.atomic());
     parExpr = rightExpr;
   }
   else if($4==NULL && $5==NULL) {
-    rightExpr = new ExprNode(SUBLIST, NULL, $3, input_pes.clocks(), declared_atomic);
+    rightExpr = new ExprNode(SUBLIST, NULL, $3, input_pes.clocks(), input_pes.atomic());
     parExpr = rightExpr;
   }
   else if($3 == NULL) {
@@ -199,7 +188,7 @@ trans_left_list TOK_IMPLY trans_dest_list_top trans_reset_list_top trans_replace
       currExpr = currExpr->getExpr();
     }
     ExprNode *tempExprC = currExpr->getExpr();
-    ExprNode *tempExpr = new ExprNode(RESET, NULL, $4, input_pes.clocks(), declared_atomic);
+    ExprNode *tempExpr = new ExprNode(RESET, NULL, $4, input_pes.clocks(), input_pes.atomic());
     currExpr->setExprDestLeft(tempExpr);
     parExpr = tempExpr;
     delete tempExprC;
@@ -214,7 +203,7 @@ trans_left_list TOK_IMPLY trans_dest_list_top trans_reset_list_top trans_replace
       currExpr = currExpr->getExpr();
     }
     ExprNode *tempExprC = currExpr->getExpr();
-    ExprNode *tempExpr = new ExprNode(SUBLIST, NULL, $3, input_pes.clocks(), declared_atomic);
+    ExprNode *tempExpr = new ExprNode(SUBLIST, NULL, $3, input_pes.clocks(), input_pes.atomic());
     currExpr->setExprDestLeft(tempExpr);
     parExpr = tempExpr;
     delete tempExprC;
@@ -222,9 +211,9 @@ trans_left_list TOK_IMPLY trans_dest_list_top trans_reset_list_top trans_replace
 
   }
   else if($5 == NULL) {
-    ExprNode *tempExpr = new ExprNode(SUBLIST, NULL, $3, input_pes.clocks(), declared_atomic);
+    ExprNode *tempExpr = new ExprNode(SUBLIST, NULL, $3, input_pes.clocks(), input_pes.atomic());
     parExpr = tempExpr;
-    rightExpr = new ExprNode(RESET, tempExpr, $4, input_pes.clocks(), declared_atomic);
+    rightExpr = new ExprNode(RESET, tempExpr, $4, input_pes.clocks(), input_pes.atomic());
   }
   else {
     /* Iterate through the assignment expression
@@ -234,8 +223,8 @@ trans_left_list TOK_IMPLY trans_dest_list_top trans_reset_list_top trans_replace
       currExpr = currExpr->getExpr();
     }
     ExprNode *tempExprC = currExpr->getExpr();
-    ExprNode *tempExpr = new ExprNode(SUBLIST, NULL, $3, input_pes.clocks(), declared_atomic);
-    ExprNode *aboveTempExpr = new ExprNode(RESET, tempExpr, $4, input_pes.clocks(), declared_atomic);
+    ExprNode *tempExpr = new ExprNode(SUBLIST, NULL, $3, input_pes.clocks(), input_pes.atomic());
+    ExprNode *aboveTempExpr = new ExprNode(RESET, tempExpr, $4, input_pes.clocks(), input_pes.atomic());
     currExpr->setExprDestLeft(aboveTempExpr);
     parExpr = tempExpr;
     delete tempExprC;
@@ -276,11 +265,11 @@ trans_left_list TOK_IMPLY trans_dest_list_top trans_reset_list_top trans_replace
     delete tempExprC;
   }
   else if($4==NULL && $6==NULL) {
-    rightExpr = new ExprNode(RESET, NULL, $5, input_pes.clocks(), declared_atomic);
+    rightExpr = new ExprNode(RESET, NULL, $5, input_pes.clocks(), input_pes.atomic());
     parExpr = rightExpr;
   }
   else if($5==NULL && $6==NULL) {
-    rightExpr = new ExprNode(SUBLIST, NULL, $4, input_pes.clocks(), declared_atomic);
+    rightExpr = new ExprNode(SUBLIST, NULL, $4, input_pes.clocks(), input_pes.atomic());
     parExpr = rightExpr;
   }
   else if($4 == NULL) {
@@ -291,7 +280,7 @@ trans_left_list TOK_IMPLY trans_dest_list_top trans_reset_list_top trans_replace
       currExpr = currExpr->getExpr();
     }
     ExprNode *tempExprC = currExpr->getExpr();
-    ExprNode *tempExpr = new ExprNode(RESET, NULL, $5, input_pes.clocks(), declared_atomic);
+    ExprNode *tempExpr = new ExprNode(RESET, NULL, $5, input_pes.clocks(), input_pes.atomic());
     currExpr->setExprDestLeft(tempExpr);
     parExpr = tempExpr;
     delete tempExprC;
@@ -306,7 +295,7 @@ trans_left_list TOK_IMPLY trans_dest_list_top trans_reset_list_top trans_replace
       currExpr = currExpr->getExpr();
     }
     ExprNode *tempExprC = currExpr->getExpr();
-    ExprNode *tempExpr = new ExprNode(SUBLIST, NULL, $4, input_pes.clocks(), declared_atomic);
+    ExprNode *tempExpr = new ExprNode(SUBLIST, NULL, $4, input_pes.clocks(), input_pes.atomic());
     currExpr->setExprDestLeft(tempExpr);
     parExpr = tempExpr;
     delete tempExprC;
@@ -314,9 +303,9 @@ trans_left_list TOK_IMPLY trans_dest_list_top trans_reset_list_top trans_replace
 
   }
   else if($6 == NULL) {
-    ExprNode *tempExpr = new ExprNode(SUBLIST, NULL, $4, input_pes.clocks(), declared_atomic);
+    ExprNode *tempExpr = new ExprNode(SUBLIST, NULL, $4, input_pes.clocks(), input_pes.atomic());
     parExpr = tempExpr;
-    rightExpr = new ExprNode(RESET, tempExpr, $5, input_pes.clocks(), declared_atomic);
+    rightExpr = new ExprNode(RESET, tempExpr, $5, input_pes.clocks(), input_pes.atomic());
   }
   else {
     /* Iterate through the assignment expression
@@ -326,8 +315,8 @@ trans_left_list TOK_IMPLY trans_dest_list_top trans_reset_list_top trans_replace
       currExpr = currExpr->getExpr();
     }
     ExprNode *tempExprC = currExpr->getExpr();
-    ExprNode *tempExpr = new ExprNode(SUBLIST, NULL, $4, input_pes.clocks(), declared_atomic);
-    ExprNode *aboveTempExpr = new ExprNode(RESET, tempExpr, $5, input_pes.clocks(), declared_atomic);
+    ExprNode *tempExpr = new ExprNode(SUBLIST, NULL, $4, input_pes.clocks(), input_pes.atomic());
+    ExprNode *aboveTempExpr = new ExprNode(RESET, tempExpr, $5, input_pes.clocks(), input_pes.atomic());
     currExpr->setExprDestLeft(aboveTempExpr);
     parExpr = tempExpr;
     delete tempExprC;
@@ -347,7 +336,7 @@ trans_left_list TOK_IMPLY trans_dest_list_top trans_reset_list_top trans_replace
 trans_left_list: /* must be nonempty */
 TOK_LPAREN TOK_RPAREN /* Empty left expression indicated by () */
 {
-    $$ = new ExprNode(BOOL, true, input_pes.clocks(), declared_atomic);
+    $$ = new ExprNode(BOOL, true, input_pes.clocks(), input_pes.atomic());
 }
 | TOK_LPAREN trans_source_list TOK_RPAREN /* State constraints only */
 {
@@ -355,12 +344,12 @@ TOK_LPAREN TOK_RPAREN /* Empty left expression indicated by () */
 }
 | TOK_LPAREN guard_list TOK_RPAREN /* Guards only */
 {
-  $$ = new ExprNode(CONSTRAINT, $2, input_pes.clocks(), declared_atomic);
+  $$ = new ExprNode(CONSTRAINT, $2, input_pes.clocks(), input_pes.atomic());
 }
 | TOK_LPAREN trans_source_list TOK_COMMA guard_list TOK_RPAREN
 /* State and clock constraints */
 {
-  $$ = new ExprNode(AND, $2, new ExprNode(CONSTRAINT, $4, input_pes.clocks(), declared_atomic), input_pes.clocks(), declared_atomic);
+  $$ = new ExprNode(AND, $2, new ExprNode(CONSTRAINT, $4, input_pes.clocks(), input_pes.atomic()), input_pes.clocks(), input_pes.atomic());
 };
 
 
@@ -371,11 +360,11 @@ trans_atomic
 }
 | trans_source_list TOK_AND trans_source_list
 {
-   $$ = new ExprNode(AND, $1, $3, input_pes.clocks(), declared_atomic);
+   $$ = new ExprNode(AND, $1, $3, input_pes.clocks(), input_pes.atomic());
 }
 | trans_source_list TOK_OR trans_source_list
 {
-   $$ = new ExprNode(OR, $1, $3, input_pes.clocks(), declared_atomic);
+   $$ = new ExprNode(OR, $1, $3, input_pes.clocks(), input_pes.atomic());
 }
 | TOK_LPAREN trans_source_list TOK_RPAREN
 {
@@ -385,10 +374,10 @@ trans_atomic
 trans_atomic: /* Cannot be empty */
 TOK_ID_ATOMIC TOK_LT TOK_INT
 {
-  int x = lookup_atomic($1, declared_atomic);
+  int x = input_pes.lookup_atomic($1);
   if( x != -1) {
 
-    $$ = new ExprNode(ATOMIC_LT, x, $3, input_pes.clocks(), declared_atomic);
+    $$ = new ExprNode(ATOMIC_LT, x, $3, input_pes.clocks(), input_pes.atomic());
   }
   else {
     errPrtExit("control variable not declared");
@@ -397,9 +386,9 @@ TOK_ID_ATOMIC TOK_LT TOK_INT
 }
 |TOK_ID_ATOMIC TOK_GT TOK_INT
 {
-  int x = lookup_atomic($1, declared_atomic);
+  int x = input_pes.lookup_atomic($1);
   if( x != -1) {
-    $$ = new ExprNode(ATOMIC_GT, x, $3, input_pes.clocks(), declared_atomic);
+    $$ = new ExprNode(ATOMIC_GT, x, $3, input_pes.clocks(), input_pes.atomic());
   }
   else {
     errPrtExit("control variable not declared");
@@ -408,9 +397,9 @@ TOK_ID_ATOMIC TOK_LT TOK_INT
 }
 |TOK_ID_ATOMIC TOK_LE TOK_INT
 {
-  int x = lookup_atomic($1, declared_atomic);
+  int x = input_pes.lookup_atomic($1);
   if( x != -1) {
-    $$ = new ExprNode(ATOMIC_LE, x, $3, input_pes.clocks(), declared_atomic);
+    $$ = new ExprNode(ATOMIC_LE, x, $3, input_pes.clocks(), input_pes.atomic());
   }
   else {
     errPrtExit("control variable not declared");
@@ -419,9 +408,9 @@ TOK_ID_ATOMIC TOK_LT TOK_INT
 }
 |TOK_ID_ATOMIC TOK_GE TOK_INT
 {
-  int x = lookup_atomic($1, declared_atomic);
+  int x = input_pes.lookup_atomic($1);
   if( x != -1) {
-    $$ = new ExprNode(ATOMIC_GE, x, $3, input_pes.clocks(), declared_atomic);
+    $$ = new ExprNode(ATOMIC_GE, x, $3, input_pes.clocks(), input_pes.atomic());
   }
   else {
     errPrtExit("control variable not declared");
@@ -430,9 +419,9 @@ TOK_ID_ATOMIC TOK_LT TOK_INT
 }
 |TOK_ID_ATOMIC TOK_EQ TOK_INT
 {
-  int x = lookup_atomic($1, declared_atomic);
+  int x = input_pes.lookup_atomic($1);
   if( x != -1) {
-    $$ = new ExprNode(ATOMIC, x, $3, input_pes.clocks(), declared_atomic);
+    $$ = new ExprNode(ATOMIC, x, $3, input_pes.clocks(), input_pes.atomic());
   }
   else {
     errPrtExit("control variable not declared");
@@ -441,9 +430,9 @@ TOK_ID_ATOMIC TOK_LT TOK_INT
 }
 |TOK_ID_ATOMIC TOK_NEQ TOK_INT
 {
-  int x = lookup_atomic($1, declared_atomic);
+  int x = input_pes.lookup_atomic($1);
   if( x != -1) {
-    $$ = new ExprNode(ATOMIC_NOT, x, $3, input_pes.clocks(), declared_atomic);
+    $$ = new ExprNode(ATOMIC_NOT, x, $3, input_pes.clocks(), input_pes.atomic());
   }
   else {
     errPrtExit("control variable not declared");
@@ -476,9 +465,9 @@ trans_dest_list_top: /* empty */ { $$ = NULL;}
 trans_dest_list: /* cannot be empty */
 TOK_ID_ATOMIC TOK_ASSIGN TOK_INT
 {
-  int x = lookup_atomic($1, declared_atomic);
+  int x = input_pes.lookup_atomic($1);
   if (x != -1) {
-    $$ = new SubstList(x, $3, declared_atomic->size(), declared_atomic);
+    $$ = new SubstList(x, $3, input_pes.atomic().size(), input_pes.atomic());
   }
   else {
     errPrtExit("control variable not defined");
@@ -487,7 +476,7 @@ TOK_ID_ATOMIC TOK_ASSIGN TOK_INT
 }
 |trans_dest_list TOK_COMMA TOK_ID_ATOMIC TOK_ASSIGN TOK_INT
 {
-  int x = lookup_atomic($3, declared_atomic);
+  int x = input_pes.lookup_atomic($3);
   if ( x!= -1) {
     $$ = ($1)->addst(x, $5);
   }
@@ -533,7 +522,7 @@ TOK_LBRACK TOK_ID_CLOCK TOK_ASSIGN TOK_ID_CLOCK TOK_RBRACK
 {
   short int x = input_pes.lookup_clock($2);
   short int y = input_pes.lookup_clock($4);
-  $$ = new ExprNode(ASSIGN, new ExprNode(BOOL,true, input_pes.clocks(), declared_atomic),x,y, input_pes.clocks(), declared_atomic);
+  $$ = new ExprNode(ASSIGN, new ExprNode(BOOL,true, input_pes.clocks(), input_pes.atomic()),x,y, input_pes.clocks(), input_pes.atomic());
   delete $2;
   delete $4;
 }
@@ -541,7 +530,7 @@ TOK_LBRACK TOK_ID_CLOCK TOK_ASSIGN TOK_ID_CLOCK TOK_RBRACK
 {
   short int x = input_pes.lookup_clock($4);
   short int y = input_pes.lookup_clock($6);
-  $$ = new ExprNode(ASSIGN, $1, x, y, input_pes.clocks(), declared_atomic);
+  $$ = new ExprNode(ASSIGN, $1, x, y, input_pes.clocks(), input_pes.atomic());
   delete $4;
   delete $6;
 };
@@ -614,7 +603,7 @@ TOK_ATOMIC TOK_COLON TOK_LBRACE atomic_list TOK_RBRACE
 {
   if(debug) {
     cout << "control variable declared: ";
-    print_atomic(cout, declared_atomic);
+    input_pes.print_atomic(cout);
     cout << endl;
   }
 };
@@ -625,31 +614,31 @@ TOK_ATOMIC TOK_COLON TOK_LBRACE atomic_list TOK_RBRACE
 atomic_list: /* empty */
 {/*do nothing*/}
 /* These parts initially give the proposition value 0. */
-| TOK_ID_ATOMIC { add_atomic($1, declared_atomic, InitSub) ; delete $1;}
+| TOK_ID_ATOMIC { input_pes.add_atomic($1) ; delete $1;}
 | TOK_ID_ATOMIC TOK_LPAREN TOK_INT TOK_RPAREN
 {
   /* Here the atomic number has the number of values
    * in () - they are for the reader, and can
    * can be ignored by the program. */
-  add_atomic($1, declared_atomic, InitSub) ;
+  input_pes.add_atomic($1) ;
   delete $1;
 }
-| atomic_list TOK_COMMA TOK_ID_ATOMIC { add_atomic($3, declared_atomic, InitSub); delete $3; }
+| atomic_list TOK_COMMA TOK_ID_ATOMIC { input_pes.add_atomic($3); delete $3; }
 | atomic_list TOK_COMMA TOK_ID_ATOMIC TOK_LPAREN TOK_INT TOK_RPAREN {
   /* Here the atomic number has the number of values
    * in () - they are for the reader, and can
    * can be ignored by the program. */
-  add_atomic($3, declared_atomic, InitSub);
+  input_pes.add_atomic($3);
   delete $3;
 }
 /* These next two parts give the atomic the specified
  * initial value */
 | TOK_ID_ATOMIC TOK_ASSIGN TOK_INT
-{ add_atomicv($1,$3, declared_atomic, InitSub);
+{ input_pes.add_atomic($1,$3);
   delete $1;
 }
 | atomic_list TOK_COMMA TOK_ID_ATOMIC TOK_ASSIGN TOK_INT
-{ add_atomicv($3,$5, declared_atomic, InitSub);
+{ input_pes.add_atomic($3,$5);
   delete $3;
 };
 
@@ -688,7 +677,7 @@ TOK_PREDICATE TOK_COLON TOK_LBRACE predicate_list TOK_RBRACE
 {
   if(debug) {
     cout << "predicate declared: ";
-    print_predicates(std::cout, declared_predicates);
+    input_pes.print_predicates(std::cout);
     cout << endl;
   }
 };
@@ -697,15 +686,13 @@ TOK_PREDICATE TOK_COLON TOK_LBRACE predicate_list TOK_RBRACE
 predicate_list:
 TOK_ID_PREDICATE
 {
-  add_predicate($1, predicateInd, declared_predicates, input_pes.clocks(), declared_atomic) ;
-  predicateInd++;
+  input_pes.add_predicate($1) ;
   // Do not delete $1 since it has its shallow copy as a predicate
   // However, delete $1 in the ExprNode at the end of the program
 }
 | predicate_list TOK_COMMA TOK_ID_PREDICATE
 {
-  add_predicate($3, predicateInd, declared_predicates, input_pes.clocks(), declared_atomic);
-  predicateInd++;
+  input_pes.add_predicate($3);
   // Do not delete $3 since it has its shallow copy as a predicate
   // However, delete $3 in the ExprNode at the end of the program
 };
@@ -728,15 +715,15 @@ equation {  }
 equation:
 TOK_INT TOK_COLON TOK_NU TOK_ID_PREDICATE TOK_ASSIGN expr
 {
-  if (add_equation($1,true,$4,$6, declared_predicates, equations)== 0) {
-    errPrtExit("predicate vairable not declared");
+  if (!input_pes.add_equation($1,true,$4,$6)) {
+    errPrtExit("predicate variable not declared");
   }
   delete $4;
 }
 |TOK_INT TOK_COLON TOK_MU TOK_ID_PREDICATE TOK_ASSIGN expr
 {
-  if (add_equation($1, false,$4,$6, declared_predicates, equations)== 0) {
-    errPrtExit("predicate vairbale not declared");
+  if (!input_pes.add_equation($1, false,$4,$6)) {
+    errPrtExit("predicate variable not declared");
   }
   delete $4;
 };
@@ -748,9 +735,9 @@ expr:
 /** The ( ) requirement for FORALL and EXISTS
  * is used to eliminate shift-reduce conflicts. */
 TOK_FORALL TOK_TIME TOK_LPAREN expr TOK_RPAREN
-{ $$ = new ExprNode(FORALL, $4, input_pes.clocks(), declared_atomic); }
+{ $$ = new ExprNode(FORALL, $4, input_pes.clocks(), input_pes.atomic()); }
 |TOK_EXISTS TOK_TIME TOK_LPAREN expr TOK_RPAREN
-{ $$ = new ExprNode(EXISTS,$4, input_pes.clocks(), declared_atomic); }
+{ $$ = new ExprNode(EXISTS,$4, input_pes.clocks(), input_pes.atomic()); }
 |TOK_FORALL TOK_TIME TOK_LPAREN TOK_LBRACE exprProp TOK_RBRACE TOK_RPAREN
 { $$ = $5; }
 |TOK_EXISTS TOK_TIME TOK_LPAREN TOK_LBRACE exprProp TOK_RBRACE TOK_RPAREN
@@ -761,7 +748,7 @@ TOK_FORALL TOK_TIME TOK_LPAREN expr TOK_RPAREN
 {
   /* For now, let the operator handle the simplification rather than
    * using a simplified form for atomic propositions */
-  $$ = new ExprNode(FORALL_REL, $5, $9, input_pes.clocks(), declared_atomic);
+  $$ = new ExprNode(FORALL_REL, $5, $9, input_pes.clocks(), input_pes.atomic());
 }
 /* Simplified EXISTS_REL when relativized expression involves only
  * atomic proposition. */
@@ -769,25 +756,25 @@ TOK_FORALL TOK_TIME TOK_LPAREN expr TOK_RPAREN
 {
   /* For now, let the operator handle the simplification rather than
    * using a simplified form for atomic propositions */
-  $$ = new ExprNode(EXISTS_REL, $5, $9, input_pes.clocks(), declared_atomic);
+  $$ = new ExprNode(EXISTS_REL, $5, $9, input_pes.clocks(), input_pes.atomic());
 }
 | TOK_FORALL TOK_TIME_REL TOK_LBRACK expr TOK_RBRACK TOK_LPAREN expr TOK_RPAREN
 {
-  $$ = new ExprNode(FORALL_REL, $4, $7, input_pes.clocks(), declared_atomic);
+  $$ = new ExprNode(FORALL_REL, $4, $7, input_pes.clocks(), input_pes.atomic());
 }
 |TOK_EXISTS TOK_TIME_REL TOK_LBRACK expr TOK_RBRACK TOK_LPAREN expr TOK_RPAREN
 {
 
-  $$ = new ExprNode(EXISTS_REL, $4, $7, input_pes.clocks(), declared_atomic);
+  $$ = new ExprNode(EXISTS_REL, $4, $7, input_pes.clocks(), input_pes.atomic());
 }
 |TOK_ALLACT TOK_LPAREN expr TOK_RPAREN
-{ $$ = new ExprNode(ALLACT, $3, input_pes.clocks(), declared_atomic); }
+{ $$ = new ExprNode(ALLACT, $3, input_pes.clocks(), input_pes.atomic()); }
 |TOK_EXISTACT TOK_LPAREN expr TOK_RPAREN
-{ $$ = new ExprNode(EXISTACT,$3, input_pes.clocks(), declared_atomic); }
+{ $$ = new ExprNode(EXISTACT,$3, input_pes.clocks(), input_pes.atomic()); }
 |expr TOK_OR expr
-{ $$ = new ExprNode(OR, $1, $3, input_pes.clocks(), declared_atomic); }
+{ $$ = new ExprNode(OR, $1, $3, input_pes.clocks(), input_pes.atomic()); }
 |expr TOK_OR_SIMPLE expr
-{ $$ = new ExprNode(OR_SIMPLE, $1, $3, input_pes.clocks(), declared_atomic); }
+{ $$ = new ExprNode(OR_SIMPLE, $1, $3, input_pes.clocks(), input_pes.atomic()); }
 |expr TOK_AND expr
 {
   /* Since both expressions are constraints,
@@ -797,31 +784,31 @@ TOK_FORALL TOK_TIME TOK_LPAREN expr TOK_RPAREN
     DBM * newDBM = new DBM(*($1->dbm()));
     *newDBM & *($3->dbm());
     newDBM->cf();
-    $$ = new ExprNode(CONSTRAINT, newDBM, input_pes.clocks(), declared_atomic);
+    $$ = new ExprNode(CONSTRAINT, newDBM, input_pes.clocks(), input_pes.atomic());
     delete $1;
     delete $3;
 
   }
   else{
-    $$ = new ExprNode(AND, $1, $3, input_pes.clocks(), declared_atomic);
+    $$ = new ExprNode(AND, $1, $3, input_pes.clocks(), input_pes.atomic());
   }
 }
 | TOK_LBRACE exprProp TOK_RBRACE TOK_OR expr
-{ $$ = new ExprNode(OR_SIMPLE, $2, $5, input_pes.clocks(), declared_atomic); }
+{ $$ = new ExprNode(OR_SIMPLE, $2, $5, input_pes.clocks(), input_pes.atomic()); }
 /** Creates an IMPLY.  Note that this has some restrictions
  * for the user so that expressions are well formed.
  * The program does not check for these restrictions; it
  * just produces the expression. */
 |expr TOK_IMPLY expr
-{ $$ = new ExprNode(IMPLY, $1, $3, input_pes.clocks(), declared_atomic); }
+{ $$ = new ExprNode(IMPLY, $1, $3, input_pes.clocks(), input_pes.atomic()); }
 |constraints
 {
   $1->cf();
-  $$ = new ExprNode(CONSTRAINT, $1, input_pes.clocks(), declared_atomic);
+  $$ = new ExprNode(CONSTRAINT, $1, input_pes.clocks(), input_pes.atomic());
 }
 |TOK_ID_PREDICATE
 {
-  $$ = lookup_predicate($1, declared_predicates);
+  $$ = input_pes.lookup_predicate($1);
   if ( $$ == NULL ) {
     errPrtExit("predicate variable not declared");
   }
@@ -831,32 +818,32 @@ TOK_FORALL TOK_TIME TOK_LPAREN expr TOK_RPAREN
 { $$ = $1; }
 |TOK_ABLEWAITINF
 {
-  $$ = new ExprNode(ABLEWAITINF, true, input_pes.clocks(), declared_atomic);
+  $$ = new ExprNode(ABLEWAITINF, true, input_pes.clocks(), input_pes.atomic());
 }
 |TOK_UNABLEWAITINF
 {
-  $$ = new ExprNode(UNABLEWAITINF, false, input_pes.clocks(), declared_atomic);
+  $$ = new ExprNode(UNABLEWAITINF, false, input_pes.clocks(), input_pes.atomic());
 }
 /** This segment is the resets, substitutions
  * of atomic proposition values, and assignments
  * of clocks to the value of other clocks. */
 |expr TOK_LBRACK reset TOK_RBRACK
-{ $$ = new ExprNode(RESET, $1, $3, input_pes.clocks(), declared_atomic); }
+{ $$ = new ExprNode(RESET, $1, $3, input_pes.clocks(), input_pes.atomic()); }
 |expr TOK_LBRACK sublist TOK_RBRACK
-{ $$ = new ExprNode(SUBLIST, $1, $3, input_pes.clocks(), declared_atomic); }
+{ $$ = new ExprNode(SUBLIST, $1, $3, input_pes.clocks(), input_pes.atomic()); }
 |expr TOK_LBRACK TOK_ID_CLOCK TOK_ASSIGN TOK_ID_CLOCK TOK_RBRACK
 {
   short int x = input_pes.lookup_clock($3);
   short int y = input_pes.lookup_clock($5);
-  $$ = new ExprNode(ASSIGN, $1, x, y, input_pes.clocks(), declared_atomic);
+  $$ = new ExprNode(ASSIGN, $1, x, y, input_pes.clocks(), input_pes.atomic());
   delete $3;
   delete $5;
 }
 |expr TOK_LBRACK TOK_ID_ATOMIC TOK_ASSIGN TOK_ID_ATOMIC TOK_RBRACK
 {
-  short int x = lookup_atomic($3, declared_atomic);
-  short int y = lookup_atomic($5, declared_atomic);
-  $$ = new ExprNode(REPLACE, $1, x, y, input_pes.clocks(), declared_atomic);
+  short int x = input_pes.lookup_atomic($3);
+  short int y = input_pes.lookup_atomic($5);
+  $$ = new ExprNode(REPLACE, $1, x, y, input_pes.clocks(), input_pes.atomic());
   delete $3;
   delete $5;
 }
@@ -869,13 +856,13 @@ TOK_FORALL TOK_TIME TOK_LPAREN expr TOK_RPAREN
 exprProp:
 atomicProp { $$ = $1;};
 | exprProp TOK_OR exprProp
-{ $$ = new ExprNode(OR, $1, $3, input_pes.clocks(), declared_atomic); }
+{ $$ = new ExprNode(OR, $1, $3, input_pes.clocks(), input_pes.atomic()); }
 | exprProp TOK_OR_SIMPLE exprProp
-{ $$ = new ExprNode(OR_SIMPLE, $1, $3, input_pes.clocks(), declared_atomic); }
+{ $$ = new ExprNode(OR_SIMPLE, $1, $3, input_pes.clocks(), input_pes.atomic()); }
 | exprProp TOK_AND exprProp
 {
 
-  $$ = new ExprNode(AND, $1, $3, input_pes.clocks(), declared_atomic);
+  $$ = new ExprNode(AND, $1, $3, input_pes.clocks(), input_pes.atomic());
 
 }
 |TOK_LPAREN exprProp TOK_RPAREN  { $$ = $2 ;}
@@ -883,15 +870,15 @@ atomicProp { $$ = $1;};
 
 /* Just atomic propositions */
 atomicProp:
-TOK_TRUE { $$ = new ExprNode(BOOL, true, input_pes.clocks(), declared_atomic); }
-|TOK_FALSE { $$ = new ExprNode(BOOL, false, input_pes.clocks(), declared_atomic); }
+TOK_TRUE { $$ = new ExprNode(BOOL, true, input_pes.clocks(), input_pes.atomic()); }
+|TOK_FALSE { $$ = new ExprNode(BOOL, false, input_pes.clocks(), input_pes.atomic()); }
 /* This next segment of clauses represents the constraints
  * on the atomic (control) propositions. */
 |TOK_ID_ATOMIC TOK_LT TOK_INT
 {
-  int x = lookup_atomic($1, declared_atomic);
+  int x = input_pes.lookup_atomic($1);
   if( x != -1) {
-    $$ = new ExprNode(ATOMIC_LT, x, $3, input_pes.clocks(), declared_atomic);
+    $$ = new ExprNode(ATOMIC_LT, x, $3, input_pes.clocks(), input_pes.atomic());
   }
   else {
     errPrtExit("control variable not declared");
@@ -900,9 +887,9 @@ TOK_TRUE { $$ = new ExprNode(BOOL, true, input_pes.clocks(), declared_atomic); }
 }
 |TOK_ID_ATOMIC TOK_GT TOK_INT
 {
-  int x = lookup_atomic($1, declared_atomic);
+  int x = input_pes.lookup_atomic($1);
   if( x != -1) {
-    $$ = new ExprNode(ATOMIC_GT, x, $3, input_pes.clocks(), declared_atomic);
+    $$ = new ExprNode(ATOMIC_GT, x, $3, input_pes.clocks(), input_pes.atomic());
   }
   else {
     errPrtExit("control variable not declared");
@@ -911,9 +898,9 @@ TOK_TRUE { $$ = new ExprNode(BOOL, true, input_pes.clocks(), declared_atomic); }
 }
 |TOK_ID_ATOMIC TOK_LE TOK_INT
 {
-  int x = lookup_atomic($1, declared_atomic);
+  int x = input_pes.lookup_atomic($1);
   if( x != -1) {
-    $$ = new ExprNode(ATOMIC_LE, x, $3, input_pes.clocks(), declared_atomic);
+    $$ = new ExprNode(ATOMIC_LE, x, $3, input_pes.clocks(), input_pes.atomic());
   }
   else {
     errPrtExit("control variable not declared");
@@ -922,9 +909,9 @@ TOK_TRUE { $$ = new ExprNode(BOOL, true, input_pes.clocks(), declared_atomic); }
 }
 |TOK_ID_ATOMIC TOK_GE TOK_INT
 {
-  int x = lookup_atomic($1, declared_atomic);
+  int x = input_pes.lookup_atomic($1);
   if( x != -1) {
-    $$ = new ExprNode(ATOMIC_GE, x, $3, input_pes.clocks(), declared_atomic);
+    $$ = new ExprNode(ATOMIC_GE, x, $3, input_pes.clocks(), input_pes.atomic());
   }
   else {
     errPrtExit("control variable not declared");
@@ -933,9 +920,9 @@ TOK_TRUE { $$ = new ExprNode(BOOL, true, input_pes.clocks(), declared_atomic); }
 }
 |TOK_ID_ATOMIC TOK_EQ TOK_INT
 {
-  int x = lookup_atomic($1, declared_atomic);
+  int x = input_pes.lookup_atomic($1);
   if( x != -1) {
-    $$ = new ExprNode(ATOMIC, x, $3, input_pes.clocks(), declared_atomic);
+    $$ = new ExprNode(ATOMIC, x, $3, input_pes.clocks(), input_pes.atomic());
   }
   else {
     errPrtExit("control variable not declared");
@@ -944,9 +931,9 @@ TOK_TRUE { $$ = new ExprNode(BOOL, true, input_pes.clocks(), declared_atomic); }
 }
 |TOK_ID_ATOMIC TOK_NEQ TOK_INT
 {
-  int x = lookup_atomic($1, declared_atomic);
+  int x = input_pes.lookup_atomic($1);
   if( x != -1) {
-    $$ = new ExprNode(ATOMIC_NOT, x, $3, input_pes.clocks(), declared_atomic);
+    $$ = new ExprNode(ATOMIC_NOT, x, $3, input_pes.clocks(), input_pes.atomic());
   }
   else {
     errPrtExit("control variable not declared");
@@ -1231,9 +1218,9 @@ reset:      TOK_ID_CLOCK
 /** Generate the list of proposition substitutions. */
 sublist:   TOK_ID_ATOMIC TOK_ASSIGN TOK_INT
 {
-  int x = lookup_atomic($1, declared_atomic);
+  int x = input_pes.lookup_atomic($1);
   if (x != -1) {
-    $$ = new SubstList(x, $3, declared_atomic->size(), declared_atomic);
+    $$ = new SubstList(x, $3, input_pes.atomic().size(), input_pes.atomic());
   }
   else {
     errPrtExit("control variable not defined");
@@ -1242,7 +1229,7 @@ sublist:   TOK_ID_ATOMIC TOK_ASSIGN TOK_INT
 }
 |TOK_ID_ATOMIC TOK_ASSIGN TOK_INT TOK_COMMA sublist
 {
-  int x = lookup_atomic($1, declared_atomic);
+  int x = input_pes.lookup_atomic($1);
   if ( x!= -1) {
     $$ = ($5)->addst(x, $3);
   }

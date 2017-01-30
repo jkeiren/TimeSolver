@@ -39,14 +39,14 @@ bool prover::do_proof(int step, DBM * const lhs, const ExprNode * const rhs, Sub
   switch(rhs->getOpType()){
     case PREDICATE:{
 
-      ExprNode *e = lookup_equation(rhs->getPredicate(), &(input_pes.equations()));
+      ExprNode *e = input_pes.lookup_equation(rhs->getPredicate());
       if (e == NULL){
         cerr << "open predicate variable found: "<< rhs->getPredicate()<<endl;
         exit(-1);
       }
 
       // Get Predicate Index for Hashing
-      int pInd = lookup_predicate(rhs->getPredicate(), &(input_pes.predicates()))->getIntVal() - 1;
+      int pInd = input_pes.lookup_predicate(rhs->getPredicate())->getIntVal() - 1;
       prevParityGfp = currParityGfp;
       currParityGfp = rhs->get_Parity();
       lhs->cf();
@@ -1281,14 +1281,14 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
   switch(rhs->getOpType()){
     case PREDICATE:{
 
-      ExprNode *e = lookup_equation(rhs->getPredicate(), &(input_pes.equations()));
+      ExprNode *e = input_pes.lookup_equation(rhs->getPredicate());
       if (e == NULL){
         cerr << "open predicate variable found: "<< rhs->getPredicate()<<endl;
         exit(-1);
       }
 
       // Get Predicate Index for Hashing
-      int pInd = lookup_predicate(rhs->getPredicate(), &(input_pes.predicates()))->getIntVal() - 1;
+      int pInd = input_pes.lookup_predicate(rhs->getPredicate())->getIntVal() - 1;
 
       prevParityGfp = currParityGfp;
       currParityGfp = rhs->get_Parity();
