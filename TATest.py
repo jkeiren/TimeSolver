@@ -22,7 +22,7 @@ def filterTimes(lines):
     invalid = re.compile(r"(running|Program|start|end) (t|T)(ime)|demo|timesolver")
     return list(filter(lambda x: invalid.search(x) == None, lines))
 
-def compare(expectedFileName, given):
+def compare(expectedFileName, given, printDiff = False):
     """Compare the output in the file with name expectedFileName to the
     string given"""
     
@@ -31,7 +31,7 @@ def compare(expectedFileName, given):
         givenLines = filterTimes(given.splitlines(keepends = True))
         
         result = expectedFile == givenLines
-        if(not result):
+        if(printDiff and not result):
             sys.stdout.write("[!!!] Output has changed for {0}\n".format(expectedFileName))
             sys.stdout.write("[!!!] Diff follows")
             d = difflib.Differ()
@@ -93,6 +93,7 @@ def traverseTestCases(rootDir, overwrite, fileFilter, debug=True):
                 failed += 1
     print("{0} tests were run".format(count))
     print("{0} tests failed".format(failed))
+    return failed
 
 def main():
     """
@@ -113,32 +114,40 @@ def main():
     curdir = os.getcwd()
     script_dir = os.path.dirname(os.path.realpath(__file__))
     os.chdir(script_dir)
+    
+    totalFailed = 0
 
     if not options.notest:
       testdir = os.path.join("examples", "CorrectnessTestSuite")
       print('Running all test cases in {0}'.format(testdir))
-      traverseTestCases(testdir, options.overwrite, fileFilter)
+      totalFailed += traverseTestCases(testdir, options.overwrite, fileFilter)
     
     if options.examples:
       testdir = os.path.join("examples", "FISCHER")
       print('Running all test cases in {0}'.format(testdir))
-      traverseTestCases(testdir, options.overwrite, lambda x: fileFilter(x) or not x.startswith('FISCHER-4'))
+      totalFailed += traverseTestCases(testdir, options.overwrite, lambda x: fileFilter(x) or not x.startswith('FISCHER-4'))
       
       # Do not check the full output since this gives rise to some extremely large files.
       testdir = os.path.join("examples", "GRC")
       print('Running all test cases in {0}'.format(testdir))
-      traverseTestCases(testdir, options.overwrite, lambda x: fileFilter(x) or not x.startswith('GRC-4'), False)
+      totalFailed += traverseTestCases(testdir, options.overwrite, lambda x: fileFilter(x) or not x.startswith('GRC-4'), False)
       
       testdir = os.path.join("examples", "LEADER")
       print('Running all test cases in {0}'.format(testdir))
-      traverseTestCases(testdir, options.overwrite, lambda x: fileFilter(x) or not x.startswith('LEADER-4'))
+      totalFailed += traverseTestCases(testdir, options.overwrite, lambda x: fileFilter(x) or not x.startswith('LEADER-4'))
       
       testdir = os.path.join("examples", "TrainGate")
       print('Running all test cases in {0}'.format(testdir))
-      traverseTestCases(testdir, options.overwrite, lambda x: fileFilter(x) or (not x.startswith('Train2') and not x.startswith('Train3')))
+      totalFailed += traverseTestCases(testdir, options.overwrite, lambda x: fileFilter(x) or (not x.startswith('Train2') and not x.startswith('Train3')))
 
     os.chdir(curdir)
+    
+    return totalFailed
 
 if __name__ == "__main__":
-    main()
+    result = main()
+    if result == 0:
+        sys.exit(0)
+    else:
+        sys.exit(1)
 
