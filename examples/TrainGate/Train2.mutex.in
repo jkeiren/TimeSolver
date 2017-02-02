@@ -1,0 +1,60 @@
+//defines for state names of the gate
+#define CFree 0
+#define COcc 1
+#define CCommitted 2
+//defines for state names of the trains
+#define CSafe 0
+#define CAppr 1
+#define CStop 2
+#define CStart 3
+#define CCross 4
+//defines for trains
+#define CTrain1 1
+#define CTrain2 2
+//defines for actions
+#define Cgo 0
+#define Cappr 1
+#define Cleave 2
+#define Cstop 3
+CLOCKS: { x1, x2, x0 }
+CONTROL: { pGate, pTrain1, pTrain2, q0, q1, qAct, qCommitted }
+PREDICATE: { X,Y }
+START: X
+EQUATIONS: {
+ 1: nu X = \forall time(\AllAct(X)) && \forall time(\AllAct(qAct != 0 || Y))
+ 2: nu Y = \forall time(\AllAct(qAct == 2 || Y)) && \forall time(\AllAct(qAct != 0))
+ }
+INVARIANT:
+  pGate == 2 -> x0 <= 0
+  pTrain1 == 1 -> x1 <= 20
+  pTrain1 == 3 -> x1 <= 15
+  pTrain1 == 4 -> x1 <= 5
+  pTrain2 == 1 -> x2 <= 20
+  pTrain2 == 3 -> x2 <= 15
+  pTrain2 == 4 -> x2 <= 5
+TRANSITIONS:// Train1
+(pTrain1 == 1 && qCommitted == 0, x1 >= 10)->(pTrain1 = 4, qCommitted = 0){x1};
+(pTrain1 == 3 && qCommitted == 0, x1 >= 7)->(pTrain1 = 4, qCommitted = 0){x1};
+// Train2
+(pTrain2 == 1 && qCommitted == 0, x2 >= 10)->(pTrain2 = 4, qCommitted = 0){x2};
+(pTrain2 == 3 && qCommitted == 0, x2 >= 7)->(pTrain2 = 4, qCommitted = 0){x2};
+// Train1 and Gate
+(pTrain1 == 0 && qCommitted == 0 && pGate == 0 && q0 == 0)->(pTrain1 = 1, qCommitted = 0, pGate = 1, q0 = 1, qAct = 1){x1};
+(pTrain1 == 0 && qCommitted == 0 && pGate == 0 && q0 != 0 && q1 == 0 && q0 == 0)->(pTrain1 = 1, qCommitted = 0, pGate = 1, q1 = 1, qAct = 1){x1};
+(pTrain1 == 0 && qCommitted == 0 && pGate == 1 && q0 == 0)->(pTrain1 = 1, pGate = 2, qCommitted = 1, q0 = 1, qAct = 1){x1, x0};
+(pTrain1 == 0 && qCommitted == 0 && pGate == 1 && q0 != 0 && q1 == 0)->(pTrain1 = 1, pGate = 2, qCommitted = 1, q1 = 1, qAct = 1){x1, x0};
+(pTrain1 == 1 && pGate == 2 && qCommitted == 1 && q0 == 1 && q1 == 0, x1 <= 10 && x0 <= 0)->(pTrain1 = 2, qCommitted = 0, pGate = 1, qAct = 3);
+(pTrain1 == 1 && pGate == 2 && qCommitted == 1 && q1 == 1, x1 <= 10 && x0 <= 0)->(pTrain1 = 2, qCommitted = 0, pGate = 1, qAct = 3);
+(pTrain1 == 2 && qCommitted == 0 && pGate == 0 && q0 != 0 && q0 == 1)->(pTrain1 = 3, qCommitted = 0, pGate = 1, qAct = 0){x1};
+(pTrain1 == 4 && qCommitted == 0 && pGate == 1 && q0 == 1 && q1 == 2, x1 >= 3)->(pTrain1 = 0, qCommitted = 0, pGate = 0, q0 = 2, q1 = 0, qAct = 2);
+(pTrain1 == 4 && qCommitted == 0 && pGate == 1 && q0 == 1 && q1 == 0, x1 >= 3)->(pTrain1 = 0, qCommitted = 0, pGate = 0, q0 = 0, q1 = 0, qAct = 2);
+// Train2 and Gate
+(pTrain2 == 0 && qCommitted == 0 && pGate == 0 && q0 == 0)->(pTrain2 = 1, qCommitted = 0, pGate = 1, q0 = 2, qAct = 1){x2};
+(pTrain2 == 0 && qCommitted == 0 && pGate == 0 && q0 != 0 && q1 == 0 && q0 == 0)->(pTrain2 = 1, qCommitted = 0, pGate = 1, q1 = 2, qAct = 1){x2};
+(pTrain2 == 0 && qCommitted == 0 && pGate == 1 && q0 == 0)->(pTrain2 = 1, pGate = 2, qCommitted = 1, q0 = 2, qAct = 1){x2, x0};
+(pTrain2 == 0 && qCommitted == 0 && pGate == 1 && q0 != 0 && q1 == 0)->(pTrain2 = 1, pGate = 2, qCommitted = 1, q1 = 2, qAct = 1){x2, x0};
+(pTrain2 == 1 && pGate == 2 && qCommitted == 1 && q0 == 2 && q1 == 0, x2 <= 10 && x0 <= 0)->(pTrain2 = 2, qCommitted = 0, pGate = 1, qAct = 3);
+(pTrain2 == 1 && pGate == 2 && qCommitted == 1 && q1 == 2, x2 <= 10 && x0 <= 0)->(pTrain2 = 2, qCommitted = 0, pGate = 1, qAct = 3);
+(pTrain2 == 2 && qCommitted == 0 && pGate == 0 && q0 != 0 && q0 == 2)->(pTrain2 = 3, qCommitted = 0, pGate = 1, qAct = 0){x2};
+(pTrain2 == 4 && qCommitted == 0 && pGate == 1 && q0 == 2 && q1 == 1, x2 >= 3)->(pTrain2 = 0, qCommitted = 0, pGate = 0, q0 = 1, q1 = 0, qAct = 2);
+(pTrain2 == 4 && qCommitted == 0 && pGate == 1 && q0 == 2 && q1 == 0, x2 >= 3)->(pTrain2 = 0, qCommitted = 0, pGate = 0, q0 = 0, q1 = 0, qAct = 2);
