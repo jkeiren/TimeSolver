@@ -206,7 +206,9 @@ public:
    * substituted values, used to represent the current
    * atomic "state" of the Sequent.
    * @return The DBM Value of the placeholder constraint or an empty DBM if
-   * no valid value for the placeholder exists (thus proof is Invalid). */
+   * no valid value for the placeholder exists (thus proof is Invalid).
+   * The sequent is valid for the clock valuations in the intersection of lhs
+   * and the return value. */
   DBMList * do_proof_place(int step, DBM * const lhs, DBMList * const place,
                                    const ExprNode * const rhs, SubstList * const sub);
 
