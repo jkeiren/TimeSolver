@@ -1435,27 +1435,28 @@ bool prover::do_proof(int step, DBM * const lhs, const ExprNode * const rhs, Sub
  * @param sub (*) The current substitution list of variables and their
  * substituted values, used to represent the current
  * atomic "state" of the Sequent.
- * @return The DBM Value of the placeholder constraint or an empty DBM if
- * no valid value for the placeholder exists (thus proof is Invalid). */
+ * @post retPlaceDBM contains the DBM Value of the placeholder constraint or an
+ * empty DBM if no valid value for the placeholder exists (thus proof is Invalid).
+ * --@return The DBM Value of the placeholder constraint or an empty DBM if
+ * --no valid value for the placeholder exists (thus proof is Invalid). */
 DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const place,
                          const ExprNode * const rhs, SubstList * const sub)
 {
   /* do_proof_place() written by Peter Fontana, needed for support
    * of EXISTS Quantifiers. */
-  bool retVal = false;
 
 #if DEBUG
   if (debug) {
     lhs->cf();
     place->cf();
-    print_sequent_place(std::cout, step, retVal, lhs, place, rhs, sub, rhs->getOpType());
+    print_sequent_place(std::cout, step, false, lhs, place, rhs, sub, rhs->getOpType());
   }
 #endif
   step++;
 
   switch(rhs->getOpType()){
     case PREDICATE:{
-
+      bool retVal = false;
       ExprNode *e = input_pes.lookup_equation(rhs->getPredicate());
       if (e == NULL){
         cerr << "open predicate variable found: "<< rhs->getPredicate()<<endl;
@@ -1738,6 +1739,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
       break;
     }
     case OR:{
+      bool retVal = false;
       place->cf();
       DBMList placeB(*place);
       // delete retPlaceDBM;
@@ -1800,6 +1802,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
 #endif
       break;}
     case OR_SIMPLE:{
+      bool retVal = false;
       /* In OR_SIMPLE, the placeholder will either be empty or completely full
        * in one of the two cases. Hence, fewer comparisons with unions of zones
        * are needed. */
@@ -1841,6 +1844,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
       retVal = !(retPlaceDBM->emptiness());
       break;}
     case FORALL:{
+      bool retVal = false;
       /* Here the model checker looks at the zone of
        * all time sucessors and then substitutes in
        * the substitued constraints and sees if the
@@ -1910,7 +1914,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
       }
       break;}
     case FORALL_REL: {
-
+      bool retVal = false;
       /* Proof methodology:
        * first, see if \phi_1 is satisfied during the time advance.
        * If it is, check that phi_2 is true both at and before those
@@ -2228,7 +2232,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
       break;
     }
     case EXISTS:{
-
+      bool retVal = false;
       /* First try to get a new placeholder value that works */
       lhs->cf();
       place->cf();
@@ -2284,6 +2288,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
       break;
     }
     case EXISTS_REL: {
+      bool retVal = false;
       /* First Try to get a placeholder value that works */
       lhs->cf();
       place->cf();
@@ -2475,7 +2480,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
     }
     case ALLACT: {
 
-      retVal = true;
+      bool retVal = true;
       *retPlaceDBM = (*place);
       /* Enumerate through all transitions */
 #if DEBUG
@@ -2726,7 +2731,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
       break;
     }
     case EXISTACT: {
-      retVal = false;
+      bool retVal = false;
       retPlaceDBM->makeEmpty();
       /* Enumerate through all transitions */
 #if DEBUG
@@ -2867,6 +2872,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
       break;
     }
     case IMPLY:{
+      bool retVal = false;
       DBM tempLHS(*lhs);
       /* call comp_ph() for efficient proving of IMPLY's left. */
       if(comp_ph(&tempLHS, *(rhs->getLeft()), *sub)){
@@ -2893,6 +2899,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
       }
       break;}
     case CONSTRAINT:{
+      bool retVal = false;
       lhs->cf();
       // The line: (rhs->dbm())->cf(); is not needed.
       retVal = (*lhs <= *(rhs->dbm()));
@@ -2946,7 +2953,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
 
       break;}
     case BOOL:{
-      retVal = (rhs->getBool());
+      bool retVal = (rhs->getBool());
       if(retVal) {
         *retPlaceDBM = (*place);
       }
@@ -2963,7 +2970,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
 #endif
       break;}
     case ATOMIC:{
-      retVal = (sub->at(rhs->getAtomic()) == rhs->getIntVal());
+      bool retVal = (sub->at(rhs->getAtomic()) == rhs->getIntVal());
       if(retVal) {
         *retPlaceDBM = (*place);
       }
@@ -2980,7 +2987,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
 #endif
       break;}
     case ATOMIC_NOT:{
-      retVal = (sub->at(rhs->getAtomic()) != rhs->getIntVal());
+      bool retVal = (sub->at(rhs->getAtomic()) != rhs->getIntVal());
       if(retVal) {
         *retPlaceDBM = (*place);
       }
@@ -2997,7 +3004,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
 #endif
       break;}
     case ATOMIC_LT:{
-      retVal = (sub->at(rhs->getAtomic()) < rhs->getIntVal());
+      bool retVal = (sub->at(rhs->getAtomic()) < rhs->getIntVal());
       if(retVal) {
         *retPlaceDBM = (*place);
       }
@@ -3014,7 +3021,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
 #endif
       break;}
     case ATOMIC_GT:{
-      retVal = (sub->at(rhs->getAtomic()) > rhs->getIntVal());
+      bool retVal = (sub->at(rhs->getAtomic()) > rhs->getIntVal());
       if(retVal) {
         *retPlaceDBM = (*place);
       }
@@ -3031,7 +3038,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
 #endif
       break;}
     case ATOMIC_LE:{
-      retVal = (sub->at(rhs->getAtomic()) <= rhs->getIntVal());
+      bool retVal = (sub->at(rhs->getAtomic()) <= rhs->getIntVal());
       if(retVal) {
         *retPlaceDBM = (*place);
       }
@@ -3048,7 +3055,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
 #endif
       break;}
     case ATOMIC_GE:{
-      retVal = (sub->at(rhs->getAtomic()) >= rhs->getIntVal());
+      bool retVal = (sub->at(rhs->getAtomic()) >= rhs->getIntVal());
       if(retVal) {
         *retPlaceDBM = (*place);
       }
@@ -3069,6 +3076,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
       retPlaceDBM = do_proof_place(step, lhs, place, rhs->getExpr(), &st);
       break;}
     case RESET:{
+      bool retVal = false;
       // Bound the LHS to prevent infinite proofs
       lhs->cf();
       lhs->bound(MAXC);
@@ -3117,6 +3125,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
       }
       break;}
     case ASSIGN:{
+      bool retVal = false;
       // use lhs->cf() for more efficiency
       lhs->cf();
       DBM ph(*lhs);
@@ -3167,6 +3176,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
       retPlaceDBM = do_proof_place(step, lhs, place, rhs->getExpr(), sub);
       break; }
     case ABLEWAITINF:{
+      bool retVal = false;
       lhs->cf();
       DBMList ph(*lhs);
       ph & *place;
@@ -3197,6 +3207,7 @@ DBMList * prover::do_proof_place(int step, DBM * const lhs, DBMList * const plac
 #endif
       break;}
     case UNABLEWAITINF:{
+      bool retVal = false;
       lhs->cf();
       DBMList ph(*lhs);
       ph & *place;
