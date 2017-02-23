@@ -265,6 +265,26 @@ TEST(DBMTest, PreCanonicalDBM1)
     EXPECT_EQ(testDBM1precf(), pre_cf);
 }
 
+TEST(DBMTest, PreCanonicalStrictDBM1)
+{
+  DBM strict_pred(testDBM1precf());
+  strict_pred.predClosureRev();
+
+  // DBM in canonical form (expected result)
+  DBM expected(3, make_c3());
+  expected.addConstraint(0,0, (0x1));
+  expected.addConstraint(0,1, (0x1));
+  expected.addConstraint(0,2, (0x1));
+  expected.addConstraint(1,0, (3 << 1));
+  expected.addConstraint(1,1, (0x1));
+  expected.addConstraint(1,2, (3 << 1));
+  expected.addConstraint(2,0, (7 << 1));
+  expected.addConstraint(2,1, (7 << 1));
+  expected.addConstraint(2,2, (0x1));
+
+  EXPECT_EQ(expected, strict_pred);
+}
+
 TEST(DBMTest, AddDBM1)
 {
     DBM add(testDBM1());

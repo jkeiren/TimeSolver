@@ -244,6 +244,32 @@ public:
   }
 
 protected:
+  bool do_proof_predicate(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
+  bool do_proof_and(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
+  bool do_proof_or(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
+  bool do_proof_or_simple(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
+  bool do_proof_forall(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
+  bool do_proof_forall_rel(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
+  bool do_proof_exists(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
+  bool do_proof_exists_rel(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
+  bool do_proof_allact(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
+  bool do_proof_existact(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
+  bool do_proof_imply(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
+  bool do_proof_constraint(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
+  bool do_proof_bool(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
+  bool do_proof_atomic(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
+  bool do_proof_atomic_not(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
+  bool do_proof_atomic_lt(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
+  bool do_proof_atomic_gt(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
+  bool do_proof_atomic_le(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
+  bool do_proof_atomic_ge(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
+  bool do_proof_sublist(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
+  bool do_proof_reset(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
+  bool do_proof_assign(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
+  bool do_proof_replace(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
+  bool do_proof_ablewaitinf(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
+  bool do_proof_unablewaitinf(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
+
   /** Using that a Sequent object is a set of sequents with matching rhs and
    *  discrete states with different clock states, determines if the specified
    * DBM is contained within one of the sequents. This is used for greatest
