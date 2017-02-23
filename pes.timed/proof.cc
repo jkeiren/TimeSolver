@@ -1425,7 +1425,6 @@ bool prover::do_proof(int step, DBM * const lhs, const ExprNode * const rhs, Sub
 DBMList* prover::do_proof_place_predicate(int step, DBM* const lhs, DBMList* const place,
                                           const ExprNode* const rhs, SubstList* const sub)
 {
-  bool retVal = false;
   ExprNode *e = input_pes.lookup_equation(rhs->getPredicate());
   if (e == NULL){
     cerr << "open predicate variable found: "<< rhs->getPredicate()<<endl;
@@ -1451,7 +1450,6 @@ DBMList* prover::do_proof_place_predicate(int step, DBM* const lhs, DBMList* con
     SequentPlace *hf = Xlist_false_ph.look_for_sequent(tf->sub(), pInd);
     if(hf != NULL && tabled_false_sequentPlace(hf, lhs, place)) {
       // Found known false
-      retVal = false;
       retPlaceDBM->makeEmpty();
 #if DEBUG
       if (debug) {
@@ -1492,7 +1490,6 @@ DBMList* prover::do_proof_place_predicate(int step, DBM* const lhs, DBMList* con
         // to be valid
         return retPlaceDBM;
       }
-      retVal = true;
       *retPlaceDBM = (tempPlace);
       // Note: we intersect the current found placeholder
       // with the placeholder stored in the sequent.
@@ -1531,7 +1528,6 @@ DBMList* prover::do_proof_place_predicate(int step, DBM* const lhs, DBMList* con
     h = Xlist_pGFP_ph.locate_sequent(t, pInd);
     if((!newSequent) && tabled_sequent_gfpPlace(h, lhs, place)) {
       // Found gfp Circularity - thus valid
-      retVal = true;
       *retPlaceDBM = (*place);
 #if DEBUG
       if (debug) {
@@ -1564,7 +1560,6 @@ DBMList* prover::do_proof_place_predicate(int step, DBM* const lhs, DBMList* con
     h = Xlist_pLFP_ph.locate_sequent(t, pInd);
     if((!newSequent) && tabled_sequent_lfpPlace(h, lhs, place)) {
       // Found lfp circularity - thus invalid
-      retVal = false;
       retPlaceDBM->makeEmpty();
 
 #if DEBUG
@@ -1714,7 +1709,6 @@ DBMList* prover::do_proof_place_and(int step, DBM* const lhs, DBMList* const pla
 DBMList* prover::do_proof_place_or(int step, DBM* const lhs, DBMList* const place,
                                           const ExprNode* const rhs, SubstList* const sub)
 {
-  bool retVal = false;
   place->cf();
   DBMList placeB(*place);
   // delete retPlaceDBM;
@@ -1725,7 +1719,6 @@ DBMList* prover::do_proof_place_or(int step, DBM* const lhs, DBMList* const plac
   if((!emptyLeft) && (*retPlaceDBM >= placeB)) {
     /* Here, the current transition successful;
      * we are done */
-    retVal = true;
     return retPlaceDBM;
   }
 
@@ -1737,7 +1730,7 @@ DBMList* prover::do_proof_place_or(int step, DBM* const lhs, DBMList* const plac
 #if DEBUG
   if(debug) {
     // Check Debugging Here to make sure it is giving the right output
-    print_sequentCheck(cout, step - 1, retVal, lhs, place, sub, rhs->getOpType());
+    print_sequentCheck(cout, step - 1, false, lhs, place, sub, rhs->getOpType());
     cout << "Left Placeholder of OR (P): ";
     leftPlace.print_constraint(cout);
     cout << "\nRight Placeholder of OR (P): ";
@@ -1760,13 +1753,11 @@ DBMList* prover::do_proof_place_or(int step, DBM* const lhs, DBMList* const plac
   }
   else if (*retPlaceDBM <= leftPlace) {
     *retPlaceDBM = leftPlace;
-    retVal = retPlaceDBM->emptiness();
   }
   else { /* Corner Case: make DBM Union*/
     retPlaceDBM->addDBMList(leftPlace);
     retPlaceDBM->cf();
   }
-  retVal = !(retPlaceDBM->emptiness());
 
 #if DEBUG
   if(debug) {
@@ -1781,7 +1772,6 @@ DBMList* prover::do_proof_place_or(int step, DBM* const lhs, DBMList* const plac
 DBMList* prover::do_proof_place_or_simple(int step, DBM* const lhs, DBMList* const place,
                                           const ExprNode* const rhs, SubstList* const sub)
 {
-  bool retVal = false;
   /* In OR_SIMPLE, the placeholder will either be empty or completely full
    * in one of the two cases. Hence, fewer comparisons with unions of zones
    * are needed. */
@@ -1795,7 +1785,6 @@ DBMList* prover::do_proof_place_or_simple(int step, DBM* const lhs, DBMList* con
   if(!emptyLeft && (*retPlaceDBM >= *place)) {
     /* Here, the current transition successful;
      * we are done */
-    retVal = true;
     return retPlaceDBM;
   }
 
@@ -1820,14 +1809,12 @@ DBMList* prover::do_proof_place_or_simple(int step, DBM* const lhs, DBMList* con
    * disjunct. Therefore, the right must be the simple disjunct
    * and must be the entire placeholder. */
 
-  retVal = !(retPlaceDBM->emptiness());
   return retPlaceDBM;
 }
 
 DBMList* prover::do_proof_place_forall(int step, DBM* const lhs, DBMList* const place,
                                           const ExprNode* const rhs, SubstList* const sub)
 {
-  bool retVal = false;
   /* Here the model checker looks at the zone of
    * all time sucessors and then substitutes in
    * the substitued constraints and sees if the
@@ -1862,14 +1849,10 @@ DBMList* prover::do_proof_place_forall(int step, DBM* const lhs, DBMList* const 
     DBMList currPlace(*retPlaceDBM);
     retPlaceDBM = succCheckRule(lhs, &currPlace);
 
-    if(!(retPlaceDBM->emptiness())){
-      retVal = true;
-    }
-    else {/* proof is false */
-      retVal = false;
-    }
 #if DEBUG
     if (debug) {
+      // Result only used for printing the correct value below.
+      bool result = !retPlaceDBM->emptiness();
       // This work is done in the succCheck method.
       // Perhaps I should move the debug rule there?
       DBM succLHS(*lhs);
@@ -1880,8 +1863,8 @@ DBMList* prover::do_proof_place_forall(int step, DBM* const lhs, DBMList* const 
       succRuleConseq.cf();
       succRuleConseq.suc();
       succRuleConseq.cf();
-      print_sequentCheck(cout, step - 1, retVal, &succLHS, &succRuleConseq, sub, rhs->getOpType());
-      if(retVal) {
+      print_sequentCheck(cout, step - 1, result, &succLHS, &succRuleConseq, sub, rhs->getOpType());
+      if(result) {
         cout <<"----(Valid) Placeholder Check Passed-----" << endl
         <<"--With Placeholder := {";
         retPlaceDBM->print_constraint(cout);
@@ -2222,7 +2205,6 @@ DBMList* prover::do_proof_place_forall_rel(int step, DBM* const lhs, DBMList* co
 DBMList* prover::do_proof_place_exists(int step, DBM* const lhs, DBMList* const place,
                                           const ExprNode* const rhs, SubstList* const sub)
 {
-  bool retVal = false;
   /* First try to get a new placeholder value that works */
   lhs->cf();
   place->cf();
@@ -2238,11 +2220,10 @@ DBMList* prover::do_proof_place_exists(int step, DBM* const lhs, DBMList* const 
   retPlaceDBM->cf();
   if(retPlaceDBM->emptiness()){
     if (debug) {
-      print_sequentCheck(cout, step - 1, retVal, &ph, retPlaceDBM, sub, rhs->getOpType());
+      print_sequentCheck(cout, step - 1, false, &ph, retPlaceDBM, sub, rhs->getOpType());
 
       cout <<"----(Invalid) Empty First Placeholder: No Need for additional Placeholder Checks-----" << endl << endl;
     }
-    retVal = false;
     return retPlaceDBM;
   }
   /* Now check that it works (the new placeholder can be
@@ -2253,16 +2234,12 @@ DBMList* prover::do_proof_place_exists(int step, DBM* const lhs, DBMList* const 
   (*place) & (*retPlaceDBM);
   place->cf();
   *retPlaceDBM = (*place);
-  if(place->emptiness()) {
-    retVal = false;
-  }
-  else {
-    retVal = true;
-  }
+
 #if DEBUG
   if (debug) {
-    print_sequent_placeCheck(cout, step - 1, retVal, lhs, place, retPlaceDBM, sub, rhs->getOpType());
-    if(retVal) {
+    bool result = !place->emptiness();
+    print_sequent_placeCheck(cout, step - 1, result, lhs, place, retPlaceDBM, sub, rhs->getOpType());
+    if(result) {
       cout <<"----(Valid) Placeholder Check Passed-----" << endl
       <<"--With Placeholder := {";
       retPlaceDBM->print_constraint(cout);
@@ -2474,7 +2451,6 @@ DBMList* prover::do_proof_place_exists_rel(int step, DBM* const lhs, DBMList* co
 DBMList* prover::do_proof_place_allact(int step, DBM* const lhs, DBMList* const place,
                                           const ExprNode* const rhs, SubstList* const sub)
 {
-  bool retVal = true;
   *retPlaceDBM = (*place);
   /* Enumerate through all transitions */
 #if DEBUG
@@ -2699,13 +2675,7 @@ DBMList* prover::do_proof_place_allact(int step, DBM* const lhs, DBMList* const 
     }
 
   }
-  if(retPlaceDBM->emptiness()) {
-    retVal = false;
 
-  }
-  else {
-    retVal = true;
-  }
   // Now go through the vector and delete everything in the vector
   // (Don't delete the transitions since we passed references,
   // but do delete the DBMLists since we passed copies)
@@ -2871,7 +2841,6 @@ DBMList* prover::do_proof_place_existact(int step, DBM* const lhs, DBMList* cons
 DBMList* prover::do_proof_place_imply(int step, DBM* const lhs, DBMList* const place,
                                           const ExprNode* const rhs, SubstList* const sub)
 {
-  bool retVal = false;
   DBM tempLHS(*lhs);
   /* call comp_ph() for efficient proving of IMPLY's left. */
   if(comp_ph(&tempLHS, *(rhs->getLeft()), *sub)){
@@ -2888,7 +2857,6 @@ DBMList* prover::do_proof_place_imply(int step, DBM* const lhs, DBMList* const p
   else  {
     /* The set of states does not satisfy the premises of the IF
      * so thus the proof is true */
-    retVal = true;
     *retPlaceDBM = (*place);
 #if DEBUG
     if (debug) {
@@ -2906,7 +2874,7 @@ DBMList* prover::do_proof_place_constraint(int step, DBM* const lhs, DBMList* co
   lhs->cf();
   // The line: (rhs->dbm())->cf(); is not needed.
   retVal = (*lhs <= *(rhs->dbm()));
-  if(retVal == true) {
+  if(retVal) {
     *retPlaceDBM = (*place);
 
 #if DEBUG
