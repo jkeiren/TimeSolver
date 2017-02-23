@@ -272,6 +272,57 @@ protected:
   bool do_proof_ablewaitinf(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
   bool do_proof_unablewaitinf(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
 
+  DBMList* do_proof_place_predicate(int step, DBM* const lhs, DBMList* const place,
+                                            const ExprNode* const rhs, SubstList* const sub);
+  DBMList* do_proof_place_and(int step, DBM* const lhs, DBMList* const place,
+                                            const ExprNode* const rhs, SubstList* const sub);
+  DBMList* do_proof_place_or(int step, DBM* const lhs, DBMList* const place,
+                                            const ExprNode* const rhs, SubstList* const sub);
+  DBMList* do_proof_place_or_simple(int step, DBM* const lhs, DBMList* const place,
+                                            const ExprNode* const rhs, SubstList* const sub);
+  DBMList* do_proof_place_forall(int step, DBM* const lhs, DBMList* const place,
+                                            const ExprNode* const rhs, SubstList* const sub);
+  DBMList* do_proof_place_forall_rel(int step, DBM* const lhs, DBMList* const place,
+                                            const ExprNode* const rhs, SubstList* const sub);
+  DBMList* do_proof_place_exists(int step, DBM* const lhs, DBMList* const place,
+                                            const ExprNode* const rhs, SubstList* const sub);
+  DBMList* do_proof_place_exists_rel(int step, DBM* const lhs, DBMList* const place,
+                                            const ExprNode* const rhs, SubstList* const sub);
+  DBMList* do_proof_place_allact(int step, DBM* const lhs, DBMList* const place,
+                                            const ExprNode* const rhs, SubstList* const sub);
+  DBMList* do_proof_place_existact(int step, DBM* const lhs, DBMList* const place,
+                                            const ExprNode* const rhs, SubstList* const sub);
+  DBMList* do_proof_place_imply(int step, DBM* const lhs, DBMList* const place,
+                                            const ExprNode* const rhs, SubstList* const sub);
+  DBMList* do_proof_place_constraint(int step, DBM* const lhs, DBMList* const place,
+                                            const ExprNode* const rhs, SubstList* const sub);
+  DBMList* do_proof_place_bool(int step, DBM* const lhs, DBMList* const place,
+                                            const ExprNode* const rhs, SubstList* const sub);
+  DBMList* do_proof_place_atomic(int step, DBM* const lhs, DBMList* const place,
+                                            const ExprNode* const rhs, SubstList* const sub);
+  DBMList* do_proof_place_atomic_not(int step, DBM* const lhs, DBMList* const place,
+                                            const ExprNode* const rhs, SubstList* const sub);
+  DBMList* do_proof_place_atomic_lt(int step, DBM* const lhs, DBMList* const place,
+                                            const ExprNode* const rhs, SubstList* const sub);
+  DBMList* do_proof_place_atomic_gt(int step, DBM* const lhs, DBMList* const place,
+                                            const ExprNode* const rhs, SubstList* const sub);
+  DBMList* do_proof_place_atomic_le(int step, DBM* const lhs, DBMList* const place,
+                                            const ExprNode* const rhs, SubstList* const sub);
+  DBMList* do_proof_place_atomic_ge(int step, DBM* const lhs, DBMList* const place,
+                                            const ExprNode* const rhs, SubstList* const sub);
+  DBMList* do_proof_place_sublist(int step, DBM* const lhs, DBMList* const place,
+                                            const ExprNode* const rhs, SubstList* const sub);
+  DBMList* do_proof_place_reset(int step, DBM* const lhs, DBMList* const place,
+                                            const ExprNode* const rhs, SubstList* const sub);
+  DBMList* do_proof_place_assign(int step, DBM* const lhs, DBMList* const place,
+                                            const ExprNode* const rhs, SubstList* const sub);
+  DBMList* do_proof_place_replace(int step, DBM* const lhs, DBMList* const place,
+                                            const ExprNode* const rhs, SubstList* const sub);
+  DBMList* do_proof_place_ablewaitinf(int step, DBM* const lhs, DBMList* const place,
+                                            const ExprNode* const rhs, SubstList* const sub);
+  DBMList* do_proof_place_unablewaitinf(int step, DBM* const lhs, DBMList* const place,
+                                            const ExprNode* const rhs, SubstList* const sub);
+
   /** Using that a Sequent object is a set of sequents with matching rhs and
    *  discrete states with different clock states, determines if the specified
    * DBM is contained within one of the sequents. This is used for greatest
