@@ -64,8 +64,7 @@ export LDFLAGS
 
 FLEX = flex
 BISON = bison
-INCL_PATH = -I.
-TEST_DIR = test
+INCL_PATH = -I. -Iexternal/cpplogging/include
 
 .PHONY: default
 default: all
@@ -75,8 +74,8 @@ all: timesolver-ta check
 doc: timesolver-ta *.hh *.cc
 	doxygen pes-timed_Doxyfile
 
-timesolver-ta:	pes.tab.o pes.lex.o ExprNode.o proof.o timesolver-ta.o
-	$(CXX) $(CXXFLAGS) pes.lex.o pes.tab.o ExprNode.o proof.o timesolver-ta.o $(LDFLAGS) -o timesolver-ta
+timesolver-ta:	pes.tab.o pes.lex.o ExprNode.o proof.o timesolver-ta.o logger.o
+	$(CXX) $(CXXFLAGS) pes.lex.o pes.tab.o ExprNode.o proof.o timesolver-ta.o external/cpplogging/logger.o $(LDFLAGS) -o timesolver-ta
 
 timesolver-ta.o: timesolver-ta.cc DBM.hh ExprNode.hh DBMList.hh proof_data.hh proof.hh pes.hh
 	$(CXX) $(CXXFLAGS) -c timesolver-ta.cc $(INCL_PATH)
@@ -98,9 +97,12 @@ pes.tab.o: pes.tab.cc pes.tab.hh DBM.hh
 
 pes.tab.cc pes.tab.hh: pes.y pes.hh ExprNode.hh transition.hh OneDIntArray.hh bidirectional_map.hh
 	$(BISON) -t -d -v -o pes.tab.cc pes.y
+	
+logger.o:
+	$(MAKE) -C external/cpplogging
 
 check:
-	$(MAKE) -C $(TEST_DIR) check
+	$(MAKE) -C test check
 
 checktool: timesolver-ta
 	../TATest.py
@@ -122,4 +124,5 @@ clean:
 	-echo "Removing other tool-generated files!"
 	-rm -rf timesolver-ta.dSYM
 	-rm -f gmon.out
-	$(MAKE) -C $(TEST_DIR) clean
+	$(MAKE) -C test clean
+	$(MAKE) -C external/cpplogging clean
