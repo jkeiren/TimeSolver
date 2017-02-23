@@ -2870,11 +2870,9 @@ DBMList* prover::do_proof_place_imply(int step, DBM* const lhs, DBMList* const p
 DBMList* prover::do_proof_place_constraint(int step, DBM* const lhs, DBMList* const place,
                                           const ExprNode* const rhs, SubstList* const sub)
 {
-  bool retVal = false;
   lhs->cf();
   // The line: (rhs->dbm())->cf(); is not needed.
-  retVal = (*lhs <= *(rhs->dbm()));
-  if(retVal) {
+  if(*lhs <= *(rhs->dbm())) {
     *retPlaceDBM = (*place);
 
 #if DEBUG
@@ -2897,20 +2895,19 @@ DBMList* prover::do_proof_place_constraint(int step, DBM* const lhs, DBMList* co
     tPlace & *lhs;
 
     tPlace.cf();
-    retVal = !(tPlace.emptiness());
-    if(!retVal)
+    if(tPlace.emptiness())
     {
       // New Combined DBM Does not satisfy Constraint
       retPlaceDBM->makeEmpty();
     }
 #if DEBUG
-    if (debug && retVal) {
+    if (debug && !tPlace.emptiness()) {
       cout << "---(Valid, Placeholder) Leaf DBM (CONSTRAINT) Reached and Placeholder Computed----" << endl <<
       "----Placeholder := {";
       retPlaceDBM->print_constraint(cout);
       cout << "}----" << endl << endl;
     }
-    if (debug && !retVal) {
+    if (debug && tPlace.emptiness()) {
       cout << "---(Invalid, Placeholder) Leaf DBM (CONSTRAINT) Unsatisfied regardless of placeholder----" << endl << endl;
     }
 #endif
