@@ -2878,14 +2878,8 @@ DBMList* prover::do_proof_place_constraint(int step, DBM* const lhs, DBMList* co
     *retPlaceDBM = (*place);
 
 #if DEBUG
-    if (debug && retVal) {
+    if (debug) {
       cout << "---(Valid) Leaf DBM (CONSTRAINT) Reached with no need for Placeholder----" << endl << endl;
-    }
-    if (debug && !retVal) {
-      cout << "---(Valid, Placeholder) Leaf DBM (CONSTRAINT) Reached and Placeholder Computed----" << endl <<
-      "----Placeholder := {";
-      retPlaceDBM->print_constraint(cout);
-      cout << "}----" << endl << endl;
     }
 #endif
   }
