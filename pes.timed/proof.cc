@@ -2918,21 +2918,26 @@ DBMList* prover::do_proof_place_constraint(int step, DBM* const lhs, DBMList* co
 DBMList* prover::do_proof_place_bool(int step, DBM* const lhs, DBMList* const place,
                                           const ExprNode* const rhs, SubstList* const sub)
 {
-  bool retVal = (rhs->getBool());
-  if(retVal) {
+  if(rhs->getBool()) {
     *retPlaceDBM = (*place);
+
+#if DEBUG
+    if(debug)
+    {
+      cout << "---(Valid) Leaf BOOL Reached----" << endl << endl;
+    }
+#endif
   }
   else{
     retPlaceDBM->makeEmpty();
-  }
 #if DEBUG
-  if (debug && retVal) {
-    cout << "---(Valid) Leaf BOOL Reached----" << endl << endl;
-  }
-  if (debug && !retVal) {
-    cout << "---(Invalid) Leaf BOOL Reached----" << endl << endl;
-  }
+    if(debug)
+    {
+      cout << "---(Invalid) Leaf BOOL Reached----" << endl << endl;
+    }
 #endif
+  }
+
   return retPlaceDBM;
 }
 
