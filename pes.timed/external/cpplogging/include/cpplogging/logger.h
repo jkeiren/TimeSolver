@@ -316,6 +316,20 @@ public:
   }
 };
 
+/// \brief Mixin that takes care of formatting of a message without any addition
+/// information. Similar to just printing to cerr.
+///
+/// In this case, the plain_formatter
+class plain_formatter: public formatter_interface
+{
+public:
+  /// \brief Simply return the msg.
+  static std::string format(const log_level_t, const std::string&, const time_t, const std::string& msg)
+  {
+    return msg;
+  }
+};
+
 /// \brief Mixin that takes care of formatting of a message.
 ///
 /// In this case, the formatter
@@ -372,6 +386,7 @@ public:
 /// \brief File output class.
 ///
 /// Provides facilities to output to a file. By default output is sent to stderr.
+template<typename Formatter>
 class file_output: public output_policy
 {
   protected:
@@ -434,7 +449,7 @@ class file_output: public output_policy
         return;
       }
 
-      fprintf(p_stream, "%s", formatter::format(level, hint, timestamp, msg).c_str());
+      fprintf(p_stream, "%s", Formatter::format(level, hint, timestamp, msg).c_str());
       fflush(p_stream);
     }
 };
@@ -511,8 +526,16 @@ public:
 inline
 output_policy& default_output_policy()
 {
-  static file_output m_default = file_output();
+  static file_output<formatter> m_default = file_output<formatter>();
   return m_default;
+}
+
+/// \brief The default output policy used by the logger
+inline
+output_policy& plain_output_policy()
+{
+  static file_output<plain_formatter> m_plain = file_output<plain_formatter>();
+  return m_plain;
 }
 
 /// \brief Initialise the output policies. This returns the singleton set
@@ -550,6 +573,9 @@ else cpplogging::logger().get(level, ##__VA_ARGS__)
 
 #define cpplogEnabled(level, ...) \
 (((level) <= CPPLOG_MAX_LOG_LEVEL) && ((level) <= (cpplogging::logger::get_reporting_level(__VA_ARGS__))))
+
+#define cpplogGet(level, ...) \
+cpplogging::logger().get(level, ##__VA_ARGS__)
 
   } // namespace cpplogging
 #endif /* LOGGING_LOGGER_H */
