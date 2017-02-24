@@ -580,9 +580,9 @@ clocks_Decl:
 TOK_CLOCKS TOK_COLON TOK_LBRACE clocks_list TOK_RBRACE
 {
   if(debug){
-    cout << "clocks declared: ";
-    input_pes.print_clocks(std::cout);
-    cout << endl;
+    std::cerr << "clocks declared: ";
+    input_pes.print_clocks(std::cerr);
+    std::cerr << endl;
   }
 };
 
@@ -602,9 +602,9 @@ atomic_Decl:
 TOK_ATOMIC TOK_COLON TOK_LBRACE atomic_list TOK_RBRACE
 {
   if(debug) {
-    cout << "control variable declared: ";
-    input_pes.print_atomic(cout);
-    cout << endl;
+    std::cerr << "control variable declared: ";
+    input_pes.print_atomic(std::cerr);
+    std::cerr << endl;
   }
 };
 
@@ -647,7 +647,7 @@ TOK_INITIALLY TOK_COLON initial_list
 {
   InitC = $3;
   if(debug) {
-    cout << "initial condition defined" <<endl;
+    std::cerr << "initial condition defined" <<endl;
   }
 };
 
@@ -676,9 +676,9 @@ predicate_Decl:
 TOK_PREDICATE TOK_COLON TOK_LBRACE predicate_list TOK_RBRACE
 {
   if(debug) {
-    cout << "predicate declared: ";
-    input_pes.print_predicates(std::cout);
-    cout << endl;
+    std::cerr << "predicate declared: ";
+    input_pes.print_predicates(std::cerr);
+    std::cerr << endl;
   }
 };
 

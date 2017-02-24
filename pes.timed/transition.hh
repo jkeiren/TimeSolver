@@ -203,5 +203,18 @@ inline void print_Transition(const Transition* const t, std::ostream& os)
   }
 }
 
+inline
+std::ostream& operator <<(std::ostream& os, const Transition* const t)
+{
+  print_Transition(t, os);
+  return os;
+}
+
+inline
+std::ostream& operator <<(std::ostream& os, const Transition& t)
+{
+  print_Transition(&t, os);
+  return os;
+}
 
 #endif // TRANSITION_HH

@@ -7,6 +7,7 @@
 #ifndef PROOF_HH
 #define PROOF_HH
 
+#include "cpplogging/logger.h"
 #include "pes.hh"
 #include "DBM.hh"
 #include "ExprNode.hh"
@@ -16,6 +17,7 @@
 class prover
 {
 protected:
+  bool debug;
   const pes& input_pes;
 
   bool currParityGfp;
@@ -24,11 +26,6 @@ protected:
 
   /* The size of the Hash table of Sequents: nBits + 1 */
   int  nHash;
-
-  /** True if debug mode is on, and
-   * False if debug mode is off. Running the
-   * program with -d sets it to true. */
-  bool debug;
 
   long int numLocations;
 
@@ -117,12 +114,12 @@ public:
          bool a_currParityGfp, bool a_prevParityGfp, bool a_useCaching,
          int a_nHash, bool debug, int MAXC,
          int nbits) :
+  debug(debug),
   input_pes(a_input_pes),
   currParityGfp(a_currParityGfp),
   prevParityGfp(a_prevParityGfp),
   useCaching(a_useCaching),
   nHash(a_nHash),
-  debug(debug),
   numLocations(1),
   MAXC(MAXC),
   nbits(nbits),
@@ -136,6 +133,13 @@ public:
   Xlist_false_ph(input_pes.atomic().size(), nbits, input_pes.predicates().size()*nHash, nHash, input_pes.predicates().size(), newSequent)
 
   {
+    if(debug)
+    {
+      cpplogging::logger::set_reporting_level(cpplogging::debug);
+      cpplogging::logger::register_output_policy(cpplogging::plain_output_policy());
+      cpplogging::logger::unregister_output_policy(cpplogging::default_output_policy());
+    }
+
     /* Initialize DBMs. The initial constructor
      * indicates that the DBM is not in canonical form.
      * We also make it so reference DBMs are in

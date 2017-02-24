@@ -58,19 +58,20 @@ def runTestCase(dirName, fileName, overwrite, debug):
         if overwrite:
             result = None
             if os.path.exists(resultPath):
-                result = compare(resultPath, ret.stdout)
+                result = compare(resultPath, ret.stderr)
                 
             if result:
                 print('[{0}] {1}/{2}'.format('\033[32mKEEP\033[39m', dirName, resultFile))
             else:
                 with gzip.open(os.path.join(dirName,resultFile), 'wt') as f:
-                    f.write(ret.stdout)
+                    f.write(ret.stderr)
                     print('[{0}] {1}/{2}'.format('\033[33mGENERATE\033[39m', dirName, resultFile))
         else:
-            result = compare(os.path.join(dirName,resultFile), ret.stdout)
+            result = compare(os.path.join(dirName,resultFile), ret.stderr)
             print('[{0}] {1}/{2}'.format('\033[32mOK\033[39m' if result else '\033[31mFAILED\033[39m', dirName, fileName))
     except subprocess.CalledProcessError as e:
         print('[{0}] {1}/{2}'.format('\033[31mFAILED\033[39m', dirName, fileName))
+        print('Standard out: {0}'.format(e.stdout))
         print('Standard error: {0}'.format(e.stderr))
         result = False
         

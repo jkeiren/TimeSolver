@@ -1218,7 +1218,7 @@ public:
 
 };
 
-/** Stream operator for DBMLists */
+/** Stream operator for DBMs */
 inline
 std::ostream& operator<<(std::ostream& os, const DBM& d)
 {
