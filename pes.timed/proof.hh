@@ -194,7 +194,94 @@ public:
    * atomic "state" of the Sequent.
    * @return True if the expression evaluates to True given the other parameters
    * and False otherwise (if the expression evaluates to False).*/
-  bool do_proof(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
+  bool do_proof(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub)
+  {
+    bool retVal = false;
+    if (cpplogEnabled(cpplogging::debug)){
+      lhs->cf();
+      print_sequent(std::cerr, step, retVal, lhs, rhs, sub, rhs->getOpType());
+    }
+    step++;
+
+    switch(rhs->getOpType()){
+      case PREDICATE:{
+        return do_proof_predicate(step, lhs, rhs, sub);
+      }
+      case AND:
+      {
+        return do_proof_and(step, lhs, rhs, sub);
+      }
+      case OR:{
+        return do_proof_or(step, lhs, rhs, sub);
+      }
+      case OR_SIMPLE:{
+        return do_proof_or_simple(step, lhs, rhs, sub);
+      }
+      case FORALL:{
+        return do_proof_forall(step, lhs, rhs, sub);
+      }
+      case FORALL_REL: {
+        return do_proof_forall_rel(step, lhs, rhs, sub);
+      }
+      case EXISTS:{
+        return do_proof_exists(step, lhs, rhs, sub);
+      }
+      case EXISTS_REL: {
+        return do_proof_exists_rel(step, lhs, rhs, sub);
+      }
+      case ALLACT: {
+        return do_proof_allact(step, lhs, rhs, sub);
+      }
+      case EXISTACT: {
+        return do_proof_existact(step, lhs, rhs, sub);
+      }
+      case IMPLY:{
+        return do_proof_imply(step, lhs, rhs, sub);
+      }
+      case CONSTRAINT:{
+        return do_proof_constraint(step, lhs, rhs, sub);
+      }
+      case BOOL:{
+        return do_proof_bool(step, lhs, rhs, sub);
+      }
+      case ATOMIC:{
+        return do_proof_atomic(step, lhs, rhs, sub);
+      }
+      case ATOMIC_NOT:{
+        return do_proof_atomic_not(step, lhs, rhs, sub);
+      }
+      case ATOMIC_LT:{
+        return do_proof_atomic_lt(step, lhs, rhs, sub);
+      }
+      case ATOMIC_GT:{
+        return do_proof_atomic_gt(step, lhs, rhs, sub);
+      }
+      case ATOMIC_LE:{
+        return do_proof_atomic_le(step, lhs, rhs, sub);
+      }
+      case ATOMIC_GE:{
+        return do_proof_atomic_ge(step, lhs, rhs, sub);
+      }
+      case SUBLIST:{
+        return do_proof_sublist(step, lhs, rhs, sub);
+      }
+      case RESET:{
+        return do_proof_reset(step, lhs, rhs, sub);
+      }
+      case ASSIGN:{
+        return do_proof_assign(step, lhs, rhs, sub);
+      }
+      case REPLACE:{
+        return do_proof_replace(step, lhs, rhs, sub);
+      }
+      case ABLEWAITINF:{
+        return do_proof_ablewaitinf(step, lhs, rhs, sub);
+      }
+      case UNABLEWAITINF:{
+        return do_proof_unablewaitinf(step, lhs, rhs, sub);
+      }
+    }
+  }
 
   /** The prover function that handles placeholders.
    * @param step The "tree level" of the sequent in the proof tree.
@@ -214,7 +301,97 @@ public:
    * The sequent is valid for the clock valuations in the intersection of lhs
    * and the return value. */
   DBMList * do_proof_place(int step, DBM * const lhs, DBMList * const place,
-                                   const ExprNode * const rhs, SubstList * const sub);
+                                   const ExprNode * const rhs, SubstList * const sub)
+  {
+    /* do_proof_place() written by Peter Fontana, needed for support
+     * of EXISTS Quantifiers. */
+
+    if (cpplogEnabled(cpplogging::debug)) {
+      lhs->cf();
+      place->cf();
+      print_sequent_place(std::cerr, step, false, lhs, place, rhs, sub, rhs->getOpType());
+    }
+
+    step++;
+
+    switch(rhs->getOpType()){
+      case PREDICATE:{
+        return do_proof_place_predicate(step, lhs, place, rhs, sub);
+      }
+      case AND:{
+        return do_proof_place_and(step, lhs, place, rhs, sub);
+      }
+      case OR:{
+        return do_proof_place_or(step, lhs, place, rhs, sub);
+      }
+      case OR_SIMPLE:{
+        return do_proof_place_or_simple(step, lhs, place, rhs, sub);
+      }
+      case FORALL:{
+        return do_proof_place_forall(step, lhs, place, rhs, sub);
+      }
+      case FORALL_REL: {
+        return do_proof_place_forall_rel(step, lhs, place, rhs, sub);
+      }
+      case EXISTS:{
+        return do_proof_place_exists(step, lhs, place, rhs, sub);
+      }
+      case EXISTS_REL: {
+        return do_proof_place_exists_rel(step, lhs, place, rhs, sub);
+      }
+      case ALLACT: {
+        return do_proof_place_allact(step, lhs, place, rhs, sub);
+      }
+      case EXISTACT: {
+        return do_proof_place_existact(step, lhs, place, rhs, sub);
+      }
+      case IMPLY:{
+        return do_proof_place_imply(step, lhs, place, rhs, sub);
+      }
+      case CONSTRAINT:{
+        return do_proof_place_constraint(step, lhs, place, rhs, sub);
+      }
+      case BOOL:{
+        return do_proof_place_bool(step, lhs, place, rhs, sub);
+      }
+      case ATOMIC:{
+        return do_proof_place_atomic(step, lhs, place, rhs, sub);
+      }
+      case ATOMIC_NOT:{
+        return do_proof_place_atomic_not(step, lhs, place, rhs, sub);
+      }
+      case ATOMIC_LT:{
+        return do_proof_place_atomic_lt(step, lhs, place, rhs, sub);
+      }
+      case ATOMIC_GT:{
+        return do_proof_place_atomic_gt(step, lhs, place, rhs, sub);
+      }
+      case ATOMIC_LE:{
+        return do_proof_place_atomic_le(step, lhs, place, rhs, sub);
+      }
+      case ATOMIC_GE:{
+        return do_proof_place_atomic_ge(step, lhs, place, rhs, sub);
+      }
+      case SUBLIST:{
+        return do_proof_place_sublist(step, lhs, place, rhs, sub);
+      }
+      case RESET:{
+        return do_proof_place_reset(step, lhs, place, rhs, sub);
+      }
+      case ASSIGN:{
+        return do_proof_place_assign(step, lhs, place, rhs, sub);
+      }
+      case REPLACE:{
+        return do_proof_place_replace(step, lhs, place, rhs, sub);
+      }
+      case ABLEWAITINF:{
+        return do_proof_place_ablewaitinf(step, lhs, place, rhs, sub);
+      }
+      case UNABLEWAITINF:{
+        return do_proof_place_unablewaitinf(step, lhs, place, rhs, sub);
+      }
+    }
+  }
 
   void printTabledSequents(std::ostream& os) const
   {
