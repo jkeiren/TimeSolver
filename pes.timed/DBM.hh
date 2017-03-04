@@ -542,7 +542,6 @@ public:
    * This method preserves canonical form.
    * @return The reference to the changed calling DBM. */
   DBM & suc(){
-
     // We start i at 1 because (0,0) isn't a clock
     for(short int i = 1; i < nClocks; i++) {
       this->operatorWrite(i,0) = (0xFFF << 1);
@@ -787,7 +786,8 @@ public:
     if (x < 0 || x >= nClocks || y >= nClocks || y < 0){
       std::cerr << "nClocks : " << nClocks << " x : "<< x << " y : "
       << y <<std::endl;
-      std::cerr <<  "reset(x,y) clock indices out of bounds" <<std::endl; exit(-1);
+      std::cerr <<  "reset(x,y) clock indices out of bounds" <<std::endl;
+      exit(-1);
     }
     /* Now compute the preset by relaxing constraints on clock $x$ */
       // Now flush out difference constraints since they

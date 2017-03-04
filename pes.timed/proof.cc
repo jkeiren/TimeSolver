@@ -9,7 +9,7 @@
 
 using namespace std;
 
-bool prover::do_proof_predicate(int step, DBM* const lhs, const ExprNode* const rhs, SubstList* const sub)
+bool prover::do_proof_predicate(const int step, DBM* const lhs, const ExprNode* const rhs, SubstList* const sub)
 {
   bool retVal = false;
 
@@ -28,94 +28,86 @@ bool prover::do_proof_predicate(int step, DBM* const lhs, const ExprNode* const 
   /* Look in Known True and Known False Sequent Caches */
   if(useCaching) {
     /* First look in known False Sequent table */
-    Sequent *tf = new Sequent(rhs, sub);
-    Sequent *hf = Xlist_false.look_for_sequent(tf->sub(), pInd);
-    if(hf != NULL && tabled_false_sequent(hf, lhs)) {
-      retVal = false;
+    { // Restricted scope for looking up false sequents
+      Sequent tf(rhs, sub);
+      Sequent *hf = Xlist_false.look_for_sequent(tf.sub(), pInd);
+      if(hf != NULL && tabled_false_sequent(hf, lhs)) {
+        retVal = false;
+        cpplog(cpplogging::debug) << "---(Invalid) Located a Known False Sequent ----" << endl << endl;
 
-      cpplog(cpplogging::debug) << "---(Invalid) Located a Known False Sequent ----" << endl << endl;
-
-      /* Add backpointer to parent sequent (shallow copy) */
-      hf->parSequent.push_back(parentRef);
-      if(tf != hf) {
-        delete tf;
+        /* Add backpointer to parent sequent (shallow copy) */
+        hf->parSequent.push_back(parentRef);
+        return retVal; // break out of switch
       }
-      return retVal; // break out of switch
-    }
-    if(tf != hf) {
-      delete tf;
     }
 
     /* Now look in known True Sequent table */
-    Sequent *tfb = new Sequent(rhs, sub); //JK Can be optimised out by reusing tf?
-    Sequent *hfb = Xlist_true.look_for_sequent(tfb->sub(), pInd);
-    if(hfb != NULL && tabled_sequent(hfb, lhs)) {
-      retVal = true;
+    { // Restricted scope for looking up true sequents
+      Sequent tf(rhs, sub); //JK Can be optimised out by reusing tf?
+      Sequent *hf = Xlist_true.look_for_sequent(tf.sub(), pInd);
+      if(hf != NULL && tabled_sequent(hf, lhs)) {
+        retVal = true;
+        cpplog(cpplogging::debug) << "---(Valid) Located a Known True Sequent ----" << endl << endl;
 
-      cpplog(cpplogging::debug) << "---(Valid) Located a Known True Sequent ----" << endl << endl;
-
-      /* Add backpointer to parent sequent (shallow copy) */
-      hfb->parSequent.push_back(parentRef);
-      if(tfb != hfb) {
-        delete tfb;
+        /* Add backpointer to parent sequent (shallow copy) */
+        hf->parSequent.push_back(parentRef);
+        return retVal; // break out of switch
       }
-      return retVal; // break out of switch
-    }
-    if(tfb != hfb) {
-      delete tfb;
     }
   }
 
   /* Now deal with greatest fixpoint circularity and least
    * fixpoint circularity */
+  Sequent *h = nullptr;
+  { // Restricted scope for detecting circularities
+    Sequent *t = new Sequent(rhs, sub);
+    if(currParityGfp) { // Thus a Greatest Fixpoint
+      h = Xlist_pGFP.locate_sequent(t, pInd);
+      if((!newSequent) && tabled_sequent(h, lhs)) {
+        // Found gfp Circularity - thus valid
+        retVal = true;
 
-  Sequent *t = new Sequent(rhs, sub);
-  Sequent *h;
-  if(currParityGfp) { // Thus a Greatest Fixpoint
-    h = Xlist_pGFP.locate_sequent(t, pInd);
-    if((!newSequent) && tabled_sequent(h, lhs)) {
-      // Found gfp Circularity - thus valid
-      retVal = true;
+        cpplog(cpplogging::debug) << "---(Valid) Located a True Sequent or gfp Circularity ----" << endl << endl;
 
-      cpplog(cpplogging::debug) << "---(Valid) Located a True Sequent or gfp Circularity ----" << endl << endl;
+        /* Add backpointer to parent sequent (shallow copy) */
+        h->parSequent.push_back(parentRef);
 
-      /* Add backpointer to parent sequent (shallow copy) */
-      h->parSequent.push_back(parentRef);
-
-      // Add sequent to known true cache
-      if(useCaching) {
-        Sequent *t7 = new Sequent(rhs, sub);
-        Sequent *h7 = Xlist_true.locate_sequent(t7, pInd);
-        update_sequent(h7, lhs);
+        // Add sequent to known true cache
+        if(useCaching) {
+          Sequent *t7 = new Sequent(rhs, sub);
+          Sequent *h7 = Xlist_true.locate_sequent(t7, pInd);
+          update_sequent(h7, lhs);
+        }
+        return retVal;
       }
-      return retVal;
+
+      h->ds.push_back(new DBM(*lhs));
     }
+    else { // Thus, a least fixpoint
+      // Now look for a Circularity
+      h = Xlist_pLFP.locate_sequent(t, pInd);
+      if((!newSequent) && tabled_sequent_lfp(h, lhs)) {
+        // Found lfp circularituy - thus invalid
+        retVal = false;
 
-    h->ds.push_back(new DBM(*lhs));
-  }
-  else { // Thus, a least fixpoint
-    // Now look for a Circularity
-    h = Xlist_pLFP.locate_sequent(t, pInd);
-    if((!newSequent) && tabled_sequent_lfp(h, lhs)) {
-      // Found lfp circularituy - thus invalid
-      retVal = false;
+        cpplog(cpplogging::debug) << "---(Invalid) Located a lfp Circularity ----" << endl << endl;
 
-      cpplog(cpplogging::debug) << "---(Invalid) Located a lfp Circularity ----" << endl << endl;
+        /* Add backpointer to parent sequent (shallow copy) */
+        h->parSequent.push_back(parentRef);
 
-      /* Add backpointer to parent sequent (shallow copy) */
-      h->parSequent.push_back(parentRef);
-
-      // Now Put Sequent in False Cache
-      if(useCaching) {
-        Sequent *t7 = new Sequent(rhs, sub);
-        Sequent *h7 = Xlist_false.locate_sequent(t7, pInd);
-        update_false_sequent(h7, lhs);
+        // Now Put Sequent in False Cache
+        if(useCaching) {
+          Sequent *t7 = new Sequent(rhs, sub);
+          Sequent *h7 = Xlist_false.locate_sequent(t7, pInd);
+          update_false_sequent(h7, lhs);
+        }
+        return retVal;
       }
-      return retVal;
-    }
 
-    h->ds.push_back(new DBM(*lhs));
-  }
+      h->ds.push_back(new DBM(*lhs));
+    }
+  } // End scope for circularity
+  assert(h != nullptr);
 
   // NO CIRCULARITY FOUND
 
@@ -133,9 +125,6 @@ bool prover::do_proof_predicate(int step, DBM* const lhs, const ExprNode* const 
    * predicate */
   parentRef = tempParentState;
 
-
-
-
   /* Key Concept of Purging:
    * If Was True, discovered false, check that
    *		Z_now_false <= Z_cached_true | or | Z_cached_true >= Z_now_false
@@ -144,89 +133,88 @@ bool prover::do_proof_predicate(int step, DBM* const lhs, const ExprNode* const 
    * This Must be done regardless of how the tabling
    * is done for that specific cache */
   // Purge updated sequent
-  if(useCaching && retVal) {
-    /* First look in opposite parity Caches */
-    Sequent *t2 = new Sequent(rhs, sub);
-    Sequent *t2s;
-    bool madeEmpty = false;
-    /* If found, Purge Sequent from its cache */
-    t2s = Xlist_false.look_for_and_purge_rhs_sequent(lhs, t2, pInd, false, &madeEmpty);
+  if(useCaching) {
+    if(retVal)
+    {
+      /* First look in opposite parity Caches */
+      bool madeEmpty = false;
+      Sequent *t2 = new Sequent(rhs, sub);
+      /* If found, Purge Sequent from its cache */
+      Sequent *t2s = Xlist_false.look_for_and_purge_rhs_sequent(lhs, t2, pInd, false, &madeEmpty);
 
+      /* Now purge backpointers */
+      if(t2s != NULL) {
+        look_for_and_purge_rhs_backStack(&(t2s->parSequent),
+                                         &(t2s->parSequentPlace));
+      }
 
-    /* Now purge backpointers */
-    if(t2s != NULL) {
-      look_for_and_purge_rhs_backStack(&(t2s->parSequent),
-                                       &(t2s->parSequentPlace));
+      // Now update in proper Cache
+      Sequent *t5 = new Sequent(rhs, sub);
+      Sequent *h5 = Xlist_true.locate_sequent(t5, pInd);
+      update_sequent(h5, lhs);
 
+      // Now make deletions for Memory Cleanup
+      if(t2 != t2s) {
+        delete t2;
+      }
+      if(madeEmpty) {
+        delete t2s;
+      }
     }
-    // Now update in proper Cache
-    Sequent *t5 = new Sequent(rhs, sub);
-    Sequent *h5 = Xlist_true.locate_sequent(t5, pInd);
-    update_sequent(h5, lhs);
+    else { // !retVal
+      /* True cache (not gfp caches) */
+      Sequent *t22 = new Sequent(rhs, sub);
+      bool madeEmpty = false;
+      /* If found, Purge Sequent from its cache */
+      Sequent *t22s = Xlist_true.look_for_and_purge_rhs_sequent(lhs, t22, pInd, true, &madeEmpty);
 
-    // Now make deletions for Memory Cleanup
-    if(t2 != t2s) {
-      delete t2;
-    }
-    if(madeEmpty) {
-      delete t2s;
-    }
+      /* Now purge backpointers.
+       * Ignore circularity booleans because they do not form backpointers */
+      if(t22s != NULL) {
+        look_for_and_purge_rhs_backStack(&(t22s->parSequent),
+                                         &(t22s->parSequentPlace));
+      }
 
+      // Now update in proper Cache
+      Sequent *t5 = new Sequent(rhs, sub);
+      Sequent *h5 = Xlist_false.locate_sequent(t5, pInd);
+      update_false_sequent(h5, lhs);
 
-
-  }
-  else if(useCaching) {
-    /* True cache (not gfp caches) */
-    Sequent *t22 = new Sequent(rhs, sub);
-    Sequent *t22s;
-    bool madeEmpty = false;
-    /* If found, Purge Sequent from its cache */
-    t22s = Xlist_true.look_for_and_purge_rhs_sequent(lhs, t22, pInd, true, &madeEmpty);
-
-
-    /* Now purge backpointers.
-     * Ignore circularity booleans because they do not form backpointers */
-    if(t22s != NULL) {
-
-      look_for_and_purge_rhs_backStack(&(t22s->parSequent),
-                                       &(t22s->parSequentPlace));
-
-    }
-    // Now update in proper Cache
-    Sequent *t5 = new Sequent(rhs, sub);
-    Sequent *h5 = Xlist_false.locate_sequent(t5, pInd);
-    update_false_sequent(h5, lhs);
-
-    // Now make deletions for Memory Cleanup
-    if( t22 != t22s) {
-      delete t22;
-    }
-    if(madeEmpty) {
-      delete t22s;
+      // Now make deletions for Memory Cleanup
+      if( t22 != t22s) {
+        delete t22;
+      }
+      if(madeEmpty) {
+        delete t22s;
+      }
     }
   }
 
   /* The line: h->parSequent.push_back(parentRef);
    * is not needed since the backpointer stored before proof. */
-
   DBM * tempDBM = h->ds.back();
   delete tempDBM;
   h->ds.pop_back();
   return retVal;
 }
 
-bool prover::do_proof_and(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub)
+bool prover::do_proof_and(const int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub)
 {
   /* Because lhs is only changed after it is copied, it can
    * be passed to both branches. */
   bool retVal = do_proof(step, lhs, rhs->getLeft(), sub);
-  if(retVal == true) {
+  if(retVal) {
     retVal = do_proof(step, lhs, rhs->getRight(), sub);
   }
   return retVal;
 }
 
-bool prover::do_proof_or(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub)
+/* For an expression l || r we consider three cases, using a placeholder:
+ * - the proof for l returns an empty placeholder
+ * - the proof for l covers the entire DBM lhs
+ * - the proof for l covers a strict, non-empty subset of lhs
+ */
+bool prover::do_proof_or(const int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub)
 {
   bool retVal = false;
 
@@ -234,8 +222,9 @@ bool prover::do_proof_or(int step, DBM * const lhs, const ExprNode * const rhs, 
   DBMList place1(*INFTYDBM);
   retPlaceDBM = do_proof_place(step, lhs, &place1, rhs->getLeft(), sub);
   retPlaceDBM->cf();
+
   // Reset place parent to NULL
-  parentPlaceRef = NULL;
+  parentPlaceRef = nullptr;
   if(retPlaceDBM->emptiness()) {
     retVal = do_proof(step, lhs, rhs->getRight(), sub);
   }
@@ -244,14 +233,16 @@ bool prover::do_proof_or(int step, DBM * const lhs, const ExprNode * const rhs, 
   }
   else {
     /* Here we get the corner case where we have to use the
-     * OR Split rule */
-    place1 = *retPlaceDBM;
+     * OR Split rule, so we try to establish whether part of lhs is covered by
+     * l, and the other part is covered by rhs. */
+    place1 = *retPlaceDBM; // place1 contains the states covered by l.
+
     DBMList place2(*INFTYDBM);
     retPlaceDBM = do_proof_place(step, lhs, &place2, rhs->getRight(), sub);
     retPlaceDBM->cf();
 
     // Reset place parent to NULL
-    parentPlaceRef = NULL;
+    parentPlaceRef = nullptr;
     if(retPlaceDBM->emptiness()) {
       retVal = false;
     }
@@ -260,25 +251,25 @@ bool prover::do_proof_or(int step, DBM * const lhs, const ExprNode * const rhs, 
     }
     else {
       retPlaceDBM->addDBMList(place1);
-      retVal = (*retPlaceDBM) >= *lhs;
+      retVal = (*retPlaceDBM) >= *lhs; // if the union of both placeholders covers the set of states, we are still happy
     }
   }
   return retVal;
 }
 
-bool prover::do_proof_or_simple(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub)
+bool prover::do_proof_or_simple(const int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub)
 {
   /* Simplified OR does not need to split on placeholders */
   bool retVal = do_proof(step, lhs, rhs->getLeft(), sub);
   // Reset place parent to NULL
   if(!retVal) {
-    DBM lhsb(*lhs);
+    DBM lhsb(*lhs); // why do we require this copy?
     retVal  = do_proof(step, &lhsb, rhs->getRight(), sub);
   }
   return retVal;
 }
 
-bool prover::do_proof_forall(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub)
+bool prover::do_proof_forall(const int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub)
 {
   /* Here the model checker looks at the zone of
    * all time sucessors and then substitutes in
@@ -295,7 +286,7 @@ bool prover::do_proof_forall(int step, DBM * const lhs, const ExprNode * const r
   return do_proof(step, &ph, rhs->getQuant(), sub);
 }
 
-bool prover::do_proof_forall_rel(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub)
+bool prover::do_proof_forall_rel(const int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub)
 {
   /* Proof methodology:
    * first, see if \phi_1 is satisfied during the time advance.
@@ -520,7 +511,7 @@ bool prover::do_proof_forall_rel(int step, DBM * const lhs, const ExprNode * con
   return retVal;
 }
 
-bool prover::do_proof_exists(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub)
+bool prover::do_proof_exists(const int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub)
 {
   bool retVal = false;
 
@@ -581,7 +572,7 @@ bool prover::do_proof_exists(int step, DBM * const lhs, const ExprNode * const r
   return retVal;
 }
 
-bool prover::do_proof_exists_rel(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub)
+bool prover::do_proof_exists_rel(const int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub)
 {
   bool retVal = false;
 
@@ -756,7 +747,7 @@ bool prover::do_proof_exists_rel(int step, DBM * const lhs, const ExprNode * con
   return retVal;
 }
 
-bool prover::do_proof_allact(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub)
+bool prover::do_proof_allact(const int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub)
 {
   bool retVal = true;
   /* Enumerate through all transitions */
@@ -845,7 +836,7 @@ bool prover::do_proof_allact(int step, DBM * const lhs, const ExprNode * const r
   return retVal;
 }
 
-bool prover::do_proof_existact(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub)
+bool prover::do_proof_existact(const int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub)
 {
   bool retVal = false;
   /* Enumerate through all transitions */
@@ -972,7 +963,7 @@ bool prover::do_proof_existact(int step, DBM * const lhs, const ExprNode * const
   return retVal;
 }
 
-bool prover::do_proof_imply(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub)
+bool prover::do_proof_imply(const int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub)
 {
   bool retVal = false;
   /* Here is the one call to comp_ph(...) outside of copm_ph(...) */
@@ -998,7 +989,7 @@ bool prover::do_proof_imply(int step, DBM * const lhs, const ExprNode * const rh
   return retVal;
 }
 
-bool prover::do_proof_constraint(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub)
+bool prover::do_proof_constraint(DBM * const lhs, const ExprNode * const rhs)
 {
   lhs->cf();
   /* The line: (rhs->dbm())->cf(); is not needed */
@@ -1012,7 +1003,7 @@ bool prover::do_proof_constraint(int step, DBM * const lhs, const ExprNode * con
   return retVal;
 }
 
-bool prover::do_proof_bool(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub)
+bool prover::do_proof_bool(const ExprNode * const rhs)
 {
   bool retVal = (rhs->getBool());
   if (retVal) {
@@ -1024,9 +1015,9 @@ bool prover::do_proof_bool(int step, DBM * const lhs, const ExprNode * const rhs
   return retVal;
 }
 
-bool prover::do_proof_atomic(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub)
+bool prover::do_proof_atomic(const ExprNode * const rhs, const SubstList * const sub)
 {
-  bool retVal = (sub->operator[](rhs->getAtomic()) == rhs->getIntVal());
+  bool retVal = (sub->at(rhs->getAtomic()) == rhs->getIntVal());
   if (retVal) {
     cpplog(cpplogging::debug) << "---(Valid) Leaf ATOMIC == Reached----" << endl << endl;
   }
@@ -1036,9 +1027,9 @@ bool prover::do_proof_atomic(int step, DBM * const lhs, const ExprNode * const r
   return retVal;
 }
 
-bool prover::do_proof_atomic_not(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub)
+bool prover::do_proof_atomic_not(const ExprNode * const rhs, const SubstList * const sub)
 {
-  bool retVal = (sub->operator[](rhs->getAtomic()) != rhs->getIntVal());
+  bool retVal = (sub->at(rhs->getAtomic()) != rhs->getIntVal());
   if (retVal) {
     cpplog(cpplogging::debug) << "---(Valid) Leaf ATOMIC != Reached----" << endl << endl;
   }
@@ -1048,9 +1039,9 @@ bool prover::do_proof_atomic_not(int step, DBM * const lhs, const ExprNode * con
   return retVal;
 }
 
-bool prover::do_proof_atomic_lt(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub)
+bool prover::do_proof_atomic_lt(const ExprNode * const rhs, const SubstList * const sub)
 {
-  bool retVal = (sub->operator[](rhs->getAtomic()) < rhs->getIntVal());
+  bool retVal = (sub->at(rhs->getAtomic()) < rhs->getIntVal());
   if (retVal) {
     cpplog(cpplogging::debug) << "---(Valid) Leaf ATOMIC < Reached----" << endl << endl;
   }
@@ -1060,9 +1051,9 @@ bool prover::do_proof_atomic_lt(int step, DBM * const lhs, const ExprNode * cons
   return retVal;
 }
 
-bool prover::do_proof_atomic_gt(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub)
+bool prover::do_proof_atomic_gt(const ExprNode * const rhs, const SubstList * const sub)
 {
-  bool retVal = (sub->operator[](rhs->getAtomic()) > rhs->getIntVal());
+  bool retVal = (sub->at(rhs->getAtomic()) > rhs->getIntVal());
   if (retVal) {
     cpplog(cpplogging::debug) << "---(Valid) Leaf ATOMIC > Reached----" << endl << endl;
   }
@@ -1072,9 +1063,9 @@ bool prover::do_proof_atomic_gt(int step, DBM * const lhs, const ExprNode * cons
   return retVal;
 }
 
-bool prover::do_proof_atomic_le(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub)
+bool prover::do_proof_atomic_le(const ExprNode * const rhs, const SubstList * const sub)
 {
-  bool retVal = (sub->operator[](rhs->getAtomic()) <= rhs->getIntVal());
+  bool retVal = (sub->at(rhs->getAtomic()) <= rhs->getIntVal());
   if (retVal) {
     cpplog(cpplogging::debug) << "---(Valid) Leaf ATOMIC < Reached----" << endl << endl;
   }
@@ -1083,9 +1074,10 @@ bool prover::do_proof_atomic_le(int step, DBM * const lhs, const ExprNode * cons
   }
   return retVal;
 }
-bool prover::do_proof_atomic_ge(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub)
+
+bool prover::do_proof_atomic_ge(const ExprNode * const rhs, const SubstList * const sub)
 {
-  bool retVal = (sub->operator[](rhs->getAtomic()) >= rhs->getIntVal());
+  bool retVal = (sub->at(rhs->getAtomic()) >= rhs->getIntVal());
   if (retVal) {
     cpplog(cpplogging::debug) << "---(Valid) Leaf ATOMIC > Reached----" << endl << endl;
   }
@@ -1095,44 +1087,38 @@ bool prover::do_proof_atomic_ge(int step, DBM * const lhs, const ExprNode * cons
   return retVal;
 }
 
-bool prover::do_proof_sublist(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub)
+bool prover::do_proof_sublist(const int step, DBM * const lhs, const ExprNode * const rhs, const SubstList * const sub)
 {
   SubstList st(rhs->getSublist(), sub );
   return do_proof(step, lhs, rhs->getExpr(), &st);
 }
 
-bool prover::do_proof_reset(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub)
+bool prover::do_proof_reset(const int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub)
 {
-  lhs->cf();
+  //lhs->cf(); // FIXME: lhs is not used further in this proof, also, reset says the *result* is in CF, and does not require the dbm to be in CF.
   DBM ph(*lhs);
-  const ClockSet *rs = rhs->getClockSet();
-  ph.reset(rs);
-
+  ph.reset(rhs->getClockSet());
   return do_proof(step, &ph, rhs->getExpr(), sub);
 }
 
-bool prover::do_proof_assign(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub)
+bool prover::do_proof_assign(const int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub)
 {
-  lhs->cf();
+  //lhs->cf(); // FIXME: see remark in do_proof_reset
   DBM ph(*lhs);
   /* Here the DBM zone is where the value of
    * clock x is reset to clock y, which is possibly
    * a constant or a value*/
-  short int cX = rhs->getcX();
-  short int cY = rhs->getcY();
-
-  ph.reset(cX, cY);
-
+  ph.reset(rhs->getcX(), rhs->getcY());
   return do_proof(step, &ph, rhs->getExpr(), sub);
 }
 
-bool prover::do_proof_replace(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub)
+bool prover::do_proof_replace(const int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub)
 {
   sub->operator[](rhs->getcX()) = sub->operator[](rhs->getcY());
   return do_proof(step, lhs, rhs->getExpr(), sub);
 }
 
-bool prover::do_proof_ablewaitinf(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub)
+bool prover::do_proof_ablewaitinf(DBM * const lhs, SubstList * const sub)
 {
   lhs->cf();
   DBM ph(*lhs);
@@ -1141,7 +1127,7 @@ bool prover::do_proof_ablewaitinf(int step, DBM * const lhs, const ExprNode * co
   ph.cf();
   /* Time can diverge if and only if there are no upper bound
    * constraints in the successor */
-  bool retVal = !(ph.hasUpperConstraint());
+  bool retVal = !ph.hasUpperConstraint();
   if (retVal) {
     cpplog(cpplogging::debug) << "---(Valid) Time able to diverge to INFTY in current location----" << endl << endl;
   }
@@ -1151,7 +1137,8 @@ bool prover::do_proof_ablewaitinf(int step, DBM * const lhs, const ExprNode * co
   return retVal;
 }
 
-bool prover::do_proof_unablewaitinf(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub)
+// FIXME: eliminate duplication with do_proof_ablewaitinf
+bool prover::do_proof_unablewaitinf(DBM * const lhs, SubstList * const sub)
 {
   lhs->cf();
   DBM ph(*lhs);
@@ -1544,7 +1531,7 @@ DBMList* prover::do_proof_place_or_simple(int step, DBM* const lhs, DBMList* con
   return retPlaceDBM;
 }
 
-DBMList* prover::do_proof_place_forall(int step, DBM* const lhs, DBMList* const place,
+DBMList* prover::do_proof_place_forall(int step, DBM* const lhs,
                                           const ExprNode* const rhs, SubstList* const sub)
 {
   /* Here the model checker looks at the zone of
@@ -2534,8 +2521,8 @@ DBMList* prover::do_proof_place_imply(int step, DBM* const lhs, DBMList* const p
   return retPlaceDBM;
 }
 
-DBMList* prover::do_proof_place_constraint(int step, DBM* const lhs, DBMList* const place,
-                                          const ExprNode* const rhs, SubstList* const sub)
+DBMList* prover::do_proof_place_constraint(DBM* const lhs, DBMList* const place,
+                                          const ExprNode* const rhs)
 {
   lhs->cf();
   // The line: (rhs->dbm())->cf(); is not needed.
@@ -2577,8 +2564,7 @@ DBMList* prover::do_proof_place_constraint(int step, DBM* const lhs, DBMList* co
   return retPlaceDBM;
 }
 
-DBMList* prover::do_proof_place_bool(int step, DBM* const lhs, DBMList* const place,
-                                          const ExprNode* const rhs, SubstList* const sub)
+DBMList* prover::do_proof_place_bool(DBMList* const place, const ExprNode* const rhs)
 {
   if(rhs->getBool()) {
     *retPlaceDBM = (*place);
@@ -2592,7 +2578,7 @@ DBMList* prover::do_proof_place_bool(int step, DBM* const lhs, DBMList* const pl
   return retPlaceDBM;
 }
 
-DBMList* prover::do_proof_place_atomic(int step, DBM* const lhs, DBMList* const place,
+DBMList* prover::do_proof_place_atomic(DBMList* const place,
                                           const ExprNode* const rhs, SubstList* const sub)
 {
   bool retVal = (sub->at(rhs->getAtomic()) == rhs->getIntVal());
@@ -2607,7 +2593,7 @@ DBMList* prover::do_proof_place_atomic(int step, DBM* const lhs, DBMList* const 
   return retPlaceDBM;
 }
 
-DBMList* prover::do_proof_place_atomic_not(int step, DBM* const lhs, DBMList* const place,
+DBMList* prover::do_proof_place_atomic_not(DBMList* const place,
                                           const ExprNode* const rhs, SubstList* const sub)
 {
   bool retVal = (sub->at(rhs->getAtomic()) != rhs->getIntVal());
@@ -2622,7 +2608,7 @@ DBMList* prover::do_proof_place_atomic_not(int step, DBM* const lhs, DBMList* co
   return retPlaceDBM;
 }
 
-DBMList* prover::do_proof_place_atomic_lt(int step, DBM* const lhs, DBMList* const place,
+DBMList* prover::do_proof_place_atomic_lt(DBMList* const place,
                                           const ExprNode* const rhs, SubstList* const sub)
 {
   bool retVal = (sub->at(rhs->getAtomic()) < rhs->getIntVal());
@@ -2637,7 +2623,7 @@ DBMList* prover::do_proof_place_atomic_lt(int step, DBM* const lhs, DBMList* con
   return retPlaceDBM;
 }
 
-DBMList* prover::do_proof_place_atomic_gt(int step, DBM* const lhs, DBMList* const place,
+DBMList* prover::do_proof_place_atomic_gt(DBMList* const place,
                                           const ExprNode* const rhs, SubstList* const sub)
 {
   bool retVal = (sub->at(rhs->getAtomic()) > rhs->getIntVal());
@@ -2652,7 +2638,7 @@ DBMList* prover::do_proof_place_atomic_gt(int step, DBM* const lhs, DBMList* con
   return retPlaceDBM;
 }
 
-DBMList* prover::do_proof_place_atomic_le(int step, DBM* const lhs, DBMList* const place,
+DBMList* prover::do_proof_place_atomic_le(DBMList* const place,
                                           const ExprNode* const rhs, SubstList* const sub)
 {
   bool retVal = (sub->at(rhs->getAtomic()) <= rhs->getIntVal());
@@ -2667,7 +2653,7 @@ DBMList* prover::do_proof_place_atomic_le(int step, DBM* const lhs, DBMList* con
   return retPlaceDBM;
 }
 
-DBMList* prover::do_proof_place_atomic_ge(int step, DBM* const lhs, DBMList* const place,
+DBMList* prover::do_proof_place_atomic_ge(DBMList* const place,
                                           const ExprNode* const rhs, SubstList* const sub)
 {
   bool retVal = (sub->at(rhs->getAtomic()) >= rhs->getIntVal());
@@ -2801,8 +2787,8 @@ DBMList* prover::do_proof_place_replace(int step, DBM* const lhs, DBMList* const
   return retPlaceDBM;
 }
 
-DBMList* prover::do_proof_place_ablewaitinf(int step, DBM* const lhs, DBMList* const place,
-                                          const ExprNode* const rhs, SubstList* const sub)
+DBMList* prover::do_proof_place_ablewaitinf(DBM* const lhs, DBMList* const place,
+                                            SubstList* const sub)
 {
   bool retVal = false;
   lhs->cf();
@@ -2830,10 +2816,8 @@ DBMList* prover::do_proof_place_ablewaitinf(int step, DBM* const lhs, DBMList* c
   return retPlaceDBM;
 }
 
-DBMList* prover::do_proof_place_unablewaitinf(int step, DBM* const lhs, DBMList* const place,
-                                          const ExprNode* const rhs, SubstList* const sub)
+DBMList* prover::do_proof_place_unablewaitinf(DBM* const lhs, DBMList* const place, SubstList* const sub)
 {
-  bool retVal = false;
   lhs->cf();
   DBMList ph(*lhs);
   ph & *place;
@@ -2841,14 +2825,13 @@ DBMList* prover::do_proof_place_unablewaitinf(int step, DBM* const lhs, DBMList*
   ph.suc();
   invs_chk(input_pes.invariants(), &ph, *sub);
   ph.cf();
-  /* Time canot diverge if and only if there is an upper bound
+  /* Time cannot diverge if and only if there is an upper bound
    * constraint in the successor. By design of succ() and invariants,
    * either all DBMs have an upper bound constraint, or none
    * of them do. Hence, checking the first is always good enough. */
   vector <DBM *> * currList = ph.getDBMList();
   DBM * currDBM = (*currList)[0];
-  retVal = currDBM->hasUpperConstraint();
-  if(retVal) {
+  if(currDBM->hasUpperConstraint()) {
     *retPlaceDBM = (*place);
     cpplog(cpplogging::debug) << "---(Valid) Time unable to diverge to INFTY in current location----" << endl << endl;
   }

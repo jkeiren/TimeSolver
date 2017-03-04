@@ -133,11 +133,12 @@ public:
   Xlist_false_ph(input_pes.atomic().size(), nbits, input_pes.predicates().size()*nHash, nHash, input_pes.predicates().size(), newSequent)
 
   {
+    cpplogging::logger::register_output_policy(cpplogging::plain_output_policy());
+    cpplogging::logger::unregister_output_policy(cpplogging::default_output_policy());
+
     if(debug)
     {
       cpplogging::logger::set_reporting_level(cpplogging::debug);
-      cpplogging::logger::register_output_policy(cpplogging::plain_output_policy());
-      cpplogging::logger::unregister_output_policy(cpplogging::default_output_policy());
     }
 
     /* Initialize DBMs. The initial constructor
@@ -198,7 +199,7 @@ public:
   {
     bool retVal = false;
     if (cpplogEnabled(cpplogging::debug)){
-      lhs->cf();
+      lhs->cf(); // FIXME: why do we transform the DBM to canonical form just for this debug print?
       print_sequent(std::cerr, step, retVal, lhs, rhs, sub, rhs->getOpType());
     }
     step++;
@@ -239,28 +240,28 @@ public:
         return do_proof_imply(step, lhs, rhs, sub);
       }
       case CONSTRAINT:{
-        return do_proof_constraint(step, lhs, rhs, sub);
+        return do_proof_constraint(lhs, rhs);
       }
       case BOOL:{
-        return do_proof_bool(step, lhs, rhs, sub);
+        return do_proof_bool(rhs);
       }
       case ATOMIC:{
-        return do_proof_atomic(step, lhs, rhs, sub);
+        return do_proof_atomic(rhs, sub);
       }
       case ATOMIC_NOT:{
-        return do_proof_atomic_not(step, lhs, rhs, sub);
+        return do_proof_atomic_not(rhs, sub);
       }
       case ATOMIC_LT:{
-        return do_proof_atomic_lt(step, lhs, rhs, sub);
+        return do_proof_atomic_lt(rhs, sub);
       }
       case ATOMIC_GT:{
-        return do_proof_atomic_gt(step, lhs, rhs, sub);
+        return do_proof_atomic_gt(rhs, sub);
       }
       case ATOMIC_LE:{
-        return do_proof_atomic_le(step, lhs, rhs, sub);
+        return do_proof_atomic_le(rhs, sub);
       }
       case ATOMIC_GE:{
-        return do_proof_atomic_ge(step, lhs, rhs, sub);
+        return do_proof_atomic_ge(rhs, sub);
       }
       case SUBLIST:{
         return do_proof_sublist(step, lhs, rhs, sub);
@@ -275,10 +276,10 @@ public:
         return do_proof_replace(step, lhs, rhs, sub);
       }
       case ABLEWAITINF:{
-        return do_proof_ablewaitinf(step, lhs, rhs, sub);
+        return do_proof_ablewaitinf(lhs, sub);
       }
       case UNABLEWAITINF:{
-        return do_proof_unablewaitinf(step, lhs, rhs, sub);
+        return do_proof_unablewaitinf(lhs, sub);
       }
     }
   }
@@ -328,7 +329,7 @@ public:
         return do_proof_place_or_simple(step, lhs, place, rhs, sub);
       }
       case FORALL:{
-        return do_proof_place_forall(step, lhs, place, rhs, sub);
+        return do_proof_place_forall(step, lhs, rhs, sub);
       }
       case FORALL_REL: {
         return do_proof_place_forall_rel(step, lhs, place, rhs, sub);
@@ -349,28 +350,28 @@ public:
         return do_proof_place_imply(step, lhs, place, rhs, sub);
       }
       case CONSTRAINT:{
-        return do_proof_place_constraint(step, lhs, place, rhs, sub);
+        return do_proof_place_constraint(lhs, place, rhs);
       }
       case BOOL:{
-        return do_proof_place_bool(step, lhs, place, rhs, sub);
+        return do_proof_place_bool(place, rhs);
       }
       case ATOMIC:{
-        return do_proof_place_atomic(step, lhs, place, rhs, sub);
+        return do_proof_place_atomic(place, rhs, sub);
       }
       case ATOMIC_NOT:{
-        return do_proof_place_atomic_not(step, lhs, place, rhs, sub);
+        return do_proof_place_atomic_not(place, rhs, sub);
       }
       case ATOMIC_LT:{
-        return do_proof_place_atomic_lt(step, lhs, place, rhs, sub);
+        return do_proof_place_atomic_lt(place, rhs, sub);
       }
       case ATOMIC_GT:{
-        return do_proof_place_atomic_gt(step, lhs, place, rhs, sub);
+        return do_proof_place_atomic_gt(place, rhs, sub);
       }
       case ATOMIC_LE:{
-        return do_proof_place_atomic_le(step, lhs, place, rhs, sub);
+        return do_proof_place_atomic_le(place, rhs, sub);
       }
       case ATOMIC_GE:{
-        return do_proof_place_atomic_ge(step, lhs, place, rhs, sub);
+        return do_proof_place_atomic_ge(place, rhs, sub);
       }
       case SUBLIST:{
         return do_proof_place_sublist(step, lhs, place, rhs, sub);
@@ -385,10 +386,10 @@ public:
         return do_proof_place_replace(step, lhs, place, rhs, sub);
       }
       case ABLEWAITINF:{
-        return do_proof_place_ablewaitinf(step, lhs, place, rhs, sub);
+        return do_proof_place_ablewaitinf(lhs, place, sub);
       }
       case UNABLEWAITINF:{
-        return do_proof_place_unablewaitinf(step, lhs, place, rhs, sub);
+        return do_proof_place_unablewaitinf(lhs, place, sub);
       }
     }
   }
@@ -427,31 +428,31 @@ public:
   }
 
 protected:
-  bool do_proof_predicate(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
-  bool do_proof_and(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
-  bool do_proof_or(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
-  bool do_proof_or_simple(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
-  bool do_proof_forall(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
-  bool do_proof_forall_rel(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
-  bool do_proof_exists(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
-  bool do_proof_exists_rel(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
-  bool do_proof_allact(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
-  bool do_proof_existact(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
-  bool do_proof_imply(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
-  bool do_proof_constraint(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
-  bool do_proof_bool(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
-  bool do_proof_atomic(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
-  bool do_proof_atomic_not(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
-  bool do_proof_atomic_lt(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
-  bool do_proof_atomic_gt(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
-  bool do_proof_atomic_le(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
-  bool do_proof_atomic_ge(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
-  bool do_proof_sublist(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
-  bool do_proof_reset(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
-  bool do_proof_assign(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
-  bool do_proof_replace(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
-  bool do_proof_ablewaitinf(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
-  bool do_proof_unablewaitinf(int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
+  bool do_proof_predicate(const int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
+  bool do_proof_and(const int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
+  bool do_proof_or(const int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
+  bool do_proof_or_simple(const int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
+  bool do_proof_forall(const int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
+  bool do_proof_forall_rel(const int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
+  bool do_proof_exists(const int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
+  bool do_proof_exists_rel(const int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
+  bool do_proof_allact(const int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
+  bool do_proof_existact(const int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
+  bool do_proof_imply(const int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
+  bool do_proof_constraint(DBM * const lhs, const ExprNode * const rhs);
+  bool do_proof_bool(const ExprNode * const rhs);
+  bool do_proof_atomic(const ExprNode * const rhs, const SubstList * const sub);
+  bool do_proof_atomic_not(const ExprNode * const rhs, const SubstList * const sub);
+  bool do_proof_atomic_lt(const ExprNode * const rhs, const SubstList * const sub);
+  bool do_proof_atomic_gt(const ExprNode * const rhs, const SubstList * const sub);
+  bool do_proof_atomic_le(const ExprNode * const rhs, const SubstList * const sub);
+  bool do_proof_atomic_ge(const ExprNode * const rhs, const SubstList * const sub);
+  bool do_proof_sublist(const int step, DBM * const lhs, const ExprNode * const rhs, const SubstList * const sub);
+  bool do_proof_reset(const int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
+  bool do_proof_assign(const int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
+  bool do_proof_replace(const int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub);
+  bool do_proof_ablewaitinf(DBM * const lhs, SubstList * const sub);
+  bool do_proof_unablewaitinf(DBM * const lhs, SubstList * const sub);
 
   DBMList* do_proof_place_predicate(int step, DBM* const lhs, DBMList* const place,
                                             const ExprNode* const rhs, SubstList* const sub);
@@ -461,7 +462,7 @@ protected:
                                             const ExprNode* const rhs, SubstList* const sub);
   DBMList* do_proof_place_or_simple(int step, DBM* const lhs, DBMList* const place,
                                             const ExprNode* const rhs, SubstList* const sub);
-  DBMList* do_proof_place_forall(int step, DBM* const lhs, DBMList* const place,
+  DBMList* do_proof_place_forall(int step, DBM* const lhs,
                                             const ExprNode* const rhs, SubstList* const sub);
   DBMList* do_proof_place_forall_rel(int step, DBM* const lhs, DBMList* const place,
                                             const ExprNode* const rhs, SubstList* const sub);
@@ -475,21 +476,20 @@ protected:
                                             const ExprNode* const rhs, SubstList* const sub);
   DBMList* do_proof_place_imply(int step, DBM* const lhs, DBMList* const place,
                                             const ExprNode* const rhs, SubstList* const sub);
-  DBMList* do_proof_place_constraint(int step, DBM* const lhs, DBMList* const place,
+  DBMList* do_proof_place_constraint(DBM* const lhs, DBMList* const place,
+                                            const ExprNode* const rhs);
+  DBMList* do_proof_place_bool(DBMList* const place, const ExprNode* const rhs);
+  DBMList* do_proof_place_atomic(DBMList* const place,
                                             const ExprNode* const rhs, SubstList* const sub);
-  DBMList* do_proof_place_bool(int step, DBM* const lhs, DBMList* const place,
+  DBMList* do_proof_place_atomic_not(DBMList* const place,
                                             const ExprNode* const rhs, SubstList* const sub);
-  DBMList* do_proof_place_atomic(int step, DBM* const lhs, DBMList* const place,
+  DBMList* do_proof_place_atomic_lt(DBMList* const place,
                                             const ExprNode* const rhs, SubstList* const sub);
-  DBMList* do_proof_place_atomic_not(int step, DBM* const lhs, DBMList* const place,
+  DBMList* do_proof_place_atomic_gt(DBMList* const place,
                                             const ExprNode* const rhs, SubstList* const sub);
-  DBMList* do_proof_place_atomic_lt(int step, DBM* const lhs, DBMList* const place,
+  DBMList* do_proof_place_atomic_le(DBMList* const place,
                                             const ExprNode* const rhs, SubstList* const sub);
-  DBMList* do_proof_place_atomic_gt(int step, DBM* const lhs, DBMList* const place,
-                                            const ExprNode* const rhs, SubstList* const sub);
-  DBMList* do_proof_place_atomic_le(int step, DBM* const lhs, DBMList* const place,
-                                            const ExprNode* const rhs, SubstList* const sub);
-  DBMList* do_proof_place_atomic_ge(int step, DBM* const lhs, DBMList* const place,
+  DBMList* do_proof_place_atomic_ge(DBMList* const place,
                                             const ExprNode* const rhs, SubstList* const sub);
   DBMList* do_proof_place_sublist(int step, DBM* const lhs, DBMList* const place,
                                             const ExprNode* const rhs, SubstList* const sub);
@@ -499,10 +499,8 @@ protected:
                                             const ExprNode* const rhs, SubstList* const sub);
   DBMList* do_proof_place_replace(int step, DBM* const lhs, DBMList* const place,
                                             const ExprNode* const rhs, SubstList* const sub);
-  DBMList* do_proof_place_ablewaitinf(int step, DBM* const lhs, DBMList* const place,
-                                            const ExprNode* const rhs, SubstList* const sub);
-  DBMList* do_proof_place_unablewaitinf(int step, DBM* const lhs, DBMList* const place,
-                                            const ExprNode* const rhs, SubstList* const sub);
+  DBMList* do_proof_place_ablewaitinf(DBM* const lhs, DBMList* const place, SubstList* const sub);
+  DBMList* do_proof_place_unablewaitinf(DBM* const lhs, DBMList* const place, SubstList* const sub);
 
   /** Using that a Sequent object is a set of sequents with matching rhs and
    *  discrete states with different clock states, determines if the specified
