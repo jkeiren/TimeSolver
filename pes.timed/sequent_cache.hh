@@ -6,6 +6,13 @@ class sequent_cache
 protected:
     const pes& input_pes;
 
+    /** The maximum number of bits used in the hashing function
+     * when storing discrete states. */
+    int nbits;
+
+    /** The size of the Hash table of Sequents: nBits + 1 */
+    int  nHash;
+
 public:
   /** XList_pGFP (XList) is an array of stacks, where each stack
    * is an array of sequents that
@@ -44,9 +51,11 @@ public:
    * placeholders. */
   sequentStackPlace Xlist_false_ph;
 
-  sequent_cache(const pes& a_input_pes, const int nbits, const int size,
+  sequent_cache(const pes& input_pes, const int nbits, const int size,
                 const int seqStSize, bool& newSequent) :
-    input_pes(a_input_pes),
+    input_pes(input_pes),
+    nbits(nbits),
+    nHash(seqStSize),
     Xlist_pGFP(input_pes.atomic().size(), nbits, size, seqStSize, input_pes.predicates().size(), newSequent),
     Xlist_pLFP(input_pes.atomic().size(), nbits, size, seqStSize, input_pes.predicates().size(), newSequent),
     Xlist_true(input_pes.atomic().size(), nbits, size, seqStSize, input_pes.predicates().size(), newSequent),

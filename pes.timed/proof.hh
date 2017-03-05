@@ -18,15 +18,11 @@
 class prover
 {
 protected:
-  bool debug;
   const pes& input_pes;
 
   bool currParityGfp;
   bool prevParityGfp;
   bool useCaching;
-
-  /* The size of the Hash table of Sequents: nBits + 1 */
-  int  nHash;
 
   long int numLocations;
 
@@ -34,11 +30,7 @@ protected:
    * constant (in the clock constraints).  There
    * is one constant for all of the clocks
    * This is modified by the program and the parser. */
-  int MAXC;
-
-  /** The maximum number of bits used in the hashing function
-   * when storing discrete states. */
-  int nbits;
+  const int MAXC;
 
   /** This DBM is a copy of a DBM initially
    * that represents the unconstrained DBM in
@@ -55,6 +47,7 @@ protected:
    * without placeholder parents, and used to help generate backpointers
    * in the proof tree. */
   Sequent * parentRef;
+
   /** Global variable that keeps track of the parent placeholder sequent
    * of the current sequent in the proof tree. Used for sequents
    * with placeholder parents, and used to help generate backpointers
@@ -73,19 +66,16 @@ protected:
   sequent_cache cache;
 
 public:
-  prover(const pes& a_input_pes,
-         bool a_currParityGfp, bool a_prevParityGfp, bool a_useCaching,
-         int a_nHash, bool debug, int MAXC,
+  prover(const pes& input_pes,
+         bool currParityGfp, bool prevParityGfp, bool useCaching,
+         int nHash, bool debug, int MAXC,
          int nbits) :
-  debug(debug),
-  input_pes(a_input_pes),
-  currParityGfp(a_currParityGfp),
-  prevParityGfp(a_prevParityGfp),
-  useCaching(a_useCaching),
-  nHash(a_nHash),
+  input_pes(input_pes),
+  currParityGfp(currParityGfp),
+  prevParityGfp(prevParityGfp),
+  useCaching(useCaching),
   numLocations(1),
   MAXC(MAXC),
-  nbits(nbits),
   cache(input_pes, nbits, input_pes.predicates().size()*nHash, nHash, newSequent)
   {
     cpplogging::logger::register_output_policy(cpplogging::plain_output_policy());
