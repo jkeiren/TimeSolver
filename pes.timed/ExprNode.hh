@@ -127,11 +127,14 @@ public:
   SubstList * addst(const int index, const int val){
     this->operator[](index) = val;
     return this;
-  };
+  }
 
   /** Returns the number of variables in this SubstList.
    * @return the number of variables in the SubstList. */
-  int nElements(void) const {return quantity;};
+  int nElements(void) const
+  {
+    return quantity;
+  }
 
   /** Prints the contents of the SubstList.  A variable with
    * value -1 is considered empty (the SubstList does not restrict
@@ -191,7 +194,7 @@ public:
     predicate = nullptr;
     subst = nullptr;
     assert(q != nullptr);
-  };
+  }
 
   /** Constructor for two-children expressions with
    * opType = {FORALL_REL, EXISTS_REL, OR, AND, IMPLY}.
@@ -212,7 +215,7 @@ public:
     subst = nullptr;
     assert(l != nullptr);
     assert(r != nullptr);
-  };
+  }
 
   /** Constructor for a clock constraint expression with optype = {CONSTRAINT}.
    * Clock constraints are represented as DBMs.
@@ -232,7 +235,7 @@ public:
     constraint = c;
     cset = nullptr;
     subst = nullptr;
-  };
+  }
 
   /** Constructor for a boolean expression of true or false
    * with optype = {BOOL, ABLEWAITINF, UNABLEWAITINF}.
@@ -255,7 +258,7 @@ public:
     constraint = nullptr;
     cset = nullptr;
     subst = nullptr;
-  };
+  }
 
 
   /** Constructor for atomic (state value) expressions with
@@ -284,7 +287,7 @@ public:
     subst = nullptr;
     cset = nullptr;
     constraint = nullptr;
-  };
+  }
 
   /** Constructor for invariant sub-expressions with opType = {ATOMIC}.
    * This expression represents a state (combined discrete and clock) such that
@@ -313,7 +316,7 @@ public:
     predicate = nullptr;
     cset = nullptr;
     subst = nullptr;
-  };
+  }
 
 
   /** Constructor for predicate variable expressions with opType = {PREDICATE}.
@@ -333,7 +336,7 @@ public:
     cset = nullptr;
     subst = nullptr;
     constraint = nullptr;
-  };
+  }
 
   /** Constructor for clock set expressions with opType = {RESET}. These
    * expressions are used to reset a set of clocks (specified by the
@@ -353,7 +356,7 @@ public:
     predicate = nullptr;
     constraint = nullptr;
     subst = nullptr;
-  };
+  }
 
   /** Constructor for sublist expressions, representing a change of
    * discrete state, with opType = {SUBLIST}. These expressions
@@ -376,7 +379,7 @@ public:
     predicate = nullptr;
     cset = nullptr;
     constraint = nullptr;
-  };
+  }
 
   /** Constructor for assignment and replacement expressions with
    * opType = {ASSIGN, REPLACE}. If
@@ -403,7 +406,7 @@ public:
     cset = nullptr;
     constraint = nullptr;
     subst = nullptr;
-  };
+  }
 
   /** Copy Constructor. This is used when an expression needs to be duplicated
    * in the parser. Because this makes a deep copy of every item, use sparingly,
@@ -462,7 +465,7 @@ public:
     delete cset;
     /* Note: since predicates are shallow-copied, they are not deleted
      * here. */
-  };
+  }
 
   /** Method that deletes the predicate string. Since predicate strings are
    * assigned as shallow copies (multiple ExprNode objects are given the same
@@ -477,37 +480,53 @@ public:
    * the expression.
    * @return The opType which tells what kind of expression that node is.
    * @see The Constructor(s) comments for more information. */
-  opType getOpType() const {return op;};
+  opType getOpType() const
+  {
+    return op;
+  }
 
   /** Returns the left child of the expression. Used for
    * quantified expressions, which have only one child. (In an ExprNode,
    * the single child is assigned as the left child with a NULL right child.)
    * @return The reference to the left (or single) child of that expression.
    * @see The Constructor(s) comments for more information. */
-  ExprNode * getQuant() const {return left;};
+  ExprNode * getQuant() const
+  {
+    return left;
+  }
 
   /** Returns the left child of the ExprNode.
    * @note This does the same thing as getQuant(), but tends to be used
    * for expressions with two (left and right) children.
    * @return The reference to the left (or single) child of that expression.
    * @see The Constructor(s) comments for more information. */
-  const ExprNode * getLeft() const {return left;};
+  const ExprNode * getLeft() const
+  {
+    return left;
+  }
 
   /** Returns the right (or second) child of the expression.
    * @return The reference to the right (or second) child of that expression.
    * @see The Constructor(s) comments for more information. */
-  const ExprNode * getRight() const {return right;};
+  const ExprNode * getRight() const
+  {
+    return right;
+  }
 
   /** Returns the clock constraint (DBM representation) of the expression.
    * @return The reference to the DBM representing the clock constraints.
    * @see The Constructor(s) comments for more information. */
-  const DBM* dbm() const {return constraint;};
+  const DBM* dbm() const
+  {
+    return constraint;
+  }
 
   /** Sets the constraint of the ExprNode to the specified DBM reference.
    * This method assigns the DBM with a shallow copy (copies the address).
    * @param dbm (*) the DBM reference to assign to the ExprNode.
    * @return none. */
-  void setDBM(DBM * dbm) {
+  void setDBM(DBM * dbm)
+  {
     constraint = dbm;
   }
 
@@ -515,7 +534,10 @@ public:
    * used to get the true/false value of the expression.
    * @return The boolean value (TRUE or FALSE) of the expression if stored.
    * @see The Constructor(s) comments for more information. */
-  bool getBool() const {return b;};
+  bool getBool() const
+  {
+    return b;
+  }
 
 
   /** Returns the variable (location, or clock) id stored
@@ -523,36 +545,54 @@ public:
    * @return The id of the atomic (location, or clock)
    * variable stored in the expression.
    * @see The Constructor(s) comments for more information. */
-  short int getAtomic() const {return atomic;};
+  short int getAtomic() const
+  {
+    return atomic;
+  }
 
   /** Returns the value (name) of the predicate variable in
    * the expression.
    * @return The expression's predicate variable's name.
    * @see The Constructor(s) comments for more information. */
-  const char * getPredicate() const {return predicate;};
+  const char * getPredicate() const
+  {
+    return predicate;
+  }
 
   /** Returns the value representing constant with which to compare the variable
    * stored in atomic.
    * @return The value of the variable relevant to the atomic variable.
    * @see The Constructor(s) comments for more information. */
-  short int getIntVal() const {return intVal;};
+  short int getIntVal() const
+  {
+    return intVal;
+  }
 
   /** Returns the left (or single) child of the ExprNode.
    * @note This does the same thing as getQuant() and getLeft(), and is
    * used for other single-child ExprNode expressions.
    * @return The reference to the left (or single) child of that expression.
    * @see The Constructor(s) comments for more information. */
-  ExprNode * getExpr() const {return left;};
+  ExprNode * getExpr() const
+  {
+    return left;
+  }
 
   /** Returns the set of clocks stored in the ExprNode.
    * @return The set of clocks stored in the Expression.
    * @see The Constructor(s) comments for more information. */
-  const ClockSet * getClockSet() const {return cset;};
+  const ClockSet * getClockSet() const
+  {
+    return cset;
+  }
 
   /** Returns the assignment of control variables stored in the expression.
    * @return The assignment of (discrete) variables.
    * @see The Constructor(s) comments for more information. */
-  const SubstList * getSublist() const {return subst;};
+  const SubstList * getSublist() const
+  {
+    return subst;
+  }
 
   /** Returns the clock id of the clock to reset or to give a
    * different variable. While this can be used for other
@@ -561,7 +601,10 @@ public:
    * the expression.
    * @note This does the same thing as getAtomic().
    * @see The Constructor(s) comments for more information. */
-  short int   getcX() const {return atomic;};
+  short int   getcX() const
+  {
+    return atomic;
+  }
 
   /** Returns the value to assign a clock to. For this method,
    * the value is intended to be the index of the clock to take its
@@ -569,12 +612,18 @@ public:
    * @return the value of the variable relevant to the atomic variable.
    * @note This does the same thing as getIntVal().
    * @see The Constructor(s) comments for more information. */
-  short int   getcY() const {return intVal;};
+  short int getcY() const
+  {
+    return intVal;
+  }
 
   /** Sets the parity of the expression, using true = gfp and false = lfp.
    * @param parity The desired parity: true = gfp and false = lfp.
    * @return None. */
-  void set_Parity(const bool parity) { b=parity;};
+  void set_Parity(const bool parity)
+  {
+    b=parity;
+  }
 
   /** Sets the block (equation block) the expression represents
    * by changing the value of intVal. Used for PREDICATE (equation) expressions.
@@ -582,7 +631,10 @@ public:
    * the block of the expression.
    * @note The integer storing the block can be used for other purposes.
    * @return None.*/
-  void set_Block(const int block) {intVal = block;};
+  void set_Block(const int block)
+  {
+    intVal = block;
+  }
 
 
   /** Returns the parity of the expression: true = gfp, false = lfp.
@@ -590,7 +642,10 @@ public:
    * expression: true = gfp, false = lfp.
    * @note This does the same thing as getBool(). It is used differently.
    * @see The Constructor(s) comments for more information. */
-  bool get_Parity() const {return b;};
+  bool get_Parity() const
+  {
+    return b;
+  }
 
   /** Returns the integer representing the block number of the expression.
    * This function is used for PREDICATE expressions.
@@ -598,7 +653,10 @@ public:
    * expression's block.
    * @note This function does the same thing as getIntVal() and getcY().
    * @see The Constructor(s) comments for more information. */
-  short int  get_Block() const {return intVal;};
+  short int  get_Block() const
+  {
+    return intVal;
+  }
 
   /** Checks if atomic (usually location variable) a has value b; this
    * method is used when checking invariants.  This method
@@ -608,8 +666,10 @@ public:
    * @param b The candidate intVal value.
    * @returns true: if a is the atomic id in the expression and b is the intVal
    * value in the expression; false: otherwise. */
-  bool inv_loc(const int a, const int b) {return ((a==atomic) && (b==intVal));};
-
+  bool inv_loc(const int a, const int b)
+  {
+    return ((a==atomic) && (b==intVal));
+  }
 
   /** Negates all the atomic propositions in the expression. The negation
    * works by switching the atomic proposition types of all nodes (including
@@ -663,20 +723,19 @@ public:
    * specified expression.
    * @param destL (*) the (left) child expression
    * @return None. */
-   void setExprDestLeft(ExprNode * destL) {
-
+   void setExprDestLeft(ExprNode * destL)
+   {
      left = destL;
-
-   };
+   }
 
   /** Set the right child destination to a shallow copy of the
    * specified expression.
    * @param destR (*) the (right) child expression
    * @return None. */
-   void setExprDestRight(ExprNode * destR) {
-
+   void setExprDestRight(ExprNode * destR)
+   {
      right = destR;
-   };
+   }
 
 protected:
   /* Note: The data variables here are used as a "quasi-union",

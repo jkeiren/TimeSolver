@@ -58,7 +58,7 @@ public:
   Sequent(const ExprNode * const rhs, const SubstList * const sub)
   : e(rhs),
     st(new SubstList(*sub)){
-  };
+  }
 
 
   /* A default Copy Constructor is implemented by the
@@ -90,13 +90,17 @@ public:
 
   /** Returns the ExprNode element (rhs or consequent) of the Sequent.
    * @return the rhs expression of the ExprNode element of the Sequent. */
-  const ExprNode * rhs() const {return e ; };
+  const ExprNode * rhs() const
+  {
+    return e;
+  }
 
   /** Returns the discrete state of the sequent's left (the SubstList).
    * @return the discrete state of the sequent's left (the SubstList). */
-  const SubstList * sub() const {return st ; };
-
-
+  const SubstList * sub() const
+  {
+    return st;
+  }
 
   /** A list of DBMs stored in the sequent, used to store a set of sequents
    * in a method for easy access during sequent caching. This vector
@@ -117,9 +121,7 @@ public:
    * placeholder (parSequent). */
   std::vector<Sequent *> parSequent;
 
-
 protected:
-
   /** The right hand side expression of the sequent. */
   const ExprNode *e;
   /** The discrete state of the left of a sequent, represented
@@ -164,7 +166,7 @@ public:
   SequentPlace(const ExprNode * const rhs, const SubstList * const sub)
   : e(rhs),
     st(new SubstList(*sub)) {
-  };
+  }
 
 
   /* A default Copy Constructor is implemented by the
@@ -196,18 +198,21 @@ public:
     // Clearing vectors is enough
     parSequent.clear();
     parSequentPlace.clear();
-  };
-
+  }
 
   /** Returns the ExprNode element (rhs or consequent) of the Sequent.
    * @return the rhs expression of the ExprNode element of the Sequent. */
-  const ExprNode * rhs() const {return e ; };
+  const ExprNode * rhs() const
+  {
+    return e;
+  }
 
   /** Returns the discrete state of the sequent's left (the SubstList).
    * @return the discrete state of the sequent's left (the SubstList). */
-  const SubstList * sub() const {return st ; };
-
-
+  const SubstList * sub() const
+  {
+    return st;
+  }
 
   /** A list of (DBM, DBMList) pairs stored in the sequent,
    * used to store a set of sequents
