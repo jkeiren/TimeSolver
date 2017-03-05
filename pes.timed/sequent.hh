@@ -280,7 +280,6 @@ inline bool tabled_sequent(const Sequent * const s, const DBM * const lhs){
     }
   }
   return false;
-
 }
 
 /** Using that a Sequent object is a set of sequents with matching rhs and
