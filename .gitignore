@@ -26,3 +26,8 @@ pes.timed/TimeSolver.includes
 pes.timed/test/dbmlisttest
 pes.timed/test/dbmtest
 pes.timed/test/gtest_main.a
+pes.timed/timesolver-ta.config
+pes.timed/timesolver-ta.creator
+pes.timed/timesolver-ta.creator.user
+pes.timed/timesolver-ta.files
+pes.timed/timesolver-ta.includes
