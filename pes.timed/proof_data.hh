@@ -16,18 +16,6 @@
  * store the sequents with placeholders separately. */
 typedef std::vector<SequentPlace *> stackPlace;
 
-typedef DBM* DBMsetElt;
-
-/** This defines a DBMset as a vector of DBM
- * arrays (DBM Arrays). */
-typedef std::vector<DBMsetElt>  DBMset;
-
-typedef std::pair<DBM *, DBMList *> DBMPlaceSetElt;
-/** Defines a vector of (DBM, DBMList) pairs. Used for lists
- * of placeholder proofs, since (for faster performance) the union
- * of clock zones is restricted to placeholders. */
-typedef std::vector<DBMPlaceSetElt> DBMPlaceSet;
-
 /** Provide the hash function to hash atomic (discrete location) variables
  * into bins; it gives a hash bin per SubstList (
  * discrete location representation).

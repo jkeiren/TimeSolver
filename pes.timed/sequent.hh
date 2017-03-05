@@ -2,6 +2,7 @@
 #define SEQUENT_HH
 
 #include "ExprNode.hh"
+#include "proof_data.hh"
 
 /** The internal representation of a proof sequent with
  * a (potential) union of clock zones for the clock state.
@@ -27,6 +28,13 @@
  * @version 1.2
  * @date November 2, 2013 */
 class SequentPlace; // forward declaration for parent scope
+
+/** Elements of a DBM set */
+typedef DBM* DBMsetElt;
+
+/** This defines a DBMset as a vector of DBM
+ * arrays (DBM Arrays). */
+typedef std::vector<DBMsetElt>  DBMset;
 
 /** The internal representation of a proof sequent with
  * a clock zone for the clock state. A sequent is a
@@ -108,7 +116,7 @@ public:
    * Each element in ds is combined with the location state (st)
    * and the right hand expression (e) to form a proof sequent
    * in the proof tree. */
-  std::vector<DBM*> ds;
+  DBMset ds;
 
   /** The placeholder sequent parent to this sequent in the proof tree;
    * this is used  to quickly access backpointers. A sequent either has a parent
@@ -129,6 +137,13 @@ protected:
   const SubstList *st;
 };
 
+/** Type of elements of a DBM set with placeholders */
+typedef std::pair<DBM *, DBMList *> DBMPlaceSetElt;
+
+/** Defines a vector of (DBM, DBMList) pairs. Used for lists
+ * of placeholder proofs, since (for faster performance) the union
+ * of clock zones is restricted to placeholders. */
+typedef std::vector<DBMPlaceSetElt> DBMPlaceSet;
 
 /** The internal representation of a proof sequent with
  * a (potential) union of clock zones for the clock state.
@@ -221,7 +236,7 @@ public:
    * Each element in ds is combined with the location state (st)
    * and the right hand expression (e) to form a proof sequent
    * in the proof tree. */
-  std::vector<std::pair<DBM*, DBMList* > > ds;
+  DBMPlaceSet ds;
 
   /** The placeholder sequent parent to this sequent in the proof tree;
    * this is used  to quickly access backpointers. A sequent either has a parent
@@ -243,5 +258,323 @@ protected:
    * as a SubstList. */
   const SubstList *st;
 };
+
+/** Using that a Sequent object is a set of sequents with matching rhs and
+ *  discrete states with different clock states, determines if the specified
+ * DBM is contained within one of the sequents. This is used for greatest
+ * fixpoint circularity (or known true sequents), since by definition
+ * of sequents, if sequent B is true and A <= B (the right hand side matches
+ * and the left hand state of A is a subset of the states in B), A is also true.
+ * For this method, each B *(*it) is a known sequent and lhs is the clock state
+ * of A. This method assumes that the right hand side and discrete states match
+ * (and is often called after locate_sequent() or look_for_sequent()); hence,
+ * it only needs to compare clock states.
+ * @param s (*) The sequent that contains a set of DBMs.
+ * @param lhs (*) The DBM to compare the sequent's DBMs to.
+ * @return true: lhs <= some sequent in s
+ * (consequently, the sequent is true), false: otherwise.*/
+inline bool tabled_sequent(const Sequent * const s, const DBM * const lhs){
+  for(DBMset::const_iterator it = s->ds.begin(); it != s->ds.end(); it++) {
+    if (*(*it) >= *lhs) {
+      return true;
+    }
+  }
+  return false;
+
+}
+
+/** Using that a Sequent object is a set of sequents with matching rhs and
+ *  discrete states with different clock states, determines if the specified
+ * clock state is contained within one of the sequents. For performance
+ * reasons, if the sequent is found in here, its placeholder is restricted
+ * to be the largest placeholder possible.
+ * This is used for known true sequents, since by definition
+ * of sequents, if sequent B is true and A <= B (the right hand side matches
+ * and the left hand state of A is a subset of the states in B), A is also true.
+ * For this method, each B *(*it) is a known sequent
+ * and (lhs, lhsPlace) is the clock state
+ * of A. This method assumes that the right hand side and discrete states match
+ * (and is often called after locate_sequentPlace() or
+ * look_for_sequentPlace()); hence,
+ * it only needs to compare clock states.
+ * @param s (*) The placeholder sequent that
+ * contains a set of (DBM, DBMList) pairs.
+ * @param lhs (*) The DBM of the clock state to compare the sequent's DBMs to.
+ * @param lhsPlace (*) The placeholder DBMList of the clock state.
+ * @return true: (lhs, lhsPlace) <= some sequent in s
+ * (consequently, the sequent is true), false: otherwise.*/
+inline bool tabled_sequentPlace(const SequentPlace * const s, const DBM * const lhs,
+                         DBMList * const lhsPlace){
+  for(DBMPlaceSet::const_iterator it = s->ds.begin(); it != s->ds.end(); it++) {
+    if (*((*it).first) == *lhs) {
+      // Since in the cache, we have the largest placeholder where this is true
+      *lhsPlace & *((*it).second);
+      lhsPlace->cf();
+      return true;
+    }
+  }
+  return false;
+}
+
+/** Using that a Sequent object is a set of sequents with matching rhs and
+ *  discrete states with different clock states, determines if the specified
+ * DBM is contains one of the sequents. This is used for known false
+ * sequents, since by definition
+ * of sequents, if sequent B is false and B <= A (the right hand side matches
+ * and the left hand state of B is a subset of the states in A), A is false.
+ * For this method, each B *(*it) is a known sequent and lhs is the clock state
+ * of A. This method assumes that the right hand side and discrete states match
+ * (and is often called after locate_sequent() or look_for_sequent()); hence,
+ * it only needs to compare clock states.
+ * @param s (*) The sequent that contains a set of DBMs.
+ * @param lhs (*) The DBM to compare the sequent's DBMs to.
+ * @return true: lhs >= some sequent in s
+ * (consequently, the sequent is false), false: otherwise.*/
+inline bool tabled_false_sequent(const Sequent * const s, const DBM * const lhs){
+  for(DBMset::const_iterator it = s->ds.begin(); it != s->ds.end(); it++) {
+    if (*(*it) <= *lhs) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/** Using that a Sequent object is a set of sequents with matching rhs and
+ *  discrete states with different clock states, determines if the specified
+ * clock state contains one of the sequents.
+ * This is used for known false sequents, since by definition
+ * of sequents, if sequent B is false and B <= A (the right hand side matches
+ * and the left hand state of B is a subset of the states in A), A is false.
+ * For this method, each B *(*it) is a known sequent
+ * and (lhs, lhsPlace) is the clock state
+ * of A. This method assumes that the right hand side and discrete states match
+ * (and is often called after locate_sequentPlace() or
+ * look_for_sequentPlace()); hence,
+ * it only needs to compare clock states.
+ * @param s (*) The placeholder sequent that
+ * contains a set of (DBM, DBMList) pairs.
+ * @param lhs (*) The DBM of the clock state to compare the sequent's DBMs to.
+ * @param lhsPlace (*) The placeholder DBMList of the clock state.
+ * @return true: (lhs, lhsPlace) >= some sequent in s
+ * (consequently, the sequent is false), false: otherwise.*/
+inline bool tabled_false_sequentPlace(const SequentPlace * const s, const DBM * const lhs,
+                               const DBMList * const lhsPlace){
+  for(DBMPlaceSet::const_iterator it = s->ds.begin(); it != s->ds.end(); it++) {
+    // if (*((*it).first) == *lhs && *((*it).second) <= *lhsPlace) {
+    if (*((*it).first) <= *lhs) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/** Using that a Sequent object is a set of sequents with matching rhs and
+ *  discrete states with different clock states, determines if the specified
+ * DBM equals one of the sequents. This is used for least fixpoint
+ * sequents and checks for sequent equality. For least fixpoint circularity,
+ * if an equal sequent is found then this sequent is false.
+ * This method assumes that the right hand side and discrete states match
+ * (and is often called after locate_sequent() or look_for_sequent()); hence,
+ * it only needs to compare clock states.
+ * @param s (*) The sequent that contains a set of DBMs.
+ * @param lhs (*) The DBM to compare the sequent's DBMs to.
+ * @return true: lhs == some sequent in s, false: otherwise.*/
+inline bool tabled_sequent_lfp(const Sequent * const s, const DBM * const lhs){
+  for(DBMset::const_iterator it = s->ds.begin(); it != s->ds.end(); it++) {
+    if (*(*it) == *lhs) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/** Using that a Sequent object is a set of sequents with matching rhs and
+ *  discrete states with different clock states, determines if the specified
+ * DBM equals one of the sequents. This is used for least fixpoint
+ * sequents and checks for sequent equality. For least fixpoint circularity,
+ * if an equal sequent is found then this sequent is false.
+ * This method assumes that the right hand side and discrete states match
+ * (and is often called after locate_sequentPlace() or
+ * look_for_sequentPlace()); hence,
+ * it only needs to compare clock states.
+ * @param s (*) The placeholder sequent that
+ * contains a set of (DBM, DBMList) pairs.
+ * @param lhs (*) The DBM of the clock state to compare the sequent's DBMs to.
+ * @param lhsPlace (*) The placeholder DBMList of the clock state.
+ * @return true: (lhs, lhsPlace) == some sequent in s, false: otherwise.*/
+inline bool tabled_sequent_lfpPlace(const SequentPlace * const s, const DBM * const lhs,
+                             const DBMList * const lhsPlace){
+  for(DBMPlaceSet::const_iterator it = s->ds.begin(); it != s->ds.end(); it++) {
+    /* Extra work for placeholders. For now,
+     * force equality on LHS sequent and use tabling logic
+     * for placeholders. */
+    if ( *(it->first) == *lhs && *(it->second) == *lhsPlace) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/** Using that a Sequent object is a set of sequents with matching rhs and
+ *  discrete states with different clock states, determines if the specified
+ * clock state is contained within one of the sequents.
+ * This is used for greatest
+ * fixpoint circularity, since by definition
+ * of sequents, if sequent B is true and A <= B (the right hand side matches
+ * and the left hand state of A is a subset of the states in B), A is also true.
+ * For this method, each B *(*it) is a known sequent
+ * and (lhs, lhsPlace) is the clock state
+ * of A. This method assumes that the right hand side and discrete states match
+ * (and is often called after locate_sequentPlace() or
+ * look_for_sequentPlace()); hence,
+ * it only needs to compare clock states.
+ * @param s (*) The placeholder sequent that
+ * contains a set of (DBM, DBMList) pairs.
+ * @param lhs (*) The DBM of the clock state to compare the sequent's DBMs to.
+ * @param lhsPlace (*) The placeholder DBMList of the clock state.
+ * @return true: (lhs, lhsPlace) <= some sequent in s
+ * (consequently, the sequent is true), false: otherwise.*/
+inline bool tabled_sequent_gfpPlace(const SequentPlace * const s, const DBM * const lhs,
+                             const DBMList * const lhsPlace){
+  for(DBMPlaceSet::const_iterator it = s->ds.begin(); it != s->ds.end(); it++) {
+    /* Extra work for placeholders. For now,
+     * force equality on LHS sequent and use tabling logic
+     * for placeholders. */
+    if (*((*it).first) == *lhs && *((*it).second) >= *lhsPlace) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/** Takes in set of known true sequents (s) with a newly
+ * established true clock state (lhs) and adds clock state (lhs)
+ * to the set of sequents in s. In the update, the
+ * DBM lhs is copied. By definition, a sequent B is true
+ * if and only if all of its states satisfy the right hand side. Hence,
+ * if any known clock state is contained in lhs (B <= lhs),
+ * we can enlarge that clock
+ * state (enlarge B). This is more efficient (for searching) than just adding an
+ * additional sequent.
+ * @param s (*) The set of known sequents to update.
+ * @param lhs (*) The DBM of the newly-established clock state.
+ * @return true: the clock state was incorporated into one of s's
+ * sequents; false: otherwise (a new sequent was added to s). */
+inline bool update_sequent(Sequent * const s, const DBM * const lhs){
+  for(DBMset::const_iterator it = s->ds.begin(); it != s->ds.end(); it++) {
+    if (*(*it) <= *lhs) {
+      *(*it) = *lhs;
+      return true;
+    }
+  }
+  DBM *m = new DBM(*lhs);
+  s->ds.push_back(m);
+  return false;
+}
+
+/** Takes in set of known true sequents (s) with a newly
+ * established true clock state (lhs, lhsPlace) and adds
+ * clock state (lhs, lhsPlace)
+ * to the set of sequents in s. In the update, the
+ * DBM lhs and the DBMList lhsPlace are copied.
+ * By definition, a sequent B is true
+ * if and only if all of its states satisfy the right hand side. Hence,
+ * if any known clock state is contained in lhs (B <= lhs),
+ * we can enlarge that clock
+ * state (enlarge B). This is more efficient (for searching) than just adding an
+ * additional sequent.
+ * @param s (*) The set of known placeholder sequents to update.
+ * @param lhs (*) The DBM of the newly-established clock state.
+ * @param lhsPlace (*) The DBMList of the newly-established clock state.
+ * @return true: the clock state was incorporated into one of s's
+ * sequents; false: otherwise (a new sequent was added to s). */
+inline bool update_sequentPlace(SequentPlace * const s, const DBM * const lhs,
+                         const DBMList * const lhsPlace){
+  for(DBMPlaceSet::iterator it = s->ds.begin(); it != s->ds.end(); it++) {
+    /* Extra work for placeholders. For now,
+     * force equality on LHS sequent and use tabling logic
+     * for placeholders. */
+    if (*((*it).first) == *lhs && *((*it).second) <= *lhsPlace) {
+      *((*it).second) = *lhsPlace;
+      return true;
+    }
+  }
+  DBM *m = new DBM(*lhs);
+  DBMList *mp = new DBMList(*lhsPlace);
+  std::pair <DBM *, DBMList *> p (m, mp);
+  s->ds.push_back(p);
+  return false;
+}
+
+/** Takes in set of known false sequents (s) with a newly
+ * established false clock state (lhs) and adds clock state (lhs)
+ * to the set of sequents in s. In the update, the
+ * DBM lhs is copied. By definition, a sequent B is false
+ * if and only if it has a clocks state that does not satisfy the right
+ * side. Hence,
+ * if any known clock state is contains (B >= lhs),
+ * we can refine that clock
+ * state (shrink B). This is more efficient (for searching) than just adding an
+ * additional sequent.
+ * @param s (*) The set of known sequents to update.
+ * @param lhs (*) The DBM of the newly-established clock state.
+ * @return true: the clock state was incorporated into one of s's
+ * sequents; false: otherwise (a new sequent was added to s). */
+inline bool update_false_sequent(Sequent * const s, const DBM * const lhs){
+  for(DBMset::iterator it = s->ds.begin(); it != s->ds.end(); it++) {
+    if (*(*it) >= *lhs) {
+      *(*it) = *lhs;
+      return true;
+    }
+  }
+  DBM *m = new DBM(*lhs);
+  s->ds.push_back(m);
+  return false;
+}
+
+/** Takes in set of known false sequents (s) with a newly
+ * established false clock state (lhs, lhsPlace) and adds
+ * clock state (lhs, lhsPlace)
+ * to the set of sequents in s. In the update, the
+ * DBM lhs and the DBMList lhsPlace are copied.
+ * By definition, a sequent B is false
+ * if and only if it has a clocks state that does not satisfy the right
+ * side. Hence,
+ * if any known clock state is contains (B >= lhs),
+ * we can refine that clock
+ * state (shrink B). This is more efficient (for searching) than just adding an
+ * additional sequent.
+ * @param s (*) The set of known placeholder sequents to update.
+ * @param lhs (*) The DBM of the newly-established clock state.
+ * @param lhsPlace (*) The DBMList of the newly-established clock state.
+ * @return true: the clock state was incorporated into one of s's
+ * sequents; false: otherwise (a new sequent was added to s). */
+inline bool update_false_sequentPlace(SequentPlace * const s, const DBM * const lhs,
+                               const DBMList * const lhsPlace){
+  for(DBMPlaceSet::iterator it = s->ds.begin(); it != s->ds.end(); it++) {
+    if (*((*it).first) >= *lhs) {
+      *((*it).first) = *lhs;
+      return true;
+    }
+  }
+  DBM *m = new DBM(*lhs);
+  /* I would like this to be NULL, but it is checked in the program */
+
+  /** This DBM is used as a DBM with
+   * the proper number of clocks and initialized
+   * so that it represents the empty region
+   * (for all clocks x_i, 0 <= x_i <= 0). */
+  DBM EMPTY(m->nClocks, m->declared_clocks);
+  for (int i=1; i<EMPTY.nClocks; i++){
+    EMPTY.addConstraint(i,0, 0);
+    EMPTY.addConstraint(0,i, 0);
+  }
+  EMPTY.cf();
+
+  DBMList *mp = new DBMList(EMPTY);
+  std::pair <DBM *, DBMList *> p (m,mp);
+  s->ds.push_back(p);
+  return false;
+}
 
 #endif // SEQUENT_HH

@@ -30,7 +30,7 @@ bool prover::do_proof_predicate(const int step, DBM* const lhs, const ExprNode* 
     /* First look in known False Sequent table */
     { // Restricted scope for looking up false sequents
       Sequent tf(rhs, sub);
-      Sequent *hf = Xlist_false.look_for_sequent(tf.sub(), pInd);
+      Sequent *hf = cache.Xlist_false.look_for_sequent(tf.sub(), pInd);
       if(hf != NULL && tabled_false_sequent(hf, lhs)) {
         retVal = false;
         cpplog(cpplogging::debug) << "---(Invalid) Located a Known False Sequent ----" << endl << endl;
@@ -44,7 +44,7 @@ bool prover::do_proof_predicate(const int step, DBM* const lhs, const ExprNode* 
     /* Now look in known True Sequent table */
     { // Restricted scope for looking up true sequents
       Sequent tf(rhs, sub); //JK Can be optimised out by reusing tf?
-      Sequent *hf = Xlist_true.look_for_sequent(tf.sub(), pInd);
+      Sequent *hf = cache.Xlist_true.look_for_sequent(tf.sub(), pInd);
       if(hf != NULL && tabled_sequent(hf, lhs)) {
         retVal = true;
         cpplog(cpplogging::debug) << "---(Valid) Located a Known True Sequent ----" << endl << endl;
@@ -62,7 +62,7 @@ bool prover::do_proof_predicate(const int step, DBM* const lhs, const ExprNode* 
   { // Restricted scope for detecting circularities
     Sequent *t = new Sequent(rhs, sub);
     if(currParityGfp) { // Thus a Greatest Fixpoint
-      h = Xlist_pGFP.locate_sequent(t, pInd);
+      h = cache.Xlist_pGFP.locate_sequent(t, pInd);
       if((!newSequent) && tabled_sequent(h, lhs)) {
         // Found gfp Circularity - thus valid
         retVal = true;
@@ -75,7 +75,7 @@ bool prover::do_proof_predicate(const int step, DBM* const lhs, const ExprNode* 
         // Add sequent to known true cache
         if(useCaching) {
           Sequent *t7 = new Sequent(rhs, sub);
-          Sequent *h7 = Xlist_true.locate_sequent(t7, pInd);
+          Sequent *h7 = cache.Xlist_true.locate_sequent(t7, pInd);
           update_sequent(h7, lhs);
         }
         return retVal;
@@ -85,7 +85,7 @@ bool prover::do_proof_predicate(const int step, DBM* const lhs, const ExprNode* 
     }
     else { // Thus, a least fixpoint
       // Now look for a Circularity
-      h = Xlist_pLFP.locate_sequent(t, pInd);
+      h = cache.Xlist_pLFP.locate_sequent(t, pInd);
       if((!newSequent) && tabled_sequent_lfp(h, lhs)) {
         // Found lfp circularituy - thus invalid
         retVal = false;
@@ -98,7 +98,7 @@ bool prover::do_proof_predicate(const int step, DBM* const lhs, const ExprNode* 
         // Now Put Sequent in False Cache
         if(useCaching) {
           Sequent *t7 = new Sequent(rhs, sub);
-          Sequent *h7 = Xlist_false.locate_sequent(t7, pInd);
+          Sequent *h7 = cache.Xlist_false.locate_sequent(t7, pInd);
           update_false_sequent(h7, lhs);
         }
         return retVal;
@@ -140,17 +140,17 @@ bool prover::do_proof_predicate(const int step, DBM* const lhs, const ExprNode* 
       bool madeEmpty = false;
       Sequent *t2 = new Sequent(rhs, sub);
       /* If found, Purge Sequent from its cache */
-      Sequent *t2s = Xlist_false.look_for_and_purge_rhs_sequent(lhs, t2, pInd, false, &madeEmpty);
+      Sequent *t2s = cache.Xlist_false.look_for_and_purge_rhs_sequent(lhs, t2, pInd, false, &madeEmpty);
 
       /* Now purge backpointers */
       if(t2s != NULL) {
-        look_for_and_purge_rhs_backStack(&(t2s->parSequent),
+        cache.look_for_and_purge_rhs_backStack(&(t2s->parSequent),
                                          &(t2s->parSequentPlace));
       }
 
       // Now update in proper Cache
       Sequent *t5 = new Sequent(rhs, sub);
-      Sequent *h5 = Xlist_true.locate_sequent(t5, pInd);
+      Sequent *h5 = cache.Xlist_true.locate_sequent(t5, pInd);
       update_sequent(h5, lhs);
 
       // Now make deletions for Memory Cleanup
@@ -166,18 +166,18 @@ bool prover::do_proof_predicate(const int step, DBM* const lhs, const ExprNode* 
       Sequent *t22 = new Sequent(rhs, sub);
       bool madeEmpty = false;
       /* If found, Purge Sequent from its cache */
-      Sequent *t22s = Xlist_true.look_for_and_purge_rhs_sequent(lhs, t22, pInd, true, &madeEmpty);
+      Sequent *t22s = cache.Xlist_true.look_for_and_purge_rhs_sequent(lhs, t22, pInd, true, &madeEmpty);
 
       /* Now purge backpointers.
        * Ignore circularity booleans because they do not form backpointers */
       if(t22s != NULL) {
-        look_for_and_purge_rhs_backStack(&(t22s->parSequent),
+        cache.look_for_and_purge_rhs_backStack(&(t22s->parSequent),
                                          &(t22s->parSequentPlace));
       }
 
       // Now update in proper Cache
       Sequent *t5 = new Sequent(rhs, sub);
-      Sequent *h5 = Xlist_false.locate_sequent(t5, pInd);
+      Sequent *h5 = cache.Xlist_false.locate_sequent(t5, pInd);
       update_false_sequent(h5, lhs);
 
       // Now make deletions for Memory Cleanup
@@ -1182,7 +1182,7 @@ DBMList* prover::do_proof_place_predicate(int step, DBM* const lhs, DBMList* con
    * need to store placeholders. */
   if(useCaching) {
     SequentPlace *tf = new SequentPlace(rhs, sub);
-    SequentPlace *hf = Xlist_false_ph.look_for_sequent(tf->sub(), pInd);
+    SequentPlace *hf = cache.Xlist_false_ph.look_for_sequent(tf->sub(), pInd);
     if(hf != NULL && tabled_false_sequentPlace(hf, lhs, place)) {
       // Found known false
       retPlaceDBM->makeEmpty();
@@ -1212,7 +1212,7 @@ DBMList* prover::do_proof_place_predicate(int step, DBM* const lhs, DBMList* con
   /* Now look in known true cache */
   if(useCaching) {
     SequentPlace *tfb = new SequentPlace(rhs, sub);
-    SequentPlace *hfb = Xlist_true_ph.look_for_sequent(tfb->sub(), pInd);
+    SequentPlace *hfb = cache.Xlist_true_ph.look_for_sequent(tfb->sub(), pInd);
     DBMList tempPlace(*place);
     /* Note: tempPlace is changed by tabled_sequentPlace() */
     if(hfb != NULL && tabled_sequentPlace(hfb, lhs, &tempPlace)) {
@@ -1254,7 +1254,7 @@ DBMList* prover::do_proof_place_predicate(int step, DBM* const lhs, DBMList* con
   SequentPlace *h;
   if(currParityGfp) { // Thus a Greatest Fixpoint
     /* Already looked in known false so no need to do so */
-    h = Xlist_pGFP_ph.locate_sequent(t, pInd);
+    h = cache.Xlist_pGFP_ph.locate_sequent(t, pInd);
     if((!newSequent) && tabled_sequent_gfpPlace(h, lhs, place)) {
       // Found gfp Circularity - thus valid
       *retPlaceDBM = (*place);
@@ -1271,7 +1271,7 @@ DBMList* prover::do_proof_place_predicate(int step, DBM* const lhs, DBMList* con
       // Add sequent to known true cache
       if(useCaching) {
         SequentPlace *t7 = new SequentPlace(rhs, sub);
-        SequentPlace *h7 = Xlist_true_ph.locate_sequent(t7, pInd);
+        SequentPlace *h7 = cache.Xlist_true_ph.locate_sequent(t7, pInd);
         update_sequentPlace(h7, lhs, place);
       }
       return retPlaceDBM;
@@ -1283,7 +1283,7 @@ DBMList* prover::do_proof_place_predicate(int step, DBM* const lhs, DBMList* con
   }
   else { // Thus, a least fixpoint
     // Now look in lfp circularity cache
-    h = Xlist_pLFP_ph.locate_sequent(t, pInd);
+    h = cache.Xlist_pLFP_ph.locate_sequent(t, pInd);
     if((!newSequent) && tabled_sequent_lfpPlace(h, lhs, place)) {
       // Found lfp circularity - thus invalid
       retPlaceDBM->makeEmpty();
@@ -1301,7 +1301,7 @@ DBMList* prover::do_proof_place_predicate(int step, DBM* const lhs, DBMList* con
       // Now Put Sequent in False Cache
       if(useCaching) {
         SequentPlace *t7 = new SequentPlace(rhs, sub);
-        SequentPlace *h7 = Xlist_false_ph.locate_sequent(t7, pInd);
+        SequentPlace *h7 = cache.Xlist_false_ph.locate_sequent(t7, pInd);
         update_false_sequentPlace(h7, lhs, place);
       }
       return retPlaceDBM;
@@ -1350,19 +1350,19 @@ DBMList* prover::do_proof_place_predicate(int step, DBM* const lhs, DBMList* con
     SequentPlace *t2c = new SequentPlace(rhs, sub);
     SequentPlace *t2s;
     bool madeEmpty = false;
-    t2s = Xlist_false_ph.look_for_and_purge_rhs_sequent(std::make_pair(lhs, retPlaceDBM), t2c, pInd, false, &madeEmpty);
+    t2s = cache.Xlist_false_ph.look_for_and_purge_rhs_sequent(std::make_pair(lhs, retPlaceDBM), t2c, pInd, false, &madeEmpty);
 
 
     /* Now purge backpointers */
     if(t2s != NULL) {
-      look_for_and_purge_rhs_backStack(&(t2s->parSequent),
+      cache.look_for_and_purge_rhs_backStack(&(t2s->parSequent),
                                        &(t2s->parSequentPlace));
       // Delete t2s later to prevent double deletion
 
     }
     // Now update in proper Cache
     SequentPlace *t5 = new SequentPlace(rhs, sub);
-    SequentPlace *h5 = Xlist_true_ph.locate_sequent(t5, pInd);
+    SequentPlace *h5 = cache.Xlist_true_ph.locate_sequent(t5, pInd);
     update_sequentPlace(h5, lhs, retPlaceDBM);
 
     // Now make deletions for Memory Cleanup
@@ -1382,19 +1382,19 @@ DBMList* prover::do_proof_place_predicate(int step, DBM* const lhs, DBMList* con
     SequentPlace *t2b2 = new SequentPlace(rhs, sub);
     SequentPlace *t2bs;
     bool madeEmpty = false;
-    t2bs = Xlist_true_ph.look_for_and_purge_rhs_sequent(std::make_pair(lhs, retPlaceDBM), t2b2, pInd, true, &madeEmpty);
+    t2bs = cache.Xlist_true_ph.look_for_and_purge_rhs_sequent(std::make_pair(lhs, retPlaceDBM), t2b2, pInd, true, &madeEmpty);
 
 
     /* Now purge backpointers.
      * Ignore circularity booleans because they do not form backpointers */
     if(t2bs != NULL) {
-      look_for_and_purge_rhs_backStack(&(t2bs->parSequent),
+      cache.look_for_and_purge_rhs_backStack(&(t2bs->parSequent),
                                        &(t2bs->parSequentPlace));
       // delete t2bs later to prevent double deletion.
     }
     // Now update in proper Cache
     SequentPlace *t5 = new SequentPlace(rhs, sub);
-    SequentPlace *h5 = Xlist_false_ph.locate_sequent(t5, pInd);
+    SequentPlace *h5 = cache.Xlist_false_ph.locate_sequent(t5, pInd);
     update_false_sequentPlace(h5, lhs, retPlaceDBM);
 
     // Now make deletions for Memory Cleanup
