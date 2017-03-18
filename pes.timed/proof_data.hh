@@ -138,7 +138,7 @@ public:
    * @param pInd The index of the predicate; used to find the proper hashing bin.
    * @return The reference to the sequent with the three components
    * specified as parameters. */
-  SequentType * locate_sequent(SequentType * const s, int pInd)
+  SequentType * locate_sequent(SequentType * const s, int pInd) const
   {
     int indexH = hash_func(s->sub(), aSize, nbits);
     int index = pInd*seqStSize + indexH;
@@ -182,7 +182,8 @@ public:
    * @param pInd The index of the predicate; used to find the proper hashing bin.
    * @return The reference to the sequent with the three components
    * specified as parameters. */
-  SequentType * look_for_sequent(const SubstList * const subs, int pInd){
+  SequentType * look_for_sequent(const SubstList * const subs, int pInd) const
+  {
     int indexH = hash_func(subs, aSize, nbits);
     int index = pInd*seqStSize + indexH;
     for(typename stack::const_iterator it = Xlist[index].begin(); it != Xlist[index].end(); it++){
@@ -227,15 +228,16 @@ public:
    * @return The pointer to the purged sequent, or
    * NULL if no sequent was purged.*/
   SequentType * look_for_and_purge_rhs_sequent(const DBMsetElementType elt,
-               const SequentType * const s,
-               const int pInd,
-               const bool tableCheck, bool * const madeEmpty){
+               const SequentType * const s, const int pInd,
+               const bool tableCheck, bool * const madeEmpty)
+  {
     int indexH = hash_func(s->sub(), aSize, nbits);
     int index = pInd*seqStSize + indexH;
     bool matched = false;
     *madeEmpty = false;
     /* This assumes that location only locates one sequent in the stack */
     SequentType * foundSequent = NULL;
+
     for(typename stack::const_iterator it = Xlist[index].begin(); it != Xlist[index].end(); it++){
       SequentType *ls = (*it);
       matched = true;
@@ -251,7 +253,8 @@ public:
        * that are in line with the proper "tabling"
        * or containment, which are specified by
        * the tableCheck Boolean */
-      if(matched == true){
+      if(matched)
+      {
         // Now Iterate on the Tabled Sequents
         /* Key Concept of Purging:
          * If Was True (tableCheck is true), discovered false, check that
@@ -260,35 +263,17 @@ public:
          *		Z_now_true >= Z_cached_false | or | Z_cached_false <= Z_now_true
          * This Must be done regardless of how the tabling
          * is done for that specific cache */
-        if(tableCheck) {
-          for(typename DBMsetType::iterator itb = ls->dbm_set().begin(); itb != ls->dbm_set().end(); itb++) {
-            // JK: there is an interesting difference in the handling of DBMs in the
-            // cases without and with placeholders.
-            // without placeholders we use the comparison
-            // *(*itb) >= *lhs)
-            // with placeholders we compare
-            // *(*itb).first) == *lhs
-            // this is handled in match_for_purgin_tabled
-            if (match_for_purging_tabled(*itb, *getDBM(elt))) {
-              // purge Here
-              delete_DBMset_elt(*itb);
-              itb = ls->dbm_set().erase(itb);
-              itb--;
-              foundSequent = ls;
-            }
-          }
-        }
-        else { //tableCheck is false
-          for(typename DBMsetType::iterator itb = ls->dbm_set().begin(); itb != ls->dbm_set().end(); itb++) {
-            if (*getDBM(*itb) <= *getDBM(elt)) {
-              // purge Here
-              delete_DBMset_elt(*itb);
-              itb = ls->dbm_set().erase(itb);
-              itb--;
-              foundSequent = ls;
-            }
-          }
 
+        for(typename DBMsetType::iterator itb = ls->dbm_set().begin(); itb != ls->dbm_set().end(); ++itb) {
+          if((tableCheck && match_for_purging_tabled(*itb, *getDBM(elt)))
+             || *getDBM(*itb) <= *getDBM(elt))
+          {
+            // purge Here
+            delete_DBMset_elt(*itb);
+            itb = ls->dbm_set().erase(itb);
+            itb--;
+            foundSequent = ls;
+          }
         }
 
         // Reset matched to delete only other matched purges
