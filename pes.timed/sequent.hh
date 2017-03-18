@@ -2,7 +2,6 @@
 #define SEQUENT_HH
 
 #include "ExprNode.hh"
-#include "proof_data.hh"
 
 /** The internal representation of a proof sequent with
  * a (potential) union of clock zones for the clock state.
@@ -499,8 +498,8 @@ public:
    * @param lhsPlace (*) The placeholder DBMList of the clock state.
    * @return true: (lhs, lhsPlace) >= some sequent in s
    * (consequently, the sequent is false), false: otherwise.*/
-  inline bool tabled_false_sequent(const DBM * const lhs,
-                                   const DBMList * const lhsPlace){
+  inline bool tabled_false_sequent(const DBM * const lhs)
+  {
     return std::find_if(ds.begin(), ds.end(), [&](const DBMPlaceSetElt x){return *(x.first) <= *lhs; }) != ds.end();
   }
 
@@ -596,7 +595,7 @@ public:
    * @param lhsPlace (*) The DBMList of the newly-established clock state.
    * @return true: the clock state was incorporated into one of s's
    * sequents; false: otherwise (a new sequent was added to s). */
-  bool update_false_sequent(const DBM * const lhs, const DBMList * const lhsPlace){
+  bool update_false_sequent(const DBM * const lhs){
     for(DBMPlaceSet::iterator it = ds.begin(); it != ds.end(); ++it) {
       if (*((*it).first) >= *lhs) {
         *((*it).first) = *lhs;

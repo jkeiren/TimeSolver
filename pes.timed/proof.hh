@@ -1784,7 +1784,7 @@ inline DBMList* prover::do_proof_place_predicate(int step, DBM* const lhs, DBMLi
   if(useCaching) {
     SequentPlace *tf = new SequentPlace(rhs, sub);
     SequentPlace *hf = cache.Xlist_false_ph.look_for_sequent(tf->sub(), pInd);
-    if(hf != NULL && hf->tabled_false_sequent(lhs, place)) {
+    if(hf != NULL && hf->tabled_false_sequent(lhs)) {
       // Found known false
       retPlaceDBM->makeEmpty();
       cpplog(cpplogging::debug) << "---(Invalid) Located a Known False Sequent ----" <<  std::endl <<  std::endl;
@@ -1903,7 +1903,7 @@ inline DBMList* prover::do_proof_place_predicate(int step, DBM* const lhs, DBMLi
       if(useCaching) {
         SequentPlace *t7 = new SequentPlace(rhs, sub);
         SequentPlace *h7 = cache.Xlist_false_ph.locate_sequent(t7, pInd);
-        h7->update_false_sequent(lhs, place);
+        h7->update_false_sequent(lhs);
       }
       return retPlaceDBM;
     }
@@ -1989,7 +1989,7 @@ inline DBMList* prover::do_proof_place_predicate(int step, DBM* const lhs, DBMLi
     // Now update in proper Cache
     SequentPlace *t5 = new SequentPlace(rhs, sub);
     SequentPlace *h5 = cache.Xlist_false_ph.locate_sequent(t5, pInd);
-    h5->update_false_sequent(lhs, retPlaceDBM);
+    h5->update_false_sequent(lhs);
 
     // Now make deletions for Memory Cleanup
     if(t2b2 != t2bs) {

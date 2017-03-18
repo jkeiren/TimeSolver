@@ -134,7 +134,6 @@ public:
    * then examined for the desired clock state (with tabled_sequent()).
    * @param s (*) The sequent; only its discrete state is examined, but the entire
    * sequent is added if not found.
-   * @param Xlist (*) The cache of sequents to look in.
    * @param pInd The index of the predicate; used to find the proper hashing bin.
    * @return The reference to the sequent with the three components
    * specified as parameters. */
@@ -315,7 +314,8 @@ public:
    * false but discovered to be true.
    * @return true: one or more sequents were purged; false: otherwise.*/
   bool look_for_and_purge_rhs_sequent_state(const SequentType * const s,
-                    const int pInd, const bool tableCheck) {
+                    const int pInd)
+  {
     int indexH = hash_func(s->sub(), aSize, nbits);
     int index = pInd*seqStSize + indexH;
     bool matched = false;
@@ -335,7 +335,7 @@ public:
        * that are in line with the proper "tabling"
        * or containment, which are specified by
        * the tableCheck Boolean */
-      if(matched == true){
+      if(matched){
         /* Key Concept of Purging:
          * If Was True (tableCheck is true), discovered false, check that
          *		Z_now_false <= Z_cached_true | or | Z_cached_true >= Z_now_false
@@ -355,7 +355,6 @@ public:
 
         // Reset matched to delete only other matched purges
         matched = false;
-
       }
 
     }
