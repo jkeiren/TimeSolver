@@ -147,6 +147,7 @@ class pes
       }
     }
 
+    /** Getter for all atomic variables */
     const bidirectional_map<std::string, int>& atomic() const
     {
       return _atomic;
@@ -167,6 +168,7 @@ class pes
       return 1;
     }
 
+    /** Find the index of the atomic variable @name */
     int lookup_atomic(const std::string& name) const
     {
       try
@@ -189,11 +191,13 @@ class pes
       }
     }
 
+    /** Get the assignment of initial values */
     const std::map <int,int>& initially() const
     {
       return _initially;
     }
 
+    /** Get the declared predicates */
     const std::map <std::string, ExprNode*>& predicates() const
     {
       return _predicates;
@@ -246,6 +250,7 @@ class pes
       }
     }
 
+    /** Get the predicate for which we need to solve */
     std::string& start_predicate()
     {
       return _start_predicate;
@@ -272,6 +277,7 @@ class pes
       }
     }
 
+    /** Get the equations */
     const std::map<std::string, ExprNode*>& equations() const
     {
       return _equations;
@@ -317,21 +323,25 @@ class pes
       }
     }
 
+    /** Get all invariants */
     const std::vector<ExprNode*>& invariants() const
     {
       return _invariants;
     }
 
+    /** Add an invariant */
     void add_invariant(ExprNode* inv)
     {
       _invariants.push_back(inv);
     }
 
+    /** Get all transitions of the TA */
     const std::vector<Transition*>& transitions() const
     {
       return _transitions;
     }
 
+    /** Add a transition to the TA */
     void add_transition(Transition* t)
     {
       _transitions.push_back(t);

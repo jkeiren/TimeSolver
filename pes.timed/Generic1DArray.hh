@@ -88,7 +88,6 @@ public:
       std::cerr << "memcpy error - add Generic1DArray" << std::endl;
       exit(-1);
     }
-    return;
   }
 
   /** Returns a reference of the element at the specified index.

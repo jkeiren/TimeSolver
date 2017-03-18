@@ -93,19 +93,18 @@ public:
     // Clearing vectors is enough
     parSequent.clear();
     parSequentPlace.clear();
-  };
-
+  }
 
   /** Returns the ExprNode element (rhs or consequent) of the Sequent.
    * @return the rhs expression of the ExprNode element of the Sequent. */
-  const ExprNode * rhs() const
+  const ExprNode* rhs() const
   {
     return e;
   }
 
   /** Returns the discrete state of the sequent's left (the SubstList).
    * @return the discrete state of the sequent's left (the SubstList). */
-  const SubstList * sub() const
+  const SubstList* sub() const
   {
     return st;
   }

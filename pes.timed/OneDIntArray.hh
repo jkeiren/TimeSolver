@@ -11,7 +11,7 @@
 #include "Generic1DArray.hh"
 
 /** An implementation of an array of short integers.
- * @author Dezhuang Zhang and Pater Fontana
+ * @author Dezhuang Zhang and Peter Fontana
  * @note Many functions are inlined for better performance.
  * @version 1.2
  * @date November 2, 2013 */
@@ -28,6 +28,8 @@ public:
    * @param Y (&) The reference to the object to copy.
    * @return [Constructor]. */
   OneDIntArray(const OneDIntArray &Y) : Generic1DArray(Y){};
+
+public:
   
   /** Retrieves a reference for the element specified at the given index.
    * The reference returned is a reference to the actual copy, not a deep copy. 
@@ -37,14 +39,8 @@ public:
    * the first index.
    * @return A reference to the element in the array. */
   short int& operator[](const short int index) {
-    // Indexes are zero based
-    /* We might want a private method that does not use bounds checks
-     * In order to improve performance. */
-    if (index < 0 || index >= quantity) {   
-      std::cerr << "OneDIntArray operator[] - out of bounds." << std::endl;
-      exit(-1);
-    }
-    return operatorAccess(index);
+    // re-use the const version of this function.
+    return const_cast<short int&>(at(index));
   }
 
   /** Retrieves a const reference for the element specified at the given index.
@@ -62,10 +58,7 @@ public:
       std::cerr << "OneDIntArray operator[] - out of bounds." << std::endl;
       exit(-1);
     }
-    short int offset = index * sizeof(short int);
-    short int *p = (short int*) &(storage[offset]);
-    // Dereference p
-    return (*p);
+    return operatorAccess(index);
   }
 
 
@@ -81,11 +74,7 @@ protected:
    * the first index.
    * @return A reference to the element in the array. */
   short int& operatorAccess(const short int index) {
-    // Indexes are zero based
-    short int offset = index * sizeof(short int);
-    short int *p = (short int*) &(storage[offset]);
-    // Dereference p
-    return (*p);
+    return const_cast<short int&>(operatorAccess_impl(index));
   }
 
   /** Retrieves a reference for the element specified at the given index.
@@ -98,6 +87,19 @@ protected:
    * the first index.
    * @return A reference to the element in the array. */
   const short int& operatorAccess(const short int index) const {
+    return operatorAccess_impl(index);
+  }
+
+  /** Retrieves a reference for the element specified at the given index.
+   * This is a protected method because it eliminates bounds checking to improve
+   * performance.
+   * The reference returned is a reference to the actual copy, not a deep copy.
+   * Consequently, this reference can be used to change the
+   * referred object's value.
+   * @param index The index of the element to acces; 0 is
+   * the first index.
+   * @return A reference to the element in the array. */
+  const short int& operatorAccess_impl(const short int index) const {
     // Indexes are zero based
     short int offset = index * sizeof(short int);
     short int *p = (short int*) &(storage[offset]);
