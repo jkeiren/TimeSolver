@@ -634,12 +634,12 @@ inline bool prover::do_proof_predicate(const int step, DBM* const lhs, const Exp
     { // Restricted scope for looking up false sequents
       Sequent tf(rhs, sub);
       Sequent *hf = cache.Xlist_false.look_for_sequent(tf.sub(), pInd);
-      if(hf != NULL && tabled_false_sequent(hf, lhs)) {
+      if(hf != NULL && hf->tabled_false_sequent(lhs)) {
         retVal = false;
         cpplog(cpplogging::debug) << "---(Invalid) Located a Known False Sequent ----" <<  std::endl <<  std::endl;
 
         /* Add backpointer to parent sequent (shallow copy) */
-        hf->parSequent.push_back(parentRef);
+        hf->addParent(parentRef);
         return retVal; // break out of switch
       }
     }
@@ -648,12 +648,12 @@ inline bool prover::do_proof_predicate(const int step, DBM* const lhs, const Exp
     { // Restricted scope for looking up true sequents
       Sequent tf(rhs, sub); //JK Can be optimised out by reusing tf?
       Sequent *hf = cache.Xlist_true.look_for_sequent(tf.sub(), pInd);
-      if(hf != NULL && tabled_sequent(hf, lhs)) {
+      if(hf != NULL && hf->tabled_sequent(lhs)) {
         retVal = true;
         cpplog(cpplogging::debug) << "---(Valid) Located a Known True Sequent ----" <<  std::endl <<  std::endl;
 
         /* Add backpointer to parent sequent (shallow copy) */
-        hf->parSequent.push_back(parentRef);
+        hf->addParent(parentRef);
         return retVal; // break out of switch
       }
     }
@@ -666,48 +666,48 @@ inline bool prover::do_proof_predicate(const int step, DBM* const lhs, const Exp
     Sequent *t = new Sequent(rhs, sub);
     if(currParityGfp) { // Thus a Greatest Fixpoint
       h = cache.Xlist_pGFP.locate_sequent(t, pInd);
-      if((!newSequent) && tabled_sequent(h, lhs)) {
+      if((!newSequent) && h->tabled_sequent(lhs)) {
         // Found gfp Circularity - thus valid
         retVal = true;
 
         cpplog(cpplogging::debug) << "---(Valid) Located a True Sequent or gfp Circularity ----" <<  std::endl <<  std::endl;
 
         /* Add backpointer to parent sequent (shallow copy) */
-        h->parSequent.push_back(parentRef);
+        h->addParent(parentRef);
 
         // Add sequent to known true cache
         if(useCaching) {
           Sequent *t7 = new Sequent(rhs, sub);
           Sequent *h7 = cache.Xlist_true.locate_sequent(t7, pInd);
-          update_sequent(h7, lhs);
+          h7->update_sequent(lhs);
         }
         return retVal;
       }
 
-      h->ds.push_back(new DBM(*lhs));
+      h->push_sequent(new DBM(*lhs));
     }
     else { // Thus, a least fixpoint
       // Now look for a Circularity
       h = cache.Xlist_pLFP.locate_sequent(t, pInd);
-      if((!newSequent) && tabled_sequent_lfp(h, lhs)) {
+      if((!newSequent) && h->tabled_sequent_lfp(lhs)) {
         // Found lfp circularituy - thus invalid
         retVal = false;
 
         cpplog(cpplogging::debug) << "---(Invalid) Located a lfp Circularity ----" <<  std::endl <<  std::endl;
 
         /* Add backpointer to parent sequent (shallow copy) */
-        h->parSequent.push_back(parentRef);
+        h->addParent(parentRef);
 
         // Now Put Sequent in False Cache
         if(useCaching) {
           Sequent *t7 = new Sequent(rhs, sub);
           Sequent *h7 = cache.Xlist_false.locate_sequent(t7, pInd);
-          update_false_sequent(h7, lhs);
+          h7->update_false_sequent(lhs);
         }
         return retVal;
       }
 
-      h->ds.push_back(new DBM(*lhs));
+      h->push_sequent(new DBM(*lhs));
     }
   } // End scope for circularity
   assert(h != nullptr);
@@ -747,14 +747,13 @@ inline bool prover::do_proof_predicate(const int step, DBM* const lhs, const Exp
 
       /* Now purge backpointers */
       if(t2s != NULL) {
-        cache.look_for_and_purge_rhs_backStack(&(t2s->parSequent),
-                                         &(t2s->parSequentPlace));
+        cache.look_for_and_purge_rhs_backStack(t2s->parents(), t2s->parents_with_placeholders());
       }
 
       // Now update in proper Cache
       Sequent *t5 = new Sequent(rhs, sub);
       Sequent *h5 = cache.Xlist_true.locate_sequent(t5, pInd);
-      update_sequent(h5, lhs);
+      h5->update_sequent(lhs);
 
       // Now make deletions for Memory Cleanup
       if(t2 != t2s) {
@@ -774,14 +773,13 @@ inline bool prover::do_proof_predicate(const int step, DBM* const lhs, const Exp
       /* Now purge backpointers.
        * Ignore circularity booleans because they do not form backpointers */
       if(t22s != NULL) {
-        cache.look_for_and_purge_rhs_backStack(&(t22s->parSequent),
-                                         &(t22s->parSequentPlace));
+        cache.look_for_and_purge_rhs_backStack(t22s->parents(), t22s->parents_with_placeholders());
       }
 
       // Now update in proper Cache
       Sequent *t5 = new Sequent(rhs, sub);
       Sequent *h5 = cache.Xlist_false.locate_sequent(t5, pInd);
-      update_false_sequent(h5, lhs);
+      h5->update_false_sequent(lhs);
 
       // Now make deletions for Memory Cleanup
       if( t22 != t22s) {
@@ -793,11 +791,9 @@ inline bool prover::do_proof_predicate(const int step, DBM* const lhs, const Exp
     }
   }
 
-  /* The line: h->parSequent.push_back(parentRef);
+  /* The line: h->addParent(parentRef);
    * is not needed since the backpointer stored before proof. */
-  DBM * tempDBM = h->ds.back();
-  delete tempDBM;
-  h->ds.pop_back();
+  h->pop_sequent();
   return retVal;
 }
 
@@ -1788,7 +1784,7 @@ inline DBMList* prover::do_proof_place_predicate(int step, DBM* const lhs, DBMLi
   if(useCaching) {
     SequentPlace *tf = new SequentPlace(rhs, sub);
     SequentPlace *hf = cache.Xlist_false_ph.look_for_sequent(tf->sub(), pInd);
-    if(hf != NULL && tabled_false_sequentPlace(hf, lhs, place)) {
+    if(hf != NULL && hf->tabled_false_sequent(lhs, place)) {
       // Found known false
       retPlaceDBM->makeEmpty();
       cpplog(cpplogging::debug) << "---(Invalid) Located a Known False Sequent ----" <<  std::endl <<  std::endl;
@@ -1798,10 +1794,10 @@ inline DBMList* prover::do_proof_place_predicate(int step, DBM* const lhs, DBMLi
       /* Now that we have a proven sequent, add the backpointer
        * from the child to the parent */
       if(parentPlaceRef != NULL) {
-        hf->parSequentPlace.push_back(parentPlaceRef);
+        hf->addParent(parentPlaceRef);
       }
       else { // Parent is regular sequent
-        hf->parSequent.push_back(parentRef);
+        hf->addParent(parentRef);
       }
       // Do not delete if tf is the same sequent as hf
       if(tf != hf) {
@@ -1820,7 +1816,7 @@ inline DBMList* prover::do_proof_place_predicate(int step, DBM* const lhs, DBMLi
     SequentPlace *hfb = cache.Xlist_true_ph.look_for_sequent(tfb->sub(), pInd);
     DBMList tempPlace(*place);
     /* Note: tempPlace is changed by tabled_sequentPlace() */
-    if(hfb != NULL && tabled_sequentPlace(hfb, lhs, &tempPlace)) {
+    if(hfb != NULL && hfb->tabled_sequent(lhs, &tempPlace)) {
       // Found known true
       if(tempPlace.emptiness()) {
         // returning placeholder must be non-empty for the sequent
@@ -1838,10 +1834,10 @@ inline DBMList* prover::do_proof_place_predicate(int step, DBM* const lhs, DBMLi
       /* Now that we have a proven sequent, add the backpointer
        * in the cache from the child to the parent */
       if(parentPlaceRef != NULL) {
-        hfb->parSequentPlace.push_back(parentPlaceRef);
+        hfb->addParent(parentPlaceRef);
       }
       else { // Parent is regular sequent
-        hfb->parSequent.push_back(parentRef);
+        hfb->addParent(parentRef);
       }
 
       if(tfb != hfb) {
@@ -1860,36 +1856,36 @@ inline DBMList* prover::do_proof_place_predicate(int step, DBM* const lhs, DBMLi
   if(currParityGfp) { // Thus a Greatest Fixpoint
     /* Already looked in known false so no need to do so */
     h = cache.Xlist_pGFP_ph.locate_sequent(t, pInd);
-    if((!newSequent) && tabled_sequent_gfpPlace(h, lhs, place)) {
+    if((!newSequent) && h->tabled_sequent_gfp(lhs, place)) {
       // Found gfp Circularity - thus valid
       *retPlaceDBM = (*place);
       cpplog(cpplogging::debug) << "---(Valid) Located True Sequent or gfp Circularity ----" <<  std::endl <<  std::endl;
 
       /* Now update backpointer for greatest fixpoint circularity */
       if(parentPlaceRef != NULL) {
-        h->parSequentPlace.push_back(parentPlaceRef);
+        h->addParent(parentPlaceRef);
       }
       else { // Parent is regular sequent
-        h->parSequent.push_back(parentRef);
+        h->addParent(parentRef);
       }
 
       // Add sequent to known true cache
       if(useCaching) {
         SequentPlace *t7 = new SequentPlace(rhs, sub);
         SequentPlace *h7 = cache.Xlist_true_ph.locate_sequent(t7, pInd);
-        update_sequentPlace(h7, lhs, place);
+        h7->update_sequent(lhs, place);
       }
       return retPlaceDBM;
     }
 
 
     std::pair <DBM *, DBMList *> p (new DBM(*lhs),new DBMList(*place));
-    h->ds.push_back(p);
+    h->dbm_set().push_back(p);
   }
   else { // Thus, a least fixpoint
     // Now look in lfp circularity cache
     h = cache.Xlist_pLFP_ph.locate_sequent(t, pInd);
-    if((!newSequent) && tabled_sequent_lfpPlace(h, lhs, place)) {
+    if((!newSequent) && h->tabled_sequent_lfp(lhs, place)) {
       // Found lfp circularity - thus invalid
       retPlaceDBM->makeEmpty();
 
@@ -1897,23 +1893,23 @@ inline DBMList* prover::do_proof_place_predicate(int step, DBM* const lhs, DBMLi
 
       /* Now update backpointer for least fixpoint circularity */
       if(parentPlaceRef != NULL) {
-        h->parSequentPlace.push_back(parentPlaceRef);
+        h->addParent(parentPlaceRef);
       }
       else { // Parent is regular sequent
-        h->parSequent.push_back(parentRef);
+        h->addParent(parentRef);
       }
 
       // Now Put Sequent in False Cache
       if(useCaching) {
         SequentPlace *t7 = new SequentPlace(rhs, sub);
         SequentPlace *h7 = cache.Xlist_false_ph.locate_sequent(t7, pInd);
-        update_false_sequentPlace(h7, lhs, place);
+        h7->update_false_sequent(lhs, place);
       }
       return retPlaceDBM;
     }
 
     std::pair <DBM *, DBMList *> p (new DBM(*lhs), new DBMList(*place));
-    h->ds.push_back(p);
+    h->push_sequent(p);
   }
 
   /* Assign parent value after caching since during caching we may have
@@ -1931,12 +1927,7 @@ inline DBMList* prover::do_proof_place_predicate(int step, DBM* const lhs, DBMLi
    * predicate */
   parentPlaceRef = tempParentPlace;
 
-  std::pair <DBM *, DBMList *> tempP = h->ds.back();
-  DBM * tempF = tempP.first;
-  delete tempF;
-  DBMList * tempS = tempP.second;
-  delete tempS;
-  h->ds.pop_back();
+  h->pop_sequent();
   // ds might be empty, but we leave it in
 
 
@@ -1960,15 +1951,14 @@ inline DBMList* prover::do_proof_place_predicate(int step, DBM* const lhs, DBMLi
 
     /* Now purge backpointers */
     if(t2s != NULL) {
-      cache.look_for_and_purge_rhs_backStack(&(t2s->parSequent),
-                                       &(t2s->parSequentPlace));
+      cache.look_for_and_purge_rhs_backStack(t2s->parents(), t2s->parents_with_placeholders());
       // Delete t2s later to prevent double deletion
 
     }
     // Now update in proper Cache
     SequentPlace *t5 = new SequentPlace(rhs, sub);
     SequentPlace *h5 = cache.Xlist_true_ph.locate_sequent(t5, pInd);
-    update_sequentPlace(h5, lhs, retPlaceDBM);
+    h5->update_sequent(lhs, retPlaceDBM);
 
     // Now make deletions for Memory Cleanup
     if(t2c != t2s) {
@@ -1993,14 +1983,13 @@ inline DBMList* prover::do_proof_place_predicate(int step, DBM* const lhs, DBMLi
     /* Now purge backpointers.
      * Ignore circularity booleans because they do not form backpointers */
     if(t2bs != NULL) {
-      cache.look_for_and_purge_rhs_backStack(&(t2bs->parSequent),
-                                       &(t2bs->parSequentPlace));
+      cache.look_for_and_purge_rhs_backStack(t2bs->parents(), t2bs->parents_with_placeholders());
       // delete t2bs later to prevent double deletion.
     }
     // Now update in proper Cache
     SequentPlace *t5 = new SequentPlace(rhs, sub);
     SequentPlace *h5 = cache.Xlist_false_ph.locate_sequent(t5, pInd);
-    update_false_sequentPlace(h5, lhs, retPlaceDBM);
+    h5->update_false_sequent(lhs, retPlaceDBM);
 
     // Now make deletions for Memory Cleanup
     if(t2b2 != t2bs) {

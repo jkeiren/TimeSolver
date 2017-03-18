@@ -153,7 +153,7 @@ public:
       }
       if (matched) {
         delete s;
-        if(ls->ds.size() == 0) {
+        if(ls->dbm_set().size() == 0) {
           newSequent = true;
         }
         else {
@@ -261,7 +261,7 @@ public:
          * This Must be done regardless of how the tabling
          * is done for that specific cache */
         if(tableCheck) {
-          for(typename DBMsetType::iterator itb = ls->ds.begin(); itb != ls->ds.end(); itb++) {
+          for(typename DBMsetType::iterator itb = ls->dbm_set().begin(); itb != ls->dbm_set().end(); itb++) {
             // JK: there is an interesting difference in the handling of DBMs in the
             // cases without and with placeholders.
             // without placeholders we use the comparison
@@ -272,18 +272,18 @@ public:
             if (match_for_purging_tabled(*itb, *getDBM(elt))) {
               // purge Here
               delete_DBMset_elt(*itb);
-              itb = ls->ds.erase(itb);
+              itb = ls->dbm_set().erase(itb);
               itb--;
               foundSequent = ls;
             }
           }
         }
         else { //tableCheck is false
-          for(typename DBMsetType::iterator itb = ls->ds.begin(); itb != ls->ds.end(); itb++) {
+          for(typename DBMsetType::iterator itb = ls->dbm_set().begin(); itb != ls->dbm_set().end(); itb++) {
             if (*getDBM(*itb) <= *getDBM(elt)) {
               // purge Here
               delete_DBMset_elt(*itb);
-              itb = ls->ds.erase(itb);
+              itb = ls->dbm_set().erase(itb);
               itb--;
               foundSequent = ls;
             }
@@ -297,7 +297,7 @@ public:
       }
 
       // If sequent is empty, remove it from the list of sequents
-      if((ls->ds).empty()) {
+      if((ls->dbm_set()).empty()) {
         it = Xlist[index].erase(it);
         it--;
         *madeEmpty = true;
@@ -360,11 +360,7 @@ public:
          * is done for that specific cache */
         // Potential memory leak: may need to go through and delete DBMs
         // Iterate Through and Delete every element of ds
-        for(typename DBMsetType::iterator itB = ls->ds.begin();
-            itB != ls->ds.end(); itB++) {
-          delete_DBMset_elt(*itB);
-        }
-        ls->ds.clear();
+        ls->delete_sequents();
         delete ls; // This line causes some problems
         // If sequent is empty, remove it from the list of sequents
         /* Since deleting all DBM sequents in purging (aggressive: usually
@@ -394,7 +390,7 @@ public:
     for(int i = 0; i < predicateInd*(nbits+1); i++){
       for(typename stack::const_iterator it = Xlist[i].begin(); it != Xlist[i].end(); it++){
         int conseqNumSeq = 0;
-        for(typename DBMsetType::const_iterator ie = (*it)->ds.begin(); ie != (*it)->ds.end(); ie++){
+        for(typename DBMsetType::const_iterator ie = (*it)->dbm_set().begin(); ie != (*it)->dbm_set().end(); ie++){
           print_DBMset_elt(os, *ie);
           conseqNumSeq++;
           totNumSeq++;
