@@ -100,6 +100,10 @@ logger.o:
 
 check:
 	$(MAKE) -C test check
+	
+tests:
+	$(MAKE) -C test dbmtest
+	$(MAKE) -C test dbmlisttest
 
 checktool: timesolver-ta
 	../TATest.py
