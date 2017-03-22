@@ -147,21 +147,23 @@ public:
    * specified as parameters. */
   SequentType * locate_sequent(SequentType * const s, int pInd) const
   {
-    const int index = get_index(s->sub(), pInd);
-    for(typename stack::const_iterator it = Xlist[index].begin(); it != Xlist[index].end(); it++){
-      SequentType *ls = (*it);
-      if (s->sub()->equal_contents(*(ls->sub()))) {
-        delete s;
-        newSequent = ls->dbm_set().empty();
-        return ls;
-      }
+    SequentType *ls = look_for_sequent(s->sub(), pInd);
+    if(ls == nullptr)
+    {
+      /* Sequent not found; add it to the cache.
+       * (This is why we must take in the entire Sequent s as a parameter
+       * and not just its sublist component.) */
+      const int index = get_index(s->sub(), pInd);
+      newSequent = true;
+      Xlist[index].push_back(s);
+      return (Xlist[index].back());
     }
-    /* Sequent not found; add it to the cache.
-     * (This is why we must take in the entire Sequent s as a parameter
-     * and not just its sublist component.) */
-    newSequent = true;
-    Xlist[index].push_back(s);
-    return (Xlist[index].back());
+    else
+    {
+      delete s;
+      newSequent = ls->dbm_set().empty();
+      return ls;
+    }
   }
 
   /** Looks in a cache of sequents (the stack Xlist)
@@ -178,7 +180,7 @@ public:
    * specified as parameters. */
   SequentType * look_for_sequent(const SubstList * const subs, int pInd) const
   {
-    int index = get_index(subs, pInd);
+    const int index = get_index(subs, pInd);
     for(typename stack::const_iterator it = Xlist[index].begin(); it != Xlist[index].end(); it++){
       SequentType *ls = (*it);
       if(subs->equal_contents(*(ls->sub()))) {
