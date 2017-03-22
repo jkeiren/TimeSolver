@@ -16,26 +16,6 @@
  * store the sequents with placeholders separately. */
 typedef std::vector<SequentPlace *> stackPlace;
 
-/** Provide the hash function to hash atomic (discrete location) variables
- * into bins; it gives a hash bin per SubstList (
- * discrete location representation).
- * Sufficient bins are given so each predicate variable has its
- * own bins (hashing does not collide on predicate variables); this is
- * for optimized performance, since the number of predicates is usually small.
- * Given the possibly large number of discrete states, hashing is used
- * to save space.
- * @param sub (*) The discrete state to hash into a bin.
- * @return The hashed bin index for that discrete state.*/
-inline int hash_func(const SubstList * const sub, const int aSize, const int nbits){
-  // From demo.7.cc (instead of from demo.cc) of previous code
-  int sum = 0;
-  for(int i=0; i<aSize; i++){
-    sum += (sub->at(i) & nbits);
-    sum = sum & nbits;
-  }
-  return sum;
-}
-
 template <typename SequentType, typename DBMsetElementType>
 class sequentStackT
 {
@@ -53,6 +33,34 @@ protected:
   int seqStSize;
   const int predicateInd;
   bool& newSequent;
+
+  /** Provide the hash function to hash atomic (discrete location) variables
+   * into bins; it gives a hash bin per SubstList (
+   * discrete location representation).
+   * Sufficient bins are given so each predicate variable has its
+   * own bins (hashing does not collide on predicate variables); this is
+   * for optimized performance, since the number of predicates is usually small.
+   * Given the possibly large number of discrete states, hashing is used
+   * to save space.
+   * @param sub (*) The discrete state to hash into a bin.
+   * @return The hashed bin index for that discrete state.*/
+  int hash_func(const SubstList * const sub, const int aSize, const int nbits) const
+  {
+    // From demo.7.cc (instead of from demo.cc) of previous code
+    int sum = 0;
+    for(int i=0; i<aSize; i++){
+      sum += (sub->at(i) & nbits);
+      sum = sum & nbits;
+    }
+    return sum;
+  }
+
+  /** Get the right index into the stack */
+  int get_index(const SubstList* const sub, const int pInd) const
+  {
+    int indexH = hash_func(sub, aSize, nbits);
+    return pInd*seqStSize + indexH;
+  }
 
   // Comparison for look_for_and_purge_rhs_sequent
   bool match_for_purging_tabled(DBM* fst, const DBM& snd)
@@ -139,25 +147,12 @@ public:
    * specified as parameters. */
   SequentType * locate_sequent(SequentType * const s, int pInd) const
   {
-    int indexH = hash_func(s->sub(), aSize, nbits);
-    int index = pInd*seqStSize + indexH;
+    const int index = get_index(s->sub(), pInd);
     for(typename stack::const_iterator it = Xlist[index].begin(); it != Xlist[index].end(); it++){
       SequentType *ls = (*it);
-      bool matched = true;
-      for(int j = 0; j < aSize; j++){
-        if (s->sub()->at(j) != ls->sub()->at(j)){
-          matched  = false;
-          break;
-        }
-      }
-      if (matched) {
+      if (s->sub()->equal_contents(*(ls->sub()))) {
         delete s;
-        if(ls->dbm_set().size() == 0) {
-          newSequent = true;
-        }
-        else {
-          newSequent = false;
-        }
+        newSequent = ls->dbm_set().empty();
         return ls;
       }
     }
@@ -183,24 +178,16 @@ public:
    * specified as parameters. */
   SequentType * look_for_sequent(const SubstList * const subs, int pInd) const
   {
-    int indexH = hash_func(subs, aSize, nbits);
-    int index = pInd*seqStSize + indexH;
+    int index = get_index(subs, pInd);
     for(typename stack::const_iterator it = Xlist[index].begin(); it != Xlist[index].end(); it++){
       SequentType *ls = (*it);
-      bool matched = true;
-      for(int j = 0; j < aSize; j++){
-        if (subs->at(j) != ls->sub()->at(j)){
-          matched  = false;
-          break;
-        }
-      }
-      if (matched) {
+      if(subs->equal_contents(*(ls->sub()))) {
         // Found the Sequent, return it
         return ls;
       }
     }
     // sequent not in structure, so return NULL.
-    return NULL;
+    return nullptr;
   }
 
   /** Given a sequent cache and using the clock state lhs and the
@@ -230,29 +217,19 @@ public:
                const SequentType * const s, const int pInd,
                const bool tableCheck, bool * const madeEmpty)
   {
-    int indexH = hash_func(s->sub(), aSize, nbits);
-    int index = pInd*seqStSize + indexH;
-    bool matched = false;
+    int index = get_index(s->sub(), pInd);
     *madeEmpty = false;
     /* This assumes that location only locates one sequent in the stack */
-    SequentType * foundSequent = NULL;
+    SequentType * foundSequent = nullptr;
 
     for(typename stack::const_iterator it = Xlist[index].begin(); it != Xlist[index].end(); it++){
       SequentType *ls = (*it);
-      matched = true;
-
-      for(int j = 0; j < aSize; j++){
-        if (s->sub()->at(j) != ls->sub()->at(j)){
-          matched  = false;
-          break;
-        }
-      }
 
       /* For Now, purge the LHS Possibilities
        * that are in line with the proper "tabling"
        * or containment, which are specified by
        * the tableCheck Boolean */
-      if(matched)
+      if(s->sub()->equal_contents(*(ls->sub())))
       {
         // Now Iterate on the Tabled Sequents
         /* Key Concept of Purging:
@@ -274,10 +251,6 @@ public:
             foundSequent = ls;
           }
         }
-
-        // Reset matched to delete only other matched purges
-        matched = false;
-
       }
 
       // If sequent is empty, remove it from the list of sequents
@@ -316,26 +289,16 @@ public:
   bool look_for_and_purge_rhs_sequent_state(const SequentType * const s,
                     const int pInd)
   {
-    int indexH = hash_func(s->sub(), aSize, nbits);
-    int index = pInd*seqStSize + indexH;
-    bool matched = false;
+    int index = get_index(s->sub(), pInd);
     bool foundMatch = false;
     for(typename stack::iterator it = Xlist[index].begin(); it != Xlist[index].end(); it++){
       SequentType *ls = (*it);
-      matched = true;
-
-      for(int j = 0; j < aSize; j++){
-        if (s->sub()->at(j) != ls->sub()->at(j)){
-          matched  = false;
-          break;
-        }
-      }
 
       /* For Now, purge the LHS Possibilities
        * that are in line with the proper "tabling"
        * or containment, which are specified by
        * the tableCheck Boolean */
-      if(matched){
+      if(s->sub()->equal_contents(*(ls->sub()))) {
         /* Key Concept of Purging:
          * If Was True (tableCheck is true), discovered false, check that
          *		Z_now_false <= Z_cached_true | or | Z_cached_true >= Z_now_false
@@ -352,9 +315,6 @@ public:
          * over purges), just erase the list. */
         it = Xlist[index].erase(it);
         it--;
-
-        // Reset matched to delete only other matched purges
-        matched = false;
       }
 
     }

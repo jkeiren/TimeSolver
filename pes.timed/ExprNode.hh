@@ -119,6 +119,24 @@ public:
     return (memcmp(storage, Y.storage, quantity * sizeof(short int)) == 0);
   }
 
+  /** Element-wise equality of SubList elements */
+  bool equal_contents(const SubstList &Y) const
+  {
+    if (quantity != Y.quantity)
+    {
+      return false;
+    }
+
+    for(int j = 0; j < quantity; j++)
+    {
+      if (at(j) != Y.at(j))
+      {
+        return false;
+      }
+    }
+    return true;
+  }
+
   /** Changes the list by changing the specified variable to
    * value val.  The SubstList calling this is changed.
    * @param index The location to change the value of
