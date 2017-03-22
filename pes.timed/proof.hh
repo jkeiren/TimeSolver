@@ -131,7 +131,6 @@ public:
   {
     bool retVal = false;
     if (cpplogEnabled(cpplogging::debug)){
-      lhs->cf(); // FIXME: why do we transform the DBM to canonical form just for this debug print?
       print_sequent(std::cerr, step, retVal, lhs, rhs, sub, rhs->getOpType());
     }
     step++;
@@ -241,8 +240,6 @@ public:
      * of EXISTS Quantifiers. */
 
     if (cpplogEnabled(cpplogging::debug)) {
-      lhs->cf();
-      place->cf();
       print_sequent_place(std::cerr, step, false, lhs, place, rhs, sub, rhs->getOpType());
     }
 
