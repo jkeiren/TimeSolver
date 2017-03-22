@@ -961,31 +961,13 @@ public:
     }
   }
 
-  /** Prints out the constraints in the DBMList, omitting
-   * implicit constraints in DBMs in the DBMList (such as x_1 >= 0). Here,
-   * implicit constraints are inequalities that do not
-   * constrain any values. This does not omit constraints
-   * that can be derived from other constraints. The output format
-   * is the same as for print_constraint().
-   * @return None */
-  void print_ExplicitConstraint(std::ostream& os, const std::vector<std::string>& clock_strings) const{
-    for(std::vector<DBM *>::iterator it = dbmListVec->begin();
-        it != dbmListVec->end(); it++) {
-      DBM *tD = *it;
-      tD->print_ExplicitConstraint(os, clock_strings);
-      if( (it+1) != dbmListVec->end()) {
-        os << " || ";
-      }
-    }
-  }
-
 };
 
 /** Stream operator for DBMLists */
 inline
 std::ostream& operator<<(std::ostream& os, const DBMList& l)
 {
-    l.print(os);
+    l.print_constraint(os);
     return os;
 }
 

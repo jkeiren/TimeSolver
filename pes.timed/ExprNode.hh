@@ -160,8 +160,15 @@ public:
    * @param os (&) The output stream to print the output to
    * @return none. */
   void print(std::ostream &os) const;
+
 };
 
+inline
+std::ostream& operator<<(std::ostream& os, const SubstList& s)
+{
+  s.print(os);
+  return os;
+}
 
 
 
@@ -830,6 +837,21 @@ protected:
 
 };
 
+/** Prints out the expression to the desired output stream, labeling
+ * the expression with its opType. The typical output stream is cout.
+ * @param e (*) The expression to print out.
+ * @param os (&) The type of output stream to print the output to.
+ * @return None */
+void print_ExprNode(const ExprNode * const e, std::ostream& os);
+
+/** Overload for streaming ExprNode to output stream */
+inline
+std::ostream& operator<<(std::ostream& os, const ExprNode& e)
+{
+  print_ExprNode(&e, os);
+  return os;
+}
+
 /* These next set of functions are global and
  * used in demo.cc to keep track of the clocks, equations,
  * blocks and predicate variables of the PES read in by
@@ -903,19 +925,19 @@ void print_sequent_placeCheck(std::ostream& os, const int step, const bool retVa
                               const DBMList * const place, const DBMList * const rhsList,
                               const SubstList * const sub, const opType op);
 
-/** Prints out the expression to the desired output stream, labeling
- * the expression with its opType. The typical output stream is cout.
- * @param e (*) The expression to print out.
- * @param os (&) The type of output stream to print the output to.
- * @return None */
-void print_ExprNode(const ExprNode * const e, std::ostream& os);
-
 /** Prints out the expression type (opType) to the desired output stream.
  * The typical output stream is cout.
  * @param op (*) The expression type.
  * @param os (&) The type of output stream to print the output to.
  * @return none */
 void print_ExprNodeType(const opType op, std::ostream& os);
+
+inline
+std::ostream& operator<<(std::ostream& os, const opType& op)
+{
+  print_ExprNodeType(op, os);
+  return os;
+}
 
 /** Prints out the expression type (opType), for expressions
  * with placeholders, to the desired output stream.

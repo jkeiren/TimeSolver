@@ -64,22 +64,14 @@ const string& lookup_atomic_name(const unsigned int n, const bidirectional_map<s
  * @return None */
 void print_sequent(std::ostream& os, const int step, const bool retVal, const DBM * const lhs,
                    const ExprNode * const rhs, const SubstList * const sub, const opType op){
-  os << "seq#" << step << "  " <<retVal << "  ";
-  if (lhs != NULL) {
-    lhs->print_constraint(os) ;
-  }
-  if (sub != NULL) {
-    os << ", ";
-    sub->print(os);
-  }
-  os << "\t|-  " ;
-  if (rhs != NULL) {
-    print_ExprNode(rhs, os);
-  }
-  os << "\t";
-  print_ExprNodeType(op, os);
+  assert(lhs != nullptr);
+  assert(sub != nullptr);
+  assert(rhs != nullptr);
 
-  os << endl;
+  os << "seq#" << step << "  " << retVal << "  "
+     << *lhs << ", " << *sub
+     << "\t|-  " << *rhs
+     << "\t" << op << endl;
 }
 
 /** Prints out a placeholder check sequent in the proof tree; used for
@@ -95,22 +87,14 @@ void print_sequent(std::ostream& os, const int step, const bool retVal, const DB
  * @return None */
 void print_sequentCheck(std::ostream& os, const int step, const bool retVal, const DBM * const lhs,
                         const DBMList * const rhsList, const SubstList * const sub, const opType op){
-  os << "seq#" << step << "  " <<retVal << "  ";
-  if (lhs != NULL) {
-    lhs->print_constraint(os) ;
-  }
-  if (sub != NULL) {
-    os << ", ";
-    sub->print(os);
-  }
-  os << "\t|-  " ;
-  if (rhsList != NULL) {
-    rhsList->print_constraint(os);
-  }
-  os << "\t";
-  print_ExprNodeType(op, os);
+  assert(lhs != nullptr);
+  assert(sub != nullptr);
+  assert(rhsList != nullptr);
 
-  os << endl;
+  os << "seq#" << step << "  " << retVal << "  "
+     << *lhs << ", " << *sub
+     << "\t|-  " << *rhsList
+     << "\t" << op << endl;
 }
 
 /** Prints out a sequent with a placeholder clock state in a proof tree.
@@ -126,24 +110,17 @@ void print_sequentCheck(std::ostream& os, const int step, const bool retVal, con
 void print_sequent_place(std::ostream& os, const int step, const bool retVal, const DBM * const lhs,
                          const DBMList * const place, const ExprNode * const rhs,
                          const SubstList * const sub, const opType op){
-  os << "seq#" << step << "  " <<retVal << "  ";
-  if (lhs != NULL) {
-    lhs->print_constraint(os) ;
-  }
-  if (place != NULL) {
-    os << " plhold: {";
-    place->print_constraint(os);
-    os << "}";
-  }
-  if (sub != NULL) {
-    os << ", ";
-    sub->print(os);
-  }
-  os << "\t|-  " ;
-  if (rhs != NULL) {
-    print_ExprNode(rhs, os);
-  }
-  os << "\t";
+  assert(lhs != nullptr);
+  assert(place != nullptr);
+  assert(sub != nullptr);
+  assert(rhs != nullptr);
+
+  os << "seq#" << step << "  " <<retVal << "  "
+     << *lhs
+     << " plhold: {" << *place << "}"
+     << ", " << *sub
+     << "\t|-  " << *rhs
+     << "\t";
   print_ExprNodeTypePlace(op, os);
   os << endl;
 }
@@ -164,24 +141,16 @@ void print_sequent_place(std::ostream& os, const int step, const bool retVal, co
 void print_sequent_placeCheck(std::ostream& os, const int step, const bool retVal, const DBM * const lhs,
                               const DBMList * const place, const DBMList * const rhsList,
                               const SubstList * const sub, const opType op){
-  os << "seq#" << step << "  " <<retVal << "  ";
-  if (lhs != NULL) {
-    lhs->print_constraint(os) ;
-  }
-  if (place != NULL) {
-    os << " plhold: {";
-    place->print_constraint(os);
-    os << "}";
-  }
-  if (sub != NULL) {
-    os << ", ";
-    sub->print(os);
-  }
-  os << "\t|-  " ;
-  if (rhsList != NULL) {
-    rhsList->print_constraint(os);
-  }
-  os << "\t";
+  assert(lhs != nullptr);
+  assert(place != nullptr);
+  assert(sub != nullptr);
+  assert(rhsList != nullptr);
+
+  os << "seq#" << step << "  " << retVal << "  " << *lhs
+     << " plhold: {" << *place << "}"
+     << ", " << *sub
+     << "\t|-  " << *rhsList
+     << "\t";
   print_ExprNodeTypePlace(op, os);
   os << endl;
 }
@@ -524,18 +493,6 @@ void SubstList::print(std::ostream &os) const {
     }
   }
   os << "]";
-}
-
-/** Prints the specified integer (in base 10) in
- * its binary equivalent.
- * @param val The integer in base 10 to print.
- * @return none */
-void printBinary(std::ostream& os, const int val) {
-  for(int i = 15; i >=0; i--){
-    if (val & (1 << i))
-      os <<"1";
-    else os <<"0";
-  }
 }
 
 /** Prints out the fed in expression node to the fed in

@@ -1171,58 +1171,13 @@ public:
     }
   }
 
-  /** Prints out the constraints in the DBM, omitting
-   * implicit constraints (such as x_1 >= 0). Here,
-   * implicit constraints are inequalities that do not
-   * constrain any values. This does not omit constraints
-   * that can be derived from other constraints.
-   * @return None */
-  void print_ExplicitConstraint(std::ostream& os, const std::vector<std::string>& clock_strings) const{
-    bool end = false;
-    for(short int i = 0; i < nClocks; i++){
-      for(short int j = 0; j < nClocks; j++){
-        if(i==j) continue;
-        short int val = this->operatorRead(i,j) >> 1;
-        if (val == 0xFFF)  {
-          continue;
-        }
-        short int type = this->operatorRead(i,j) & 0x1;
-        if(i == 0 && val == 0x0 && type == 0x1) {
-          continue;
-        }
-        if(end) os <<",";
-        if(i != 0 && j!=0){
-          os << clock_strings[i];
-          os << "-";
-          os << clock_strings[j];
-        }else if (i == 0){
-          os << clock_strings[j];;
-          if (type == 1) os << ">=" << -val ;
-          else os << ">" << -val ;
-          end = true;
-          continue;
-        }else if (j == 0){
-          os << clock_strings[i];
-        }
-
-        if (type == 1) {
-          os << "<=" << val ;
-        }
-        else {
-          os << "<" << val ;
-        }
-        end = true;
-      }
-    }
-  }
-
 };
 
 /** Stream operator for DBMs */
 inline
 std::ostream& operator<<(std::ostream& os, const DBM& d)
 {
-    d.print(os);
+    d.print_constraint(os);
     return os;
 }
 
