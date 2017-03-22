@@ -24,7 +24,7 @@ protected:
   bool prevParityGfp;
   bool useCaching;
 
-  long int numLocations;
+  size_t numLocations;
 
   /** This parameter is the size of the maximum
    * constant (in the clock constraints).  There
@@ -94,20 +94,20 @@ public:
 
     retPlaceDBM = new DBMList(*INFTYDBM);
 
-    /* Initialize parent sequents to NULL */
-    parentRef = NULL;
-    parentPlaceRef = NULL;
+    /* Initialize parent sequents */
+    parentRef = nullptr;
+    parentPlaceRef = nullptr;
 
     newSequent = true;
-  };
+  }
 
   ~prover()
   {
     delete INFTYDBM;
     delete retPlaceDBM;
-  };
+  }
 
-  long int getNumLocations() const
+  size_t getNumLocations() const
   {
     return numLocations;
   }
@@ -630,7 +630,7 @@ inline bool prover::do_proof_predicate(const int step, DBM* const lhs, const Exp
     /* First look in known False Sequent table */
     { // Restricted scope for looking up false sequents
       Sequent tf(rhs, sub);
-      Sequent *hf = cache.Xlist_false.look_for_sequent(tf.sub(), pInd);
+      Sequent *hf = cache.Xlist_false.look_for_sequent(tf.discrete_state(), pInd);
       if(hf != NULL && hf->tabled_false_sequent(lhs)) {
         retVal = false;
         cpplog(cpplogging::debug) << "---(Invalid) Located a Known False Sequent ----" <<  std::endl <<  std::endl;
@@ -644,7 +644,7 @@ inline bool prover::do_proof_predicate(const int step, DBM* const lhs, const Exp
     /* Now look in known True Sequent table */
     { // Restricted scope for looking up true sequents
       Sequent tf(rhs, sub); //JK Can be optimised out by reusing tf?
-      Sequent *hf = cache.Xlist_true.look_for_sequent(tf.sub(), pInd);
+      Sequent *hf = cache.Xlist_true.look_for_sequent(tf.discrete_state(), pInd);
       if(hf != NULL && hf->tabled_sequent(lhs)) {
         retVal = true;
         cpplog(cpplogging::debug) << "---(Valid) Located a Known True Sequent ----" <<  std::endl <<  std::endl;
@@ -1780,7 +1780,7 @@ inline DBMList* prover::do_proof_place_predicate(int step, DBM* const lhs, DBMLi
    * need to store placeholders. */
   if(useCaching) {
     SequentPlace *tf = new SequentPlace(rhs, sub);
-    SequentPlace *hf = cache.Xlist_false_ph.look_for_sequent(tf->sub(), pInd);
+    SequentPlace *hf = cache.Xlist_false_ph.look_for_sequent(tf->discrete_state(), pInd);
     if(hf != NULL && hf->tabled_false_sequent(lhs)) {
       // Found known false
       retPlaceDBM->makeEmpty();
@@ -1810,7 +1810,7 @@ inline DBMList* prover::do_proof_place_predicate(int step, DBM* const lhs, DBMLi
   /* Now look in known true cache */
   if(useCaching) {
     SequentPlace *tfb = new SequentPlace(rhs, sub);
-    SequentPlace *hfb = cache.Xlist_true_ph.look_for_sequent(tfb->sub(), pInd);
+    SequentPlace *hfb = cache.Xlist_true_ph.look_for_sequent(tfb->discrete_state(), pInd);
     DBMList tempPlace(*place);
     /* Note: tempPlace is changed by tabled_sequentPlace() */
     if(hfb != NULL && hfb->tabled_sequent(lhs, &tempPlace)) {

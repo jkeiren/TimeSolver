@@ -123,7 +123,8 @@ public:
 
   /** Destructor.  Does nothing.
    * @return [Destructor]. */
-  ~SubstList(){};
+  ~SubstList()
+  {}
 
   /** Deep-Copy equality of SubList structures: two SubstList objects are equal
    * if and only if they both are the same size and they have the same values
@@ -131,7 +132,7 @@ public:
    * @param Y (&) The reference to the RHS SubstList.
    * @return true: the SubstList is equal to Y; false: otherwise. */
   bool operator == (const SubstList &Y) const {
-    return (memcmp(storage, Y.storage, quantity * sizeof(short int)) == 0);
+    return (std::memcmp(storage, Y.storage, quantity * sizeof(short int)) == 0);
   }
 
   /** Element-wise equality of SubList elements */
@@ -282,6 +283,7 @@ public:
            const bidirectional_map<std::string, int>& as)
     : op(o), declared_clocks(cs), declared_atomic(as)
   {
+    assert(c != nullptr);
     left = nullptr;
     right = nullptr;
     predicate = nullptr;
@@ -467,35 +469,29 @@ public:
    * descendants of the ExprNode E
    * @param E (&) The ExprNode object to make a deep copy of
    * @return [Constructor]. */
-  ExprNode(const ExprNode& E) :
-    op(E.op),
-    declared_clocks(E.declared_clocks),
-    declared_atomic(E.declared_atomic)
+  ExprNode(const ExprNode& other) :
+    op(other.op),
+    predicate(other.predicate), // shallow copy good enough
+    b(other.b),
+    atomic(other.atomic),
+    intVal(other.intVal),
+    declared_clocks(other.declared_clocks),
+    declared_atomic(other.declared_atomic)
   {
-    if(E.op != PREDICATE) {
-      if(E.constraint != nullptr) {
-        constraint = new DBM(*(E.constraint));
-      }
-      atomic = E.atomic;
-      intVal = E.intVal;
-
-      b = E.b;
-      predicate = nullptr;
-      if(E.cset != nullptr) {
-        cset = new ClockSet(*(E.cset));
-      }
-      if(E.subst != nullptr) {
-        subst = new SubstList(*(E.subst));
-      }
-      if(E.left != nullptr) {
-        left = new ExprNode(*(E.left));
-      }
-      if(E.right != nullptr) {
-        right = new ExprNode(*(E.right));
-      }
+    if(other.constraint != nullptr) {
+      constraint = new DBM(*(other.constraint));
     }
-    else {
-      predicate = E.predicate; // shallow copy good enough
+    if(other.cset != nullptr) {
+      cset = new ClockSet(*(other.cset));
+    }
+    if(other.subst != nullptr) {
+      subst = new SubstList(*(other.subst));
+    }
+    if(other.left != nullptr) {
+      left = new ExprNode(*(other.left));
+    }
+    if(other.right != nullptr) {
+      right = new ExprNode(*(other.right));
     }
   }
 

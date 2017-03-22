@@ -16,6 +16,7 @@
  * store the sequents with placeholders separately. */
 typedef std::vector<SequentPlace *> stackPlace;
 
+/** Stack of sequents used to detect, among others, cycles of fixed points */
 template <typename SequentType, typename DBMsetElementType>
 class sequentStackT
 {
@@ -23,15 +24,15 @@ class sequentStackT
 protected:
   /** This defines a stack as a vector of Sequent
    * arrays (Sequents). */
-  typedef std::vector<SequentType*> stack;
+  typedef std::vector<SequentType*> stack_t;
   typedef std::vector<DBMsetElementType> DBMsetType;
-  stack * Xlist;
+  stack_t * Xlist;
 
-  int aSize;
+  int atomic_size; // number of atomics in PES.
   int nbits;
   int size;
   int seqStSize;
-  const int predicateInd;
+  const int predicates_size; // number of predicates in PES.
   bool& newSequent;
 
   /** Provide the hash function to hash atomic (discrete location) variables
@@ -44,11 +45,11 @@ protected:
    * to save space.
    * @param sub (*) The discrete state to hash into a bin.
    * @return The hashed bin index for that discrete state.*/
-  int hash_func(const SubstList * const sub, const int aSize, const int nbits) const
+  int hash_func(const SubstList * const sub, const int atomic_size, const int nbits) const
   {
     // From demo.7.cc (instead of from demo.cc) of previous code
     int sum = 0;
-    for(int i=0; i<aSize; i++){
+    for(int i=0; i<atomic_size; i++){
       sum += (sub->at(i) & nbits);
       sum = sum & nbits;
     }
@@ -56,10 +57,9 @@ protected:
   }
 
   /** Get the right index into the stack */
-  int get_index(const SubstList* const sub, const int pInd) const
+  int get_index(const SubstList* const discrete_state, const int predicate_index) const
   {
-    int indexH = hash_func(sub, aSize, nbits);
-    return pInd*seqStSize + indexH;
+    return predicate_index*seqStSize + hash_func(discrete_state, atomic_size, nbits);
   }
 
   // Comparison for look_for_and_purge_rhs_sequent
@@ -77,9 +77,7 @@ protected:
   /** print the elements pointed to by the components of p */
   void print_DBMset_elt(std::ostream& os, const std::pair<const DBM * const, const DBMList * const>& p) const
   {
-    p.first->print_constraint(os);
-    os << ", plhold: ";
-    p.second->print_constraint(os);
+    os << p.first << ", plhold: " << p.second;
   }
 
   /** delete the elements pointed to by the components of p */
@@ -97,7 +95,7 @@ protected:
   /** print the element pointed to by p */
   void print_DBMset_elt(std::ostream& os, const DBM * const p) const
   {
-    p->print_constraint(os);
+    os << p;
   }
 
   /** delete the element pointed to by p */
@@ -115,15 +113,15 @@ public:
 
   sequentStackT(const int aSize, const int nbits, const int size,
                const int seqStSize, const int predicateInd, bool& newSequent)
-  : Xlist(new stack[size]), aSize(aSize), nbits(nbits), size(size),
-          seqStSize(seqStSize), predicateInd(predicateInd), newSequent(newSequent)
+  : Xlist(new stack_t[size]), atomic_size(aSize), nbits(nbits), size(size),
+          seqStSize(seqStSize), predicates_size(predicateInd), newSequent(newSequent)
   {}
 
   ~sequentStackT()
   {
     for(int i = 0; i < size; i++) {
       // Now Iterate and delete for each vector
-      for(typename stack::iterator it = Xlist[i].begin(); it != Xlist[i].end(); it++) {
+      for(typename stack_t::iterator it = Xlist[i].begin(); it != Xlist[i].end(); it++) {
         SequentType *ls = (*it);
         delete ls;
       }
@@ -145,22 +143,22 @@ public:
    * @param pInd The index of the predicate; used to find the proper hashing bin.
    * @return The reference to the sequent with the three components
    * specified as parameters. */
-  SequentType * locate_sequent(SequentType * const s, int pInd) const
+  SequentType * locate_sequent(SequentType * const sequent, int predicate_index) const
   {
-    SequentType *ls = look_for_sequent(s->sub(), pInd);
+    SequentType *ls = look_for_sequent(sequent->discrete_state(), predicate_index);
     if(ls == nullptr)
     {
       /* Sequent not found; add it to the cache.
        * (This is why we must take in the entire Sequent s as a parameter
        * and not just its sublist component.) */
-      const int index = get_index(s->sub(), pInd);
+      const int index = get_index(sequent->discrete_state(), predicate_index);
       newSequent = true;
-      Xlist[index].push_back(s);
+      Xlist[index].push_back(sequent);
       return (Xlist[index].back());
     }
     else
     {
-      delete s;
+      delete sequent;
       newSequent = ls->dbm_set().empty();
       return ls;
     }
@@ -178,12 +176,12 @@ public:
    * @param pInd The index of the predicate; used to find the proper hashing bin.
    * @return The reference to the sequent with the three components
    * specified as parameters. */
-  SequentType * look_for_sequent(const SubstList * const subs, int pInd) const
+  SequentType * look_for_sequent(const SubstList * const discrete_state, int predicate_index) const
   {
-    const int index = get_index(subs, pInd);
-    for(typename stack::const_iterator it = Xlist[index].begin(); it != Xlist[index].end(); it++){
+    const int index = get_index(discrete_state, predicate_index);
+    for(typename stack_t::const_iterator it = Xlist[index].begin(); it != Xlist[index].end(); it++){
       SequentType *ls = (*it);
-      if(subs->equal_contents(*(ls->sub()))) {
+      if(discrete_state->equal_contents(*(ls->discrete_state()))) {
         // Found the Sequent, return it
         return ls;
       }
@@ -216,22 +214,22 @@ public:
    * @return The pointer to the purged sequent, or
    * NULL if no sequent was purged.*/
   SequentType * look_for_and_purge_rhs_sequent(const DBMsetElementType elt,
-               const SequentType * const s, const int pInd,
+               const SequentType * const sequent, const int predicate_index,
                const bool tableCheck, bool * const madeEmpty)
   {
-    int index = get_index(s->sub(), pInd);
+    int index = get_index(sequent->discrete_state(), predicate_index);
     *madeEmpty = false;
     /* This assumes that location only locates one sequent in the stack */
     SequentType * foundSequent = nullptr;
 
-    for(typename stack::const_iterator it = Xlist[index].begin(); it != Xlist[index].end(); it++){
+    for(typename stack_t::const_iterator it = Xlist[index].begin(); it != Xlist[index].end(); it++){
       SequentType *ls = (*it);
 
       /* For Now, purge the LHS Possibilities
        * that are in line with the proper "tabling"
        * or containment, which are specified by
        * the tableCheck Boolean */
-      if(s->sub()->equal_contents(*(ls->sub())))
+      if(sequent->discrete_state()->equal_contents(*(ls->discrete_state())))
       {
         // Now Iterate on the Tabled Sequents
         /* Key Concept of Purging:
@@ -288,19 +286,19 @@ public:
    * if tableCheck = false, then we are aiming to purge sequents cached as
    * false but discovered to be true.
    * @return true: one or more sequents were purged; false: otherwise.*/
-  bool look_for_and_purge_rhs_sequent_state(const SequentType * const s,
-                    const int pInd)
+  bool look_for_and_purge_rhs_sequent_state(const SequentType * const sequent,
+                    const int predicate_index)
   {
-    int index = get_index(s->sub(), pInd);
+    int index = get_index(sequent->discrete_state(), predicate_index);
     bool foundMatch = false;
-    for(typename stack::iterator it = Xlist[index].begin(); it != Xlist[index].end(); it++){
+    for(typename stack_t::iterator it = Xlist[index].begin(); it != Xlist[index].end(); it++){
       SequentType *ls = (*it);
 
       /* For Now, purge the LHS Possibilities
        * that are in line with the proper "tabling"
        * or containment, which are specified by
        * the tableCheck Boolean */
-      if(s->sub()->equal_contents(*(ls->sub()))) {
+      if(sequent->discrete_state()->equal_contents(*(ls->discrete_state()))) {
         /* Key Concept of Purging:
          * If Was True (tableCheck is true), discovered false, check that
          *		Z_now_false <= Z_cached_true | or | Z_cached_true >= Z_now_false
@@ -333,8 +331,8 @@ public:
   void print_Xlist(std::ostream& os) const {
     int totNumSeq = 0;
     os << "\t--For Each Sequence, Premise sets separated by \";\" --" << std::endl;
-    for(int i = 0; i < predicateInd*(nbits+1); i++){
-      for(typename stack::const_iterator it = Xlist[i].begin(); it != Xlist[i].end(); it++){
+    for(int i = 0; i < predicates_size*(nbits+1); i++){
+      for(typename stack_t::const_iterator it = Xlist[i].begin(); it != Xlist[i].end(); it++){
         int conseqNumSeq = 0;
         for(typename DBMsetType::const_iterator ie = (*it)->dbm_set().begin(); ie != (*it)->dbm_set().end(); ie++){
           print_DBMset_elt(os, *ie);
@@ -342,7 +340,7 @@ public:
           totNumSeq++;
           os << " ; ";
         }
-        (*it)->sub()->print(os);
+        (*it)->discrete_state()->print(os);
         os << "\t |- " << *((*it)->rhs());
 
         os << " (" << conseqNumSeq;
