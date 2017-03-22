@@ -159,10 +159,23 @@ public:
    * this variable).
    * @param os (&) The output stream to print the output to
    * @return none. */
-  void print(std::ostream &os) const;
-
+  void print(std::ostream &os) const {
+    bool end =false;
+    os << "[";
+    for(int i = 0; i < quantity; i++){
+      if (this->at(i) != -1){
+        if(end) os <<",";
+        //os << "p" << i;
+        os << declared_atomic.reverse_at(i);
+        os <<"=" << this->at(i);
+        end = true;
+      }
+    }
+    os << "]";
+  }
 };
 
+/** Overload for substitution lists */
 inline
 std::ostream& operator<<(std::ostream& os, const SubstList& s)
 {
@@ -835,22 +848,23 @@ protected:
   /** Pointer to the globally declared atomics*/
   const bidirectional_map<std::string, int>& declared_atomic;
 
-};
+  /** Prints out the expression to the desired output stream, labeling
+   * the expression with its opType. The typical output stream is cout.
+   * @param e (*) The expression to print out.
+   * @param os (&) The type of output stream to print the output to.
+   * @return None */
+  void print(std::ostream& os) const;
 
-/** Prints out the expression to the desired output stream, labeling
- * the expression with its opType. The typical output stream is cout.
- * @param e (*) The expression to print out.
- * @param os (&) The type of output stream to print the output to.
- * @return None */
-void print_ExprNode(const ExprNode * const e, std::ostream& os);
+};
 
 /** Overload for streaming ExprNode to output stream */
 inline
 std::ostream& operator<<(std::ostream& os, const ExprNode& e)
 {
-  print_ExprNode(&e, os);
+  e.print(os);
   return os;
 }
+
 
 /* These next set of functions are global and
  * used in demo.cc to keep track of the clocks, equations,
@@ -930,7 +944,7 @@ void print_sequent_placeCheck(std::ostream& os, const int step, const bool retVa
  * @param op (*) The expression type.
  * @param os (&) The type of output stream to print the output to.
  * @return none */
-void print_ExprNodeType(const opType op, std::ostream& os);
+void print_ExprNodeType(const opType op, std::ostream& os, bool place = false);
 
 inline
 std::ostream& operator<<(std::ostream& os, const opType& op)
@@ -938,15 +952,6 @@ std::ostream& operator<<(std::ostream& os, const opType& op)
   print_ExprNodeType(op, os);
   return os;
 }
-
-/** Prints out the expression type (opType), for expressions
- * with placeholders, to the desired output stream.
- * The typical output stream is cout. This method is used for
- * expression types within proof subtrees with placehloders.
- * @param op (*) The expression type.
- * @param os (&) The type of output stream to print the output to.
- * @return none */
-void print_ExprNodeTypePlace(const opType op, std::ostream& os);
 
 void print_ExprNodeTrans(const ExprNode * const e, std::ostream& os);
 

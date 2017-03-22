@@ -121,7 +121,7 @@ void print_sequent_place(std::ostream& os, const int step, const bool retVal, co
      << ", " << *sub
      << "\t|-  " << *rhs
      << "\t";
-  print_ExprNodeTypePlace(op, os);
+  print_ExprNodeType(op, os, true);
   os << endl;
 }
 
@@ -151,7 +151,7 @@ void print_sequent_placeCheck(std::ostream& os, const int step, const bool retVa
      << ", " << *sub
      << "\t|-  " << *rhsList
      << "\t";
-  print_ExprNodeTypePlace(op, os);
+  print_ExprNodeType(op, os, true);
   os << endl;
 }
 
@@ -160,130 +160,130 @@ void print_sequent_placeCheck(std::ostream& os, const int step, const bool retVa
  * @param e (*) The expression to print out.
  * @param os (&) The type of output stream to print the output to.
  * @return None */
-void print_ExprNode(const ExprNode * const e, std::ostream& os)
+void ExprNode::print(std::ostream& os) const
 {
-  switch (e->getOpType()){
+  switch (getOpType()){
     case PREDICATE:
-      os << e->getPredicate() ;
+      os << getPredicate() ;
       break;
     case FORALL:
       os << "FORALL.[";
-      print_ExprNode(e->getQuant(),os);
+      getQuant()->print(os);
       os << "]";
       break;
     case EXISTS:
       os << "EXISTS.[";
-      print_ExprNode(e->getQuant(), os);
+      getQuant()->print(os);
       os << "]";
       break;
     case FORALL_REL:
       os << "FORALLREL.(";
-      print_ExprNode(e->getLeft(),os);
+      getLeft()->print(os);
       os << ")[";
-      print_ExprNode(e->getRight(),os);
+      getRight()->print(os);
       os << "]";
       break;
     case EXISTS_REL:
       os << "EXISTSREL.(";
-      print_ExprNode(e->getLeft(),os);
+      getLeft()->print(os);
       os << ")[";
-      print_ExprNode(e->getRight(),os);
+      getRight()->print(os);
       os << "]";
       break;
     case ALLACT:
       os << "ALLACT.[";
-      print_ExprNode(e->getQuant(),os);
+      getQuant()->print(os);
       os << "]";
       break;
     case EXISTACT:
       os << "EXISTACT.[";
-      print_ExprNode(e->getQuant(),os);
+      getQuant()->print(os);
       os << "]";
       break;
     case AND:
       os << "(";
-      print_ExprNode(e->getLeft(), os);
+      getLeft()->print(os);
       os << " AND ";
-      print_ExprNode(e->getRight(), os);
+      getRight()->print(os);
       os << ")";
       break;
     case OR:
       os << "(";
-      print_ExprNode(e->getLeft(), os);
+      getLeft()->print(os);
       os << " OR ";
-      print_ExprNode(e->getRight(), os);
+      getRight()->print(os);
       os << ")";
       break;
     case OR_SIMPLE:
       os << "(";
-      print_ExprNode(e->getLeft(), os);
+      getLeft()->print(os);
       os << " OR_S ";
-      print_ExprNode(e->getRight(), os);
+      getRight()->print(os);
       os << ")";
       break;
     case IMPLY:
       os << "-(-";
-      print_ExprNode(e->getLeft(), os);
+      getLeft()->print(os);
       os << " IMPLY ";
-      print_ExprNode(e->getRight(), os);
+      getRight()->print(os);
       os << "-)-";
       break;
     case RESET:
-      print_ExprNode(e->getExpr(), os);
-      e->getClockSet()->print(os);
+      getExpr()->print(os);
+      getClockSet()->print(os);
       break;
     case REPLACE:
-      print_ExprNode(e->getExpr(), os);
-      os << lookup_atomic_name(e->getAtomic(), e->declared_atomic);
+      getExpr()->print(os);
+      os << lookup_atomic_name(getAtomic(), declared_atomic);
       os << ":=";
-      os << e->getIntVal();
+      os << getIntVal();
       break;
     case CONSTRAINT:
-      e->dbm()->print_constraint(os);
+      os << *(dbm());
       break;
     case ATOMIC:
-      os << lookup_atomic_name(e->getAtomic(), e->declared_atomic);
+      os << lookup_atomic_name(getAtomic(), declared_atomic);
       os << "==";
-      os << e->getIntVal();
+      os << getIntVal();
       break;
     case ATOMIC_NOT:
-      os << lookup_atomic_name(e->getAtomic(), e->declared_atomic);
+      os << lookup_atomic_name(getAtomic(), declared_atomic);
       os << "!=";
-      os << e->getIntVal();
+      os << getIntVal();
       break;
     case ATOMIC_LT:
-      os << lookup_atomic_name(e->getAtomic(), e->declared_atomic);
+      os << lookup_atomic_name(getAtomic(), declared_atomic);
       os << "<";
-      os << e->getIntVal();
+      os << getIntVal();
       break;
     case ATOMIC_GT:
-      os << lookup_atomic_name(e->getAtomic(), e->declared_atomic);
+      os << lookup_atomic_name(getAtomic(), declared_atomic);
       os << ">";
-      os << e->getIntVal();
+      os << getIntVal();
       break;
     case ATOMIC_LE:
-      os << lookup_atomic_name(e->getAtomic(), e->declared_atomic);
+      os << lookup_atomic_name(getAtomic(), declared_atomic);
       os << "<=";
-      os << e->getIntVal();
+      os << getIntVal();
       break;
     case ATOMIC_GE:
-      os << lookup_atomic_name(e->getAtomic(), e->declared_atomic);
+      os << lookup_atomic_name(getAtomic(), declared_atomic);
       os << ">=";
-      os << e->getIntVal();
+      os << getIntVal();
       break;
     case BOOL:
-      os << ((e->getBool())? "TRUE" : "FALSE");
+      os << ((getBool())? "TRUE" : "FALSE");
       break;
     case SUBLIST:
-      print_ExprNode(e->getExpr(), os);
-      e->getSublist()->print(os);
+      getExpr()->print(os);
+      getSublist()->print(os);
       break;
     case ASSIGN:
-      print_ExprNode(e->getExpr(), os);
+      getExpr()->print(os);
       os << "[";
-      os << lookup_clock_name(e->getcX(), e->declared_clocks);
+      os << lookup_clock_name(getcX(), declared_clocks);
       os << "==";
-      os << lookup_clock_name(e->getcY(), e->declared_clocks);
+      os << lookup_clock_name(getcY(), declared_clocks);
       os << "]";
       break;
     case ABLEWAITINF:
@@ -299,8 +299,10 @@ void print_ExprNode(const ExprNode * const e, std::ostream& os)
  * The typical output stream is os.
  * @param op (*) The expression type.
  * @param os (&) The type of output stream to print the output to.
+ * @param place If true, print for expressions with placeholders. Used for
+ * expression types within proof subtrees with placeholders.
  * @return none */
-void print_ExprNodeType(const opType op, std::ostream& os)
+void print_ExprNodeType(const opType op, std::ostream& os, bool place)
 {
   os << "**(";
   switch (op){
@@ -308,22 +310,22 @@ void print_ExprNodeType(const opType op, std::ostream& os)
       os << "PREDICATE";
       break;
     case FORALL:
-      os << "FORALL";
+      os << "FORALL" << (place?" - P2":"");
       break;
     case EXISTS:
-      os << "EXISTS - P";
+      os << "EXISTS - P" << (place?"2":"");
       break;
     case FORALL_REL:
-      os << "FORALLREL";
+      os << "FORALLREL" << (place?" - P2":"");
       break;
     case EXISTS_REL:
-      os << "EXISTSREL - P";
+      os << "EXISTSREL - P" << (place?"2":"");
       break;
     case ALLACT:
-      os << "ALLACT";
+      os << "ALLACT" << (place?" - B":"");
       break;
     case EXISTACT:
-      os << "EXISTACT";
+      os << "EXISTACT" << (place?" - B":"");
       break;
     case AND:
       os << "AND - B";
@@ -338,10 +340,10 @@ void print_ExprNodeType(const opType op, std::ostream& os)
       os << "IMPLY";
       break;
     case RESET:
-      os << "RESET";
+      os << "RESET" << (place?" - P2":"");
       break;
     case REPLACE:
-      os << "REPLACE";
+      os << "REPLACE" << (place?" - B":"");
       break;
     case CONSTRAINT:
       os << "CONSTRAINT";
@@ -383,121 +385,9 @@ void print_ExprNodeType(const opType op, std::ostream& os)
   os << ")**";
 }
 
-
-/** Prints out the expression type (opType), for expressions
- * with placeholders, to the desired output stream.
- * The typical output stream is os. This method is used for
- * expression types within proof subtrees with placehloders.
- * @param op (*) The expression type.
- * @param os (&) The type of output stream to print the output to.
- * @return none */
-void print_ExprNodeTypePlace(const opType op, std::ostream& os)
-{
-  os << "**(";
-  switch (op){
-    case PREDICATE:
-      os << "PREDICATE";
-      break;
-    case FORALL:
-      os << "FORALL - P2";
-      break;
-    case EXISTS:
-      os << "EXISTS - P2";
-      break;
-    case FORALL_REL:
-      os << "FORALLREL - P2";
-      break;
-    case EXISTS_REL:
-      os << "EXISTSREL - P2";
-      break;
-    case ALLACT:
-      os << "ALLACT - B";
-      break;
-    case EXISTACT:
-      os << "EXISTACT - B";
-      break;
-    case AND:
-      os << "AND - B";
-      break;
-    case OR:
-      os << "OR - B";
-      break;
-    case OR_SIMPLE:
-      os << "OR_S - B";
-      break;
-    case IMPLY:
-      os << "IMPLY";
-      break;
-    case RESET:
-      os << "RESET - P2";
-      break;
-    case REPLACE:
-      os << "REPLACE - B";
-      break;
-    case CONSTRAINT:
-      os << "CONSTRAINT";
-      break;
-    case ATOMIC:
-      os << "ATOMIC ==";
-      break;
-    case ATOMIC_NOT:
-      os << "ATOMIC !=";
-      break;
-    case ATOMIC_LT:
-      os << "ATOMIC <";
-      break;
-    case ATOMIC_GT:
-      os << "ATOMIC >";
-      break;
-    case ATOMIC_LE:
-      os << "ATOMIC <=";
-      break;
-    case ATOMIC_GE:
-      os << "ATOMIC >=";
-      break;
-    case BOOL:
-      os << "BOOL";
-      break;
-    case SUBLIST:
-      os << "SUBLIST";
-      break;
-    case ASSIGN:
-      os << "ASSIGN";
-      break;
-    case ABLEWAITINF:
-      os << "ABLEWAITINF";
-      break;
-    case UNABLEWAITINF:
-      os << "UNABLEWAITINF";
-      break;
-  }
-  os << ")**";
-}
-
-
-
-/** Prints the contents of the SubstList.  -1 is considered
- * to be empty.
- * @param os (&) The output stream to print the output to
- * @return none. */
-void SubstList::print(std::ostream &os) const {
-  bool end =false;
-  os << "[";
-  for(int i = 0; i < quantity; i++){
-    if (this->at(i) != -1){
-      if(end) os <<",";
-      //os << "p" << i;
-      os << lookup_atomic_name(i, declared_atomic);
-      os <<"=" << this->at(i);
-      end = true;
-    }
-  }
-  os << "]";
-}
 
 /** Prints out the fed in expression node to the fed in
- * output stream with a specified indentation (which doesn't seem
- * to be used: used in printing of transitions.
+ * output stream: used in printing of transitions.
  * @param e (*) The ExprNode to print out.
  * @param os (&) The type of output stream to print the output to.
  * @return none */

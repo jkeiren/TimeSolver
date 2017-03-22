@@ -341,8 +341,7 @@ public:
           os << " ; ";
         }
         (*it)->sub()->print(os);
-        os << "\t |- ";
-        print_ExprNode((*it)->rhs(), os);
+        os << "\t |- " << *((*it)->rhs());
 
         os << " (" << conseqNumSeq;
         std::string tempStr;
