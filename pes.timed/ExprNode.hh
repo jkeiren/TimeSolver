@@ -35,6 +35,21 @@ enum opType {FORALL, EXISTS, FORALL_REL, EXISTS_REL, OR, OR_SIMPLE, AND, IMPLY, 
   BOOL, ATOMIC, PREDICATE, RESET, SUBLIST, ATOMIC_NOT, ATOMIC_LT, ATOMIC_GT,
   ATOMIC_LE, ATOMIC_GE, ASSIGN, REPLACE, ALLACT, EXISTACT, ABLEWAITINF, UNABLEWAITINF};
 
+/** Prints out the expression type (opType) to the desired output stream.
+ * The typical output stream is cout.
+ * @param op (*) The expression type.
+ * @param os (&) The type of output stream to print the output to.
+ * @return none */
+void print_ExprNodeType(const opType op, std::ostream& os, bool place = false);
+
+inline
+std::ostream& operator<<(std::ostream& os, const opType& op)
+{
+  print_ExprNodeType(op, os);
+  return os;
+}
+
+
 /** A Substitution list, functioning as both the location component
  * of a sequent and a mechanism to change location (via variable assignments).
  * The SubstList stores the location (discrete state) using variable form,
@@ -890,9 +905,18 @@ void makeAssignmentList(const ExprNode * const e, std::vector<std::pair<short in
  * @param op The Expression type of the proof rule; this is the rule that the
  * model checker applies to continue the proof.
  * @return None */
-void print_sequent(std::ostream& os, const int, const bool, const DBM * const, const ExprNode * const,
-                   const SubstList * const, const opType op);
+inline
+void print_sequent(std::ostream& os, const int step, const bool retVal, const DBM * const lhs,
+                   const ExprNode * const rhs, const SubstList * const sub, const opType op){
+  assert(lhs != nullptr);
+  assert(sub != nullptr);
+  assert(rhs != nullptr);
 
+  os << "seq#" << step << "  " << retVal << "  "
+     << *lhs << ", " << *sub
+     << "\t|-  " << *rhs
+     << "\t" << op << std::endl;
+}
 
 /** Prints out a placeholder check sequent in the proof tree; used for
  * the exists sub-branch that checks (and restricts) the obtained placeholder
@@ -905,8 +929,18 @@ void print_sequent(std::ostream& os, const int, const bool, const DBM * const, c
  * @param op The Expression type of the proof rule; this is the rule that the
  * model checker applies to continue the proof.
  * @return None */
-void print_sequentCheck(std::ostream& os, const int, const bool, const DBM * const, const DBMList * const,
-                        const SubstList * const, const opType op);
+inline
+void print_sequentCheck(std::ostream& os, const int step, const bool retVal, const DBM * const lhs,
+                        const DBMList * const rhsList, const SubstList * const sub, const opType op){
+  assert(lhs != nullptr);
+  assert(sub != nullptr);
+  assert(rhsList != nullptr);
+
+  os << "seq#" << step << "  " << retVal << "  "
+     << *lhs << ", " << *sub
+     << "\t|-  " << *rhsList
+     << "\t" << op << std::endl;
+}
 
 /** Prints out a sequent with a placeholder clock state in a proof tree.
  * @param step The tree level (sequent step) of the sequent (0 is root).
@@ -918,9 +952,24 @@ void print_sequentCheck(std::ostream& os, const int, const bool, const DBM * con
  * @param op The Expression type of the proof rule; this is the rule that the
  * model checker applies to continue the proof.
  * @return None */
+inline
 void print_sequent_place(std::ostream& os, const int step, const bool retVal, const DBM * const lhs,
                          const DBMList * const place, const ExprNode * const rhs,
-                         const SubstList * const sub, const opType op);
+                         const SubstList * const sub, const opType op){
+  assert(lhs != nullptr);
+  assert(place != nullptr);
+  assert(sub != nullptr);
+  assert(rhs != nullptr);
+
+  os << "seq#" << step << "  " <<retVal << "  "
+     << *lhs
+     << " plhold: {" << *place << "}"
+     << ", " << *sub
+     << "\t|-  " << *rhs
+     << "\t";
+  print_ExprNodeType(op, os, true);
+  os << std::endl;
+}
 
 /** Prints out a placeholder check sequent in the proof tree; used for
  * exists, forall and reset sequents within placeholder proofs. This check
@@ -935,22 +984,22 @@ void print_sequent_place(std::ostream& os, const int step, const bool retVal, co
  * @param op The Expression type of the proof rule; this is the rule that the
  * model checker applies to continue the proof.
  * @return None */
+inline
 void print_sequent_placeCheck(std::ostream& os, const int step, const bool retVal, const DBM * const lhs,
                               const DBMList * const place, const DBMList * const rhsList,
-                              const SubstList * const sub, const opType op);
+                              const SubstList * const sub, const opType op){
+  assert(lhs != nullptr);
+  assert(place != nullptr);
+  assert(sub != nullptr);
+  assert(rhsList != nullptr);
 
-/** Prints out the expression type (opType) to the desired output stream.
- * The typical output stream is cout.
- * @param op (*) The expression type.
- * @param os (&) The type of output stream to print the output to.
- * @return none */
-void print_ExprNodeType(const opType op, std::ostream& os, bool place = false);
-
-inline
-std::ostream& operator<<(std::ostream& os, const opType& op)
-{
-  print_ExprNodeType(op, os);
-  return os;
+  os << "seq#" << step << "  " << retVal << "  " << *lhs
+     << " plhold: {" << *place << "}"
+     << ", " << *sub
+     << "\t|-  " << *rhsList
+     << "\t";
+  print_ExprNodeType(op, os, true);
+  os << std::endl;
 }
 
 void print_ExprNodeTrans(const ExprNode * const e, std::ostream& os);

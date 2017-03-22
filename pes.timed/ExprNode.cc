@@ -25,134 +25,25 @@ using namespace std;
  * @return None. When finished, av is changed to be the vector of
  * clock assignments.  */
 void makeAssignmentList(const ExprNode * const e, vector<pair<short int,short int> > * av) {
-  pair<short int,short int> p;
-  switch (e->getOpType()){
-    case ASSIGN:
-      p.first=e->getAtomic();
-      p.second=e->getIntVal();
-      av->push_back(p);
-      makeAssignmentList(e->getExpr(), av);
-      break;
-    case BOOL: // terminal node
-      break;
-    default: // should not get here
-      break;
+  if(e->getOpType() == ASSIGN)
+  {
+    av->push_back(std::make_pair(e->getAtomic(), e->getIntVal()));
+    makeAssignmentList(e->getExpr(), av);
   }
-
 }
 
 /** Lookup the name of the clock with id n */
+static inline
 const string& lookup_clock_name(const unsigned int n, const bidirectional_map <string, int>& declared_clocks)
 {
   return declared_clocks.reverse_at(n);
 }
 
 /** Lookup the name of the atomic with id n */
+static inline
 const string& lookup_atomic_name(const unsigned int n, const bidirectional_map<std::string, int>& declared_atomic)
 {
   return declared_atomic.reverse_at(n);
-}
-
-/** Prints out a sequent in a proof tree.
- * @param step The tree level (sequent step) of the sequent (0 is root).
- * @param retVal The current value of the sequent (true or false).
- * @param lhs (*) The left hand clock state.
- * @param rhs (*) The right hand side of the sequent.
- * @param sub (*) The left hand discrete state.
- * @param op The Expression type of the proof rule; this is the rule that the
- * model checker applies to continue the proof.
- * @return None */
-void print_sequent(std::ostream& os, const int step, const bool retVal, const DBM * const lhs,
-                   const ExprNode * const rhs, const SubstList * const sub, const opType op){
-  assert(lhs != nullptr);
-  assert(sub != nullptr);
-  assert(rhs != nullptr);
-
-  os << "seq#" << step << "  " << retVal << "  "
-     << *lhs << ", " << *sub
-     << "\t|-  " << *rhs
-     << "\t" << op << endl;
-}
-
-/** Prints out a placeholder check sequent in the proof tree; used for
- * the exists sub-branch that checks (and restricts) the obtained placeholder
- * from the other branch of exists.
- * @param step The tree level (sequent step) of the sequent (0 is root).
- * @param retVal The current value of the sequent (true or false).
- * @param lhs (*) The left hand clock state.
- * @param rhsList (*) The right hand side; the obtained placeholder.
- * @param sub (*) The left hand discrete state.
- * @param op The Expression type of the proof rule; this is the rule that the
- * model checker applies to continue the proof.
- * @return None */
-void print_sequentCheck(std::ostream& os, const int step, const bool retVal, const DBM * const lhs,
-                        const DBMList * const rhsList, const SubstList * const sub, const opType op){
-  assert(lhs != nullptr);
-  assert(sub != nullptr);
-  assert(rhsList != nullptr);
-
-  os << "seq#" << step << "  " << retVal << "  "
-     << *lhs << ", " << *sub
-     << "\t|-  " << *rhsList
-     << "\t" << op << endl;
-}
-
-/** Prints out a sequent with a placeholder clock state in a proof tree.
- * @param step The tree level (sequent step) of the sequent (0 is root).
- * @param retVal The current value of the sequent (true or false).
- * @param lhs (*) The left hand clock state.
- * @param place (*) The left hand placeholder clock state.
- * @param rhs (*) The right hand side of the sequent.
- * @param sub (*) The left hand discrete state.
- * @param op The Expression type of the proof rule; this is the rule that the
- * model checker applies to continue the proof.
- * @return None */
-void print_sequent_place(std::ostream& os, const int step, const bool retVal, const DBM * const lhs,
-                         const DBMList * const place, const ExprNode * const rhs,
-                         const SubstList * const sub, const opType op){
-  assert(lhs != nullptr);
-  assert(place != nullptr);
-  assert(sub != nullptr);
-  assert(rhs != nullptr);
-
-  os << "seq#" << step << "  " <<retVal << "  "
-     << *lhs
-     << " plhold: {" << *place << "}"
-     << ", " << *sub
-     << "\t|-  " << *rhs
-     << "\t";
-  print_ExprNodeType(op, os, true);
-  os << endl;
-}
-
-/** Prints out a placeholder check sequent in the proof tree; used for
- * exists, forall and reset sequents within placeholder proofs. This check
- * takes the placeholder found in the left branch and restricts it to form
- * a (smaller) but valid placeholder to push up the tree.
- * @param step The tree level (sequent step) of the sequent (0 is root).
- * @param retVal The current value of the sequent (true or false).
- * @param lhs (*) The left hand clock state.
- * @param place (*) The left hand placeholder clock state.
- * @param rhsList (*) The right hand side; the obtained placeholder.
- * @param sub (*) The left hand discrete state.
- * @param op The Expression type of the proof rule; this is the rule that the
- * model checker applies to continue the proof.
- * @return None */
-void print_sequent_placeCheck(std::ostream& os, const int step, const bool retVal, const DBM * const lhs,
-                              const DBMList * const place, const DBMList * const rhsList,
-                              const SubstList * const sub, const opType op){
-  assert(lhs != nullptr);
-  assert(place != nullptr);
-  assert(sub != nullptr);
-  assert(rhsList != nullptr);
-
-  os << "seq#" << step << "  " << retVal << "  " << *lhs
-     << " plhold: {" << *place << "}"
-     << ", " << *sub
-     << "\t|-  " << *rhsList
-     << "\t";
-  print_ExprNodeType(op, os, true);
-  os << endl;
 }
 
 /** Prints out the expression to the desired output stream, labeling
