@@ -68,7 +68,7 @@ inline bool comp_ph_invs(const ExprNode& e, const SubstList &sublist)
  * @param sub (*) The discrete state (location variable assignment)
  * of the sequent.
  * @return true: the model has a non-vacuous invariant; false: otherwise. */
-inline bool invs_chk(const std::vector<ExprNode *>& invs, DBM * const lhs, const SubstList& sub){
+inline bool restrict_to_invariant(const std::vector<ExprNode *>& invs, DBM * const lhs, const SubstList& sub){
   bool outRes = false;
   if (invs.empty()) return false;
   for (int i=0; i < sub.nElements(); i++){
@@ -95,12 +95,12 @@ inline bool invs_chk(const std::vector<ExprNode *>& invs, DBM * const lhs, const
  * @param sub (*) The discrete state (location variable assignment)
  * of the sequent.
  * @return true: the DBMList is changed; false: otherwise. */
-inline bool invs_chk(const std::vector<ExprNode *>& invs, DBMList * const lhs, const SubstList& sub){
+inline bool restrict_to_invariant(const std::vector<ExprNode *>& invs, DBMList * const lhs, const SubstList& sub){
   bool outRes = false;
   if (invs.empty()) return false;
   std::vector<DBM *> * lList = lhs->getDBMList();
   for(unsigned int i = 0; i < lList->size(); i++) {
-    bool temp = invs_chk(invs, (*lList)[i], sub);
+    bool temp = restrict_to_invariant(invs, (*lList)[i], sub);
     outRes = temp || outRes;
   }
   return outRes;

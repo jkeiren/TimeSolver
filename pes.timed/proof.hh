@@ -614,13 +614,13 @@ inline bool prover::do_proof_predicate(const int step, DBM* const lhs, const Exp
   bool retVal = false;
 
   ExprNode *e = input_pes.lookup_equation(rhs->getPredicate());
-  if (e == NULL){
+  if (e == nullptr){
     cpplog(cpplogging::error) << "open predicate variable found: "<< rhs->getPredicate() << std::endl;
     exit(-1);
   }
 
   // Get Predicate Index for Hashing
-  int pInd = input_pes.lookup_predicate(rhs->getPredicate())->getIntVal() - 1;
+  int predicate_index = input_pes.lookup_predicate(rhs->getPredicate())->getIntVal() - 1;
   prevParityGfp = currParityGfp;
   currParityGfp = rhs->get_Parity();
   lhs->cf();
@@ -629,29 +629,25 @@ inline bool prover::do_proof_predicate(const int step, DBM* const lhs, const Exp
   if(useCaching) {
     /* First look in known False Sequent table */
     { // Restricted scope for looking up false sequents
-      Sequent tf(rhs, sub);
-      Sequent *hf = cache.Xlist_false.look_for_sequent(tf.discrete_state(), pInd);
-      if(hf != NULL && hf->tabled_false_sequent(lhs)) {
-        retVal = false;
+      Sequent *cached_sequent = cache.Xlist_false.look_for_sequent(sub, predicate_index);
+      if(cached_sequent != nullptr && cached_sequent->tabled_false_sequent(lhs)) {
         cpplog(cpplogging::debug) << "---(Invalid) Located a Known False Sequent ----" <<  std::endl <<  std::endl;
 
         /* Add backpointer to parent sequent (shallow copy) */
-        hf->addParent(parentRef);
-        return retVal; // break out of switch
+        cached_sequent->addParent(parentRef);
+        return false;
       }
     }
 
     /* Now look in known True Sequent table */
     { // Restricted scope for looking up true sequents
-      Sequent tf(rhs, sub); //JK Can be optimised out by reusing tf?
-      Sequent *hf = cache.Xlist_true.look_for_sequent(tf.discrete_state(), pInd);
-      if(hf != NULL && hf->tabled_sequent(lhs)) {
-        retVal = true;
+      Sequent *cached_sequent = cache.Xlist_true.look_for_sequent(sub, predicate_index);
+      if(cached_sequent != nullptr && cached_sequent->tabled_sequent(lhs)) {
         cpplog(cpplogging::debug) << "---(Valid) Located a Known True Sequent ----" <<  std::endl <<  std::endl;
 
         /* Add backpointer to parent sequent (shallow copy) */
-        hf->addParent(parentRef);
-        return retVal; // break out of switch
+        cached_sequent->addParent(parentRef);
+        return true;
       }
     }
   }
@@ -662,11 +658,9 @@ inline bool prover::do_proof_predicate(const int step, DBM* const lhs, const Exp
   { // Restricted scope for detecting circularities
     Sequent *t = new Sequent(rhs, sub);
     if(currParityGfp) { // Thus a Greatest Fixpoint
-      h = cache.Xlist_pGFP.locate_sequent(t, pInd);
+      h = cache.Xlist_pGFP.locate_sequent(t, predicate_index);
       if((!newSequent) && h->tabled_sequent(lhs)) {
         // Found gfp Circularity - thus valid
-        retVal = true;
-
         cpplog(cpplogging::debug) << "---(Valid) Located a True Sequent or gfp Circularity ----" <<  std::endl <<  std::endl;
 
         /* Add backpointer to parent sequent (shallow copy) */
@@ -674,22 +668,19 @@ inline bool prover::do_proof_predicate(const int step, DBM* const lhs, const Exp
 
         // Add sequent to known true cache
         if(useCaching) {
-          Sequent *t7 = new Sequent(rhs, sub);
-          Sequent *h7 = cache.Xlist_true.locate_sequent(t7, pInd);
-          h7->update_sequent(lhs);
+          Sequent *true_sequent = new Sequent(rhs, sub);
+          Sequent *cached_true_sequent = cache.Xlist_true.locate_sequent(true_sequent, predicate_index);
+          cached_true_sequent->update_sequent(lhs);
         }
-        return retVal;
+        return true; // greatest fixed point circularity found
       }
 
       h->push_sequent(new DBM(*lhs));
     }
     else { // Thus, a least fixpoint
       // Now look for a Circularity
-      h = cache.Xlist_pLFP.locate_sequent(t, pInd);
+      h = cache.Xlist_pLFP.locate_sequent(t, predicate_index);
       if((!newSequent) && h->tabled_sequent_lfp(lhs)) {
-        // Found lfp circularituy - thus invalid
-        retVal = false;
-
         cpplog(cpplogging::debug) << "---(Invalid) Located a lfp Circularity ----" <<  std::endl <<  std::endl;
 
         /* Add backpointer to parent sequent (shallow copy) */
@@ -697,17 +688,19 @@ inline bool prover::do_proof_predicate(const int step, DBM* const lhs, const Exp
 
         // Now Put Sequent in False Cache
         if(useCaching) {
-          Sequent *t7 = new Sequent(rhs, sub);
-          Sequent *h7 = cache.Xlist_false.locate_sequent(t7, pInd);
-          h7->update_false_sequent(lhs);
+          Sequent *false_sequent = new Sequent(rhs, sub);
+          Sequent *cached_false_sequent = cache.Xlist_false.locate_sequent(false_sequent, predicate_index);
+          cached_false_sequent->update_false_sequent(lhs);
         }
-        return retVal;
+        return false; // least fixed point circularity found
       }
 
       h->push_sequent(new DBM(*lhs));
     }
   } // End scope for circularity
   assert(h != nullptr);
+  // no least/greatest fixed point circularity was found; the sequent has been
+  // added to the appropriate cache.
 
   // NO CIRCULARITY FOUND
 
@@ -738,52 +731,44 @@ inline bool prover::do_proof_predicate(const int step, DBM* const lhs, const Exp
     {
       /* First look in opposite parity Caches */
       bool madeEmpty = false;
-      Sequent *t2 = new Sequent(rhs, sub);
+      Sequent *true_sequent = new Sequent(rhs, sub);
       /* If found, Purge Sequent from its cache */
-      Sequent *t2s = cache.Xlist_false.look_for_and_purge_rhs_sequent(lhs, t2, pInd, false, &madeEmpty);
+      Sequent *cached_false_sequent = cache.Xlist_false.look_for_and_purge_rhs_sequent(lhs, true_sequent, predicate_index, false, &madeEmpty);
 
       /* Now purge backpointers */
-      if(t2s != NULL) {
-        cache.look_for_and_purge_rhs_backStack(t2s->parents(), t2s->parents_with_placeholders());
+      if(cached_false_sequent != nullptr) {
+        cache.look_for_and_purge_rhs_backStack(cached_false_sequent->parents(), cached_false_sequent->parents_with_placeholders());
       }
 
       // Now update in proper Cache
-      Sequent *t5 = new Sequent(rhs, sub);
-      Sequent *h5 = cache.Xlist_true.locate_sequent(t5, pInd);
-      h5->update_sequent(lhs);
+      Sequent *cached_true_sequent = cache.Xlist_true.locate_sequent(true_sequent, predicate_index);
+      cached_true_sequent->update_sequent(lhs);
+      // Since we update the cached_true_sequent with true_sequent, we shall
+      // not free true_sequent.
 
-      // Now make deletions for Memory Cleanup
-      if(t2 != t2s) {
-        delete t2;
-      }
       if(madeEmpty) {
-        delete t2s;
+        delete cached_false_sequent;
       }
     }
     else { // !retVal
       /* True cache (not gfp caches) */
-      Sequent *t22 = new Sequent(rhs, sub);
+      Sequent *false_sequent = new Sequent(rhs, sub);
       bool madeEmpty = false;
       /* If found, Purge Sequent from its cache */
-      Sequent *t22s = cache.Xlist_true.look_for_and_purge_rhs_sequent(lhs, t22, pInd, true, &madeEmpty);
+      Sequent *cached_true_sequent = cache.Xlist_true.look_for_and_purge_rhs_sequent(lhs, false_sequent, predicate_index, true, &madeEmpty);
 
       /* Now purge backpointers.
        * Ignore circularity booleans because they do not form backpointers */
-      if(t22s != NULL) {
-        cache.look_for_and_purge_rhs_backStack(t22s->parents(), t22s->parents_with_placeholders());
+      if(cached_true_sequent != nullptr) {
+        cache.look_for_and_purge_rhs_backStack(cached_true_sequent->parents(), cached_true_sequent->parents_with_placeholders());
       }
 
       // Now update in proper Cache
-      Sequent *t5 = new Sequent(rhs, sub);
-      Sequent *h5 = cache.Xlist_false.locate_sequent(t5, pInd);
-      h5->update_false_sequent(lhs);
+      Sequent *cached_false_sequent = cache.Xlist_false.locate_sequent(false_sequent, predicate_index);
+      cached_false_sequent->update_false_sequent(lhs);
 
-      // Now make deletions for Memory Cleanup
-      if( t22 != t22s) {
-        delete t22;
-      }
       if(madeEmpty) {
-        delete t22s;
+        delete cached_true_sequent;
       }
     }
   }
@@ -815,9 +800,14 @@ inline bool prover::do_proof_or(const int step, DBM * const lhs, const ExprNode 
   bool retVal = false;
 
   /* Use two placeholders to provide split here */
-  DBMList place1(*INFTYDBM);
-  retPlaceDBM = do_proof_place(step, lhs, &place1, rhs->getLeft(), sub);
+  DBMList placeholder1(*INFTYDBM);
+  retPlaceDBM = do_proof_place(step, lhs, &placeholder1, rhs->getLeft(), sub);
   retPlaceDBM->cf();
+
+  // We optimise on proving the right hand side, depending on the placeholder.
+  // If empty, the right hand side needs to hold for the entire DBM
+  // If the placeholder already covers the entire DBM, we are done,
+  // otherwise we need to prove the right hand side for a fresh placeholder.
 
   // Reset place parent to NULL
   parentPlaceRef = nullptr;
@@ -831,10 +821,10 @@ inline bool prover::do_proof_or(const int step, DBM * const lhs, const ExprNode 
     /* Here we get the corner case where we have to use the
      * OR Split rule, so we try to establish whether part of lhs is covered by
      * l, and the other part is covered by rhs. */
-    place1 = *retPlaceDBM; // place1 contains the states covered by l.
+    placeholder1 = *retPlaceDBM; // place1 contains the states covered by l.
 
-    DBMList place2(*INFTYDBM);
-    retPlaceDBM = do_proof_place(step, lhs, &place2, rhs->getRight(), sub);
+    DBMList placeholder2(*INFTYDBM);
+    retPlaceDBM = do_proof_place(step, lhs, &placeholder2, rhs->getRight(), sub);
     retPlaceDBM->cf();
 
     // Reset place parent to NULL
@@ -846,7 +836,7 @@ inline bool prover::do_proof_or(const int step, DBM * const lhs, const ExprNode 
       retVal = true;
     }
     else {
-      retPlaceDBM->addDBMList(place1);
+      retPlaceDBM->addDBMList(placeholder1);
       retVal = (*retPlaceDBM) >= *lhs; // if the union of both placeholders covers the set of states, we are still happy
     }
   }
@@ -857,29 +847,28 @@ inline bool prover::do_proof_or_simple(const int step, DBM * const lhs, const Ex
 {
   /* Simplified OR does not need to split on placeholders */
   bool retVal = do_proof(step, lhs, rhs->getLeft(), sub);
-  // Reset place parent to NULL
   if(!retVal) {
-    DBM lhsb(*lhs); // why do we require this copy?
-    retVal  = do_proof(step, &lhsb, rhs->getRight(), sub);
+    retVal  = do_proof(step, lhs, rhs->getRight(), sub);
   }
   return retVal;
 }
 
+// [FC14] Rule \forall_{t1}
 inline bool prover::do_proof_forall(const int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub)
 {
   /* Here the model checker looks at the zone of
    * all time sucessors and then substitutes in
    * the substitued constraints and sees if the
    * zone satifies the constraints */
-  lhs->cf();
   /* DBM lhs is copied because it is changed by suc() and invs_chk().
    * The copying here assures that lhs is unchanged when it is returned,
    * allowing multiple branches of AND and OR to have the same lhs. */
-  DBM ph(*lhs);
-  ph.suc();
-  invs_chk(input_pes.invariants(), &ph, *sub);
+  DBM succ_lhs(*lhs);
+  succ_lhs.suc();
 
-  return do_proof(step, &ph, rhs->getQuant(), sub);
+  restrict_to_invariant(input_pes.invariants(), &succ_lhs, *sub);
+
+  return do_proof(step, &succ_lhs, rhs->getQuant(), sub);
 }
 
 inline bool prover::do_proof_forall_rel(const int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub)
@@ -900,7 +889,7 @@ inline bool prover::do_proof_forall_rel(const int step, DBM * const lhs, const E
   ph.suc();
 
   DBMList * tPlace = new DBMList(*INFTYDBM);
-  invs_chk(input_pes.invariants(), tPlace, *sub);
+  restrict_to_invariant(input_pes.invariants(), tPlace, *sub);
   retPlaceDBM = do_proof_place(step, &ph, tPlace,
                                rhs->getLeft(), sub);
   // Reset place parent to NULL
@@ -919,7 +908,7 @@ inline bool prover::do_proof_forall_rel(const int step, DBM * const lhs, const E
      * allowing multiple branches of AND and OR to have the same lhs. */
     DBM ph(*lhs);
     ph.suc();
-    invs_chk(input_pes.invariants(), &ph, *sub);
+    restrict_to_invariant(input_pes.invariants(), &ph, *sub);
 
     retVal = do_proof(step, &ph, rhs->getRight(), sub);
   }
@@ -994,7 +983,7 @@ inline bool prover::do_proof_forall_rel(const int step, DBM * const lhs, const E
          * nor everything. */
 
         DBMList invCompPlace(*INFTYDBM);
-        bool hasInv = invs_chk(input_pes.invariants(), &invCompPlace, *sub);
+        bool hasInv = restrict_to_invariant(input_pes.invariants(), &invCompPlace, *sub);
         if(hasInv) {
           invCompPlace.cf();
           !invCompPlace;
@@ -1126,7 +1115,7 @@ inline bool prover::do_proof_exists(const int step, DBM * const lhs, const ExprN
   /* The proper derivation for EXISTS is to incorporate the invariant
    * in the placeholder, and not the LHS. */
   DBMList tPlace(*INFTYDBM);
-  invs_chk(input_pes.invariants(), &tPlace, *sub);
+  restrict_to_invariant(input_pes.invariants(), &tPlace, *sub);
 
   retPlaceDBM = do_proof_place(step, &ph, &tPlace,
                                rhs->getQuant(), sub);
@@ -1180,7 +1169,7 @@ inline bool prover::do_proof_exists_rel(const int step, DBM * const lhs, const E
   DBM phb(ph);
 
   DBMList * tPlace = new DBMList(*INFTYDBM);
-  invs_chk(input_pes.invariants(), tPlace, *sub);
+  restrict_to_invariant(input_pes.invariants(), tPlace, *sub);
 
   retPlaceDBM = do_proof_place(step, &ph, tPlace,
                                rhs->getRight(), sub);
@@ -1364,7 +1353,7 @@ inline bool prover::do_proof_allact(const int step, DBM * const lhs, const ExprN
     /* Now check the invariant */
     DBM invCons(*INFTYDBM);
     const SubstList * sl = tempT->getEnteringLocation(sub);
-    bool isInv = invs_chk(input_pes.invariants(), &invCons, *sl);
+    bool isInv = restrict_to_invariant(input_pes.invariants(), &invCons, *sl);
     delete sl;
     if(isInv) {
       invCons.cf();
@@ -1464,7 +1453,7 @@ inline bool prover::do_proof_existact(const int step, DBM * const lhs, const Exp
     /* Now check the invariant */
     DBM invCons(*INFTYDBM);
     const SubstList * sl = tempT->getEnteringLocation(sub);
-    bool isInv = invs_chk(input_pes.invariants(), &invCons, *sl);
+    bool isInv = restrict_to_invariant(input_pes.invariants(), &invCons, *sl);
     delete sl;
     if(isInv) {
       invCons.cf();
@@ -1719,7 +1708,7 @@ inline bool prover::do_proof_ablewaitinf(DBM * const lhs, SubstList * const sub)
   lhs->cf();
   DBM ph(*lhs);
   ph.suc();
-  invs_chk(input_pes.invariants(), &ph, *sub);
+  restrict_to_invariant(input_pes.invariants(), &ph, *sub);
   ph.cf();
   /* Time can diverge if and only if there are no upper bound
    * constraints in the successor */
@@ -1739,7 +1728,7 @@ inline bool prover::do_proof_unablewaitinf(DBM * const lhs, SubstList * const su
   lhs->cf();
   DBM ph(*lhs);
   ph.suc();
-  invs_chk(input_pes.invariants(), &ph, *sub);
+  restrict_to_invariant(input_pes.invariants(), &ph, *sub);
   ph.cf();
   /* Time cannot diverge if and only if there is an upper bound
    * constraint in the successor */
@@ -2147,7 +2136,7 @@ inline DBMList* prover::do_proof_place_forall(int step, DBM* const lhs,
     /* Note; we union retPlaceDBM with the complement of the invariant.
      * should we do this if retPlaceDBM is nonempty? */
     DBMList invCompPlace(*INFTYDBM);
-    bool hasInv = invs_chk(input_pes.invariants(), &invCompPlace, *sub);
+    bool hasInv = restrict_to_invariant(input_pes.invariants(), &invCompPlace, *sub);
     if(hasInv) {
       invCompPlace.cf();
       !invCompPlace;
@@ -2209,7 +2198,7 @@ inline DBMList* prover::do_proof_place_forall_rel(int step, DBM* const lhs, DBML
   ph.suc();
 
   DBMList * tPlace = new DBMList(*INFTYDBM);
-  invs_chk(input_pes.invariants(), tPlace, *sub);
+  restrict_to_invariant(input_pes.invariants(), tPlace, *sub);
   retPlaceDBM = do_proof_place(step, &ph, tPlace,
                                rhs->getLeft(), sub);
   retPlaceDBM->cf();
@@ -2236,7 +2225,7 @@ inline DBMList* prover::do_proof_place_forall_rel(int step, DBM* const lhs, DBML
        */
 
       DBMList invCompPlace(*INFTYDBM);
-      bool hasInv = invs_chk(input_pes.invariants(), &invCompPlace, *sub);
+      bool hasInv = restrict_to_invariant(input_pes.invariants(), &invCompPlace, *sub);
       if(hasInv) {
         invCompPlace.cf();
         !invCompPlace;
@@ -2390,7 +2379,7 @@ inline DBMList* prover::do_proof_place_forall_rel(int step, DBM* const lhs, DBML
 
         DBMList invCompPlace(*INFTYDBM);
         // Do I worry about the invariants here?
-        bool hasInv = invs_chk(input_pes.invariants(), &invCompPlace, *sub);
+        bool hasInv = restrict_to_invariant(input_pes.invariants(), &invCompPlace, *sub);
         if(hasInv) {
           invCompPlace.cf();
           !invCompPlace;
@@ -2510,7 +2499,7 @@ inline DBMList* prover::do_proof_place_exists(int step, DBM* const lhs, DBMList*
   ph.suc();
   // The invariant goes into the placeholder, not the left hand side
   DBMList tPlace(*INFTYDBM);
-  invs_chk(input_pes.invariants(), &tPlace, *sub);
+  restrict_to_invariant(input_pes.invariants(), &tPlace, *sub);
 
   //DBMList * tempPlace = new DBMList(*retPlaceDBM);
   retPlaceDBM = do_proof_place(step, &ph, &tPlace,
@@ -2562,7 +2551,7 @@ inline DBMList* prover::do_proof_place_exists_rel(int step, DBM* const lhs, DBML
   DBM phb(ph);
 
   DBMList * tPlace = new DBMList(*INFTYDBM);
-  invs_chk(input_pes.invariants(), tPlace, *sub);
+  restrict_to_invariant(input_pes.invariants(), tPlace, *sub);
 
   retPlaceDBM = do_proof_place(step, &ph, tPlace,
                                rhs->getRight(), sub);
@@ -2763,7 +2752,7 @@ inline DBMList* prover::do_proof_place_allact(int step, DBM* const lhs, DBMList*
     DBM invPlace(*INFTYDBM);
     SubstList tSub(*sub);
     const SubstList * sl = tempT->getEnteringLocation(&tSub);
-    bool isInv = invs_chk(input_pes.invariants(), &invPlace, *sl);
+    bool isInv = restrict_to_invariant(input_pes.invariants(), &invPlace, *sl);
     delete sl;
     if(isInv) {
       invPlace.cf();
@@ -2983,7 +2972,7 @@ inline DBMList* prover::do_proof_place_existact(int step, DBM* const lhs, DBMLis
     DBM invCons(*INFTYDBM);
     SubstList tSub(*sub);
     const SubstList * sl = tempT->getEnteringLocation(&tSub);
-    bool isInv = invs_chk(input_pes.invariants(), &invCons, *sl);
+    bool isInv = restrict_to_invariant(input_pes.invariants(), &invCons, *sl);
     delete sl;
     if(isInv) {
       invCons.cf();
@@ -3387,7 +3376,7 @@ inline DBMList* prover::do_proof_place_ablewaitinf(DBM* const lhs, DBMList* cons
   ph & *place;
   ph.cf();
   ph.suc();
-  invs_chk(input_pes.invariants(), &ph, *sub);
+  restrict_to_invariant(input_pes.invariants(), &ph, *sub);
   ph.cf();
   /* Time can diverge if and only if there are no upper bound
    * constraints in the successor. By design of succ() and invariants,
@@ -3414,7 +3403,7 @@ inline DBMList* prover::do_proof_place_unablewaitinf(DBM* const lhs, DBMList* co
   ph & *place;
   ph.cf();
   ph.suc();
-  invs_chk(input_pes.invariants(), &ph, *sub);
+  restrict_to_invariant(input_pes.invariants(), &ph, *sub);
   ph.cf();
   /* Time cannot diverge if and only if there is an upper bound
    * constraint in the successor. By design of succ() and invariants,
