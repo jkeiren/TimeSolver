@@ -472,9 +472,9 @@ public:
   ExprNode(const ExprNode& other) :
     op(other.op),
     predicate(other.predicate), // shallow copy good enough
-    b(other.b),
     atomic(other.atomic),
     intVal(other.intVal),
+    b(other.b),
     declared_clocks(other.declared_clocks),
     declared_atomic(other.declared_atomic)
   {

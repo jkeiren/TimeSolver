@@ -779,6 +779,7 @@ inline bool prover::do_proof_predicate(const int step, DBM* const lhs, const Exp
   return retVal;
 }
 
+// [FC14] Proof rule \land
 inline bool prover::do_proof_and(const int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub)
 {
   /* Because lhs is only changed after it is copied, it can
@@ -795,6 +796,7 @@ inline bool prover::do_proof_and(const int step, DBM * const lhs, const ExprNode
  * - the proof for l covers the entire DBM lhs
  * - the proof for l covers a strict, non-empty subset of lhs
  */
+// [FC14] Proof rule based on \lor_{s_2}
 inline bool prover::do_proof_or(const int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub)
 {
   bool retVal = false;
@@ -836,13 +838,14 @@ inline bool prover::do_proof_or(const int step, DBM * const lhs, const ExprNode 
       retVal = true;
     }
     else {
-      retPlaceDBM->addDBMList(placeholder1);
+      retPlaceDBM->addDBMList(placeholder1); // here retPlaceDBM is placeholder \phi_{\lor} from [FC14]
       retVal = (*retPlaceDBM) >= *lhs; // if the union of both placeholders covers the set of states, we are still happy
     }
   }
   return retVal;
 }
 
+// Optimisation rule
 inline bool prover::do_proof_or_simple(const int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub)
 {
   /* Simplified OR does not need to split on placeholders */
@@ -865,12 +868,12 @@ inline bool prover::do_proof_forall(const int step, DBM * const lhs, const ExprN
    * allowing multiple branches of AND and OR to have the same lhs. */
   DBM succ_lhs(*lhs);
   succ_lhs.suc();
-
   restrict_to_invariant(input_pes.invariants(), &succ_lhs, *sub);
 
   return do_proof(step, &succ_lhs, rhs->getQuant(), sub);
 }
 
+// [FC14] Proof rule \forall_{ro3}
 inline bool prover::do_proof_forall_rel(const int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub)
 {
   /* Proof methodology:
@@ -881,43 +884,48 @@ inline bool prover::do_proof_forall_rel(const int step, DBM * const lhs, const E
    * without a placeholder. */
 
   bool retVal = false;
+  lhs->cf(); // First transform to canonical form, since we reuse this multiple times
 
   /* First, see if \exists(phi_1) is true. The common case is that it
    * will not be. */
-  lhs->cf();
-  DBM ph(*lhs);
-  ph.suc();
+  DBM lhs_succ(*lhs);
+  lhs_succ.suc();
 
-  DBMList * tPlace = new DBMList(*INFTYDBM);
-  restrict_to_invariant(input_pes.invariants(), tPlace, *sub);
-  retPlaceDBM = do_proof_place(step, &ph, tPlace,
-                               rhs->getLeft(), sub);
+  DBMList * placeholder1 = new DBMList(*INFTYDBM);
+  restrict_to_invariant(input_pes.invariants(), placeholder1, *sub);
+  retPlaceDBM = do_proof_place(step, &lhs_succ, placeholder1, rhs->getLeft(), sub);
+
   // Reset place parent to NULL
-  parentPlaceRef = NULL;
-  retPlaceDBM->cf();
-  if(retPlaceDBM->emptiness()){
-    if(cpplogEnabled(cpplogging::debug)) {
+  parentPlaceRef = nullptr;
+  retPlaceDBM->cf(); // At this point, retPlaceDBM is placeholder1.
+  if(retPlaceDBM->emptiness())
+  { // Here, \forall phi_2 needs to hold.
+    // [FC14] derived rule? of \forall_{ro1} TODO
+    if(cpplogEnabled(cpplogging::debug))
+    {
       print_sequentCheck(std::cerr, step - 1, retVal, lhs, retPlaceDBM, sub, rhs->getOpType());
       cpplog(cpplogging::debug) <<"----() Empty Relativization Placeholder: phi1 is never true -----" <<  std::endl <<  std::endl;
     }
-    delete tPlace;
+    delete placeholder1;
+
     /* Since here, \forall phi_2 must be true */
-    lhs->cf();
     /* DBM lhs is copied because it is changed by suc() and invs_chk().
      * The copying here assures that lhs is unchanged when it is returned,
      * allowing multiple branches of AND and OR to have the same lhs. */
-    DBM ph(*lhs);
-    ph.suc();
-    restrict_to_invariant(input_pes.invariants(), &ph, *sub);
-
-    retVal = do_proof(step, &ph, rhs->getRight(), sub);
+    DBM placeholder2(*lhs);
+    placeholder2.suc();
+    restrict_to_invariant(input_pes.invariants(), &placeholder2, *sub);
+    retVal = do_proof(step, &placeholder2, rhs->getRight(), sub);
   }
-  else {
+  else
+  {
+    // placeholder1 nonempty
     /* For improved performance, first ask if the formula
      * is true with no time elapse. */
     retVal = true;
     /* First check for the simplest case: no time elapse is needed */
     if((*retPlaceDBM) >= (*lhs)) {
+      // [FC14] proof rule \forall_{ro2};
 
       if (cpplogEnabled(cpplogging::debug)) {
         print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, lhs, retPlaceDBM, sub, rhs->getOpType());
@@ -929,8 +937,7 @@ inline bool prover::do_proof_forall_rel(const int step, DBM * const lhs, const E
       }
 
       // If here, we neither need a placeholder nor to elapse time
-      DBM phb(*lhs);
-      retVal = do_proof(step, &phb, rhs->getRight(), sub);
+      retVal = do_proof(step, lhs, rhs->getRight(), sub);
     }
     else {
       // This is the more complicated case that requires a placeholder
@@ -1091,7 +1098,7 @@ inline bool prover::do_proof_forall_rel(const int step, DBM * const lhs, const E
       delete fPlace;
 
     }
-    delete tPlace;
+    delete placeholder1;
   }
   return retVal;
 }
@@ -1680,21 +1687,19 @@ inline bool prover::do_proof_sublist(const int step, DBM * const lhs, const Expr
 
 inline bool prover::do_proof_reset(const int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub)
 {
-  //lhs->cf(); // FIXME: lhs is not used further in this proof, also, reset says the *result* is in CF, and does not require the dbm to be in CF.
-  DBM ph(*lhs);
-  ph.reset(rhs->getClockSet());
-  return do_proof(step, &ph, rhs->getExpr(), sub);
+  DBM lhs_reset(*lhs);
+  lhs_reset.reset(rhs->getClockSet());
+  return do_proof(step, &lhs_reset, rhs->getExpr(), sub);
 }
 
 inline bool prover::do_proof_assign(const int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub)
 {
-  //lhs->cf(); // FIXME: see remark in do_proof_reset
-  DBM ph(*lhs);
+  DBM lhs_assign(*lhs);
   /* Here the DBM zone is where the value of
    * clock x is reset to clock y, which is possibly
    * a constant or a value*/
-  ph.reset(rhs->getcX(), rhs->getcY());
-  return do_proof(step, &ph, rhs->getExpr(), sub);
+  lhs_assign.reset(rhs->getcX(), rhs->getcY());
+  return do_proof(step, &lhs_assign, rhs->getExpr(), sub);
 }
 
 inline bool prover::do_proof_replace(const int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub)
@@ -1748,7 +1753,7 @@ inline DBMList* prover::do_proof_place_predicate(int step, DBM* const lhs, DBMLi
                                           const ExprNode* const rhs, SubstList* const sub)
 {
   ExprNode *e = input_pes.lookup_equation(rhs->getPredicate());
-  if (e == NULL){
+  if (e == nullptr){
     std::cerr << "open predicate variable found: "<< rhs->getPredicate() << std::endl;
     exit(-1);
   }
@@ -1770,7 +1775,7 @@ inline DBMList* prover::do_proof_place_predicate(int step, DBM* const lhs, DBMLi
   if(useCaching) {
     SequentPlace *tf = new SequentPlace(rhs, sub);
     SequentPlace *hf = cache.Xlist_false_ph.look_for_sequent(tf->discrete_state(), pInd);
-    if(hf != NULL && hf->tabled_false_sequent(lhs)) {
+    if(hf != nullptr && hf->tabled_false_sequent(lhs)) {
       // Found known false
       retPlaceDBM->makeEmpty();
       cpplog(cpplogging::debug) << "---(Invalid) Located a Known False Sequent ----" <<  std::endl <<  std::endl;
@@ -1779,7 +1784,7 @@ inline DBMList* prover::do_proof_place_predicate(int step, DBM* const lhs, DBMLi
        * This is a bit conservative */
       /* Now that we have a proven sequent, add the backpointer
        * from the child to the parent */
-      if(parentPlaceRef != NULL) {
+      if(parentPlaceRef != nullptr) {
         hf->addParent(parentPlaceRef);
       }
       else { // Parent is regular sequent
@@ -1802,7 +1807,7 @@ inline DBMList* prover::do_proof_place_predicate(int step, DBM* const lhs, DBMLi
     SequentPlace *hfb = cache.Xlist_true_ph.look_for_sequent(tfb->discrete_state(), pInd);
     DBMList tempPlace(*place);
     /* Note: tempPlace is changed by tabled_sequentPlace() */
-    if(hfb != NULL && hfb->tabled_sequent(lhs, &tempPlace)) {
+    if(hfb != nullptr && hfb->tabled_sequent(lhs, &tempPlace)) {
       // Found known true
       if(tempPlace.emptiness()) {
         // returning placeholder must be non-empty for the sequent
@@ -1819,7 +1824,7 @@ inline DBMList* prover::do_proof_place_predicate(int step, DBM* const lhs, DBMLi
        * This is a bit conservative */
       /* Now that we have a proven sequent, add the backpointer
        * in the cache from the child to the parent */
-      if(parentPlaceRef != NULL) {
+      if(parentPlaceRef != nullptr) {
         hfb->addParent(parentPlaceRef);
       }
       else { // Parent is regular sequent
@@ -1848,7 +1853,7 @@ inline DBMList* prover::do_proof_place_predicate(int step, DBM* const lhs, DBMLi
       cpplog(cpplogging::debug) << "---(Valid) Located True Sequent or gfp Circularity ----" <<  std::endl <<  std::endl;
 
       /* Now update backpointer for greatest fixpoint circularity */
-      if(parentPlaceRef != NULL) {
+      if(parentPlaceRef != nullptr) {
         h->addParent(parentPlaceRef);
       }
       else { // Parent is regular sequent
@@ -1878,7 +1883,7 @@ inline DBMList* prover::do_proof_place_predicate(int step, DBM* const lhs, DBMLi
       cpplog(cpplogging::debug) << "---(Invalid) Located lfp Circularity ----" <<  std::endl <<  std::endl;
 
       /* Now update backpointer for least fixpoint circularity */
-      if(parentPlaceRef != NULL) {
+      if(parentPlaceRef != nullptr) {
         h->addParent(parentPlaceRef);
       }
       else { // Parent is regular sequent
@@ -1936,7 +1941,7 @@ inline DBMList* prover::do_proof_place_predicate(int step, DBM* const lhs, DBMLi
 
 
     /* Now purge backpointers */
-    if(t2s != NULL) {
+    if(t2s != nullptr) {
       cache.look_for_and_purge_rhs_backStack(t2s->parents(), t2s->parents_with_placeholders());
       // Delete t2s later to prevent double deletion
 
@@ -1968,7 +1973,7 @@ inline DBMList* prover::do_proof_place_predicate(int step, DBM* const lhs, DBMLi
 
     /* Now purge backpointers.
      * Ignore circularity booleans because they do not form backpointers */
-    if(t2bs != NULL) {
+    if(t2bs != nullptr) {
       cache.look_for_and_purge_rhs_backStack(t2bs->parents(), t2bs->parents_with_placeholders());
       // delete t2bs later to prevent double deletion.
     }
@@ -2358,8 +2363,8 @@ inline DBMList* prover::do_proof_place_forall_rel(int step, DBM* const lhs, DBML
 
       }
 
-      // Reset place parent to NULL
-      parentPlaceRef = NULL;
+      // Reset place parent to nullptr
+      parentPlaceRef = nullptr;
 
       if(retPlaceDBM->emptiness()) {
         retVal = false;
@@ -2412,7 +2417,7 @@ inline DBMList* prover::do_proof_place_forall_rel(int step, DBM* const lhs, DBML
         phi1PredPlace.pre();
         phi1PredPlace.cf();
         /*--- PredCheck code----*/
-        retPlaceDBM = predCheckRule(lhs, &ph, NULL, &phi2Place, &phi1Place, &phi1PredPlace);
+        retPlaceDBM = predCheckRule(lhs, &ph, nullptr, &phi2Place, &phi1Place, &phi1PredPlace);
         retPlaceDBM->cf();
 
         if(cpplogEnabled(cpplogging::debug)) {
@@ -2555,8 +2560,8 @@ inline DBMList* prover::do_proof_place_exists_rel(int step, DBM* const lhs, DBML
 
   retPlaceDBM = do_proof_place(step, &ph, tPlace,
                                rhs->getRight(), sub);
-  // Reset place parent to NULL
-  parentPlaceRef = NULL;
+  // Reset place parent to nullptr
+  parentPlaceRef = nullptr;
   retPlaceDBM->cf();
   if(retPlaceDBM->emptiness()){
     retVal = false;
@@ -2646,7 +2651,7 @@ inline DBMList* prover::do_proof_place_exists_rel(int step, DBM* const lhs, DBML
 
   DBMList currRetPlaceDBM(*retPlaceDBM);
   /*--- PredCheck code----*/
-  retPlaceDBM = predCheckRule(lhs, &ph, NULL, &phi1Place, phi2Place, phi2PredPlace);
+  retPlaceDBM = predCheckRule(lhs, &ph, nullptr, &phi1Place, phi2Place, phi2PredPlace);
   if(retPlaceDBM->emptiness()) {
     retVal = false;
 
@@ -2757,14 +2762,14 @@ inline DBMList* prover::do_proof_place_allact(int step, DBM* const lhs, DBMList*
     if(isInv) {
       invPlace.cf();
       const ClockSet * st = tempT->getCSet();
-      if(st != NULL) {
+      if(st != nullptr) {
         invPlace.preset(st);
       }
       invPlace.cf();
       /* Now perform clock assignments sequentially: perform the
        * front assignments first */
       const std::vector<std::pair<short int, short int> > * av = tempT->getAssignmentVector();
-      if(av != NULL) {
+      if(av != nullptr) {
         // Iterate over the vector and print it
         for(std::vector<std::pair<short int, short int> >::const_iterator it=av->begin(); it != av->end(); it++) {
           invPlace.preset((*it).first, (*it).second);
@@ -2977,14 +2982,14 @@ inline DBMList* prover::do_proof_place_existact(int step, DBM* const lhs, DBMLis
     if(isInv) {
       invCons.cf();
       const ClockSet * st = tempT->getCSet();
-      if(st != NULL) {
+      if(st != nullptr) {
         invCons.preset(st);
       }
       invCons.cf();
       /* Now perform clock assignments sequentially: perform the
        * front assignments first */
       const std::vector<std::pair<short int, short int> > * av = tempT->getAssignmentVector();
-      if(av != NULL) {
+      if(av != nullptr) {
         // Iterate over the vector and print it
         for(std::vector<std::pair<short int, short int> >::const_iterator it=av->begin(); it != av->end(); it++) {
           invCons.preset((*it).first, (*it).second);
