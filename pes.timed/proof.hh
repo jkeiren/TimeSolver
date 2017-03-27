@@ -1304,7 +1304,7 @@ inline bool prover::do_proof_allact(const int step, DBM * const lhs, const ExprN
   cpplog(cpplogging::debug) << "\t Proving ALLACT Transitions:----\n" <<  std::endl;
 
   for(std::vector<Transition *>::const_iterator it = input_pes.transitions().begin();
-      it != input_pes.transitions().end(); it++ ) {
+      it != input_pes.transitions().end(); ++it ) {
     Transition * tempT = *it;
     /* Obtain the entire ExprNode and prove it */
     DBM tempLHS(*lhs);
@@ -1502,7 +1502,7 @@ inline bool prover::do_proof_existact(const int step, DBM * const lhs, const Exp
 inline bool prover::do_proof_imply(const int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub)
 {
   bool retVal = false;
-  /* Here is the one call to comp_ph(...) outside of copm_ph(...) */
+  /* Here is the one call to comp_ph(...) outside of comp_ph(...) */
   DBM tempLHS(*lhs);
   if(comp_ph(&tempLHS, *(rhs->getLeft()), *sub)){
     /* Constraints are bounded by MAXC */
@@ -1528,98 +1528,57 @@ inline bool prover::do_proof_imply(const int step, DBM * const lhs, const ExprNo
 inline bool prover::do_proof_constraint(DBM * const lhs, const ExprNode * const rhs)
 {
   lhs->cf();
-  /* The line: (rhs->dbm())->cf(); is not needed */
   bool retVal = (*lhs <= *(rhs->dbm()));
-  if(retVal) {
-    cpplog(cpplogging::debug) << "---(Valid) Leaf DBM (CONSTRAINT) Reached----" <<  std::endl <<  std::endl;
-  }
-  else {
-    cpplog(cpplogging::debug) << "---(Invalid) Leaf DBM (CONSTRAINT) Reached----" <<  std::endl <<  std::endl;
-  }
+  cpplog(cpplogging::debug) << "---(" << (retVal?"V":"Inv") << "alid) Leaf DBM (CONSTRAINT) Reached----" <<  std::endl <<  std::endl;
   return retVal;
 }
 
 inline bool prover::do_proof_bool(const ExprNode * const rhs)
 {
   bool retVal = (rhs->getBool());
-  if (retVal) {
-    cpplog(cpplogging::debug) << "---(Valid) Leaf BOOL Reached----" <<  std::endl <<  std::endl;
-  }
-  else {
-    cpplog(cpplogging::debug) << "---(Invalid) Leaf BOOL Reached----" <<  std::endl <<  std::endl;
-  }
+  cpplog(cpplogging::debug) << "---" << (retVal?"V":"Inv") << "alid) Leaf BOOL Reached----" <<  std::endl <<  std::endl;
   return retVal;
 }
 
 inline bool prover::do_proof_atomic(const ExprNode * const rhs, const SubstList * const sub)
 {
   bool retVal = (sub->at(rhs->getAtomic()) == rhs->getIntVal());
-  if (retVal) {
-    cpplog(cpplogging::debug) << "---(Valid) Leaf ATOMIC == Reached----" <<  std::endl <<  std::endl;
-  }
-  else {
-    cpplog(cpplogging::debug) << "---(Invalid) Leaf ATOMIC == Reached----" <<  std::endl <<  std::endl;
-  }
+  cpplog(cpplogging::debug) << "---(" << (retVal?"V":"Inv") << "alid) Leaf ATOMIC == Reached----" <<  std::endl <<  std::endl;
   return retVal;
 }
 
 inline bool prover::do_proof_atomic_not(const ExprNode * const rhs, const SubstList * const sub)
 {
   bool retVal = (sub->at(rhs->getAtomic()) != rhs->getIntVal());
-  if (retVal) {
-    cpplog(cpplogging::debug) << "---(Valid) Leaf ATOMIC != Reached----" <<  std::endl <<  std::endl;
-  }
-  else {
-    cpplog(cpplogging::debug) << "---(Invalid) Leaf ATOMIC != Reached----" <<  std::endl <<  std::endl;
-  }
+  cpplog(cpplogging::debug) << "---(" << (retVal?"V":"Inv") << "alid) Leaf ATOMIC != Reached----" <<  std::endl <<  std::endl;
   return retVal;
 }
 
 inline bool prover::do_proof_atomic_lt(const ExprNode * const rhs, const SubstList * const sub)
 {
   bool retVal = (sub->at(rhs->getAtomic()) < rhs->getIntVal());
-  if (retVal) {
-    cpplog(cpplogging::debug) << "---(Valid) Leaf ATOMIC < Reached----" <<  std::endl <<  std::endl;
-  }
-  else {
-    cpplog(cpplogging::debug) << "---(Invalid) Leaf ATOMIC < Reached----" <<  std::endl <<  std::endl;
-  }
+  cpplog(cpplogging::debug) << "---(" << (retVal?"V":"Inv") << "alid) Leaf ATOMIC < Reached----" <<  std::endl <<  std::endl;
   return retVal;
 }
 
 inline bool prover::do_proof_atomic_gt(const ExprNode * const rhs, const SubstList * const sub)
 {
   bool retVal = (sub->at(rhs->getAtomic()) > rhs->getIntVal());
-  if (retVal) {
-    cpplog(cpplogging::debug) << "---(Valid) Leaf ATOMIC > Reached----" <<  std::endl <<  std::endl;
-  }
-  else {
-    cpplog(cpplogging::debug) << "---(Invalid) Leaf ATOMIC > Reached----" <<  std::endl <<  std::endl;
-  }
+  cpplog(cpplogging::debug) << "---(" << (retVal?"V":"Inv") << "alid) Leaf ATOMIC > Reached----" <<  std::endl <<  std::endl;
   return retVal;
 }
 
 inline bool prover::do_proof_atomic_le(const ExprNode * const rhs, const SubstList * const sub)
 {
   bool retVal = (sub->at(rhs->getAtomic()) <= rhs->getIntVal());
-  if (retVal) {
-    cpplog(cpplogging::debug) << "---(Valid) Leaf ATOMIC < Reached----" <<  std::endl <<  std::endl;
-  }
-  else{
-    cpplog(cpplogging::debug) << "---(Invalid) Leaf ATOMIC < Reached----" <<  std::endl <<  std::endl;
-  }
+  cpplog(cpplogging::debug) << "---(" << (retVal?"V":"Inv") << "alid) Leaf ATOMIC < Reached----" <<  std::endl <<  std::endl;
   return retVal;
 }
 
 inline bool prover::do_proof_atomic_ge(const ExprNode * const rhs, const SubstList * const sub)
 {
   bool retVal = (sub->at(rhs->getAtomic()) >= rhs->getIntVal());
-  if (retVal) {
-    cpplog(cpplogging::debug) << "---(Valid) Leaf ATOMIC > Reached----" <<  std::endl <<  std::endl;
-  }
-  else {
-    cpplog(cpplogging::debug) << "---(Invalid) Leaf ATOMIC > Reached----" <<  std::endl <<  std::endl;
-  }
+  cpplog(cpplogging::debug) << "---(" << (retVal?"V":"Inv") << "alid) Leaf ATOMIC > Reached----" <<  std::endl <<  std::endl;
   return retVal;
 }
 
@@ -1662,12 +1621,9 @@ inline bool prover::do_proof_ablewaitinf(DBM * const lhs, SubstList * const sub)
   /* Time can diverge if and only if there are no upper bound
    * constraints in the successor */
   bool retVal = !ph.hasUpperConstraint();
-  if (retVal) {
-    cpplog(cpplogging::debug) << "---(Valid) Time able to diverge to INFTY in current location----" <<  std::endl <<  std::endl;
-  }
-  else {
-    cpplog(cpplogging::debug) << "---(Invalid) Time unable to diverge to INFTY in current location---" <<  std::endl <<  std::endl;
-  }
+  cpplog(cpplogging::debug) << "---(" << (retVal?"V":"Inv") << "alid) Time "
+                            << (retVal?"":"un") << "able to diverge to INFTY in current location----" <<  std::endl <<  std::endl;
+
   return retVal;
 }
 
@@ -1682,12 +1638,8 @@ inline bool prover::do_proof_unablewaitinf(DBM * const lhs, SubstList * const su
   /* Time cannot diverge if and only if there is an upper bound
    * constraint in the successor */
   bool retVal = ph.hasUpperConstraint();
-  if (retVal) {
-    cpplog(cpplogging::debug) << "---(Valid) Time unable to diverge to INFTY in current location----" <<  std::endl <<  std::endl;
-  }
-  else {
-    cpplog(cpplogging::debug) << "---(Invalid) Time able to diverge to INFTY in current location---" <<  std::endl <<  std::endl;
-  }
+  cpplog(cpplogging::debug) << "---(" << (retVal?"V":"Inv") << "alid) Time "
+                            << (retVal?"un":"") << "able to diverge to INFTY in current location----" <<  std::endl <<  std::endl;
   return retVal;
 }
 

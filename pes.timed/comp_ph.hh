@@ -127,7 +127,8 @@ inline bool restrict_to_invariant(const std::vector<ExprNode *>& invs, DBMList *
  * @param sublist (*) The discrete location of the left hand side.
  * @return true: the expression evaluates to true (and ph is
  * tightened to make the expression true), false: otherwise (if
- * the set of discrete and clock states satisfying the premise is empty).*/
+ * the set of discrete and clock states satisfying the premise is empty).
+ * @post ph is in canonical form if it was already in canonical form before. */
 inline bool comp_ph(DBM * const ph, const ExprNode& e, const SubstList& sublist)
 {
   switch (e.getOpType())
