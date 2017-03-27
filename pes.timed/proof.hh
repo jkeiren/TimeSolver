@@ -930,10 +930,7 @@ inline bool prover::do_proof_forall_rel(const int step, DBM * const lhs, const E
       if (cpplogEnabled(cpplogging::debug)) {
         print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, lhs, retPlaceDBM, sub, rhs->getOpType());
         cpplog(cpplogging::debug) <<"----(Valid) Placeholder indicates no time elapse is needed (Check Only)-----" <<  std::endl
-        << "----With Placeholder := {";
-        retPlaceDBM->print_constraint(cpplogGet(cpplogging::debug));
-        cpplog(cpplogging::debug) << "} ----"<<  std::endl <<  std::endl;
-
+           << "----With Placeholder := {" << *retPlaceDBM << "} ----"<<  std::endl <<  std::endl;
       }
 
       // If here, we neither need a placeholder nor to elapse time
@@ -946,12 +943,8 @@ inline bool prover::do_proof_forall_rel(const int step, DBM * const lhs, const E
       // Store the set of times that satisfy phi1
       DBMList phi1Place(*retPlaceDBM);
 
-      if (cpplogEnabled(cpplogging::debug)) {
-        cpplog(cpplogging::debug) <<"----() Relativization \\phi_1 placeholder obtained as {";
-        phi1Place.print_constraint(cpplogGet(cpplogging::debug));
-        cpplog(cpplogging::debug) << "} ----"<<  std::endl <<  std::endl;
-
-      }
+      cpplog(cpplogging::debug) << "----() Relativization \\phi_1 placeholder obtained as {"
+                                << phi1Place << "} ----"<<  std::endl <<  std::endl;
 
       /* We omit the check that we can elapse to the placeholder;
        * We will check that once at the end */
@@ -964,12 +957,8 @@ inline bool prover::do_proof_forall_rel(const int step, DBM * const lhs, const E
       retPlaceDBM->cf();
       DBMList phi2Place(*retPlaceDBM);
 
-      if (cpplogEnabled(cpplogging::debug)) {
-        cpplog(cpplogging::debug) <<"----() Formula \\phi_2 placeholder obtained as {";
-        phi2Place.print_constraint(cpplogGet(cpplogging::debug));
-        cpplog(cpplogging::debug) << "} ----"<<  std::endl <<  std::endl;
-
-      }
+      cpplog(cpplogging::debug) <<"----() Formula \\phi_2 placeholder obtained as {"
+                                << phi2Place << "} ----"<<  std::endl <<  std::endl;
 
       // Reset place parent to NULL
       parentPlaceRef = NULL;
@@ -1006,9 +995,8 @@ inline bool prover::do_proof_forall_rel(const int step, DBM * const lhs, const E
 
         if (cpplogEnabled(cpplogging::debug)) {
           print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, &phb, fPlace, sub, rhs->getOpType());
-          cpplog(cpplogging::debug) <<"----() FORALL (of FORALL_REL) Placeholder Check obtained  FA Placeholder := {";
-          forallPlace.print_constraint(cpplogGet(cpplogging::debug));
-          cpplog(cpplogging::debug) <<"} ----" <<  std::endl <<  std::endl;
+          cpplog(cpplogging::debug) <<"----() FORALL (of FORALL_REL) Placeholder Check obtained  FA Placeholder := {"
+                                   << forallPlace << "} ----" <<  std::endl <<  std::endl;
         }
 
         /* Now we do the pred check to find the exists placeholder;
@@ -1025,11 +1013,9 @@ inline bool prover::do_proof_forall_rel(const int step, DBM * const lhs, const E
         /*--- PredCheck code----*/
         retPlaceDBM = predCheckRule(lhs, &ph, NULL, &phi2Place, &phi1Place, phi1PredPlace);
         retPlaceDBM->cf();
-        if(cpplogEnabled(cpplogging::debug)) {
-          cpplog(cpplogging::debug) <<"----() FORALL Rel Exists predCheck placeholder obtained as := {";
-          retPlaceDBM->print_constraint(cpplogGet(cpplogging::debug));
-          cpplog(cpplogging::debug) << "} ----"<<  std::endl <<  std::endl;
-        }
+        cpplog(cpplogging::debug) <<"----() FORALL Rel Exists predCheck placeholder obtained as := {"
+                                 << *retPlaceDBM << "} ----"<<  std::endl <<  std::endl;
+
         if(!retPlaceDBM->emptiness()) {
           /* if it is nonempty, it passes the second check and we continue
            * Given the FORALL rule rewrite, do not allow the instance
@@ -1052,9 +1038,8 @@ inline bool prover::do_proof_forall_rel(const int step, DBM * const lhs, const E
           if(cpplogEnabled(cpplogging::debug)) {
             print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, lhs, retPlaceDBM, sub, rhs->getOpType());
 
-            cpplog(cpplogging::debug) <<"----() FORALL Rel Exists placeholder after time elapse check is := {";
-            retPlaceDBM->print_constraint(cpplogGet(cpplogging::debug));
-            cpplog(cpplogging::debug) << "} ----"<<  std::endl <<  std::endl;
+            cpplog(cpplogging::debug) <<"----() FORALL Rel Exists placeholder after time elapse check is := {"
+                                     << *retPlaceDBM << "} ----"<<  std::endl <<  std::endl;
           }
         }
         // retPlaceDBM is existsPlace
@@ -1089,9 +1074,8 @@ inline bool prover::do_proof_forall_rel(const int step, DBM * const lhs, const E
         // Debug information here?
         if(cpplogEnabled(cpplogging::debug)) {
           print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, lhs, retPlaceDBM, sub, rhs->getOpType());
-          cpplog(cpplogging::debug) <<"----() Final FORALL REL Placeholder is := {";
-          retPlaceDBM->print_constraint(cpplogGet(cpplogging::debug));
-          cpplog(cpplogging::debug) << "} ----"<<  std::endl <<  std::endl;
+          cpplog(cpplogging::debug) << "----() Final FORALL REL Placeholder is := {"
+                                    << *retPlaceDBM << "} ----"<<  std::endl <<  std::endl;
         }
         delete phi1PredPlace;
       }
@@ -1150,14 +1134,11 @@ inline bool prover::do_proof_exists(const int step, DBM * const lhs, const ExprN
     print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, lhs, retPlaceDBM, sub, rhs->getOpType());
     if(retVal) {
       cpplog(cpplogging::debug) <<"----(Valid) Placeholder Check Passed (Check Only)-----" <<  std::endl
-      << "----With Placeholder := {";
-      retPlaceDBM->print_constraint(cpplogGet(cpplogging::debug));
-      cpplog(cpplogging::debug) << "} ----"<<  std::endl <<  std::endl;
+                                << "----With Placeholder := {" << *retPlaceDBM << "} ----"<<  std::endl <<  std::endl;
 
     }
     else {
       cpplog(cpplogging::debug) <<"----(Invalid) Placeholder Check Failed-----" <<  std::endl <<  std::endl;
-
     }
   }
 
@@ -1221,11 +1202,8 @@ inline bool prover::do_proof_exists_rel(const int step, DBM * const lhs, const E
   // Must check for emptiness to handle the corner case when it is empty
   DBMList phi1Place(*retPlaceDBM);
 
-  if(cpplogEnabled(cpplogging::debug)) {
-    cpplog(cpplogging::debug) <<"----() Placeholder of times where \\phi_1 is true----- {";
-    phi1Place.print_constraint(cpplogGet(cpplogging::debug));
-    cpplog(cpplogging::debug) << "} ----"<<  std::endl <<  std::endl;
-  }
+  cpplog(cpplogging::debug) << "----() Placeholder of times where \\phi_1 is true----- {"
+                            << phi1Place << "} ----"<<  std::endl <<  std::endl;
 
   // This provides a preliminary check.
   *retPlaceDBM & *phi2PredPlace;
@@ -1253,18 +1231,14 @@ inline bool prover::do_proof_exists_rel(const int step, DBM * const lhs, const E
        * must span all of lhs */
       retVal = (*phi2Place) >= (*lhs);
 
-      if(cpplogEnabled(cpplogging::debug)) {
-        if(retVal) {
-          cpplog(cpplogging::debug) <<"----(Valid) Time Elapse not required and placeholder spans lhs; hence, formula is true-----" <<  std::endl;
-        }
-        else
-        {
-          cpplog(cpplogging::debug) <<"----(Invalid) While Time Elapse not required, placeholder is not large enough-----" <<  std::endl;
-        }
-        cpplog(cpplogging::debug) << "----With resulting Placeholder := {";
-        phi2Place->print_constraint(cpplogGet(cpplogging::debug));
-        cpplog(cpplogging::debug) << "} ----"<<  std::endl <<  std::endl;
+      if(retVal) {
+        cpplog(cpplogging::debug) <<"----(Valid) Time Elapse not required and placeholder spans lhs; hence, formula is true-----" <<  std::endl;
       }
+      else
+      {
+        cpplog(cpplogging::debug) <<"----(Invalid) While Time Elapse not required, placeholder is not large enough-----" <<  std::endl;
+      }
+      cpplog(cpplogging::debug) << "----With resulting Placeholder := {" << *phi2Place << "} ----"<<  std::endl <<  std::endl;
     }
 
 
@@ -1280,12 +1254,8 @@ inline bool prover::do_proof_exists_rel(const int step, DBM * const lhs, const E
   if(retPlaceDBM->emptiness()) {
     retVal = false;
 
-    if(cpplogEnabled(cpplogging::debug)) {
-      cpplog(cpplogging::debug) <<"----(Invalid) Relativization placeholder failed-----" <<  std::endl
-      << "----With resulting Placeholder := {";
-      retPlaceDBM->print_constraint(cpplogGet(cpplogging::debug));
-      cpplog(cpplogging::debug) << "} ----"<<  std::endl <<  std::endl;
-    }
+    cpplog(cpplogging::debug) << "----(Invalid) Relativization placeholder failed-----" <<  std::endl
+                              << "----With resulting Placeholder := {" << *retPlaceDBM << "} ----"<<  std::endl <<  std::endl;
 
     delete phi2Place;
     delete phi2PredPlace;
@@ -1297,9 +1267,7 @@ inline bool prover::do_proof_exists_rel(const int step, DBM * const lhs, const E
   if(cpplogEnabled(cpplogging::debug)) {
     print_sequent_place(std::cerr, step - 1,  retVal, &phb, phi2PredPlace, rhs->getLeft(), sub, rhs->getOpType());
     cpplog(cpplogging::debug) <<"----(Valid) Relativization Placeholder Check Passed (Check Only)-----" <<  std::endl
-    << "----With resulting Placeholder := {";
-    retPlaceDBM->print_constraint(cpplogGet(cpplogging::debug));
-    cpplog(cpplogging::debug) << "} ----"<<  std::endl <<  std::endl;
+    << "----With resulting Placeholder := {" << *retPlaceDBM << "} ----"<<  std::endl <<  std::endl;
   }
 
   // Allow for the possibility of the time instant after the elapse
@@ -1321,15 +1289,12 @@ inline bool prover::do_proof_exists_rel(const int step, DBM * const lhs, const E
   if (cpplogEnabled(cpplogging::debug)) {
     print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, lhs, retPlaceDBM, sub, rhs->getOpType());
     if(retVal) {
-      cpplog(cpplogging::debug) <<"----(Valid) Last Placeholder Check Passed (Check Only)-----" <<  std::endl
-      << "----With Placeholder := {";
-      retPlaceDBM->print_constraint(cpplogGet(cpplogging::debug));
-      cpplog(cpplogging::debug) << "} ----"<<  std::endl <<  std::endl;
+      cpplog(cpplogging::debug) << "----(Valid) Last Placeholder Check Passed (Check Only)-----" <<  std::endl
+                                << "----With Placeholder := {" << *retPlaceDBM << "} ----"<<  std::endl <<  std::endl;
 
     }
     else {
       cpplog(cpplogging::debug) <<"----(Invalid) Last Placeholder Check Failed-----" <<  std::endl <<  std::endl;
-
     }
   }
 
@@ -1382,15 +1347,9 @@ inline bool prover::do_proof_allact(const int step, DBM * const lhs, const ExprN
       tempLHS & invCons;
       tempLHS.cf();
       if(tempLHS.emptiness()) {
-
-        if (cpplogEnabled(cpplogging::debug)) {
-          cpplog(cpplogging::debug) << "Transition: " << tempT;
-          cpplog(cpplogging::debug) << " cannot be taken; entering invariant is false." <<  std::endl;
-          cpplog(cpplogging::debug) << "\tExtra invariant condition: ";
-          invCons.print_constraint(cpplogGet(cpplogging::debug));
-          cpplog(cpplogging::debug) <<  std::endl;
-        }
-
+        cpplog(cpplogging::debug) << "Transition: " << tempT
+                                  << " cannot be taken; entering invariant is false." <<  std::endl
+                                  << "\tExtra invariant condition: " << invCons <<  std::endl;
         continue;
       }
     }
@@ -1407,12 +1366,8 @@ inline bool prover::do_proof_allact(const int step, DBM * const lhs, const ExprN
     tempLHS.bound(MAXC);
     SubstList tempSub(*sub);
 
-    if (cpplogEnabled(cpplogging::debug)) {
-      cpplog(cpplogging::debug) << "Executing transition (with destination) " << tempT << std::endl;
-      cpplog(cpplogging::debug) << "\tExtra invariant condition: ";
-      invCons.print_constraint(cpplogGet(cpplogging::debug));
-      cpplog(cpplogging::debug) <<  std::endl;
-    }
+    cpplog(cpplogging::debug) << "Executing transition (with destination) " << tempT << std::endl
+                              << "\tExtra invariant condition: " << invCons <<  std::endl;
 
     numLocations++;
     retVal = do_proof(step, &tempLHS, tempT->getRightExpr(), &tempSub);
@@ -1486,13 +1441,9 @@ inline bool prover::do_proof_existact(const int step, DBM * const lhs, const Exp
         tempPlace & invCons;
         tempPlace.cf();
         if(tempPlace.emptiness()) {
-          if(cpplogEnabled(cpplogging::debug)) {
-            cpplog(cpplogging::debug) << "Transition: " << tempT;
-            cpplog(cpplogging::debug) << " cannot be taken; entering invariant is false." <<  std::endl;
-            cpplog(cpplogging::debug) << "\tExtra invariant condition: ";
-            invCons.print_constraint(cpplogGet(cpplogging::debug));
-            cpplog(cpplogging::debug) <<  std::endl;
-          }
+          cpplog(cpplogging::debug) << "Transition: " << tempT
+                                    << " cannot be taken; entering invariant is false." <<  std::endl
+                                    << "\tExtra invariant condition: " << invCons <<  std::endl;
 
           continue;
         }
@@ -2037,11 +1988,8 @@ inline DBMList* prover::do_proof_place_or(int step, DBM* const lhs, DBMList* con
   if(cpplogEnabled(cpplogging::debug)) {
     // Check Debugging Here to make sure it is giving the right output
     print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, false, lhs, place, sub, rhs->getOpType());
-    cpplog(cpplogging::debug) << "Left Placeholder of OR (P): ";
-    leftPlace.print_constraint(cpplogGet(cpplogging::debug));
-    cpplog(cpplogging::debug) << "\nRight Placeholder of OR (P): ";
-    retPlaceDBM->print_constraint(cpplogGet(cpplogging::debug));
-    cpplog(cpplogging::debug) <<  std::endl;
+    cpplog(cpplogging::debug) << "Left Placeholder of OR (P): " << leftPlace
+                              << "\nRight Placeholder of OR (P): " << *retPlaceDBM <<  std::endl;
   }
 
   /* Note: <= >= Not clearly working if empty DBMs */
@@ -2064,11 +2012,7 @@ inline DBMList* prover::do_proof_place_or(int step, DBM* const lhs, DBMList* con
     retPlaceDBM->cf();
   }
 
-  if(cpplogEnabled(cpplogging::debug)) {
-    cpplog(cpplogging::debug) << "Final Placeholder of OR (P): ";
-    retPlaceDBM->print_constraint(cpplogGet(cpplogging::debug));
-    cpplog(cpplogging::debug) <<  std::endl <<  std::endl;
-  }
+  cpplog(cpplogging::debug) << "Final Placeholder of OR (P): " << *retPlaceDBM << std::endl <<  std::endl;
 
   return retPlaceDBM;
 }
@@ -2169,9 +2113,7 @@ inline DBMList* prover::do_proof_place_forall(int step, DBM* const lhs,
       print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, result, &succLHS, &succRuleConseq, sub, rhs->getOpType());
       if(result) {
         cpplog(cpplogging::debug) <<"----(Valid) Placeholder Check Passed-----" <<  std::endl
-        <<"--With Placeholder := {";
-        retPlaceDBM->print_constraint(cpplogGet(cpplogging::debug));
-        cpplog(cpplogging::debug) <<"} ----" <<  std::endl <<  std::endl;
+                                  << "--With Placeholder := {" << *retPlaceDBM <<"} ----" <<  std::endl <<  std::endl;
       }
       else {
         cpplog(cpplogging::debug) <<"----(Invalid) Placeholder Check Failed-----" <<  std::endl <<  std::endl;
@@ -2263,9 +2205,8 @@ inline DBMList* prover::do_proof_place_forall_rel(int step, DBM* const lhs, DBML
         print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, &succLHS, &succRuleConseq, sub, rhs->getOpType());
         if(retVal) {
           cpplog(cpplogging::debug) <<"----(Valid) FORALL (FORALL_REL) Placeholder Check Passed-----" <<  std::endl
-          <<"--With Placeholder := {";
-          retPlaceDBM->print_constraint(cpplogGet(cpplogging::debug));
-          cpplog(cpplogging::debug) <<"} ----" <<  std::endl <<  std::endl;
+                                    <<"--With Placeholder := {" << *retPlaceDBM
+                                    <<"} ----" <<  std::endl <<  std::endl;
         }
         else {
           cpplog(cpplogging::debug) <<"----(Invalid) FORALL (FORALL_REL) Placeholder Check Failed-----" <<  std::endl <<  std::endl;
@@ -2284,9 +2225,7 @@ inline DBMList* prover::do_proof_place_forall_rel(int step, DBM* const lhs, DBML
       if (cpplogEnabled(cpplogging::debug)) {
         print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, lhs, retPlaceDBM, sub, rhs->getOpType());
         cpplog(cpplogging::debug) <<"----(Valid) EXISTS (in FORALL_REL) Placeholder indicates no time elapse is needed (Check Only)-----" <<  std::endl
-        << "----With Placeholder := {";
-        retPlaceDBM->print_constraint(cpplogGet(cpplogging::debug));
-        cpplog(cpplogging::debug) << "} ----"<<  std::endl <<  std::endl;
+                                  << "----With Placeholder := {" << *retPlaceDBM << "} ----"<<  std::endl <<  std::endl;
 
       }
 
@@ -2318,13 +2257,11 @@ inline DBMList* prover::do_proof_place_forall_rel(int step, DBM* const lhs, DBML
           print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, &phb, &infPlace, sub, rhs->getOpType());
           if(retVal) {
             cpplog(cpplogging::debug) <<"----(Valid) Placeholder Check Passed-----" <<  std::endl
-            <<"--With Placeholder := {";
-            retPlaceDBM->print_constraint(cpplogGet(cpplogging::debug));
-            cpplog(cpplogging::debug) <<"} ----" <<  std::endl <<  std::endl;
+                                      <<"--With Placeholder := {" << *retPlaceDBM
+                                      <<"} ----" <<  std::endl <<  std::endl;
           }
           else {
             cpplog(cpplogging::debug) <<"----(Invalid) Placeholder Check Failed-----" <<  std::endl <<  std::endl;
-
           }
         }
 
@@ -2338,12 +2275,7 @@ inline DBMList* prover::do_proof_place_forall_rel(int step, DBM* const lhs, DBML
       // Store the set of times that satisfy phi1
       DBMList phi1Place(*retPlaceDBM);
 
-      if(cpplogEnabled(cpplogging::debug)) {
-        cpplog(cpplogging::debug) <<"----() Relativization \\phi_1 placeholder obtained as {";
-        phi1Place.print_constraint(cpplogGet(cpplogging::debug));
-        cpplog(cpplogging::debug) << "} ----"<<  std::endl <<  std::endl;
-
-      }
+      cpplog(cpplogging::debug) <<"----() Relativization \\phi_1 placeholder obtained as {" << phi1Place << "} ----"<<  std::endl <<  std::endl;
 
       /* We omit the check that we can elapse to the placeholder;
        * We will check that once at the end */
@@ -2356,12 +2288,7 @@ inline DBMList* prover::do_proof_place_forall_rel(int step, DBM* const lhs, DBML
       retPlaceDBM->cf();
       DBMList phi2Place(*retPlaceDBM);
 
-      if(cpplogEnabled(cpplogging::debug)) {
-        cpplog(cpplogging::debug) <<"----() Formula \\phi_2 placeholder obtained as {";
-        phi2Place.print_constraint(cpplogGet(cpplogging::debug));
-        cpplog(cpplogging::debug) << "} ----"<<  std::endl <<  std::endl;
-
-      }
+      cpplog(cpplogging::debug) <<"----() Formula \\phi_2 placeholder obtained as {" << phi2Place << "} ----"<<  std::endl <<  std::endl;
 
       // Reset place parent to nullptr
       parentPlaceRef = nullptr;
@@ -2400,9 +2327,8 @@ inline DBMList* prover::do_proof_place_forall_rel(int step, DBM* const lhs, DBML
 
         if(cpplogEnabled(cpplogging::debug)) {
           print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, &phb, fPlace, sub, rhs->getOpType());
-          cpplog(cpplogging::debug) <<"----() FORALL (of FORALL_REL) Placeholder Check obtained  FA Placeholder := {";
-          forallPlace.print_constraint(cpplogGet(cpplogging::debug));
-          cpplog(cpplogging::debug) <<"} ----" <<  std::endl <<  std::endl;
+          cpplog(cpplogging::debug) <<"----() FORALL (of FORALL_REL) Placeholder Check obtained  FA Placeholder := {"
+                                    << forallPlace <<"} ----" <<  std::endl <<  std::endl;
         }
 
         /* Now we do the pred check to find the exists placeholder;
@@ -2420,11 +2346,8 @@ inline DBMList* prover::do_proof_place_forall_rel(int step, DBM* const lhs, DBML
         retPlaceDBM = predCheckRule(lhs, &ph, nullptr, &phi2Place, &phi1Place, &phi1PredPlace);
         retPlaceDBM->cf();
 
-        if(cpplogEnabled(cpplogging::debug)) {
-          cpplog(cpplogging::debug) <<"----() FORALL Rel Exists placeholder obtained as := {";
-          retPlaceDBM->print_constraint(cpplogGet(cpplogging::debug));
-          cpplog(cpplogging::debug) << "} ----"<<  std::endl <<  std::endl;
-        }
+        cpplog(cpplogging::debug) <<"----() FORALL Rel Exists placeholder obtained as := {"
+                                  << *retPlaceDBM << "} ----"<<  std::endl <<  std::endl;
 
         if(!retPlaceDBM->emptiness()) {
           /* if it is nonempty, it passes the second check and we continue
@@ -2445,10 +2368,8 @@ inline DBMList* prover::do_proof_place_forall_rel(int step, DBM* const lhs, DBML
 
           if(cpplogEnabled(cpplogging::debug)) {
             print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, lhs, retPlaceDBM, sub, rhs->getOpType());
-
-            cpplog(cpplogging::debug) <<"----() FORALL Rel Exists placeholder after time elapse check is := {";
-            retPlaceDBM->print_constraint(cpplogGet(cpplogging::debug));
-            cpplog(cpplogging::debug) << "} ----"<<  std::endl <<  std::endl;
+            cpplog(cpplogging::debug) <<"----() FORALL Rel Exists placeholder after time elapse check is := {"
+                                      << *retPlaceDBM << "} ----"<<  std::endl <<  std::endl;
           }
         }
         // retPlaceDBM is existsPlace
@@ -2481,11 +2402,8 @@ inline DBMList* prover::do_proof_place_forall_rel(int step, DBM* const lhs, DBML
         // retVal is computed above
       }
 
-      if(cpplogEnabled(cpplogging::debug)) {
-        cpplog(cpplogging::debug) << "Final Placeholder of FORALL_REL (P): ";
-        retPlaceDBM->print_constraint(cpplogGet(cpplogging::debug));
-        cpplog(cpplogging::debug) <<  std::endl <<  std::endl;
-      }
+      cpplog(cpplogging::debug) << "Final Placeholder of FORALL_REL (P): "
+                                << *retPlaceDBM <<  std::endl <<  std::endl;
 
       delete fPlace;
     }
@@ -2531,9 +2449,7 @@ inline DBMList* prover::do_proof_place_exists(int step, DBM* const lhs, DBMList*
     print_sequent_placeCheck(std::cerr, step - 1, result, lhs, place, retPlaceDBM, sub, rhs->getOpType());
     if(result) {
       cpplog(cpplogging::debug) <<"----(Valid) Placeholder Check Passed-----" <<  std::endl
-      <<"--With Placeholder := {";
-      retPlaceDBM->print_constraint(cpplogGet(cpplogging::debug));
-      cpplog(cpplogging::debug) <<"} ----" <<  std::endl <<  std::endl;
+                                <<"--With Placeholder := {" << *retPlaceDBM <<"} ----" <<  std::endl <<  std::endl;
     }
     else {
       cpplog(cpplogging::debug) <<"----(Invalid) Placeholder Check Failed-----" <<  std::endl <<  std::endl;
@@ -2597,11 +2513,8 @@ inline DBMList* prover::do_proof_place_exists_rel(int step, DBM* const lhs, DBML
   // Must check for emptiness to handle the corner case when it is empty
   DBMList phi1Place(*retPlaceDBM);
 
-  if(cpplogEnabled(cpplogging::debug)) {
-    cpplog(cpplogging::debug) <<"----() Placeholder of times where \\phi_1 is true----- {";
-    phi1Place.print_constraint(cpplogGet(cpplogging::debug));
-    cpplog(cpplogging::debug) << "} ----"<<  std::endl <<  std::endl;
-  }
+  cpplog(cpplogging::debug) << "----() Placeholder of times where \\phi_1 is true----- {"
+                            << phi1Place << "} ----"<<  std::endl <<  std::endl;
 
   *retPlaceDBM & *phi2PredPlace;
   retPlaceDBM->cf();
@@ -2629,17 +2542,14 @@ inline DBMList* prover::do_proof_place_exists_rel(int step, DBM* const lhs, DBML
        * must span all of lhs */
       retVal = (*phi2Place) >= (*lhs);
 
-      if(cpplogEnabled(cpplogging::debug)) {
-        if(retVal) {
-          cpplog(cpplogging::debug) <<"----(Valid) Time Elapse not required and placeholder spans lhs; hence, formula is true-----" <<  std::endl;
-        }
-        else {
-          cpplog(cpplogging::debug) <<"----(Invalid) While Time Elapse not required, placeholder is not large enough-----" <<  std::endl;
-        }
-        cpplog(cpplogging::debug) << "----With resulting Placeholder := {";
-        phi2Place->print_constraint(cpplogGet(cpplogging::debug));
-        cpplog(cpplogging::debug) << "} ----"<<  std::endl <<  std::endl;
+      if(retVal) {
+        cpplog(cpplogging::debug) <<"----(Valid) Time Elapse not required and placeholder spans lhs; hence, formula is true-----" <<  std::endl;
       }
+      else {
+        cpplog(cpplogging::debug) <<"----(Invalid) While Time Elapse not required, placeholder is not large enough-----" <<  std::endl;
+      }
+      cpplog(cpplogging::debug) << "----With resulting Placeholder := {"
+                                << *phi2Place << "} ----"<<  std::endl <<  std::endl;
     }
 
 
@@ -2655,12 +2565,8 @@ inline DBMList* prover::do_proof_place_exists_rel(int step, DBM* const lhs, DBML
   if(retPlaceDBM->emptiness()) {
     retVal = false;
 
-    if(cpplogEnabled(cpplogging::debug)) {
-      cpplog(cpplogging::debug) <<"----(Invalid) Relativization placeholder failed-----" <<  std::endl
-      << "----With resulting Placeholder := {";
-      retPlaceDBM->print_constraint(std::cerr);
-      cpplog(cpplogging::debug) << "} ----"<<  std::endl <<  std::endl;
-    }
+    cpplog(cpplogging::debug) << "----(Invalid) Relativization placeholder failed-----" <<  std::endl
+                              << "----With resulting Placeholder := {" << *retPlaceDBM << "} ----"<<  std::endl <<  std::endl;
 
     delete phi2Place;
     delete phi2PredPlace;
@@ -2674,10 +2580,8 @@ inline DBMList* prover::do_proof_place_exists_rel(int step, DBM* const lhs, DBML
 
   if(cpplogEnabled(cpplogging::debug)) {
     print_sequent_place(std::cerr, step - 1,  retVal, &phb, phi2PredPlace, rhs->getLeft(), sub, rhs->getOpType());
-    cpplog(cpplogging::debug) <<"----(Valid) Relativization Placeholder Check Passed (Check Only)-----" <<  std::endl
-    << "----With resulting Placeholder := {";
-    retPlaceDBM->print_constraint(std::cerr);
-    cpplog(cpplogging::debug) << "} ----"<<  std::endl <<  std::endl;
+    cpplog(cpplogging::debug) << "----(Valid) Relativization Placeholder Check Passed (Check Only)-----" <<  std::endl
+                              << "----With resulting Placeholder := {" << *retPlaceDBM << "} ----"<<  std::endl <<  std::endl;
   }
 
   // Allow for the possibility of the time instant after the elapse
@@ -2704,14 +2608,11 @@ inline DBMList* prover::do_proof_place_exists_rel(int step, DBM* const lhs, DBML
   if (cpplogEnabled(cpplogging::debug)) {
     print_sequent_placeCheck(std::cerr, step - 1, retVal, lhs, place, retPlaceDBM, sub, rhs->getOpType());
     if(retVal) {
-      cpplog(cpplogging::debug) <<"----(Valid) Final Placeholder Check Passed-----" <<  std::endl
-      <<"--With Placeholder := {";
-      retPlaceDBM->print_constraint(std::cerr);
-      cpplog(cpplogging::debug) <<"} ----" <<  std::endl <<  std::endl;
+      cpplog(cpplogging::debug) << "----(Valid) Final Placeholder Check Passed-----" <<  std::endl
+                                << "--With Placeholder := {" << *retPlaceDBM << "} ----" <<  std::endl <<  std::endl;
     }
     else {
       cpplog(cpplogging::debug) <<"----(Invalid) Final Placeholder Check Failed-----" <<  std::endl <<  std::endl;
-
     }
   }
 
@@ -2786,14 +2687,9 @@ inline DBMList* prover::do_proof_place_allact(int step, DBM* const lhs, DBMList*
         phLHS & invPlace;
         phLHS.cf();
         if(phLHS.emptiness()) {
-
-          if (cpplogEnabled(cpplogging::debug)) {
-            cpplog(cpplogging::debug) << "Transition: " << tempT;
-            cpplog(cpplogging::debug) << " cannot be taken; entering invariant is false." <<  std::endl;
-            cpplog(cpplogging::debug) << "\tExtra invariant condition: ";
-            invPlace.print_constraint(std::cerr);
-            cpplog(cpplogging::debug) <<  std::endl;
-          }
+          cpplog(cpplogging::debug) << "Transition: " << tempT
+                                    << " cannot be taken; entering invariant is false." <<  std::endl
+                                    << "\tExtra invariant condition: " << invPlace <<  std::endl;
 
           continue;
         }
@@ -2941,11 +2837,7 @@ inline DBMList* prover::do_proof_place_allact(int step, DBM* const lhs, DBMList*
   }
   transPlaceHolders.clear();
 
-  if(cpplogEnabled(cpplogging::debug)) {
-    cpplog(cpplogging::debug) << "\t --- end of ALLACT. Returned plhold: ";
-    retPlaceDBM->print_constraint(std::cerr);
-    cpplog(cpplogging::debug) <<  std::endl;
-  }
+  cpplog(cpplogging::debug) << "\t --- end of ALLACT. Returned plhold: " << *retPlaceDBM <<  std::endl;
 
   return retPlaceDBM;
 }
@@ -3003,13 +2895,9 @@ inline DBMList* prover::do_proof_place_existact(int step, DBM* const lhs, DBMLis
         tempPlace & invCons;
         tempPlace.cf();
         if(tempPlace.emptiness()) {
-          if (cpplogEnabled(cpplogging::debug)) {
-            cpplog(cpplogging::debug) << "Transition: " << tempT;
-            cpplog(cpplogging::debug) << " cannot be taken; entering invariant is false." <<  std::endl;
-            cpplog(cpplogging::debug) << "\tExtra invariant condition: ";
-            invCons.print_constraint(std::cerr);
-            cpplog(cpplogging::debug) <<  std::endl;
-          }
+          cpplog(cpplogging::debug) << "Transition: " << tempT
+                                    << " cannot be taken; entering invariant is false." <<  std::endl
+                                    << "\tExtra invariant condition: " << invCons<<  std::endl;
 
           continue;
         }
@@ -3033,12 +2921,8 @@ inline DBMList* prover::do_proof_place_existact(int step, DBM* const lhs, DBMLis
     DBMList tPlace1(tempPlace);
     DBMList prevDBM(*retPlaceDBM);
 
-    if (cpplogEnabled(cpplogging::debug)) {
-      cpplog(cpplogging::debug) << "Executing transition (with destination) " << tempT << std::endl;
-      cpplog(cpplogging::debug) << "\tExtra invariant condition: ";
-      invCons.print_constraint(cpplogGet(cpplogging::debug));
-      cpplog(cpplogging::debug) <<  std::endl;
-    }
+    cpplog(cpplogging::debug) << "Executing transition (with destination) " << tempT << std::endl
+                              << "\tExtra invariant condition: " << invCons <<  std::endl;
 
     numLocations++;
     retPlaceDBM = do_proof_place(step, &tempLHS, &tPlace1, tempT->getRightExpr(), &tempSub);
@@ -3072,11 +2956,7 @@ inline DBMList* prover::do_proof_place_existact(int step, DBM* const lhs, DBMLis
 
   }
 
-  if(cpplogEnabled(cpplogging::debug)) {
-    cpplog(cpplogging::debug) << "\t --- end of EXISTACT. Returned plhold: ";
-    retPlaceDBM->print_constraint(cpplogGet(cpplogging::debug));
-    cpplog(cpplogging::debug) <<  std::endl;
-  }
+  cpplog(cpplogging::debug) << "\t --- end of EXISTACT. Returned plhold: " << *retPlaceDBM <<  std::endl;
 
   return retPlaceDBM;
 }
@@ -3134,16 +3014,12 @@ inline DBMList* prover::do_proof_place_constraint(DBM* const lhs, DBMList* const
       // New Combined DBM Does not satisfy Constraint
       retPlaceDBM->makeEmpty();
     }
-    if(cpplogEnabled(cpplogging::debug)) {
-      if(tPlace.emptiness()) {
-        cpplog(cpplogging::debug) << "---(Invalid, Placeholder) Leaf DBM (CONSTRAINT) Unsatisfied regardless of placeholder----" <<  std::endl <<  std::endl;
-      }
-      else {
-        cpplog(cpplogging::debug) << "---(Valid, Placeholder) Leaf DBM (CONSTRAINT) Reached and Placeholder Computed----" <<  std::endl <<
-        "----Placeholder := {";
-        retPlaceDBM->print_constraint(cpplogGet(cpplogging::debug));
-        cpplog(cpplogging::debug) << "}----" <<  std::endl <<  std::endl;
-      }
+    if(tPlace.emptiness()) {
+      cpplog(cpplogging::debug) << "---(Invalid, Placeholder) Leaf DBM (CONSTRAINT) Unsatisfied regardless of placeholder----" <<  std::endl <<  std::endl;
+    }
+    else {
+      cpplog(cpplogging::debug) << "---(Valid, Placeholder) Leaf DBM (CONSTRAINT) Reached and Placeholder Computed----" <<  std::endl
+                                << "----Placeholder := {" << *retPlaceDBM << "}----" <<  std::endl <<  std::endl;
     }
   }
   return retPlaceDBM;
@@ -3299,14 +3175,11 @@ inline DBMList* prover::do_proof_place_reset(int step, DBM* const lhs, DBMList* 
     if (cpplogEnabled(cpplogging::debug)) {
       print_sequent_placeCheck(std::cerr, step - 1, retVal, lhs, retPlaceDBM, &p2Copy, sub, rhs->getOpType());
       if(retVal) {
-        cpplog(cpplogging::debug) <<"----(Valid) Placeholder Check Passed-----" <<  std::endl
-        <<"--With Placeholder := {";
-        retPlaceDBM->print_constraint(cpplogGet(cpplogging::debug));
-        cpplog(cpplogging::debug) <<"} ----" <<  std::endl <<  std::endl;
+        cpplog(cpplogging::debug) << "----(Valid) Placeholder Check Passed-----" <<  std::endl
+                                  << "--With Placeholder := {" << *retPlaceDBM <<"} ----" <<  std::endl <<  std::endl;
       }
       else {
         cpplog(cpplogging::debug) <<"----(Invalid) Placeholder Check Failed-----" <<  std::endl <<  std::endl;
-
       }
     }
   }
@@ -3349,14 +3222,11 @@ inline DBMList* prover::do_proof_place_assign(int step, DBM* const lhs, DBMList*
     if (cpplogEnabled(cpplogging::debug)) {
       print_sequent_placeCheck(std::cerr, step - 1, retVal, lhs, place, &tmp2, sub, rhs->getOpType());
       if(retVal) {
-        cpplog(cpplogging::debug) <<"----(Valid) Placeholder Check Passed-----" <<  std::endl
-        <<"--With Placeholder := {";
-        retPlaceDBM->print_constraint(cpplogGet(cpplogging::debug));
-        cpplog(cpplogging::debug) <<"} ----" <<  std::endl <<  std::endl;
+        cpplog(cpplogging::debug) << "----(Valid) Placeholder Check Passed-----" <<  std::endl
+                                  << "--With Placeholder := {" << *retPlaceDBM << "} ----" <<  std::endl <<  std::endl;
       }
       else {
         cpplog(cpplogging::debug) <<"----(Invalid) Placeholder Check Failed-----" <<  std::endl <<  std::endl;
-
       }
     }
 
