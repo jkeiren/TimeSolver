@@ -2941,7 +2941,7 @@ inline DBMList* prover::do_proof_place_constraint(DBM* const lhs, DBMList* const
     cpplog(cpplogging::debug) << "---(Valid) Leaf DBM (CONSTRAINT) Reached with no need for Placeholder----" <<  std::endl <<  std::endl;
   }
   else {
-    /* Here, since we only have a single constrait here,
+    /* Here, since we only have a single constraint here,
      * DBM will tighten only to match the single constraint
      * Since multiple constraints are represented as an
      * AND of Constraints */
@@ -2972,29 +2972,27 @@ inline DBMList* prover::do_proof_place_constraint(DBM* const lhs, DBMList* const
 
 inline DBMList* prover::do_proof_place_bool(DBMList* const place, const ExprNode* const rhs)
 {
-  if(rhs->getBool()) {
-    *retPlaceDBM = (*place);
-    cpplog(cpplogging::debug) << "---(Valid) Leaf BOOL Reached----" <<  std::endl <<  std::endl;
+  if(do_proof_bool(rhs))
+  {
+    *retPlaceDBM = *place;
   }
-  else{
+  else
+  {
     retPlaceDBM->makeEmpty();
-    cpplog(cpplogging::debug) << "---(Invalid) Leaf BOOL Reached----" <<  std::endl <<  std::endl;
   }
-
   return retPlaceDBM;
 }
 
 inline DBMList* prover::do_proof_place_atomic(DBMList* const place,
                                           const ExprNode* const rhs, SubstList* const sub)
 {
-  bool retVal = (sub->at(rhs->getAtomic()) == rhs->getIntVal());
-  if(retVal) {
-    *retPlaceDBM = (*place);
-    cpplog(cpplogging::debug) << "---(Valid) Leaf ATOMIC == Reached----" <<  std::endl <<  std::endl;
+  if(do_proof_atomic(rhs, sub))
+  {
+    *retPlaceDBM = *place;
   }
-  else{
+  else
+  {
     retPlaceDBM->makeEmpty();
-    cpplog(cpplogging::debug) << "---(Invalid) Leaf ATOMIC == Reached----" <<  std::endl <<  std::endl;
   }
   return retPlaceDBM;
 }
@@ -3002,14 +3000,13 @@ inline DBMList* prover::do_proof_place_atomic(DBMList* const place,
 inline DBMList* prover::do_proof_place_atomic_not(DBMList* const place,
                                           const ExprNode* const rhs, SubstList* const sub)
 {
-  bool retVal = (sub->at(rhs->getAtomic()) != rhs->getIntVal());
-  if(retVal) {
-    *retPlaceDBM = (*place);
-    cpplog(cpplogging::debug) << "---(Valid) Leaf ATOMIC != Reached----" <<  std::endl <<  std::endl;
+  if(do_proof_atomic_not(rhs, sub))
+  {
+    *retPlaceDBM = *place;
   }
-  else{
+  else
+  {
     retPlaceDBM->makeEmpty();
-    cpplog(cpplogging::debug) << "---(Invalid) Leaf ATOMIC != Reached----" <<  std::endl <<  std::endl;
   }
   return retPlaceDBM;
 }
@@ -3017,14 +3014,13 @@ inline DBMList* prover::do_proof_place_atomic_not(DBMList* const place,
 inline DBMList* prover::do_proof_place_atomic_lt(DBMList* const place,
                                           const ExprNode* const rhs, SubstList* const sub)
 {
-  bool retVal = (sub->at(rhs->getAtomic()) < rhs->getIntVal());
-  if(retVal) {
-    *retPlaceDBM = (*place);
-    cpplog(cpplogging::debug) << "---(Valid) Leaf ATOMIC < Reached----" <<  std::endl <<  std::endl;
+  if(do_proof_atomic_lt(rhs, sub))
+  {
+    *retPlaceDBM = *place;
   }
-  else{
+  else
+  {
     retPlaceDBM->makeEmpty();
-    cpplog(cpplogging::debug) << "---(Invalid) Leaf ATOMIC < Reached----" <<  std::endl <<  std::endl;
   }
   return retPlaceDBM;
 }
@@ -3032,14 +3028,13 @@ inline DBMList* prover::do_proof_place_atomic_lt(DBMList* const place,
 inline DBMList* prover::do_proof_place_atomic_gt(DBMList* const place,
                                           const ExprNode* const rhs, SubstList* const sub)
 {
-  bool retVal = (sub->at(rhs->getAtomic()) > rhs->getIntVal());
-  if(retVal) {
-    *retPlaceDBM = (*place);
-    cpplog(cpplogging::debug) << "---(Valid) Leaf ATOMIC > Reached----" <<  std::endl <<  std::endl;
+  if(do_proof_atomic_gt(rhs, sub))
+  {
+    *retPlaceDBM = *place;
   }
-  else{
+  else
+  {
     retPlaceDBM->makeEmpty();
-    cpplog(cpplogging::debug) << "---(Invalid) Leaf ATOMIC > Reached----" <<  std::endl <<  std::endl;
   }
   return retPlaceDBM;
 }
@@ -3047,14 +3042,13 @@ inline DBMList* prover::do_proof_place_atomic_gt(DBMList* const place,
 inline DBMList* prover::do_proof_place_atomic_le(DBMList* const place,
                                           const ExprNode* const rhs, SubstList* const sub)
 {
-  bool retVal = (sub->at(rhs->getAtomic()) <= rhs->getIntVal());
-  if(retVal) {
-    *retPlaceDBM = (*place);
-    cpplog(cpplogging::debug) << "---(Valid) Leaf ATOMIC < Reached----" <<  std::endl <<  std::endl;
+  if(do_proof_atomic_le(rhs, sub))
+  {
+    *retPlaceDBM = *place;
   }
-  else{
+  else
+  {
     retPlaceDBM->makeEmpty();
-    cpplog(cpplogging::debug) << "---(Invalid) Leaf ATOMIC < Reached----" <<  std::endl <<  std::endl;
   }
   return retPlaceDBM;
 }
@@ -3062,14 +3056,13 @@ inline DBMList* prover::do_proof_place_atomic_le(DBMList* const place,
 inline DBMList* prover::do_proof_place_atomic_ge(DBMList* const place,
                                           const ExprNode* const rhs, SubstList* const sub)
 {
-  bool retVal = (sub->at(rhs->getAtomic()) >= rhs->getIntVal());
-  if(retVal) {
-    *retPlaceDBM = (*place);
-    cpplog(cpplogging::debug) << "---(Valid) Leaf ATOMIC > Reached----" <<  std::endl <<  std::endl;
+  if(do_proof_atomic_ge(rhs, sub))
+  {
+    *retPlaceDBM = *place;
   }
-  else{
+  else
+  {
     retPlaceDBM->makeEmpty();
-    cpplog(cpplogging::debug) << "---(Invalid) Leaf ATOMIC > Reached----" <<  std::endl <<  std::endl;
   }
   return retPlaceDBM;
 }
