@@ -1080,6 +1080,7 @@ inline bool prover::do_proof_forall_rel(const int step, DBM * const lhs, const E
   return retVal;
 }
 
+// [FC14] Proof rule \exists_{t1}
 inline bool prover::do_proof_exists(const int step, DBM * const lhs, const ExprNode * const rhs, SubstList * const sub)
 {
   bool retVal = false;
@@ -1092,17 +1093,16 @@ inline bool prover::do_proof_exists(const int step, DBM * const lhs, const ExprN
 
   /* First Try to get a placeholder value that works */
   lhs->cf();
-  DBM ph(*lhs);
-  ph.suc();
+  DBM lhs_succ(*lhs);
+  lhs_succ.suc();
 
 
   /* The proper derivation for EXISTS is to incorporate the invariant
    * in the placeholder, and not the LHS. */
-  DBMList tPlace(*INFTYDBM);
-  restrict_to_invariant(input_pes.invariants(), &tPlace, *sub);
+  DBMList placeholder(*INFTYDBM);
+  restrict_to_invariant(input_pes.invariants(), &placeholder, *sub);
 
-  retPlaceDBM = do_proof_place(step, &ph, &tPlace,
-                               rhs->getQuant(), sub);
+  retPlaceDBM = do_proof_place(step, &lhs_succ, &placeholder, rhs->getQuant(), sub);
   // Reset place parent to NULL
   parentPlaceRef = NULL;
   retPlaceDBM->cf();
@@ -1114,7 +1114,7 @@ inline bool prover::do_proof_exists(const int step, DBM * const lhs, const ExprN
     }
     return retVal;
   }
-  retVal = true;
+
   /* Now check that it works. */
   /* Since we are not using retPlace anymore, we do not
    * need to copy it for the check. */
