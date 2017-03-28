@@ -198,7 +198,7 @@ int main(int argc, char** argv){
 
   /** This DBM represents the initial DBM provided
    * if one is provided by the parser. */
-  DBM *InitC;
+  DBM *InitC = nullptr;
 
   /* Read and lex the input file to tokens for the parser to use. */
   yyin = fopen(opt.input_filename.c_str(), "r");
@@ -310,7 +310,7 @@ int main(int argc, char** argv){
            currParityGfp,prevParityGfp,opt.useCaching,opt.nHash,
            opt.debug, MAXC, opt.nbits);
   
-  if (InitC != NULL) {
+  if (InitC != nullptr) {
 		InitC->setIsCfFalse();
     InitC->cf();
     suc = p.do_proof(0, InitC, start, sublist);
@@ -355,7 +355,7 @@ int main(int argc, char** argv){
 
 	// Clean Up Dynamic Memory to eliminate Memory Leaks
   delete dbm;
-  if(InitC != NULL)
+  if(InitC != nullptr)
   {
     delete InitC;
   }
