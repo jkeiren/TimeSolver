@@ -1144,18 +1144,17 @@ inline bool prover::do_proof_exists_rel(const int step, DBM * const lhs, const E
 
   /* First Try to get a placeholder value that works */
   lhs->cf();
-  DBM ph(*lhs);
+  DBM lhs_succ(*lhs);
   // Note: lhs is unchanged
-  ph.suc();
-  DBM phb(ph);
+  lhs_succ.suc();
+  DBM lhs_succ2(lhs_succ);
 
-  DBMList * tPlace = new DBMList(*INFTYDBM);
-  restrict_to_invariant(input_pes.invariants(), tPlace, *sub);
+  DBMList tPlace(*INFTYDBM);
+  restrict_to_invariant(input_pes.invariants(), &tPlace, *sub);
 
-  retPlaceDBM = do_proof_place(step, &ph, tPlace,
-                               rhs->getRight(), sub);
+  retPlaceDBM = do_proof_place(step, &lhs_succ, &tPlace, rhs->getRight(), sub);
   // Reset place parent to NULL
-  parentPlaceRef = NULL;
+  parentPlaceRef = nullptr;
   retPlaceDBM->cf();
   if(retPlaceDBM->emptiness()){
     retVal = false;
@@ -1163,11 +1162,13 @@ inline bool prover::do_proof_exists_rel(const int step, DBM * const lhs, const E
       print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, lhs, retPlaceDBM, sub, rhs->getOpType());
       cpplog(cpplogging::debug) <<"----(Invalid) Empty First Placeholder: No Need for additional Placeholder Checks-----" <<  std::endl <<  std::endl;
     }
-    //delete retPlace;
-    delete tPlace;
     return retVal;
   }
+
   retVal = true;
+
+  DBMList placeholder2(*retPlaceDBM);
+
   /* Now check for the relativization.
    * First, find the subset of the predecessor_< of the placeholder
    * that satisfies the left clause.
@@ -1175,37 +1176,37 @@ inline bool prover::do_proof_exists_rel(const int step, DBM * const lhs, const E
    * placeholder in order that the entire predecessor does satisfy
    * the relativization formaula.  */
   /* First step */
-  DBMList * phi2PredPlace = new DBMList(*retPlaceDBM);
-  phi2PredPlace->pre();
+  DBMList placeholder2_predecessor(placeholder2);
+  placeholder2_predecessor.pre();
   // pred Closure makes sure that the exact valuation for the placeholder
   // is excluded.
-  phi2PredPlace->predClosureRev();
-  phi2PredPlace->cf();
-  /* At this point, phi2PredPlace is the time predecessor_{<} of
+  placeholder2_predecessor.predClosureRev();
+  placeholder2_predecessor.cf();
+  /* At this point, placeholder2_predecessor is the time predecessor_{<} of
    * the placeholders that satisfy phi_2, the right hand formula */
 
   /* We find all the times that satisfy phi_1, and then intersect it
    * with the time predecessor of the phi_2 placeholders. */
-  DBMList * phi2Place = new DBMList(*retPlaceDBM);
-  DBMList place1Temp(*INFTYDBM);
+  DBMList placeholder1(*INFTYDBM);
   // Since invariants are past closed, we do not need to intersect
   // this placeholder with the invariant.
-  retPlaceDBM = do_proof_place(step, &phb, &place1Temp, rhs->getLeft(), sub);
+  retPlaceDBM = do_proof_place(step, &lhs_succ2, &placeholder1, rhs->getLeft(), sub);
   /* Second step: tighten and check the predecessor */
   // Must check for emptiness to handle the corner case when it is empty
-  DBMList phi1Place(*retPlaceDBM);
+  placeholder1 = *retPlaceDBM; // placeholder1 now contains the set of states in which the left hand side of the quantifier holds.
 
   cpplog(cpplogging::debug) << "----() Placeholder of times where \\phi_1 is true----- {"
-                            << phi1Place << "} ----"<<  std::endl <<  std::endl;
+                            << placeholder1 << "} ----"<<  std::endl <<  std::endl;
 
   // This provides a preliminary check.
-  *retPlaceDBM & *phi2PredPlace;
+  // If the left hand side and right hand side never hold at the same time, we
+  // only need to check whether the right hand side holds immediately
+  *retPlaceDBM & placeholder2_predecessor;
   retPlaceDBM->cf();
   if(retPlaceDBM->emptiness()) {
-    retVal = false;
 
     if(cpplogEnabled(cpplogging::debug)) {
-      print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, &phb, retPlaceDBM, sub, rhs->getOpType());
+      print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, false, &lhs_succ2, retPlaceDBM, sub, rhs->getOpType());
       cpplog(cpplogging::debug) <<"----() Empty Second Placeholder: Relativization Formula \\phi_1 is never true-----" <<  std::endl <<  std::endl;
     }
 
@@ -1213,52 +1214,47 @@ inline bool prover::do_proof_exists_rel(const int step, DBM * const lhs, const E
      * If so, make a non-empty placeholder. In this case, the third
      * Check will be true by default and can be skipped.
      * Else, return empty and break */
-    *phi2Place & *lhs; // lhs here is before the time elapse
-    phi2Place->cf();
-    if(phi2Place->emptiness()) {
+    placeholder2 & *lhs; // lhs here is before the time elapse
+    placeholder2.cf();
+    if(placeholder2.emptiness()) {
       retVal = false;
       cpplog(cpplogging::debug) << "----(Invalid) Time Elapsed required for formula to be true; hence, relativized formula cannot always be false." <<  std::endl <<  std::endl;
     }
-    else {
+    else
+    {
       /* While a time elapse is not required, the placeholder
        * must span all of lhs */
-      retVal = (*phi2Place) >= (*lhs);
+      retVal = placeholder2 >= (*lhs);
 
-      if(retVal) {
+      if(retVal)
+      {
         cpplog(cpplogging::debug) <<"----(Valid) Time Elapse not required and placeholder spans lhs; hence, formula is true-----" <<  std::endl;
       }
       else
       {
         cpplog(cpplogging::debug) <<"----(Invalid) While Time Elapse not required, placeholder is not large enough-----" <<  std::endl;
       }
-      cpplog(cpplogging::debug) << "----With resulting Placeholder := {" << *phi2Place << "} ----"<<  std::endl <<  std::endl;
+      cpplog(cpplogging::debug) << "----With resulting Placeholder := {" << placeholder2 << "} ----"<<  std::endl <<  std::endl;
     }
 
-
-    delete phi2Place;
-    delete phi2PredPlace;
-    delete tPlace;
     return retVal;
   }
 
-  DBMList currRetPlaceDBM(*retPlaceDBM);
+  // There are locations where both left-hand side and right-hand side hold.
+  // we therefore need to check the side-conditions
   /*--- PredCheck code----*/
-  retPlaceDBM = predCheckRule(lhs, &ph, nullptr, &phi1Place, phi2Place, phi2PredPlace);
+  retPlaceDBM = predCheckRule(lhs, &lhs_succ, nullptr, &placeholder1, &placeholder2, &placeholder2_predecessor);
   if(retPlaceDBM->emptiness()) {
     retVal = false;
 
     cpplog(cpplogging::debug) << "----(Invalid) Relativization placeholder failed-----" <<  std::endl
                               << "----With resulting Placeholder := {" << *retPlaceDBM << "} ----"<<  std::endl <<  std::endl;
-
-    delete phi2Place;
-    delete phi2PredPlace;
-    delete tPlace;
     return retVal;
   }
   // if it is nonempty, it passes the second check and we continue
 
   if(cpplogEnabled(cpplogging::debug)) {
-    print_sequent_place(std::cerr, step - 1,  retVal, &phb, phi2PredPlace, rhs->getLeft(), sub, rhs->getOpType());
+    print_sequent_place(std::cerr, step - 1,  retVal, &lhs_succ2, &placeholder2_predecessor, rhs->getLeft(), sub, rhs->getOpType());
     cpplog(cpplogging::debug) <<"----(Valid) Relativization Placeholder Check Passed (Check Only)-----" <<  std::endl
     << "----With resulting Placeholder := {" << *retPlaceDBM << "} ----"<<  std::endl <<  std::endl;
   }
@@ -1266,7 +1262,7 @@ inline bool prover::do_proof_exists_rel(const int step, DBM * const lhs, const E
   // Allow for the possibility of the time instant after the elapse
   retPlaceDBM->closure();
   /* Extract the new refined placeholder. */
-  *retPlaceDBM & *phi2Place;
+  *retPlaceDBM & placeholder2;
   retPlaceDBM->cf();
 
 
@@ -1291,9 +1287,6 @@ inline bool prover::do_proof_exists_rel(const int step, DBM * const lhs, const E
     }
   }
 
-  delete phi2Place;
-  delete phi2PredPlace;
-  delete tPlace;
   return retVal;
 }
 
