@@ -429,8 +429,8 @@ protected:
     !compPhi1;
     compPhi1.cf();
     bool previouslyUpdated = false;
-    for(unsigned int i = 0; i < phi2PlaceList->size(); i++) {
-      DBM * currPhi2 = (*phi2PlaceList)[i];
+    for(std::vector<DBM*>::const_iterator i = phi2PlaceList->begin(); i != phi2PlaceList->end(); ++i) {
+      DBM * currPhi2 = *i;
       DBM predPhi2(*currPhi2);
       predPhi2.pre();
       predPhi2.cf();
@@ -3173,8 +3173,8 @@ inline DBMList* prover::do_proof_place_ablewaitinf(DBM* const lhs, DBMList* cons
    * constraints in the successor. By design of succ() and invariants,
    * either all DBMs have an upper bound constraint, or none
    * of them do. Hence, checking the first is always good enough. */
-  std::vector <DBM *> * currList = ph.getDBMList();
-  DBM * currDBM = (*currList)[0];
+  assert(!ph.getDBMList()->empty());
+  DBM * currDBM = *(ph.getDBMList()->begin());
   retVal = !(currDBM->hasUpperConstraint());
   if(retVal) {
     *retPlaceDBM = (*place);
@@ -3200,8 +3200,8 @@ inline DBMList* prover::do_proof_place_unablewaitinf(DBM* const lhs, DBMList* co
    * constraint in the successor. By design of succ() and invariants,
    * either all DBMs have an upper bound constraint, or none
    * of them do. Hence, checking the first is always good enough. */
-  std::vector <DBM *> * currList = ph.getDBMList();
-  DBM * currDBM = (*currList)[0];
+  assert(!ph.getDBMList()->empty());
+  DBM * currDBM = *(ph.getDBMList()->begin());
   if(currDBM->hasUpperConstraint()) {
     *retPlaceDBM = (*place);
     cpplog(cpplogging::debug) << "---(Valid) Time unable to diverge to INFTY in current location----" <<  std::endl <<  std::endl;
