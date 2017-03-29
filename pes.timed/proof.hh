@@ -234,7 +234,7 @@ public:
    * and the return value. */
   __attribute__((flatten))
   DBMList * do_proof_place(int step, DBM * const lhs, DBMList * const place,
-                                   const ExprNode * const rhs, SubstList * const sub)
+                           const ExprNode * const rhs, SubstList * const sub)
   {
     /* do_proof_place() written by Peter Fontana, needed for support
      * of EXISTS Quantifiers. */
@@ -1298,49 +1298,54 @@ inline bool prover::do_proof_allact(const int step, DBM * const lhs, const ExprN
 
   for(std::vector<Transition *>::const_iterator it = input_pes.transitions().begin();
       it != input_pes.transitions().end(); ++it ) {
-    Transition * tempT = *it;
+    Transition * transition = *it;
     /* Obtain the entire ExprNode and prove it */
     DBM tempLHS(*lhs);
 
-    bool tempBool = comp_ph(&tempLHS, *(tempT->getLeftExpr()), *sub);
-    if(!tempBool) {
-      cpplog(cpplogging::debug) << "Transition: " << tempT << " cannot be taken." <<  std::endl;
+    bool guard_satisfied = comp_ph(&tempLHS, *(transition->getLeftExpr()), *sub);
+    if(!guard_satisfied) {
+      cpplog(cpplogging::debug) << "Transition: " << transition << " cannot be taken." <<  std::endl;
       continue;
     }
 
-    /* Now check the invariant */
-    DBM invCons(*INFTYDBM);
-    const SubstList * sl = tempT->getEnteringLocation(sub);
-    bool isInv = restrict_to_invariant(input_pes.invariants(), &invCons, *sl);
-    delete sl;
-    if(isInv) {
-      invCons.cf();
-      const ClockSet * st = tempT->getCSet();
-      if(st != NULL) {
-        invCons.preset(st);
+    /* Now check the invariant; if the invariant is satisfiable, we update the
+       left hand side to be the part of the left hand side that satisfies the location
+       invariant. */
+    DBM invariant_region(*INFTYDBM);
+    const SubstList * source_location = transition->getEnteringLocation(sub);
+    bool invariant_satisfiable = restrict_to_invariant(input_pes.invariants(), &invariant_region, *source_location);
+    delete source_location;
+
+    if(invariant_satisfiable) {
+      invariant_region.cf();
+      // Some clocks are reset on this transition
+      const ClockSet * reset_clocks = transition->getCSet();
+      if(reset_clocks != nullptr) {
+        invariant_region.preset(reset_clocks);
       }
-      invCons.cf();
+      invariant_region.cf();
       /* Now perform clock assignments sequentially: perform the
        * front assignments first */
-      const std::vector<std::pair<short int, short int> > * av = tempT->getAssignmentVector();
-      if(av != NULL) {
+      const std::vector<std::pair<short int, short int> > * clock_assignments = transition->getAssignmentVector();
+      if(clock_assignments != nullptr) {
         // Iterate over the vector and print it
-        for(std::vector<std::pair<short int, short int> >::const_iterator it=av->begin(); it != av->end(); it++) {
-          invCons.preset((*it).first, (*it).second);
-          invCons.cf();
+        for(std::vector<std::pair<short int, short int> >::const_iterator it=clock_assignments->begin(); it != clock_assignments->end(); it++) {
+          invariant_region.preset((*it).first, (*it).second);
+          invariant_region.cf();
         }
       }
-      tempLHS & invCons;
+
+      tempLHS & invariant_region;
       tempLHS.cf();
       if(tempLHS.emptiness()) {
-        cpplog(cpplogging::debug) << "Transition: " << tempT
+        cpplog(cpplogging::debug) << "Transition: " << transition
                                   << " cannot be taken; entering invariant is false." <<  std::endl
-                                  << "\tExtra invariant condition: " << invCons <<  std::endl;
+                                  << "\tExtra invariant condition: " << invariant_region <<  std::endl;
         continue;
       }
     }
 
-    tempT->getNewTrans(rhs->getQuant());
+    transition->getNewTrans(rhs->getQuant());
 
     /* Constraints are bounded by MAXC */
     /* This is to extend the LHS to make sure that
@@ -1352,13 +1357,13 @@ inline bool prover::do_proof_allact(const int step, DBM * const lhs, const ExprN
     tempLHS.bound(MAXC);
     SubstList tempSub(*sub);
 
-    cpplog(cpplogging::debug) << "Executing transition (with destination) " << tempT << std::endl
-                              << "\tExtra invariant condition: " << invCons <<  std::endl;
+    cpplog(cpplogging::debug) << "Executing transition (with destination) " << transition << std::endl
+                              << "\tExtra invariant condition: " << invariant_region <<  std::endl;
 
     numLocations++;
-    retVal = do_proof(step, &tempLHS, tempT->getRightExpr(), &tempSub);
+    retVal = do_proof(step, &tempLHS, transition->getRightExpr(), &tempSub);
     if(!retVal) {
-      cpplog(cpplogging::debug) << "Trainsition: " << tempT <<  std::endl
+      cpplog(cpplogging::debug) << "Trainsition: " << transition <<  std::endl
                                 << "\tinvalidates property and breaks transition executions. " <<  std::endl;
 
       break;
@@ -1377,11 +1382,10 @@ inline bool prover::do_proof_existact(const int step, DBM * const lhs, const Exp
   cpplog(cpplogging::debug) << "\t Proving EXISTACT Transitions:----\n" <<  std::endl;
 
   /* Use placeholders to split rules */
-  bool emptyPartialPlace = true;
-  DBMList * partialPlace;
+  DBMList * partialPlace = nullptr;
   for(std::vector<Transition *>::const_iterator it = input_pes.transitions().begin();
       it != input_pes.transitions().end(); it++ ) {
-    Transition * tempT = *it;
+    Transition * transition = *it;
 
     /* Obtain the entire ExprNode and prove it */
 
@@ -1392,54 +1396,53 @@ inline bool prover::do_proof_existact(const int step, DBM * const lhs, const Exp
     DBMList tempPlace(*INFTYDBM);
     lhs->cf();
     DBM tempLHS(*lhs);
-    bool tempBool = comp_ph_exist_place(&tempLHS, &tempPlace, *(tempT->getLeftExpr()), *sub);
-    if(tempBool == false) {
-      cpplog(cpplogging::debug) << "Transition: " << tempT << " cannot be taken." << std::endl;
+    bool guard_satisfied = comp_ph_exist_place(&tempLHS, &tempPlace, *(transition->getLeftExpr()), *sub);
+    if(!guard_satisfied) {
+      cpplog(cpplogging::debug) << "Transition: " << transition << " cannot be taken." << std::endl;
       continue;
     }
 
     /* Now check the invariant */
-    DBM invCons(*INFTYDBM);
-    const SubstList * sl = tempT->getEnteringLocation(sub);
-    bool isInv = restrict_to_invariant(input_pes.invariants(), &invCons, *sl);
-    delete sl;
-    if(isInv) {
-      invCons.cf();
-      const ClockSet * st = tempT->getCSet();
-      if(st != NULL) {
-        invCons.preset(st);
+    DBM invariant_region(*INFTYDBM);
+    const SubstList * source_location = transition->getEnteringLocation(sub);
+    bool invariant_satisfiable = restrict_to_invariant(input_pes.invariants(), &invariant_region, *source_location);
+    delete source_location;
+    if(invariant_satisfiable) {
+      invariant_region.cf();
+      const ClockSet * reset_clocks = transition->getCSet();
+      if(reset_clocks != NULL) {
+        invariant_region.preset(reset_clocks);
       }
-      invCons.cf();
+      invariant_region.cf();
       /* Now perform clock assignments sequentially: perform the
        * front assignments first */
-      const std::vector<std::pair<short int, short int> > * av = tempT->getAssignmentVector();
-      if(av != NULL) {
-        // Iterate over the vector and print it
-        for(std::vector<std::pair<short int, short int> >::const_iterator it=av->begin(); it != av->end(); it++) {
-          invCons.preset((*it).first, (*it).second);
-          invCons.cf();
+      const std::vector<std::pair<short int, short int> >* clock_assignments = transition->getAssignmentVector();
+      if(clock_assignments != nullptr) {
+        for(std::vector<std::pair<short int, short int> >::const_iterator it=clock_assignments->begin(); it != clock_assignments->end(); it++) {
+          invariant_region.preset((*it).first, (*it).second);
+          invariant_region.cf();
         }
       }
+
       /* Check if invariant preset is satisfied by the lhs.
        * If not, tighten the placeholder */
-      if(!(tempLHS <= invCons)) {
+      if(!(tempLHS <= invariant_region)) {
         // for performance reasons, also tighten the left hand side
-        tempPlace & invCons;
+        tempPlace & invariant_region;
         tempPlace.cf();
         if(tempPlace.emptiness()) {
-          cpplog(cpplogging::debug) << "Transition: " << tempT
+          cpplog(cpplogging::debug) << "Transition: " << transition
                                     << " cannot be taken; entering invariant is false." <<  std::endl
-                                    << "\tExtra invariant condition: " << invCons <<  std::endl;
+                                    << "\tExtra invariant condition: " << invariant_region <<  std::endl;
 
           continue;
         }
-        tempLHS & invCons;
+        tempLHS & invariant_region;
         tempLHS.cf();
-
       }
     }
 
-    tempT->getNewTrans(rhs->getQuant());
+    transition->getNewTrans(rhs->getQuant());
     /* Constraints are bounded by MAXC */
     /* This is to extend the LHS to make sure that
      * the RHS is satisfied by any zone that satisfies
@@ -1450,42 +1453,41 @@ inline bool prover::do_proof_existact(const int step, DBM * const lhs, const Exp
     tempLHS.bound(MAXC);
     SubstList tempSub(*sub);
     // Above placeholder restricted to satisfy incoming invariant
-    //DBMList *retPlace;
-    cpplog(cpplogging::debug) << "Executing transition (with destination) " << tempT << std::endl;
+
+    cpplog(cpplogging::debug) << "Executing transition (with destination) " << transition << std::endl;
     numLocations++;
-    retPlaceDBM = do_proof_place(step, &tempLHS, &tempPlace, tempT->getRightExpr(), &tempSub);
+    retPlaceDBM = do_proof_place(step, &tempLHS, &tempPlace, transition->getRightExpr(), &tempSub);
 
     // Reset place parent to NULL
-    parentPlaceRef = NULL;
-    if(retPlaceDBM->emptiness()) {
-
-    }
-    else if(*retPlaceDBM >= *lhs) {
-      retVal = true;
-      //delete retPlace;
-      break;
-    }
-    else { /* The rare case that involves splitting */
-      if(emptyPartialPlace) {
-        partialPlace = new DBMList(*retPlaceDBM);
-        emptyPartialPlace = false;
+    parentPlaceRef = nullptr;
+    if(!retPlaceDBM->emptiness())
+    {
+      // At least a partial solution for the existence of a transition was found
+      if(*retPlaceDBM >= *lhs) {
+        // This transition covers the entire left hand side, we're done.
+        retVal = true;
+        break;
       }
-      else {
+      else if(partialPlace == nullptr)
+      {
+        // No partial solution yet, create one.
+        partialPlace = new DBMList(*retPlaceDBM);
+      }
+      else
+      {
+        // Add partial solution.
         partialPlace->addDBMList(*retPlaceDBM);
       }
     }
-    // delete retPlace;
-
-
   }
-  if(retVal == false && !emptyPartialPlace) {
-    /* Here compare to make sure our partial places are enough */
+
+  if(!retVal && partialPlace != nullptr) {
+    /* Here compare to make sure our partial placeholders are enough */
     retVal = (*partialPlace >= *lhs);
-    delete partialPlace;
   }
-  else if(!emptyPartialPlace) {
-    delete partialPlace;
-  }
+
+  // clean up memory if needed.
+  delete partialPlace;
 
   cpplog(cpplogging::debug) << "\t --- end of EXISTACT." <<  std::endl;
 
@@ -1701,6 +1703,7 @@ inline DBMList* prover::do_proof_place_predicate(int step, DBM* const lhs, DBMLi
       if(tempPlace.emptiness()) {
         // returning placeholder must be non-empty for the sequent
         // to be valid
+        assert(retPlaceDBM->emptiness());
         return retPlaceDBM;
       }
       *retPlaceDBM = (tempPlace);
@@ -1851,7 +1854,8 @@ inline DBMList* prover::do_proof_place_predicate(int step, DBM* const lhs, DBMLi
 
 
   }
-  else if(useCaching) { /* retPlaceDBM is empty */
+  else if(useCaching)
+  { /* retPlaceDBM is empty */
     /* First look in opposite parity Cache */
     // Now look in placeholder caches
     SequentPlace *t2b2 = new SequentPlace(rhs, sub);
