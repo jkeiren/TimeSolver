@@ -313,10 +313,10 @@ int main(int argc, char** argv){
   if (InitC != nullptr) {
 		InitC->setIsCfFalse();
     InitC->cf();
-    suc = p.do_proof(0, InitC, start, sublist);
+    suc = p.do_proof(InitC, start, sublist);
   }
   else {
-    suc = p.do_proof(0, dbm, start, sublist);
+    suc = p.do_proof(dbm, start, sublist);
   }
   
   /* Now finished with the proof/disproof, so output the result of the Model Checker */
@@ -325,7 +325,7 @@ int main(int argc, char** argv){
   if(opt.debug) {
    
     std::cerr <<"Prover end time: "<< ctime(&rawtime);
-     std::cerr << "##--End of Proof==------------------" << endl << endl;
+    std::cerr << "##--End of Proof==------------------" << endl << endl;
   }
   if (suc) {
     std::cerr << "--==Program Result:  **Valid**  ==-------------------" << endl;
