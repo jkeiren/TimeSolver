@@ -1,5 +1,5 @@
 #include <limits.h>
-#include "DBMlist.hh"
+#include "DBMList.hh"
 #include "testdbms.hh"
 #include "gtest/gtest.h"
 

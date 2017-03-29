@@ -124,7 +124,7 @@ public:
     }
 
     return;
-  };
+  }
 
   /** Returns the clock set of the clocks reset by this transition.
    * @return the clocks reset by this transition. */
@@ -142,8 +142,8 @@ public:
    * transition. */
   const SubstList * getEnteringLocation(SubstList * source) const {
     // Since a new substList is created, delete it when finished.
-    SubstList *st = NULL;
-    if(destList == NULL) {
+    SubstList *st = nullptr;
+    if(destList == nullptr) {
       st = new SubstList(*source);
     }
     else {
@@ -151,7 +151,7 @@ public:
     }
 
     return st;
-  };
+  }
 
 private:
 
