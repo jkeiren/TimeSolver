@@ -69,10 +69,8 @@ protected:
   sequent_cache cache;
 
 public:
-  prover(const pes& input_pes,
-         bool currParityGfp, bool prevParityGfp, bool useCaching,
-         int nHash, bool debug, int MAXC,
-         int nbits) :
+  prover(const pes& input_pes, bool currParityGfp, bool prevParityGfp,
+         bool useCaching, int nHash, int MAXC, int nbits) :
   input_pes(input_pes),
   currParityGfp(currParityGfp),
   prevParityGfp(prevParityGfp),
@@ -82,14 +80,6 @@ public:
   MAXC(MAXC),
   cache(input_pes, nbits, input_pes.predicates().size()*nHash, nHash, newSequent)
   {
-    cpplogging::logger::register_output_policy(cpplogging::plain_output_policy());
-    cpplogging::logger::unregister_output_policy(cpplogging::default_output_policy());
-
-    if(debug)
-    {
-      cpplogging::logger::set_reporting_level(cpplogging::debug);
-    }
-
     /* This is initialized to be the largest (loosest)
      * possible DBM
      * @see DBM Constructor (Default Constructor). */

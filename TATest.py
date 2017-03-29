@@ -39,7 +39,7 @@ def compare(expectedFileName, given, printDiff = False):
             sys.stdout.writelines(diff)
         return result
 
-def runTestCase(dirName, fileName, overwrite, debug):
+def runTestCase(dirName, fileName, overwrite, printdiff, debug):
     """Run the tool 'demo' on the testcase dirName/fileName. If overwrite is
     True, the expected output is overwritten. If overwrite is False, the output
     is compared to the file in which the expected output is stored."""
@@ -67,7 +67,7 @@ def runTestCase(dirName, fileName, overwrite, debug):
                     f.write(ret.stderr)
                     print('[{0}] {1}/{2}'.format('\033[33mGENERATE\033[39m', dirName, resultFile))
         else:
-            result = compare(os.path.join(dirName,resultFile), ret.stderr)
+            result = compare(os.path.join(dirName,resultFile), ret.stderr, printdiff)
             print('[{0}] {1}/{2}'.format('\033[32mOK\033[39m' if result else '\033[31mFAILED\033[39m', dirName, fileName))
     except subprocess.CalledProcessError as e:
         print('[{0}] {1}/{2}'.format('\033[31mFAILED\033[39m', dirName, fileName))
@@ -77,7 +77,7 @@ def runTestCase(dirName, fileName, overwrite, debug):
         
     return result
   
-def traverseTestCases(rootDir, overwrite, fileFilter, debug=True):
+def traverseTestCases(rootDir, overwrite, printdiff, fileFilter, debug=True):
     """Run all test cases below rootDir. If overwrite is True, then we only use
     the current version of the executable to generate the expected output.
     if debug, then the tool will be called with the debug flag."""
@@ -89,7 +89,7 @@ def traverseTestCases(rootDir, overwrite, fileFilter, debug=True):
             if fileFilter(fname):
                 continue
             count += 1
-            res = runTestCase(dirName, fname, overwrite, debug)
+            res = runTestCase(dirName, fname, overwrite, printdiff, debug)
             if(not res):
                 failed += 1
     print("{0} tests were run".format(count))
@@ -107,6 +107,8 @@ def main():
                       help='Do not run the test cases from CorrectnessTestSuite')
     parser.add_option('-o', action='store_true', dest='overwrite',
                       help='Overwrite expected outputs')
+    parser.add_option('-d', action='store_true', dest='printdiff',
+                      help='Print diff in case of failed test')
     options, args = parser.parse_args()
 
 # Filter for ignoring certain files from the examples directory.
@@ -121,25 +123,25 @@ def main():
     if not options.notest:
       testdir = os.path.join("examples", "CorrectnessTestSuite")
       print('Running all test cases in {0}'.format(testdir))
-      totalFailed += traverseTestCases(testdir, options.overwrite, fileFilter)
+      totalFailed += traverseTestCases(testdir, options.overwrite, options.printdiff, fileFilter)
     
     if options.examples:
       testdir = os.path.join("examples", "FISCHER")
       print('Running all test cases in {0}'.format(testdir))
-      totalFailed += traverseTestCases(testdir, options.overwrite, lambda x: fileFilter(x) or not x.startswith('FISCHER-4'))
+      totalFailed += traverseTestCases(testdir, options.overwrite, options.printdiff, lambda x: fileFilter(x) or not x.startswith('FISCHER-4'))
       
       # Do not check the full output since this gives rise to some extremely large files.
       testdir = os.path.join("examples", "GRC")
       print('Running all test cases in {0}'.format(testdir))
-      totalFailed += traverseTestCases(testdir, options.overwrite, lambda x: fileFilter(x) or not x.startswith('GRC-4'), False)
+      totalFailed += traverseTestCases(testdir, options.overwrite, options.printdiff, lambda x: fileFilter(x) or not x.startswith('GRC-4'), False)
       
       testdir = os.path.join("examples", "LEADER")
       print('Running all test cases in {0}'.format(testdir))
-      totalFailed += traverseTestCases(testdir, options.overwrite, lambda x: fileFilter(x) or not x.startswith('LEADER-4'))
+      totalFailed += traverseTestCases(testdir, options.overwrite, options.printdiff, lambda x: fileFilter(x) or not x.startswith('LEADER-4'))
       
       testdir = os.path.join("examples", "TrainGate")
       print('Running all test cases in {0}'.format(testdir))
-      totalFailed += traverseTestCases(testdir, options.overwrite, lambda x: fileFilter(x) or (not x.startswith('Train2') and not x.startswith('Train3')))
+      totalFailed += traverseTestCases(testdir, options.overwrite, options.printdiff, lambda x: fileFilter(x) or (not x.startswith('Train2') and not x.startswith('Train3')))
 
     os.chdir(curdir)
     
