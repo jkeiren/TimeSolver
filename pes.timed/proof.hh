@@ -1999,39 +1999,38 @@ inline DBMList* prover::do_proof_place_or_simple(DBM* const lhs, DBMList* const 
    * in one of the two cases. Hence, fewer comparisons with unions of zones
    * are needed. */
   place->cf();
-  DBMList placeB(*place);
+  DBMList placeholder_left(*place);
+  DBMList placeholder_right(*place);
   //delete retPlaceDBM;
-  retPlaceDBM = do_proof_place(lhs, place, rhs->getLeft(), sub);
+  retPlaceDBM = do_proof_place(lhs, &placeholder_left, rhs->getLeft(), sub);
+  retPlaceDBM->cf();
+  placeholder_left = *retPlaceDBM;
   // Now do the right proof, and take the right if its placeholder is
   // larger that from the left side.
-  bool emptyLeft = retPlaceDBM->emptiness();
-  if(!emptyLeft && (*retPlaceDBM >= *place)) {
+  if(!placeholder_left.emptiness() && (placeholder_left >= *place)) {
     /* Here, the current transition successful;
      * we are done */
+    *place = placeholder_left;
+    assert(*retPlaceDBM == *place);
     return retPlaceDBM;
   }
 
+  retPlaceDBM = do_proof_place(lhs, &placeholder_right, rhs->getRight(), sub);
   retPlaceDBM->cf();
-  //DBMList * leftPlace = retPlaceDBM;
-  DBMList leftPlace(*retPlaceDBM);
-  // no delete since assigning the value
-  retPlaceDBM = do_proof_place(lhs, &placeB, rhs->getRight(), sub);
-  retPlaceDBM->cf();
+  placeholder_right = *retPlaceDBM;
   /* If the left is simple, then we have an empty left or
    * left is the entire placeholder. */
-  if(emptyLeft) { // we already checked for emptiness of the previous DBM
-    // Do Nothing
-  }
-  else if(retPlaceDBM->emptiness()) {
+
+  if(!placeholder_left.emptiness() && placeholder_right.emptiness()) {
     // Take previous DBM
-    *retPlaceDBM = leftPlace;
+    *retPlaceDBM = placeholder_left;
   }
-  /* If neither the if or the else if clauses were taken,
-   * then both are non-empty and the left is not the
+  /* If both are non-empty then the left is not the
    * entire placeholder. Hence, the left was not the simple
    * disjunct. Therefore, the right must be the simple disjunct
    * and must be the entire placeholder. */
 
+  *place = *retPlaceDBM;
   return retPlaceDBM;
 }
 
