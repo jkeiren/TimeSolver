@@ -285,7 +285,7 @@ public:
         break;
       }
       case FORALL:{
-        result = do_proof_place_forall(lhs, rhs, sub);
+        result = do_proof_place_forall(lhs, place, rhs, sub);
         break;
       }
       case FORALL_REL: {
@@ -415,7 +415,7 @@ protected:
                                             const ExprNode* const rhs, SubstList* const sub);
   DBMList* do_proof_place_or_simple(DBM* const lhs, DBMList* const place,
                                             const ExprNode* const rhs, SubstList* const sub);
-  DBMList* do_proof_place_forall(DBM* const lhs,
+  DBMList* do_proof_place_forall(DBM* const lhs, DBMList* const place,
                                             const ExprNode* const rhs, SubstList* const sub);
   DBMList* do_proof_place_forall_rel(DBM* const lhs, DBMList* const place,
                                             const ExprNode* const rhs, SubstList* const sub);
@@ -2034,7 +2034,8 @@ inline DBMList* prover::do_proof_place_or_simple(DBM* const lhs, DBMList* const 
   return retPlaceDBM;
 }
 
-inline DBMList* prover::do_proof_place_forall(DBM* const lhs,
+// post: *retPlaceDBM == *place
+inline DBMList* prover::do_proof_place_forall(DBM* const lhs, DBMList* const place,
                                           const ExprNode* const rhs, SubstList* const sub)
 {
   /* Here the model checker looks at the zone of
