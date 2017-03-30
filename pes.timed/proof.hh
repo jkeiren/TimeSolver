@@ -3212,6 +3212,7 @@ inline DBMList* prover::do_proof_place_ablewaitinf(DBM* const lhs, DBMList* cons
    * of them do. Hence, checking the first is always good enough. */
   assert(!ph.getDBMList()->empty());
   DBM * currDBM = *(ph.getDBMList()->begin());
+
   retVal = !(currDBM->hasUpperConstraint());
   if(retVal) {
     *retPlaceDBM = (*place);
@@ -3224,6 +3225,7 @@ inline DBMList* prover::do_proof_place_ablewaitinf(DBM* const lhs, DBMList* cons
   return retPlaceDBM;
 }
 
+// post: *place == *retPlaceDBM
 inline DBMList* prover::do_proof_place_unablewaitinf(DBM* const lhs, DBMList* const place, SubstList* const sub)
 {
   lhs->cf();
@@ -3239,14 +3241,19 @@ inline DBMList* prover::do_proof_place_unablewaitinf(DBM* const lhs, DBMList* co
    * of them do. Hence, checking the first is always good enough. */
   assert(!ph.getDBMList()->empty());
   DBM * currDBM = *(ph.getDBMList()->begin());
+  if(!currDBM->hasUpperConstraint())
+  {
+    place->makeEmpty();
+  }
+
   if(currDBM->hasUpperConstraint()) {
-    *retPlaceDBM = (*place);
     cpplog(cpplogging::debug) << "---(Valid) Time unable to diverge to INFTY in current location----" <<  std::endl <<  std::endl;
   }
   else{
-    retPlaceDBM->makeEmpty();
     cpplog(cpplogging::debug) << "---(Invalid) Time able to diverge to INFTY in current location---" <<  std::endl <<  std::endl;
   }
+
+  *retPlaceDBM = *place;
   return retPlaceDBM;
 }
 
