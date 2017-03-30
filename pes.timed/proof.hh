@@ -2926,8 +2926,6 @@ inline DBMList* prover::do_proof_place_existact(DBM* const lhs, DBMList* const p
       retPlaceDBM->addDBMList(prevDBM);
       retPlaceDBM->cf();
     }
-
-
   }
 
   cpplog(cpplogging::debug) << "\t --- end of EXISTACT. Returned plhold: " << *retPlaceDBM <<  std::endl;
@@ -2935,6 +2933,7 @@ inline DBMList* prover::do_proof_place_existact(DBM* const lhs, DBMList* const p
   return retPlaceDBM;
 }
 
+// post: *retPlaceDBM == *place
 inline DBMList* prover::do_proof_place_imply(DBM* const lhs, DBMList* const place,
                                           const ExprNode* const rhs, SubstList* const sub)
 {
@@ -2950,6 +2949,7 @@ inline DBMList* prover::do_proof_place_imply(DBM* const lhs, DBMList* const plac
     tempLHS.cf();
     tempLHS.bound(MAXC);
     retPlaceDBM = do_proof_place(&tempLHS, place, rhs->getRight(), sub);
+    *place = *retPlaceDBM;
   }
   else  {
     /* The set of states does not satisfy the premises of the IF
@@ -3142,6 +3142,7 @@ inline DBMList* prover::do_proof_place_reset(DBM* const lhs, DBMList* const plac
   return retPlaceDBM;
 }
 
+// post: *place == *retPlaceDBM
 inline DBMList* prover::do_proof_place_assign(DBM* const lhs, DBMList* const place,
                                           const ExprNode* const rhs, SubstList* const sub)
 {
@@ -3158,7 +3159,12 @@ inline DBMList* prover::do_proof_place_assign(DBM* const lhs, DBMList* const pla
   DBMList placeB(*INFTYDBM);
   retPlaceDBM = do_proof_place(&ph, &placeB, rhs->getExpr(), sub);
   retPlaceDBM->cf();
-  if(!(retPlaceDBM->emptiness())) {
+  if(retPlaceDBM->emptiness())
+  {
+    place->makeEmpty();
+  }
+  else
+  {
     // Double Check that the new placeholder follows from the first
     DBMList tmp2(*retPlaceDBM);
     tmp2.preset(cX, cY);
@@ -3204,7 +3210,6 @@ inline DBMList* prover::do_proof_place_replace(DBM* const lhs, DBMList* const pl
 inline DBMList* prover::do_proof_place_ablewaitinf(DBM* const lhs, DBMList* const place,
                                             SubstList* const sub)
 {
-  bool retVal = false;
   lhs->cf();
   DBMList ph(*lhs);
   ph & *place;
@@ -3222,15 +3227,13 @@ inline DBMList* prover::do_proof_place_ablewaitinf(DBM* const lhs, DBMList* cons
   if(currDBM->hasUpperConstraint())
   {
     place->makeEmpty();
-  }
-
-  retVal = !(currDBM->hasUpperConstraint());
-  if(!currDBM->hasUpperConstraint()) {
-    cpplog(cpplogging::debug) << "---(Valid) Time able to diverge to INFTY in current location----" <<  std::endl <<  std::endl;
-  }
-  else{
     cpplog(cpplogging::debug) << "---(Invalid) Time unable to diverge to INFTY in current location---" <<  std::endl <<  std::endl;
   }
+  else
+  {
+    cpplog(cpplogging::debug) << "---(Valid) Time able to diverge to INFTY in current location----" <<  std::endl <<  std::endl;
+  }
+
   *retPlaceDBM = *place;
   return retPlaceDBM;
 }
@@ -3254,13 +3257,11 @@ inline DBMList* prover::do_proof_place_unablewaitinf(DBM* const lhs, DBMList* co
   if(!currDBM->hasUpperConstraint())
   {
     place->makeEmpty();
-  }
-
-  if(currDBM->hasUpperConstraint()) {
-    cpplog(cpplogging::debug) << "---(Valid) Time unable to diverge to INFTY in current location----" <<  std::endl <<  std::endl;
-  }
-  else{
     cpplog(cpplogging::debug) << "---(Invalid) Time able to diverge to INFTY in current location---" <<  std::endl <<  std::endl;
+  }
+  else
+  {
+    cpplog(cpplogging::debug) << "---(Valid) Time unable to diverge to INFTY in current location----" <<  std::endl <<  std::endl;
   }
 
   *retPlaceDBM = *place;
