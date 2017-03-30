@@ -1942,9 +1942,10 @@ inline DBMList* prover::do_proof_place_or(DBM* const lhs, DBMList* const place,
                                           const ExprNode* const rhs, SubstList* const sub)
 {
   place->cf();
+  DBMList placeA(*place);
   DBMList placeB(*place);
   // delete retPlaceDBM;
-  retPlaceDBM = do_proof_place(lhs, place, rhs->getLeft(), sub);
+  retPlaceDBM = do_proof_place(lhs, &placeA, rhs->getLeft(), sub);
   // Now do the right proof, and take the right if its placeholder is
   // larger that from the left side.
   bool emptyLeft = retPlaceDBM->emptiness();
@@ -2999,100 +3000,86 @@ inline DBMList* prover::do_proof_place_constraint(DBM* const lhs, DBMList* const
   return retPlaceDBM;
 }
 
+// post: *retPlaceDBM == *place
 inline DBMList* prover::do_proof_place_bool(DBMList* const place, const ExprNode* const rhs)
 {
-  if(do_proof_bool(rhs))
+  if(!do_proof_bool(rhs))
   {
-    *retPlaceDBM = *place;
+    place->makeEmpty();
   }
-  else
-  {
-    retPlaceDBM->makeEmpty();
-  }
+  *retPlaceDBM = *place;
   return retPlaceDBM;
 }
 
+// post: *retPlaceDBM == *place
 inline DBMList* prover::do_proof_place_atomic(DBMList* const place,
                                           const ExprNode* const rhs, SubstList* const sub)
 {
-  if(do_proof_atomic(rhs, sub))
+  if(!do_proof_atomic(rhs,sub))
   {
-    *retPlaceDBM = *place;
+    place->makeEmpty();
   }
-  else
-  {
-    retPlaceDBM->makeEmpty();
-  }
+  *retPlaceDBM = *place;
   return retPlaceDBM;
 }
 
+// post: *retPlaceDBM == *place
 inline DBMList* prover::do_proof_place_atomic_not(DBMList* const place,
                                           const ExprNode* const rhs, SubstList* const sub)
 {
-  if(do_proof_atomic_not(rhs, sub))
+  if(!do_proof_atomic_not(rhs,sub))
   {
-    *retPlaceDBM = *place;
+    place->makeEmpty();
   }
-  else
-  {
-    retPlaceDBM->makeEmpty();
-  }
+  *retPlaceDBM = *place;
   return retPlaceDBM;
 }
 
+// post: *retPlaceDBM == *place
 inline DBMList* prover::do_proof_place_atomic_lt(DBMList* const place,
                                           const ExprNode* const rhs, SubstList* const sub)
 {
-  if(do_proof_atomic_lt(rhs, sub))
+  if(!do_proof_atomic_lt(rhs,sub))
   {
-    *retPlaceDBM = *place;
+    place->makeEmpty();
   }
-  else
-  {
-    retPlaceDBM->makeEmpty();
-  }
+  *retPlaceDBM = *place;
   return retPlaceDBM;
 }
 
+// post: *retPlaceDBM == *place
 inline DBMList* prover::do_proof_place_atomic_gt(DBMList* const place,
                                           const ExprNode* const rhs, SubstList* const sub)
 {
-  if(do_proof_atomic_gt(rhs, sub))
+  if(!do_proof_atomic_gt(rhs,sub))
   {
-    *retPlaceDBM = *place;
+    place->makeEmpty();
   }
-  else
-  {
-    retPlaceDBM->makeEmpty();
-  }
+  *retPlaceDBM = *place;
   return retPlaceDBM;
 }
 
+// post: *retPlaceDBM == *place
 inline DBMList* prover::do_proof_place_atomic_le(DBMList* const place,
                                           const ExprNode* const rhs, SubstList* const sub)
 {
-  if(do_proof_atomic_le(rhs, sub))
+  if(!do_proof_atomic_le(rhs,sub))
   {
-    *retPlaceDBM = *place;
+    place->makeEmpty();
   }
-  else
-  {
-    retPlaceDBM->makeEmpty();
-  }
+  *retPlaceDBM = *place;
   return retPlaceDBM;
 }
 
+// post: *retPlaceDBM == *place
 inline DBMList* prover::do_proof_place_atomic_ge(DBMList* const place,
                                           const ExprNode* const rhs, SubstList* const sub)
 {
-  if(do_proof_atomic_ge(rhs, sub))
+  if(!do_proof_atomic_ge(rhs,sub))
   {
-    *retPlaceDBM = *place;
+    place->makeEmpty();
   }
-  else
-  {
-    retPlaceDBM->makeEmpty();
-  }
+  *retPlaceDBM = *place;
   return retPlaceDBM;
 }
 
