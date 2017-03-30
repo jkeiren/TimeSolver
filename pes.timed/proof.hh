@@ -1002,11 +1002,11 @@ inline bool prover::do_proof_forall_rel(DBM * const lhs, const ExprNode * const 
 
     /* We omit the check that we can elapse to the placeholder;
      * We will check that once at the end */
-    DBMList *fPlace = new DBMList(*INFTYDBM);
+    DBMList placeholder2(*INFTYDBM);
     DBM lhs_succ2(lhs_succ); // copy to avoid modifying lhs_succ
-    retPlaceDBM = do_proof_place(&lhs_succ2, fPlace, rhs->getRight(), sub);
+    retPlaceDBM = do_proof_place(&lhs_succ2, &placeholder2, rhs->getRight(), sub);
     retPlaceDBM->cf();
-    DBMList placeholder2(*retPlaceDBM);
+    placeholder2 = *retPlaceDBM;
 
     cpplog(cpplogging::debug) <<"----() Formula \\phi_2 placeholder obtained as {"
                               << placeholder2 << "} ----"<<  std::endl <<  std::endl;
@@ -1043,7 +1043,7 @@ inline bool prover::do_proof_forall_rel(DBM * const lhs, const ExprNode * const 
       DBMList placeholder_forall(*retPlaceDBM);
 
       if (cpplogEnabled(cpplogging::debug)) {
-        print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, &lhs_succ2, fPlace, sub, rhs->getOpType());
+        print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, &lhs_succ2, &placeholder2, sub, rhs->getOpType());
         cpplog(cpplogging::debug) <<"----() FORALL (of FORALL_REL) Placeholder Check obtained  FA Placeholder := {"
                                  << placeholder_forall << "} ----" <<  std::endl <<  std::endl;
       }
@@ -1123,7 +1123,6 @@ inline bool prover::do_proof_forall_rel(DBM * const lhs, const ExprNode * const 
       }
       delete placeholder1_predecessor;
     }
-    delete fPlace;
   }
 
   delete placeholder1;
