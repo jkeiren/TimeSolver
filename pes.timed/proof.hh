@@ -2097,9 +2097,11 @@ inline DBMList* prover::do_proof_place_forall(DBM* const lhs, DBMList* const pla
     }
 
   }
+  *place = *retPlaceDBM;
   return retPlaceDBM;
 }
 
+// post: *retPlaceDBM == *place
 inline DBMList* prover::do_proof_place_forall_rel(DBM* const lhs, DBMList* const place,
                                           const ExprNode* const rhs, SubstList* const sub)
 {
@@ -2384,6 +2386,7 @@ inline DBMList* prover::do_proof_place_forall_rel(DBM* const lhs, DBMList* const
     }
     delete tPlace;
   }
+  *place = *retPlaceDBM;
   return retPlaceDBM;
 }
 
@@ -2463,6 +2466,7 @@ inline DBMList* prover::do_proof_place_exists_rel(DBM* const lhs, DBMList* const
       cpplog(cpplogging::debug) <<"----(Invalid) Empty First Placeholder: No Need for additional Placeholder Checks-----" <<  std::endl <<  std::endl;
     }
     delete tPlace;
+    place->makeEmpty();
     return retPlaceDBM;
   }
   retVal = true;
