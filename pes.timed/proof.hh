@@ -2988,6 +2988,7 @@ inline DBMList* prover::do_proof_place_constraint(DBM* const lhs, DBMList* const
       // New Combined DBM Does not satisfy Constraint
       retPlaceDBM->makeEmpty();
     }
+
     if(tPlace.emptiness()) {
       cpplog(cpplogging::debug) << "---(Invalid, Placeholder) Leaf DBM (CONSTRAINT) Unsatisfied regardless of placeholder----" <<  std::endl <<  std::endl;
     }
@@ -3082,11 +3083,13 @@ inline DBMList* prover::do_proof_place_atomic_ge(DBMList* const place,
   return retPlaceDBM;
 }
 
+// post: *place == *retPlaceDBM
 inline DBMList* prover::do_proof_place_sublist(DBM* const lhs, DBMList* const place,
                                           const ExprNode* const rhs, SubstList* const sub)
 {
   SubstList st(rhs->getSublist(), sub );
   retPlaceDBM = do_proof_place(lhs, place, rhs->getExpr(), &st);
+  *place = *retPlaceDBM;
   return retPlaceDBM;
 }
 
@@ -3187,14 +3190,17 @@ inline DBMList* prover::do_proof_place_assign(DBM* const lhs, DBMList* const pla
   return retPlaceDBM;
 }
 
+// post: *place == *retPlaceDBM
 inline DBMList* prover::do_proof_place_replace(DBM* const lhs, DBMList* const place,
                                           const ExprNode* const rhs, SubstList* const sub)
 {
   sub->operator[](rhs->getcX()) = sub->at(rhs->getcY());
   retPlaceDBM = do_proof_place(lhs, place, rhs->getExpr(), sub);
+  *place = *retPlaceDBM;
   return retPlaceDBM;
 }
 
+// post: *place == *retPlaceDBM
 inline DBMList* prover::do_proof_place_ablewaitinf(DBM* const lhs, DBMList* const place,
                                             SubstList* const sub)
 {
@@ -3213,15 +3219,19 @@ inline DBMList* prover::do_proof_place_ablewaitinf(DBM* const lhs, DBMList* cons
   assert(!ph.getDBMList()->empty());
   DBM * currDBM = *(ph.getDBMList()->begin());
 
+  if(currDBM->hasUpperConstraint())
+  {
+    place->makeEmpty();
+  }
+
   retVal = !(currDBM->hasUpperConstraint());
-  if(retVal) {
-    *retPlaceDBM = (*place);
+  if(!currDBM->hasUpperConstraint()) {
     cpplog(cpplogging::debug) << "---(Valid) Time able to diverge to INFTY in current location----" <<  std::endl <<  std::endl;
   }
   else{
-    retPlaceDBM->makeEmpty();
     cpplog(cpplogging::debug) << "---(Invalid) Time unable to diverge to INFTY in current location---" <<  std::endl <<  std::endl;
   }
+  *retPlaceDBM = *place;
   return retPlaceDBM;
 }
 
