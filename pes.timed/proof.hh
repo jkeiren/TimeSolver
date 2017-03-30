@@ -1991,6 +1991,7 @@ inline DBMList* prover::do_proof_place_or(DBM* const lhs, DBMList* const place,
   return retPlaceDBM;
 }
 
+// post: *retPlaceDBM == *place
 inline DBMList* prover::do_proof_place_or_simple(DBM* const lhs, DBMList* const place,
                                           const ExprNode* const rhs, SubstList* const sub)
 {
@@ -2385,6 +2386,7 @@ inline DBMList* prover::do_proof_place_forall_rel(DBM* const lhs, DBMList* const
   return retPlaceDBM;
 }
 
+// post: *retPlaceDBM == *place
 inline DBMList* prover::do_proof_place_exists(DBM* const lhs, DBMList* const place,
                                           const ExprNode* const rhs, SubstList* const sub)
 {
@@ -2406,6 +2408,7 @@ inline DBMList* prover::do_proof_place_exists(DBM* const lhs, DBMList* const pla
       print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, false, &ph, retPlaceDBM, sub, rhs->getOpType());
       cpplog(cpplogging::debug) <<"----(Invalid) Empty First Placeholder: No Need for additional Placeholder Checks-----" <<  std::endl <<  std::endl;
     }
+    place->makeEmpty();
     return retPlaceDBM;
   }
   /* Now check that it works (the new placeholder can be
@@ -2544,6 +2547,7 @@ inline DBMList* prover::do_proof_place_exists_rel(DBM* const lhs, DBMList* const
     delete phi2Place;
     delete phi2PredPlace;
     delete tPlace;
+    place->makeEmpty();
     return retPlaceDBM;
   }
 
@@ -2595,6 +2599,7 @@ inline DBMList* prover::do_proof_place_exists_rel(DBM* const lhs, DBMList* const
   return retPlaceDBM;
 }
 
+// post: *retPlaceDBM == *place
 inline DBMList* prover::do_proof_place_allact(DBM* const lhs, DBMList* const place,
                                           const ExprNode* const rhs, SubstList* const sub)
 {
@@ -2812,13 +2817,15 @@ inline DBMList* prover::do_proof_place_allact(DBM* const lhs, DBMList* const pla
 
   cpplog(cpplogging::debug) << "\t --- end of ALLACT. Returned plhold: " << *retPlaceDBM <<  std::endl;
 
+  *place = *retPlaceDBM;
+
   return retPlaceDBM;
 }
 
+// post: *retPlaceDBM == *place
 inline DBMList* prover::do_proof_place_existact(DBM* const lhs, DBMList* const place,
                                           const ExprNode* const rhs, SubstList* const sub)
 {
-  bool retVal = false;
   retPlaceDBM->makeEmpty();
   /* Enumerate through all transitions */
   cpplog(cpplogging::debug) << "\t Proving EXISTACT Transitions:----\n" <<  std::endl;
@@ -2906,10 +2913,9 @@ inline DBMList* prover::do_proof_place_existact(DBM* const lhs, DBMList* const p
     if(retPlaceDBM->emptiness()) {
       *retPlaceDBM = (prevDBM);
     }
-    else if(*retPlaceDBM >= *place) {
+    else if(*retPlaceDBM >= *place) { // FIXME: shouldn't this be LHS?
       /* Here, the current transition successful;
        * we are done */
-      retVal = true;
       break;
     }
     else if(prevDBM.emptiness()){
@@ -2918,7 +2924,6 @@ inline DBMList* prover::do_proof_place_existact(DBM* const lhs, DBMList* const p
       *retPlaceDBM = (prevDBM);
     }
     else if (prevDBM <= *retPlaceDBM) {
-      retVal = true;
       /* here, we keep retPlaceDBM as our current. */
     }
     else { /* Corner Case: make a union of DBMLists */
@@ -2928,6 +2933,7 @@ inline DBMList* prover::do_proof_place_existact(DBM* const lhs, DBMList* const p
   }
 
   cpplog(cpplogging::debug) << "\t --- end of EXISTACT. Returned plhold: " << *retPlaceDBM <<  std::endl;
+  *place = *retPlaceDBM;
 
   return retPlaceDBM;
 }
