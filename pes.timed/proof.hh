@@ -1582,7 +1582,7 @@ inline bool prover::do_proof_constraint(DBM * const lhs, const ExprNode * const 
 inline bool prover::do_proof_bool(const ExprNode * const rhs)
 {
   bool retVal = (rhs->getBool());
-  cpplog(cpplogging::debug) << "---" << (retVal?"V":"Inv") << "alid) Leaf BOOL Reached----" <<  std::endl <<  std::endl;
+  cpplog(cpplogging::debug) << "---(" << (retVal?"V":"Inv") << "alid) Leaf BOOL Reached----" <<  std::endl <<  std::endl;
   return retVal;
 }
 
@@ -1961,7 +1961,7 @@ inline DBMList* prover::do_proof_place_or(DBM* const lhs, DBMList* const place,
 
   if(cpplogEnabled(cpplogging::debug)) {
     // Check Debugging Here to make sure it is giving the right output
-    print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, false, lhs, place, sub, rhs->getOpType());
+    print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, false, lhs, &leftPlace, sub, rhs->getOpType());
     cpplog(cpplogging::debug) << "Left Placeholder of OR (P): " << leftPlace
                               << "\nRight Placeholder of OR (P): " << *retPlaceDBM <<  std::endl;
   }
