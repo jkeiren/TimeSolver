@@ -2959,6 +2959,7 @@ inline DBMList* prover::do_proof_place_imply(DBM* const lhs, DBMList* const plac
   return retPlaceDBM;
 }
 
+// post: *retPlaceDBM == *place
 inline DBMList* prover::do_proof_place_constraint(DBM* const lhs, DBMList* const place,
                                           const ExprNode* const rhs)
 {
@@ -2987,6 +2988,7 @@ inline DBMList* prover::do_proof_place_constraint(DBM* const lhs, DBMList* const
       // New Combined DBM Does not satisfy Constraint
       retPlaceDBM->makeEmpty();
     }
+    *place = *retPlaceDBM;
 
     if(tPlace.emptiness()) {
       cpplog(cpplogging::debug) << "---(Invalid, Placeholder) Leaf DBM (CONSTRAINT) Unsatisfied regardless of placeholder----" <<  std::endl <<  std::endl;
@@ -3092,10 +3094,10 @@ inline DBMList* prover::do_proof_place_sublist(DBM* const lhs, DBMList* const pl
   return retPlaceDBM;
 }
 
+// post: *place == *retPlaceDBM
 inline DBMList* prover::do_proof_place_reset(DBM* const lhs, DBMList* const place,
                                           const ExprNode* const rhs, SubstList* const sub)
 {
-  bool retVal = false;
   // Bound the LHS to prevent infinite proofs
   lhs->cf();
   lhs->bound(MAXC);
@@ -3107,7 +3109,12 @@ inline DBMList* prover::do_proof_place_reset(DBM* const lhs, DBMList* const plac
   DBMList tPlace(*INFTYDBM);
   retPlaceDBM = do_proof_place(&ph, &tPlace, rhs->getExpr(), sub);
   retPlaceDBM->cf();
-  if(!(retPlaceDBM->emptiness())) {
+  if(retPlaceDBM->emptiness())
+  {
+    place->makeEmpty();
+  }
+  else
+  {
     /* Now do the check that the new placeholder follows from
      * the previous placeholder. by setting it to such */
     DBMList p2Copy(*retPlaceDBM);
@@ -3118,14 +3125,8 @@ inline DBMList* prover::do_proof_place_reset(DBM* const lhs, DBMList* const plac
     // Use the rule to compute what the old place holder should be
     (*place) & p2Copy;
     place->cf();
-    if(place->emptiness()){
-      retVal = false;
-      retPlaceDBM->makeEmpty();
-    }
-    else{
-      retVal = true;
-      *retPlaceDBM = (*place);
-    }
+    bool retVal = !place->emptiness();
+    *retPlaceDBM = *place;
 
     if (cpplogEnabled(cpplogging::debug)) {
       print_sequent_placeCheck(std::cerr, step - 1, retVal, lhs, retPlaceDBM, &p2Copy, sub, rhs->getOpType());
