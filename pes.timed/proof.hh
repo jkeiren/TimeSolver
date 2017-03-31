@@ -1951,54 +1951,52 @@ inline DBMList* prover::do_proof_place_or(DBM* const lhs, DBMList* const place,
                                           const ExprNode* const rhs, SubstList* const sub)
 {
   place->cf();
-  DBMList placeA(*place);
-  DBMList placeB(*place);
-  // delete retPlaceDBM;
-  retPlaceDBM = do_proof_place(lhs, &placeA, rhs->getLeft(), sub);
+  DBMList placeholder_left(*place); // FIXME: why initialise with *place here?
+
+  do_proof_place(lhs, &placeholder_left, rhs->getLeft(), sub);
+  placeholder_left.cf();
+
   // Now do the right proof, and take the right if its placeholder is
   // larger that from the left side.
-  bool emptyLeft = retPlaceDBM->emptiness();
-  if((!emptyLeft) && (*retPlaceDBM >= placeB)) {
+  if(!placeholder_left.emptiness() && placeholder_left >= *place) { // why compare to *place; it seems this should be *lhs
     /* Here, the current transition successful;
      * we are done */
-    *place = *retPlaceDBM;
+    *place = placeholder_left;
+    *retPlaceDBM = *place;
     return retPlaceDBM;
   }
 
-  retPlaceDBM->cf();
-  DBMList leftPlace(*retPlaceDBM);
-  retPlaceDBM = do_proof_place(lhs, &placeB, rhs->getRight(), sub);
-  retPlaceDBM->cf();
+  // We use place here, since the result of the second call is likely to be
+  // part of the result anyway. If not, we will roll back later.
+  // *place is thus placeholder_right.
+  do_proof_place(lhs, place, rhs->getRight(), sub);
+  place->cf();
 
   if(cpplogEnabled(cpplogging::debug)) {
     // Check Debugging Here to make sure it is giving the right output
-    print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, false, lhs, &leftPlace, sub, rhs->getOpType());
-    cpplog(cpplogging::debug) << "Left Placeholder of OR (P): " << leftPlace
-                              << "\nRight Placeholder of OR (P): " << *retPlaceDBM <<  std::endl;
+    print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, false, lhs, &placeholder_left, sub, rhs->getOpType());
+    cpplog(cpplogging::debug) << "Left Placeholder of OR (P): " << placeholder_left
+                              << "\nRight Placeholder of OR (P): " << *place <<  std::endl;
   }
 
-  /* Note: <= >= Not clearly working if empty DBMs */
-  if(emptyLeft) { // we already checked the emptiness of the previous DBM
-    // Do Nothing
+  /* Note: <= >= Not clearly working if empty DBMs; should be resolved in the
+   *  implementation of <=; */
+  if(placeholder_left.emptiness() || placeholder_left <= *place)
+  {
+    // the result is the right placeholder. Already established.
   }
-  else if(retPlaceDBM->emptiness()) {
-    // Take previous DBM
-    *retPlaceDBM = leftPlace;
+  else if(place->emptiness() || *place <= placeholder_left)
+  {
+    *place = placeholder_left; // roll back
   }
-  else if(leftPlace <= (*retPlaceDBM)) {
-    // do nothing
-
-  }
-  else if (*retPlaceDBM <= leftPlace) {
-    *retPlaceDBM = leftPlace;
-  }
-  else { /* Corner Case: make DBM Union*/
-    retPlaceDBM->addDBMList(leftPlace);
-    retPlaceDBM->cf();
+  else
+  {
+    // corner case, union of DBMs
+    place->addDBMList(placeholder_left);
   }
 
-  cpplog(cpplogging::debug) << "Final Placeholder of OR (P): " << *retPlaceDBM << std::endl <<  std::endl;
-  *place = *retPlaceDBM;
+  cpplog(cpplogging::debug) << "Final Placeholder of OR (P): " << *place << std::endl <<  std::endl;
+  *retPlaceDBM = *place;
   return retPlaceDBM;
 }
 
