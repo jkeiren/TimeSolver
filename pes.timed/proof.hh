@@ -1938,6 +1938,7 @@ inline DBMList* prover::do_proof_place_and(DBM* const lhs, DBMList* const place,
   return retPlaceDBM;
 }
 
+// post: *retPlaceDBM == *place
 inline DBMList* prover::do_proof_place_or(DBM* const lhs, DBMList* const place,
                                           const ExprNode* const rhs, SubstList* const sub)
 {
@@ -1952,6 +1953,7 @@ inline DBMList* prover::do_proof_place_or(DBM* const lhs, DBMList* const place,
   if((!emptyLeft) && (*retPlaceDBM >= placeB)) {
     /* Here, the current transition successful;
      * we are done */
+    place->makeEmpty();
     return retPlaceDBM;
   }
 
@@ -1988,7 +1990,7 @@ inline DBMList* prover::do_proof_place_or(DBM* const lhs, DBMList* const place,
   }
 
   cpplog(cpplogging::debug) << "Final Placeholder of OR (P): " << *retPlaceDBM << std::endl <<  std::endl;
-
+  *place = *retPlaceDBM;
   return retPlaceDBM;
 }
 
