@@ -1930,19 +1930,15 @@ inline DBMList* prover::do_proof_place_predicate(DBM* const lhs, DBMList* const 
 inline DBMList* prover::do_proof_place_and(DBM* const lhs, DBMList* const place,
                                           const ExprNode* const rhs, SubstList* const sub)
 {
-  DBMList origPlace(*place);
-  retPlaceDBM = do_proof_place(lhs, place, rhs->getLeft(), sub);
-  retPlaceDBM->cf();
-  if(!(retPlaceDBM->emptiness())) {
-    place->cf();
-    DBMList tPlace(origPlace);
-    tPlace & (*retPlaceDBM);
-    DBMList tempDBM2(*retPlaceDBM);
-    retPlaceDBM = do_proof_place(lhs, &tPlace, rhs->getRight(), sub);
-    *retPlaceDBM & tempDBM2;
-
+  DBMList placeholder_right(*place);
+  do_proof_place(lhs, place, rhs->getLeft(), sub);
+  place->cf();
+  if(!place->emptiness()) {
+    placeholder_right & *place;
+    do_proof_place(lhs, &placeholder_right, rhs->getRight(), sub);
+    *place & placeholder_right;
   }
-  *place = *retPlaceDBM;
+  *retPlaceDBM = *place;
   return retPlaceDBM;
 }
 
