@@ -1920,6 +1920,7 @@ inline DBMList* prover::do_proof_place_predicate(DBM* const lhs, DBMList* const 
   return retPlaceDBM;
 }
 
+// post: *retPlaceDBM == *place
 inline DBMList* prover::do_proof_place_and(DBM* const lhs, DBMList* const place,
                                           const ExprNode* const rhs, SubstList* const sub)
 {
@@ -1935,6 +1936,7 @@ inline DBMList* prover::do_proof_place_and(DBM* const lhs, DBMList* const place,
     *retPlaceDBM & tempDBM2;
 
   }
+  *place = *retPlaceDBM;
   return retPlaceDBM;
 }
 
