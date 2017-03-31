@@ -1690,6 +1690,7 @@ inline bool prover::do_proof_unablewaitinf(DBM * const lhs, SubstList * const su
 
 
 /* IMPLEMENTATION PROVER WITH PLACEHOLDERS */
+// post: *retPlaceDBM == *place
 inline DBMList* prover::do_proof_place_predicate(DBM* const lhs, DBMList* const place,
                                           const ExprNode* const rhs, SubstList* const sub)
 {
@@ -1720,6 +1721,7 @@ inline DBMList* prover::do_proof_place_predicate(DBM* const lhs, DBMList* const 
       if(cached_sequent != nullptr && cached_sequent->tabled_false_sequent(lhs)) {
         // Found known false
         retPlaceDBM->makeEmpty();
+        place->makeEmpty();
         cpplog(cpplogging::debug) << "---(Invalid) Located a Known False Sequent ----" <<  std::endl <<  std::endl;
 
         /* Update backpointers to add possible pointer for parent
@@ -1747,9 +1749,11 @@ inline DBMList* prover::do_proof_place_predicate(DBM* const lhs, DBMList* const 
           // returning placeholder must be non-empty for the sequent
           // to be valid
           assert(retPlaceDBM->emptiness());
+          place->makeEmpty();
           return retPlaceDBM;
         }
         *retPlaceDBM = (tempPlace);
+        *place = *retPlaceDBM;
         // Note: we intersect the current found placeholder
         // with the placeholder stored in the sequent.
 
@@ -1809,6 +1813,7 @@ inline DBMList* prover::do_proof_place_predicate(DBM* const lhs, DBMList* const 
       if(!newSequent && h->tabled_sequent_lfp(lhs, place)) {
         // Found lfp circularity - thus invalid
         retPlaceDBM->makeEmpty();
+        place->makeEmpty();
 
         cpplog(cpplogging::debug) << "---(Invalid) Located lfp Circularity ----" <<  std::endl <<  std::endl;
 
@@ -1859,6 +1864,7 @@ inline DBMList* prover::do_proof_place_predicate(DBM* const lhs, DBMList* const 
 
   // Now Purge updated premise
   retPlaceDBM->cf();
+  *place = *retPlaceDBM;
 
   /* Key Concept of Purging:
    * If Was True, discovered false, check that
