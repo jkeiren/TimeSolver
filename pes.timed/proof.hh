@@ -1721,7 +1721,6 @@ inline DBMList* prover::do_proof_place_predicate(DBM* const lhs, DBMList* const 
       SequentPlace *cached_sequent = cache.Xlist_false_ph.look_for_sequent(sub, predicate_index);
       if(cached_sequent != nullptr && cached_sequent->tabled_false_sequent(lhs)) {
         // Found known false
-        retPlaceDBM->makeEmpty();
         place->makeEmpty();
         cpplog(cpplogging::debug) << "---(Invalid) Located a Known False Sequent ----" <<  std::endl <<  std::endl;
 
@@ -1735,6 +1734,7 @@ inline DBMList* prover::do_proof_place_predicate(DBM* const lhs, DBMList* const 
         else { // Parent is regular sequent
           cached_sequent->addParent(parentRef);
         }
+        *retPlaceDBM = *place;
         return retPlaceDBM;
       }
     }
@@ -1742,19 +1742,17 @@ inline DBMList* prover::do_proof_place_predicate(DBM* const lhs, DBMList* const 
     /* Next look in known True Sequent tables. */
     { // restricted block for known true sequents
       SequentPlace *cached_sequent = cache.Xlist_true_ph.look_for_sequent(sub, predicate_index);
-      DBMList tempPlace(*place);
+      DBMList cached_placeholder(*INFTYDBM);
       /* Note: tempPlace is changed by tabled_sequentPlace() */
-      if(cached_sequent != nullptr && cached_sequent->tabled_sequent(lhs, &tempPlace)) {
+      if(cached_sequent != nullptr && cached_sequent->tabled_sequent(lhs, &cached_placeholder)) {
         // Found known true
-        if(tempPlace.emptiness()) {
+        *place = cached_placeholder;
+        if(cached_placeholder.emptiness()) {
           // returning placeholder must be non-empty for the sequent
           // to be valid
-          assert(retPlaceDBM->emptiness());
-          *place = *retPlaceDBM;
+          *retPlaceDBM = *place;
           return retPlaceDBM;
         }
-        *retPlaceDBM = (tempPlace);
-        *place = *retPlaceDBM;
         // Note: we intersect the current found placeholder
         // with the placeholder stored in the sequent.
 
@@ -1770,6 +1768,7 @@ inline DBMList* prover::do_proof_place_predicate(DBM* const lhs, DBMList* const 
         else { // Parent is regular sequent
           cached_sequent->addParent(parentRef);
         }
+        *retPlaceDBM = *place;
         return retPlaceDBM;
       }
     }
@@ -1786,7 +1785,6 @@ inline DBMList* prover::do_proof_place_predicate(DBM* const lhs, DBMList* const 
       if(!newSequent && h->tabled_sequent_gfp(lhs, place))
       {
         // Found gfp Circularity - thus valid
-        *retPlaceDBM = (*place);
         cpplog(cpplogging::debug) << "---(Valid) Located True Sequent or gfp Circularity ----" <<  std::endl <<  std::endl;
 
         /* Now update backpointer for greatest fixpoint circularity */
@@ -1803,6 +1801,7 @@ inline DBMList* prover::do_proof_place_predicate(DBM* const lhs, DBMList* const 
           SequentPlace *cached_true_sequent = cache.Xlist_true_ph.locate_sequent(true_sequent, predicate_index);
           cached_true_sequent->update_sequent(lhs, place);
         }
+        *retPlaceDBM = *place;
         return retPlaceDBM;
       }
 
@@ -1813,7 +1812,6 @@ inline DBMList* prover::do_proof_place_predicate(DBM* const lhs, DBMList* const 
       h = cache.Xlist_pLFP_ph.locate_sequent(t, predicate_index);
       if(!newSequent && h->tabled_sequent_lfp(lhs, place)) {
         // Found lfp circularity - thus invalid
-        retPlaceDBM->makeEmpty();
         place->makeEmpty();
 
         cpplog(cpplogging::debug) << "---(Invalid) Located lfp Circularity ----" <<  std::endl <<  std::endl;
@@ -1832,6 +1830,7 @@ inline DBMList* prover::do_proof_place_predicate(DBM* const lhs, DBMList* const 
           SequentPlace *cached_false_sequent = cache.Xlist_false_ph.locate_sequent(false_sequent, predicate_index);
           cached_false_sequent->update_false_sequent(lhs);
         }
+        *retPlaceDBM = *place;
         return retPlaceDBM;
       }
 
@@ -1851,7 +1850,7 @@ inline DBMList* prover::do_proof_place_predicate(DBM* const lhs, DBMList* const 
   /* Get the current variable */
   parentPlaceRef = h;
 
-  retPlaceDBM = do_proof_place(lhs, place, e, sub);
+  do_proof_place(lhs, place, e, sub);
 
   lhs->cf();
 
@@ -1864,8 +1863,7 @@ inline DBMList* prover::do_proof_place_predicate(DBM* const lhs, DBMList* const 
   // ds might be empty, but we leave it in
 
   // Now Purge updated premise
-  retPlaceDBM->cf();
-  *place = *retPlaceDBM;
+  place->cf();
 
   /* Key Concept of Purging:
    * If Was True, discovered false, check that
@@ -1876,12 +1874,12 @@ inline DBMList* prover::do_proof_place_predicate(DBM* const lhs, DBMList* const 
    * is done for that specific cache */
   if(useCaching)
   {
-    if(!retPlaceDBM->emptiness())
+    if(!place->emptiness())
     {
       /* First look in opposite parity Caches */
       bool madeEmpty = false;
       SequentPlace *true_sequent = new SequentPlace(rhs, sub);
-      SequentPlace *cached_false_sequent = cache.Xlist_false_ph.look_for_and_purge_rhs_sequent(std::make_pair(lhs, retPlaceDBM), true_sequent, predicate_index, false, &madeEmpty);
+      SequentPlace *cached_false_sequent = cache.Xlist_false_ph.look_for_and_purge_rhs_sequent(std::make_pair(lhs, place), true_sequent, predicate_index, false, &madeEmpty);
 
       /* Now purge backpointers */
       if(cached_false_sequent != nullptr) {
@@ -1891,7 +1889,7 @@ inline DBMList* prover::do_proof_place_predicate(DBM* const lhs, DBMList* const 
 
       // Now update in proper Cache
       SequentPlace *cached_true_sequent = cache.Xlist_true_ph.locate_sequent(true_sequent, predicate_index);
-      cached_true_sequent->update_sequent(lhs, retPlaceDBM);
+      cached_true_sequent->update_sequent(lhs, place);
 
       // this delete is necessary for memory management but problematic
       if(madeEmpty) {
@@ -1900,12 +1898,12 @@ inline DBMList* prover::do_proof_place_predicate(DBM* const lhs, DBMList* const 
     }
     else
     {
-      /* retPlaceDBM is empty */
+      /* place is empty */
       /* First look in opposite parity Cache */
       // Now look in placeholder caches
       bool madeEmpty = false;
       SequentPlace *false_sequent = new SequentPlace(rhs, sub);
-      SequentPlace *cached_true_sequent = cache.Xlist_true_ph.look_for_and_purge_rhs_sequent(std::make_pair(lhs, retPlaceDBM), false_sequent, predicate_index, true, &madeEmpty);
+      SequentPlace *cached_true_sequent = cache.Xlist_true_ph.look_for_and_purge_rhs_sequent(std::make_pair(lhs, place), false_sequent, predicate_index, true, &madeEmpty);
 
       /* Now purge backpointers.
        * Ignore circularity booleans because they do not form backpointers */
@@ -1924,6 +1922,7 @@ inline DBMList* prover::do_proof_place_predicate(DBM* const lhs, DBMList* const 
     }
   }
 
+  *retPlaceDBM = *place;
   return retPlaceDBM;
 }
 
