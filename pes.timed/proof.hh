@@ -372,6 +372,7 @@ public:
 
     --step;
     assert(result != nullptr);
+    assert(*result == *place);
     return result;
   }
 
@@ -1749,7 +1750,7 @@ inline DBMList* prover::do_proof_place_predicate(DBM* const lhs, DBMList* const 
           // returning placeholder must be non-empty for the sequent
           // to be valid
           assert(retPlaceDBM->emptiness());
-          place->makeEmpty();
+          *place = *retPlaceDBM;
           return retPlaceDBM;
         }
         *retPlaceDBM = (tempPlace);
@@ -1961,7 +1962,7 @@ inline DBMList* prover::do_proof_place_or(DBM* const lhs, DBMList* const place,
   if((!emptyLeft) && (*retPlaceDBM >= placeB)) {
     /* Here, the current transition successful;
      * we are done */
-    place->makeEmpty();
+    *place = *retPlaceDBM;
     return retPlaceDBM;
   }
 
@@ -2423,7 +2424,7 @@ inline DBMList* prover::do_proof_place_exists(DBM* const lhs, DBMList* const pla
       print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, false, &ph, retPlaceDBM, sub, rhs->getOpType());
       cpplog(cpplogging::debug) <<"----(Invalid) Empty First Placeholder: No Need for additional Placeholder Checks-----" <<  std::endl <<  std::endl;
     }
-    place->makeEmpty();
+    *place = *retPlaceDBM;
     return retPlaceDBM;
   }
   /* Now check that it works (the new placeholder can be
@@ -2478,7 +2479,7 @@ inline DBMList* prover::do_proof_place_exists_rel(DBM* const lhs, DBMList* const
       cpplog(cpplogging::debug) <<"----(Invalid) Empty First Placeholder: No Need for additional Placeholder Checks-----" <<  std::endl <<  std::endl;
     }
     delete tPlace;
-    place->makeEmpty();
+    *place = *retPlaceDBM;
     return retPlaceDBM;
   }
   retVal = true;
@@ -2512,7 +2513,7 @@ inline DBMList* prover::do_proof_place_exists_rel(DBM* const lhs, DBMList* const
   *retPlaceDBM & *phi2PredPlace;
   retPlaceDBM->cf();
   if(retPlaceDBM->emptiness()) {
-    place->makeEmpty();
+    *place = *retPlaceDBM;
     retVal = false;
 
     if(cpplogEnabled(cpplogging::debug)) {
@@ -2565,7 +2566,7 @@ inline DBMList* prover::do_proof_place_exists_rel(DBM* const lhs, DBMList* const
     delete phi2Place;
     delete phi2PredPlace;
     delete tPlace;
-    place->makeEmpty();
+    *place = *retPlaceDBM;
     return retPlaceDBM;
   }
 
@@ -3135,7 +3136,7 @@ inline DBMList* prover::do_proof_place_reset(DBM* const lhs, DBMList* const plac
   retPlaceDBM->cf();
   if(retPlaceDBM->emptiness())
   {
-    place->makeEmpty();
+    *place = *retPlaceDBM;
   }
   else
   {
@@ -3185,7 +3186,7 @@ inline DBMList* prover::do_proof_place_assign(DBM* const lhs, DBMList* const pla
   retPlaceDBM->cf();
   if(retPlaceDBM->emptiness())
   {
-    place->makeEmpty();
+    *place = *retPlaceDBM;
   }
   else
   {
