@@ -582,7 +582,7 @@ protected:
    * @param currPlace (*) the reference to the current placeholder.
    * @return the tightened placeholder that satisfies the succCheck, or an
    * empty placeholder if no such placeholder is possible. */
-  inline DBMList * succCheckRule(const DBM * const lhs, DBMList * currPlace) {
+  inline void succCheckRule(const DBM * const lhs, DBMList * currPlace) {
     assert(*currPlace == *retPlaceDBM);
 
     DBM succLHS(*lhs);
@@ -608,7 +608,7 @@ protected:
 
     if(conseq >= succPrem) {
       *retPlaceDBM = *currPlace;
-      return retPlaceDBM;
+      return;
     }
 
     /* If we are here, then we have one of two cases:
@@ -635,7 +635,7 @@ protected:
     currPlace->cf();
     if(currPlace->emptiness()) {
       *retPlaceDBM = *currPlace;
-      return retPlaceDBM;
+      return;
     }
     // Do one more containment check. If this does not work,
     // then the placeholder is empty
@@ -653,11 +653,11 @@ protected:
     // use previously solved place, not new one for right hand side
     if(conseq >= succPrem) {
       *retPlaceDBM = *currPlace;
-      return retPlaceDBM;
+      return;
     }
     currPlace->makeEmpty();
     *retPlaceDBM = *currPlace;
-    return retPlaceDBM;
+    return;
   }
 
 };
@@ -1043,7 +1043,7 @@ inline bool prover::do_proof_forall_rel(DBM * const lhs, const ExprNode * const 
       }
 
       DBMList placeholder2_with_invariant(*retPlaceDBM); // succ((l,cc)) && phi_{s2}
-      retPlaceDBM = succCheckRule(lhs, &placeholder2_with_invariant);
+      succCheckRule(lhs, &placeholder2_with_invariant);
       assert(*retPlaceDBM == placeholder2_with_invariant);
       retPlaceDBM->cf();
       DBMList placeholder_forall(*retPlaceDBM);
@@ -2177,7 +2177,7 @@ inline DBMList* prover::do_proof_place_forall_rel(DBM* const lhs, DBMList* const
       }
 
       DBMList currPlace(*retPlaceDBM);
-      retPlaceDBM = succCheckRule(lhs, &currPlace);
+      succCheckRule(lhs, &currPlace);
       assert(*retPlaceDBM == currPlace);
 
       if(!(retPlaceDBM->emptiness())){
@@ -2317,7 +2317,7 @@ inline DBMList* prover::do_proof_place_forall_rel(DBM* const lhs, DBMList* const
         }
 
         DBMList currPlace(*retPlaceDBM);
-        retPlaceDBM = succCheckRule(lhs, &currPlace);
+        succCheckRule(lhs, &currPlace);
         assert(*retPlaceDBM == currPlace);
         retPlaceDBM->cf();
         DBMList forallPlace(*retPlaceDBM);
