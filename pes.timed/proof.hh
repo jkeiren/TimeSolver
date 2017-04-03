@@ -2053,17 +2053,23 @@ inline DBMList* prover::do_proof_place_forall(DBM* const lhs, DBMList* const pla
    * the substitued constraints and sees if the
    * zone satifies the constraints */
   lhs->cf();
-  DBM ph(*lhs);
-  ph.suc();
+  DBM lhs_succ(*lhs);
+  lhs_succ.suc();
+
   /* Per proof rules with the placeholder,
    * do not incorporate the invariant into the FORALL here */
-
   DBMList tPlace(*INFTYDBM);
 
-  retPlaceDBM = do_proof_place(&ph, &tPlace, rhs->getQuant(), sub);
-  retPlaceDBM->cf();
+  do_proof_place(&lhs_succ, &tPlace, rhs->getQuant(), sub);
+  tPlace.cf();
+
   //must we consider not the invariant even if the placeholder is empty. (?)
-  if(!(retPlaceDBM->emptiness())) { // Only do if a nonempty placeholder
+  if(tPlace.emptiness())
+  {
+    *place = tPlace;
+  }
+  else
+  { // Only do if a nonempty placeholder
     /* Now do the second proof rule to compute the first placeholder
      */
 
@@ -2075,13 +2081,13 @@ inline DBMList* prover::do_proof_place_forall(DBM* const lhs, DBMList* const pla
       invCompPlace.cf();
       !invCompPlace;
       invCompPlace.cf();
-      retPlaceDBM->addDBMList(invCompPlace);
-      retPlaceDBM->cf();
+      tPlace.addDBMList(invCompPlace);
+      tPlace.cf();
     }
 
-    DBMList currPlace(*retPlaceDBM);
-    retPlaceDBM = succCheckRule(lhs, &currPlace);
-    assert(*retPlaceDBM == currPlace);
+    DBMList currPlace(tPlace);
+    *retPlaceDBM = currPlace;
+    succCheckRule(lhs, &currPlace);
 
     if (cpplogEnabled(cpplogging::debug)) {
       // Result only used for printing the correct value below.
@@ -2092,7 +2098,7 @@ inline DBMList* prover::do_proof_place_forall(DBM* const lhs, DBMList* const pla
       succLHS.suc();
       succLHS.cf();
       DBMList succRuleConseq(*lhs);
-      succRuleConseq & *retPlaceDBM;
+      succRuleConseq & currPlace;
       succRuleConseq.cf();
       succRuleConseq.suc();
       succRuleConseq.cf();
@@ -2106,9 +2112,10 @@ inline DBMList* prover::do_proof_place_forall(DBM* const lhs, DBMList* const pla
 
       }
     }
-
+    *place = currPlace;
   }
-  *place = *retPlaceDBM;
+
+  *retPlaceDBM = *place;
   return retPlaceDBM;
 }
 
@@ -2171,7 +2178,7 @@ inline DBMList* prover::do_proof_place_forall_rel(DBM* const lhs, DBMList* const
 
       DBMList currPlace(*retPlaceDBM);
       retPlaceDBM = succCheckRule(lhs, &currPlace);
-      assert(retPlaceDBM == currPlace);
+      assert(*retPlaceDBM == currPlace);
 
       if(!(retPlaceDBM->emptiness())){
         retVal = true;
@@ -2311,7 +2318,7 @@ inline DBMList* prover::do_proof_place_forall_rel(DBM* const lhs, DBMList* const
 
         DBMList currPlace(*retPlaceDBM);
         retPlaceDBM = succCheckRule(lhs, &currPlace);
-        assert(retPlaceDBM == currPlace);
+        assert(*retPlaceDBM == currPlace);
         retPlaceDBM->cf();
         DBMList forallPlace(*retPlaceDBM);
 
