@@ -2058,61 +2058,56 @@ inline DBMList* prover::do_proof_place_forall(DBM* const lhs, DBMList* const pla
 
   /* Per proof rules with the placeholder,
    * do not incorporate the invariant into the FORALL here */
-  DBMList tPlace(*INFTYDBM);
+  *place = *INFTYDBM;
 
-  do_proof_place(&lhs_succ, &tPlace, rhs->getQuant(), sub);
-  tPlace.cf();
+  do_proof_place(&lhs_succ, place, rhs->getQuant(), sub);
+  place->cf();
 
   //must we consider not the invariant even if the placeholder is empty. (?)
-  if(tPlace.emptiness())
-  {
-    *place = tPlace;
-  }
-  else
+
+  if(!place->emptiness())
   { // Only do if a nonempty placeholder
     /* Now do the second proof rule to compute the first placeholder
      */
 
     /* Note; we union retPlaceDBM with the complement of the invariant.
      * should we do this if retPlaceDBM is nonempty? */
-    DBMList invCompPlace(*INFTYDBM);
-    bool hasInv = restrict_to_invariant(input_pes.invariants(), &invCompPlace, *sub);
+    DBMList invariant_complement_placeholder(*INFTYDBM);
+    bool hasInv = restrict_to_invariant(input_pes.invariants(), &invariant_complement_placeholder, *sub);
     if(hasInv) {
-      invCompPlace.cf();
-      !invCompPlace;
-      invCompPlace.cf();
-      tPlace.addDBMList(invCompPlace);
-      tPlace.cf();
+      invariant_complement_placeholder.cf();
+      !invariant_complement_placeholder;
+      invariant_complement_placeholder.cf();
+      place->addDBMList(invariant_complement_placeholder);
+      place->cf();
     }
 
-    DBMList currPlace(tPlace);
-    *retPlaceDBM = currPlace;
-    succCheckRule(lhs, &currPlace);
+    *retPlaceDBM = *place;
+    succCheckRule(lhs, place);
 
     if (cpplogEnabled(cpplogging::debug)) {
       // Result only used for printing the correct value below.
-      bool result = !retPlaceDBM->emptiness();
+      bool result = !place->emptiness();
       // This work is done in the succCheck method.
       // Perhaps I should move the debug rule there?
       DBM succLHS(*lhs);
       succLHS.suc();
       succLHS.cf();
       DBMList succRuleConseq(*lhs);
-      succRuleConseq & currPlace;
+      succRuleConseq & *place;
       succRuleConseq.cf();
       succRuleConseq.suc();
       succRuleConseq.cf();
       print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, result, &succLHS, &succRuleConseq, sub, rhs->getOpType());
       if(result) {
         cpplog(cpplogging::debug) <<"----(Valid) Placeholder Check Passed-----" <<  std::endl
-                                  << "--With Placeholder := {" << *retPlaceDBM <<"} ----" <<  std::endl <<  std::endl;
+                                  << "--With Placeholder := {" << *place <<"} ----" <<  std::endl <<  std::endl;
       }
       else {
         cpplog(cpplogging::debug) <<"----(Invalid) Placeholder Check Failed-----" <<  std::endl <<  std::endl;
 
       }
     }
-    *place = currPlace;
   }
 
   *retPlaceDBM = *place;
