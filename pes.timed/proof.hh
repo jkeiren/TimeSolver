@@ -582,19 +582,20 @@ protected:
    * @param currPlace (*) the reference to the current placeholder.
    * @return the tightened placeholder that satisfies the succCheck, or an
    * empty placeholder if no such placeholder is possible. */
-  inline DBMList * succCheckRule(const DBM * const lhs, const DBMList * const currPlace) {
+  inline DBMList * succCheckRule(const DBM * const lhs, DBMList * currPlace) {
+    assert(*currPlace == *retPlaceDBM);
 
     DBM succLHS(*lhs);
     succLHS.suc();
     // intersect with new placeholder
-    DBMList conseq(*retPlaceDBM);
+    DBMList conseq(*currPlace);
     conseq & succLHS;
 
     /* Computing Premise of Right part of proof */
     /* Compute Succ(Premise and First Placeholder) */
     // succLHS is the successor of the left-hand side, so do not repeat the work
     DBMList succPrem(*lhs);
-    succPrem & *retPlaceDBM;
+    succPrem & *currPlace;
     succPrem.cf();
     succPrem.suc();
 
@@ -630,19 +631,20 @@ protected:
     // Good values must be after succLHS
     badVals & succLHS;
     badVals.cf();
-    *retPlaceDBM & badVals;
-    retPlaceDBM->cf();
-    if(retPlaceDBM->emptiness()) {
+    *currPlace & badVals;
+    currPlace->cf();
+    if(currPlace->emptiness()) {
+      *retPlaceDBM = *currPlace;
       return retPlaceDBM;
     }
-    // Do one more containmnet check. If this does not work,
+    // Do one more containment check. If this does not work,
     // then the placeholder is empty
     succLHS = *lhs;
     succLHS.suc();
 
     // leave conseq unchanged, since that placeholder did not shrink
     succPrem = *lhs;
-    succPrem & *retPlaceDBM;
+    succPrem & *currPlace;
     succPrem.cf();
     succPrem.suc();
 
@@ -650,9 +652,11 @@ protected:
     succPrem.cf();
     // use previously solved place, not new one for right hand side
     if(conseq >= succPrem) {
+      *retPlaceDBM = *currPlace;
       return retPlaceDBM;
     }
-    retPlaceDBM->makeEmpty();
+    currPlace->makeEmpty();
+    *retPlaceDBM = *currPlace;
     return retPlaceDBM;
   }
 
@@ -1040,6 +1044,7 @@ inline bool prover::do_proof_forall_rel(DBM * const lhs, const ExprNode * const 
 
       DBMList placeholder2_with_invariant(*retPlaceDBM); // succ((l,cc)) && phi_{s2}
       retPlaceDBM = succCheckRule(lhs, &placeholder2_with_invariant);
+      assert(*retPlaceDBM == placeholder2_with_invariant);
       retPlaceDBM->cf();
       DBMList placeholder_forall(*retPlaceDBM);
 
@@ -2076,6 +2081,7 @@ inline DBMList* prover::do_proof_place_forall(DBM* const lhs, DBMList* const pla
 
     DBMList currPlace(*retPlaceDBM);
     retPlaceDBM = succCheckRule(lhs, &currPlace);
+    assert(*retPlaceDBM == currPlace);
 
     if (cpplogEnabled(cpplogging::debug)) {
       // Result only used for printing the correct value below.
@@ -2165,6 +2171,7 @@ inline DBMList* prover::do_proof_place_forall_rel(DBM* const lhs, DBMList* const
 
       DBMList currPlace(*retPlaceDBM);
       retPlaceDBM = succCheckRule(lhs, &currPlace);
+      assert(retPlaceDBM == currPlace);
 
       if(!(retPlaceDBM->emptiness())){
         retVal = true;
@@ -2304,6 +2311,7 @@ inline DBMList* prover::do_proof_place_forall_rel(DBM* const lhs, DBMList* const
 
         DBMList currPlace(*retPlaceDBM);
         retPlaceDBM = succCheckRule(lhs, &currPlace);
+        assert(retPlaceDBM == currPlace);
         retPlaceDBM->cf();
         DBMList forallPlace(*retPlaceDBM);
 
