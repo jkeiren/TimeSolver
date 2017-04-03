@@ -3174,7 +3174,6 @@ inline DBMList* prover::do_proof_place_reset(DBM* const lhs, DBMList* const plac
 inline DBMList* prover::do_proof_place_assign(DBM* const lhs, DBMList* const place,
                                           const ExprNode* const rhs, SubstList* const sub)
 {
-  bool retVal = false;
   // use lhs->cf() for more efficiency
   lhs->cf();
   DBM ph(*lhs);
@@ -3185,35 +3184,27 @@ inline DBMList* prover::do_proof_place_assign(DBM* const lhs, DBMList* const pla
   short int cY = rhs->getcY();
   ph.reset(cX, cY);
   DBMList placeB(*INFTYDBM);
-  retPlaceDBM = do_proof_place(&ph, &placeB, rhs->getExpr(), sub);
-  retPlaceDBM->cf();
-  if(retPlaceDBM->emptiness())
+  do_proof_place(&ph, &placeB, rhs->getExpr(), sub);
+  placeB.cf();
+  if(placeB.emptiness())
   {
-    *place = *retPlaceDBM;
+    *place = placeB;
   }
   else
   {
     // Double Check that the new placeholder follows from the first
-    DBMList tmp2(*retPlaceDBM);
-    tmp2.preset(cX, cY);
+    placeB.preset(cX, cY);
 
     // Now assign the old placeholder accordingly
-    (*place) & tmp2;
+    (*place) & placeB;
     place->cf();
-    if(!(place->emptiness())){ // If so, return old place holder with solved value
-      retVal = true;
-      *retPlaceDBM = (*place);
-    }
-    else{
-      retVal = false;
-      retPlaceDBM->makeEmpty();
-    }
 
     if (cpplogEnabled(cpplogging::debug)) {
-      print_sequent_placeCheck(std::cerr, step - 1, retVal, lhs, place, &tmp2, sub, rhs->getOpType());
+      bool retVal = !place->emptiness();
+      print_sequent_placeCheck(std::cerr, step - 1, retVal, lhs, place, &placeB, sub, rhs->getOpType());
       if(retVal) {
         cpplog(cpplogging::debug) << "----(Valid) Placeholder Check Passed-----" <<  std::endl
-                                  << "--With Placeholder := {" << *retPlaceDBM << "} ----" <<  std::endl <<  std::endl;
+                                  << "--With Placeholder := {" << *place << "} ----" <<  std::endl <<  std::endl;
       }
       else {
         cpplog(cpplogging::debug) <<"----(Invalid) Placeholder Check Failed-----" <<  std::endl <<  std::endl;
@@ -3221,6 +3212,7 @@ inline DBMList* prover::do_proof_place_assign(DBM* const lhs, DBMList* const pla
     }
 
   }
+  *retPlaceDBM = *place;
   return retPlaceDBM;
 }
 
@@ -3229,8 +3221,8 @@ inline DBMList* prover::do_proof_place_replace(DBM* const lhs, DBMList* const pl
                                           const ExprNode* const rhs, SubstList* const sub)
 {
   sub->operator[](rhs->getcX()) = sub->at(rhs->getcY());
-  retPlaceDBM = do_proof_place(lhs, place, rhs->getExpr(), sub);
-  *place = *retPlaceDBM;
+  do_proof_place(lhs, place, rhs->getExpr(), sub);
+  *retPlaceDBM = *place;
   return retPlaceDBM;
 }
 
