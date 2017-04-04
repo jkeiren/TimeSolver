@@ -948,21 +948,21 @@ inline bool prover::do_proof_forall_rel(DBM * const lhs, const ExprNode * const 
   lhs_succ.suc();
   // Make sure lhs_succ is not modified; we reuse it for the sake of efficiency.
 
-  DBMList * placeholder1 = new DBMList(*INFTYDBM);
-  restrict_to_invariant(input_pes.invariants(), placeholder1, *sub);
+  DBMList placeholder1(*INFTYDBM);
+  restrict_to_invariant(input_pes.invariants(), &placeholder1, *sub);
   DBM lhs_succ1(lhs_succ);
-  retPlaceDBM = do_proof_place(&lhs_succ1, placeholder1, rhs->getLeft(), sub);
+  do_proof_place(&lhs_succ1, &placeholder1, rhs->getLeft(), sub);
 
   // Reset place parent to NULL
   parentPlaceRef = nullptr;
-  retPlaceDBM->cf(); // At this point, retPlaceDBM is placeholder1.
+  placeholder1.cf();
 
-  if(retPlaceDBM->emptiness())
+  if(placeholder1.emptiness())
   { // Here, \forall phi_2 needs to hold.
     // [FC14] derived rule? of \forall_{ro1} TODO
     if(cpplogEnabled(cpplogging::debug))
     {
-      print_sequentCheck(std::cerr, step - 1, retVal, lhs, retPlaceDBM, sub, rhs->getOpType());
+      print_sequentCheck(std::cerr, step - 1, retVal, lhs, &placeholder1, sub, rhs->getOpType());
       cpplog(cpplogging::debug) <<"----() Empty Relativization Placeholder: phi1 is never true -----" <<  std::endl <<  std::endl;
     }
 
@@ -976,7 +976,7 @@ inline bool prover::do_proof_forall_rel(DBM * const lhs, const ExprNode * const 
     restrict_to_invariant(input_pes.invariants(), &placeholder2, *sub);
     retVal = do_proof(&placeholder2, rhs->getRight(), sub);
   }
-  else if(*retPlaceDBM >= *lhs)
+  else if(placeholder1 >= *lhs)
   {
     // placeholder1 nonempty
     /* First check for the simplest case: no time elapse is needed */
@@ -985,9 +985,9 @@ inline bool prover::do_proof_forall_rel(DBM * const lhs, const ExprNode * const 
     retVal = true;
     // [FC14] proof rule \forall_{ro2};
     if (cpplogEnabled(cpplogging::debug)) {
-      print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, lhs, retPlaceDBM, sub, rhs->getOpType());
+      print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, lhs, &placeholder1, sub, rhs->getOpType());
       cpplog(cpplogging::debug) <<"----(Valid) Placeholder indicates no time elapse is needed (Check Only)-----" <<  std::endl
-         << "----With Placeholder := {" << *retPlaceDBM << "} ----"<<  std::endl <<  std::endl;
+         << "----With Placeholder := {" << placeholder1 << "} ----"<<  std::endl <<  std::endl;
     }
 
     // If here, we neither need a placeholder nor to elapse time
@@ -1000,8 +1000,6 @@ inline bool prover::do_proof_forall_rel(DBM * const lhs, const ExprNode * const 
     // for the FORALL
     /* Now check that we can elapse to the placeholder. */
     // Store the set of times that satisfy phi1
-    DBMList placeholder1(*retPlaceDBM);
-
     cpplog(cpplogging::debug) << "----() Relativization \\phi_1 placeholder obtained as {"
                               << placeholder1 << "} ----"<<  std::endl <<  std::endl;
 
@@ -1009,9 +1007,8 @@ inline bool prover::do_proof_forall_rel(DBM * const lhs, const ExprNode * const 
      * We will check that once at the end */
     DBMList placeholder2(*INFTYDBM);
     DBM lhs_succ2(lhs_succ); // copy to avoid modifying lhs_succ
-    retPlaceDBM = do_proof_place(&lhs_succ2, &placeholder2, rhs->getRight(), sub);
-    retPlaceDBM->cf();
-    placeholder2 = *retPlaceDBM;
+    do_proof_place(&lhs_succ2, &placeholder2, rhs->getRight(), sub);
+    placeholder2.cf();
 
     cpplog(cpplogging::debug) <<"----() Formula \\phi_2 placeholder obtained as {"
                               << placeholder2 << "} ----"<<  std::endl <<  std::endl;
@@ -1034,19 +1031,19 @@ inline bool prover::do_proof_forall_rel(DBM * const lhs, const ExprNode * const 
        * nor everything. */
 
       DBMList invariant_region(*INFTYDBM);
+      DBMList placeholder_forall(placeholder2);
       bool nonempty_invariant = restrict_to_invariant(input_pes.invariants(), &invariant_region, *sub);
       if(nonempty_invariant) {
         !invariant_region;
         invariant_region.cf();
-        retPlaceDBM->addDBMList(invariant_region);
-        retPlaceDBM->cf();
+        placeholder_forall.addDBMList(invariant_region);
+        placeholder_forall.cf();
       }
 
-      DBMList placeholder2_with_invariant(*retPlaceDBM); // succ((l,cc)) && phi_{s2}
-      succCheckRule(lhs, &placeholder2_with_invariant);
-      assert(*retPlaceDBM == placeholder2_with_invariant);
-      retPlaceDBM->cf();
-      DBMList placeholder_forall(*retPlaceDBM);
+      *retPlaceDBM = placeholder_forall;
+      succCheckRule(lhs, &placeholder_forall);
+      placeholder_forall.cf();
+
 
       if (cpplogEnabled(cpplogging::debug)) {
         print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, &lhs_succ2, &placeholder2, sub, rhs->getOpType());
@@ -1061,77 +1058,74 @@ inline bool prover::do_proof_forall_rel(DBM * const lhs, const ExprNode * const 
        * \phi_1 (the left) is the formula. By using the placeholders
        * computed previously, we save time by not having to recompute
        * the formulas. */
-      DBMList * placeholder1_predecessor = new DBMList(placeholder1);
-      placeholder1_predecessor->pre();
-      placeholder1_predecessor->cf();
+      DBMList placeholder1_predecessor(placeholder1);
+      placeholder1_predecessor.pre();
+      placeholder1_predecessor.cf();
       /*--- PredCheck code----*/
-      retPlaceDBM = predCheckRule(lhs, &lhs_succ, nullptr, &placeholder2, &placeholder1, placeholder1_predecessor);
+      retPlaceDBM = predCheckRule(lhs, &lhs_succ, nullptr, &placeholder2, &placeholder1, &placeholder1_predecessor);
       retPlaceDBM->cf();
       cpplog(cpplogging::debug) <<"----() FORALL Rel Exists predCheck placeholder obtained as := {"
                                << *retPlaceDBM << "} ----"<<  std::endl <<  std::endl;
 
       // For readability
-      DBMList* placeholder_exists = retPlaceDBM;
+      DBMList placeholder_exists(*retPlaceDBM);
 
-      if(!placeholder_exists->emptiness()) {
+      if(!placeholder_exists.emptiness()) {
         /* if it is nonempty, it passes the second check and we continue
          * Given the FORALL rule rewrite, do not allow the instance
          * after the time elapse */
         /* Extract the new refined placeholder. */
-        *placeholder_exists & placeholder1;
-        placeholder_exists->cf(); // TODO removing this cf() changes some of the outputs.
+        placeholder_exists & placeholder1;
+        placeholder_exists.cf(); // TODO removing this cf() changes some of the outputs.
 
         /* Now check that it works. */
         /* Since we are not using retPlace anymore, we do not
          * need to copy it for the check. */
-        placeholder_exists->pre();
+        placeholder_exists.pre();
         /* This cf() is needed. */
-        placeholder_exists->cf();
+        placeholder_exists.cf();
         // Need we intersect this with succ(Gamma) or
         // do we need to perform an elapse check?
         // what if this is empty?
 
         if(cpplogEnabled(cpplogging::debug)) {
-          print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, lhs, placeholder_exists, sub, rhs->getOpType());
+          print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, lhs, &placeholder_exists, sub, rhs->getOpType());
           cpplog(cpplogging::debug) <<"----() FORALL Rel Exists placeholder after time elapse check is := {"
-                                   << *placeholder_exists << "} ----"<<  std::endl <<  std::endl;
+                                   << placeholder_exists << "} ----"<<  std::endl <<  std::endl;
         }
       }
       // retPlaceDBM is existsPlace
       /* Last, we do an or check on the two placeholders */
       bool forallEmpty = placeholder_forall.emptiness();
-      bool existsEmpty = placeholder_exists->emptiness();
+      bool existsEmpty = placeholder_exists.emptiness();
       if(forallEmpty && existsEmpty) {
-        placeholder_exists->makeEmpty();
+        placeholder_exists.makeEmpty();
         retVal = false;
       }
       else if (existsEmpty)
       {
-        *placeholder_exists = placeholder_forall;
+        placeholder_exists = placeholder_forall;
       }
       else if (!forallEmpty && !existsEmpty)
       {
-        if (*placeholder_exists <= placeholder_forall) {
-          *placeholder_exists = placeholder_forall;
+        if (placeholder_exists <= placeholder_forall) {
+          placeholder_exists = placeholder_forall;
         }
-        else if (!(placeholder_forall <= *placeholder_exists)) {
+        else if (!(placeholder_forall <= placeholder_exists)) {
           /* This case requires us to union the two placeholders. */
-          placeholder_exists->addDBMList(placeholder_forall);
+          placeholder_exists.addDBMList(placeholder_forall);
         }
       }
-      retVal = *placeholder_exists >= *lhs;
+      retVal = placeholder_exists >= *lhs;
 
       // Debug information here?
       if(cpplogEnabled(cpplogging::debug)) {
-        print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, lhs, placeholder_exists, sub, rhs->getOpType());
+        print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, lhs, &placeholder_exists, sub, rhs->getOpType());
         cpplog(cpplogging::debug) << "----() Final FORALL REL Placeholder is := {"
-                                  << *placeholder_exists << "} ----"<<  std::endl <<  std::endl;
+                                  << placeholder_exists << "} ----"<<  std::endl <<  std::endl;
       }
-      delete placeholder1_predecessor;
     }
   }
-
-  delete placeholder1;
 
   return retVal;
 }
@@ -1158,14 +1152,14 @@ inline bool prover::do_proof_exists(DBM * const lhs, const ExprNode * const rhs,
   DBMList placeholder(*INFTYDBM);
   restrict_to_invariant(input_pes.invariants(), &placeholder, *sub);
 
-  retPlaceDBM = do_proof_place(&lhs_succ, &placeholder, rhs->getQuant(), sub);
+  do_proof_place(&lhs_succ, &placeholder, rhs->getQuant(), sub);
   // Reset place parent to NULL
-  parentPlaceRef = NULL;
-  retPlaceDBM->cf();
-  if(retPlaceDBM->emptiness()){
+  parentPlaceRef = nullptr;
+  placeholder.cf();
+  if(placeholder.emptiness()){
     retVal = false;
     if(cpplogEnabled(cpplogging::debug)) {
-      print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, lhs, retPlaceDBM, sub, rhs->getOpType());
+      print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, lhs, &placeholder, sub, rhs->getOpType());
       cpplog(cpplogging::debug) <<"----(Invalid) Empty Placeholder: No Need for Placeholder Check-----" <<  std::endl <<  std::endl;
     }
     return retVal;
@@ -1174,16 +1168,16 @@ inline bool prover::do_proof_exists(DBM * const lhs, const ExprNode * const rhs,
   /* Now check that it works. */
   /* Since we are not using retPlace anymore, we do not
    * need to copy it for the check. */
-  retPlaceDBM->pre();
+  placeholder.pre();
   /* This cf() is needed. */
-  retPlaceDBM->cf();
-  retVal = (*retPlaceDBM) >= (*lhs);
+  placeholder.cf();
+  retVal = placeholder >= *lhs;
 
   if (cpplogEnabled(cpplogging::debug)) {
-    print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, lhs, retPlaceDBM, sub, rhs->getOpType());
+    print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, lhs, &placeholder, sub, rhs->getOpType());
     if(retVal) {
       cpplog(cpplogging::debug) <<"----(Valid) Placeholder Check Passed (Check Only)-----" <<  std::endl
-                                << "----With Placeholder := {" << *retPlaceDBM << "} ----"<<  std::endl <<  std::endl;
+                                << "----With Placeholder := {" << placeholder << "} ----"<<  std::endl <<  std::endl;
 
     }
     else {
@@ -1208,14 +1202,14 @@ inline bool prover::do_proof_exists_rel(DBM * const lhs, const ExprNode * const 
   DBMList tPlace(*INFTYDBM);
   restrict_to_invariant(input_pes.invariants(), &tPlace, *sub);
 
-  retPlaceDBM = do_proof_place(&lhs_succ, &tPlace, rhs->getRight(), sub);
+  do_proof_place(&lhs_succ, &tPlace, rhs->getRight(), sub);
   // Reset place parent to NULL
   parentPlaceRef = nullptr;
-  retPlaceDBM->cf();
-  if(retPlaceDBM->emptiness()){
+  tPlace.cf();
+  if(tPlace.emptiness()){
     retVal = false;
     if (cpplogEnabled(cpplogging::debug)) {
-      print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, lhs, retPlaceDBM, sub, rhs->getOpType());
+      print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, lhs, &tPlace, sub, rhs->getOpType());
       cpplog(cpplogging::debug) <<"----(Invalid) Empty First Placeholder: No Need for additional Placeholder Checks-----" <<  std::endl <<  std::endl;
     }
     return retVal;
@@ -1223,7 +1217,7 @@ inline bool prover::do_proof_exists_rel(DBM * const lhs, const ExprNode * const 
 
   retVal = true;
 
-  DBMList placeholder2(*retPlaceDBM);
+  DBMList placeholder2(tPlace);
 
   /* Now check for the relativization.
    * First, find the subset of the predecessor_< of the placeholder
@@ -1246,10 +1240,9 @@ inline bool prover::do_proof_exists_rel(DBM * const lhs, const ExprNode * const 
   DBMList placeholder1(*INFTYDBM);
   // Since invariants are past closed, we do not need to intersect
   // this placeholder with the invariant.
-  retPlaceDBM = do_proof_place(&lhs_succ2, &placeholder1, rhs->getLeft(), sub);
+  do_proof_place(&lhs_succ2, &placeholder1, rhs->getLeft(), sub);
   /* Second step: tighten and check the predecessor */
   // Must check for emptiness to handle the corner case when it is empty
-  placeholder1 = *retPlaceDBM; // placeholder1 now contains the set of states in which the left hand side of the quantifier holds.
 
   cpplog(cpplogging::debug) << "----() Placeholder of times where \\phi_1 is true----- {"
                             << placeholder1 << "} ----"<<  std::endl <<  std::endl;
@@ -1257,12 +1250,13 @@ inline bool prover::do_proof_exists_rel(DBM * const lhs, const ExprNode * const 
   // This provides a preliminary check.
   // If the left hand side and right hand side never hold at the same time, we
   // only need to check whether the right hand side holds immediately
-  *retPlaceDBM & placeholder2_predecessor;
-  retPlaceDBM->cf();
-  if(retPlaceDBM->emptiness()) {
+  DBMList tmpPlaceholder(placeholder1);
+  tmpPlaceholder & placeholder2_predecessor;
+  tmpPlaceholder.cf();
+  if(tmpPlaceholder.emptiness()) {
 
     if(cpplogEnabled(cpplogging::debug)) {
-      print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, false, &lhs_succ2, retPlaceDBM, sub, rhs->getOpType());
+      print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, false, &lhs_succ2, &tmpPlaceholder, sub, rhs->getOpType());
       cpplog(cpplogging::debug) <<"----() Empty Second Placeholder: Relativization Formula \\phi_1 is never true-----" <<  std::endl <<  std::endl;
     }
 
@@ -1711,12 +1705,9 @@ inline DBMList* prover::do_proof_place_predicate(DBM* const lhs, DBMList* const 
   prevParityGfp = currParityGfp;
   currParityGfp = rhs->get_Parity();
   lhs->cf();
-
   place->cf();
 
   /* First look in known true and false sequent tables */
-
-
   if(useCaching)
   {
     { // restricted block for known false sequents
