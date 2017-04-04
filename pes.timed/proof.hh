@@ -461,8 +461,6 @@ protected:
    * @param lhs (*) the left-hand clock set
    * @param lhsSucc (*) the successor of the left-hand clock constraint, after
    * applying invariants.
-   * @param origPlace (*) a reference to the DBMList placeholder or NULL if
-   * there is no placeholder.
    * @param phi1Place (*) the set of clock valuations that satisfy phi1, the
    * left hand formula (the relativized formula).
    * @param phi2Place (*) the set of clock valuations that satisfy phi2, the
@@ -470,91 +468,64 @@ protected:
    * @param phi2PredPlace (*) the time predecessor of phi2Place; this predecessor
    * may by <= or <, depending on the proof rule that calls this method.
    * @return the output placeholder, which is also retPlaceDBM. */
-  inline DBMList * predCheckRule(const DBM * const lhs, const DBM * const lhsSucc,
-                                 const DBMList * const origPlace, const DBMList * const phi1Place,
-                                 const DBMList * const phi2Place, const DBMList * const phi2PredPlace ) {
+  inline void predCheckRule(DBMList* result, const DBM * const lhs, const DBM * const lhs_succ,
+                            const DBMList * const placeholder1,
+                            const DBMList * const placeholder2, const DBMList * const placeholder2_strict_predecessor ) {
 
-    retPlaceDBM->makeEmpty();
-    /* Iterate through each DBM of phi2Place and union the results. */
-    std::vector<DBM *> * phi2PlaceList = phi2Place->getDBMList();
-    DBMList compPhi1(*phi1Place);
-    !compPhi1;
-    compPhi1.cf();
+    result->makeEmpty();
+    DBMList placeholder1_complement(*placeholder1);
+    !placeholder1_complement;
+    placeholder1_complement.cf();
     bool previouslyUpdated = false;
-    for(std::vector<DBM*>::const_iterator i = phi2PlaceList->begin(); i != phi2PlaceList->end(); ++i) {
-      DBM * currPhi2 = *i;
-      DBM predPhi2(*currPhi2);
-      predPhi2.pre();
-      predPhi2.cf();
+    /* Iterate through each DBM of phi2Place and union the results. */
+    const std::vector<DBM *> * placeholder2_dbms = placeholder2->getDBMList();
 
-      DBMList currDBMList(compPhi1);
-      currDBMList & predPhi2;
-      currDBMList & *lhsSucc;  // Intersect with the successor of the lhs
+    for(std::vector<DBM*>::const_iterator i = placeholder2_dbms->begin(); i != placeholder2_dbms->end(); ++i) {
+      DBM placeholder2_dbm_pred(**i);
+      placeholder2_dbm_pred.pre();
+      placeholder2_dbm_pred.cf();
+
+      DBMList currDBMList(placeholder1_complement);
+      currDBMList & placeholder2_dbm_pred;
+      currDBMList & *lhs_succ;  // Intersect with the successor of the lhs
 
 
-      DBMList compPhi2(*currPhi2);
-      !compPhi2;
-      compPhi2.cf();
+      DBMList placeholder2_dbm_complement(**i);
+      !placeholder2_dbm_complement;
+      placeholder2_dbm_complement.cf();
 
-      currDBMList & compPhi2;
+      currDBMList & placeholder2_dbm_complement;
       currDBMList.cf();
       currDBMList.pre();
-      currDBMList & *lhsSucc;
+      currDBMList & *lhs_succ;
       currDBMList.cf();
       // currDBMList currently is the set of bad times; LHS must have
       // no such times in this.
       if(currDBMList.emptiness()) { // no bad times, so no shrinkage
-        *retPlaceDBM = *phi1Place;
+        *result = *placeholder1;
         break;
       }
       /* If this is nonempty, then we have something to deal with */
       // Also, the placeholder cannot be completely contained in this
-      if(origPlace == NULL) {
-        currDBMList & *lhs;
-        currDBMList.cf();
-        if(!(currDBMList.emptiness())) {
-          if(previouslyUpdated == false) {
-            previouslyUpdated = true;
-            *retPlaceDBM = currDBMList;
-          }
-          else{
-            retPlaceDBM->addDBMList(currDBMList);
-          }
-        }
-        else {
-          if(previouslyUpdated == false) {
-            previouslyUpdated = true;
-            retPlaceDBM->makeEmpty();
-          }
+      currDBMList & *lhs;
+      currDBMList.cf();
+      if(currDBMList.emptiness())
+      {
+        if(!previouslyUpdated) {
+          previouslyUpdated = true;
+          result->makeEmpty();
         }
       }
-      else { /* This is the section if we have a placeholder */
-        currDBMList & *origPlace;
-        currDBMList.cf();
-        if(currDBMList.emptiness()) {
-          if(previouslyUpdated == false) {
-            previouslyUpdated = true;
-            retPlaceDBM->makeEmpty();
-          }
+      else
+      {
+        if(!previouslyUpdated) {
+          previouslyUpdated = true;
+          *result = currDBMList;
         }
-        else if (currDBMList >= *lhs) {
-          if(previouslyUpdated == false) {
-            previouslyUpdated = true;
-            *retPlaceDBM = currDBMList;
-          }
-          else{
-            retPlaceDBM->addDBMList(currDBMList);
-          }
-        }
-        else { // this is the same as the emptiness case
-          if(previouslyUpdated == false) {
-            previouslyUpdated = true;
-            retPlaceDBM->makeEmpty();
-          }
+        else{
+          result->addDBMList(currDBMList);
         }
       }
-
-
     }
 
     /* We also need to make another placeholder check: that the phi1Place,
@@ -562,17 +533,14 @@ protected:
      * by taking the predecessor
      * and intersecting it with succ(\Gamma). We need phi1Place to be
      * the entire predecessor, and not just the upper part of it. */
-    if(!(*retPlaceDBM >= *lhs)) {
+    if(!(*result >= *lhs)) {
       // simple empty case
-      retPlaceDBM->makeEmpty();
+      result->makeEmpty();
     }
     else {
       // here, we just need to check for gaps in the DBM and eliminate them.
       // does this case come up due to how pred check works?
     }
-
-
-    return retPlaceDBM;
   }
 
   /** Performs the succCheck rule of FORALL (and FORALL_REL) rules, including
@@ -1062,7 +1030,7 @@ inline bool prover::do_proof_forall_rel(DBM * const lhs, const ExprNode * const 
       placeholder1_predecessor.pre();
       placeholder1_predecessor.cf();
       /*--- PredCheck code----*/
-      retPlaceDBM = predCheckRule(lhs, &lhs_succ, nullptr, &placeholder2, &placeholder1, &placeholder1_predecessor);
+      predCheckRule(retPlaceDBM, lhs, &lhs_succ, &placeholder2, &placeholder1, &placeholder1_predecessor);
       retPlaceDBM->cf();
       cpplog(cpplogging::debug) <<"----() FORALL Rel Exists predCheck placeholder obtained as := {"
                                << *retPlaceDBM << "} ----"<<  std::endl <<  std::endl;
@@ -1199,25 +1167,23 @@ inline bool prover::do_proof_exists_rel(DBM * const lhs, const ExprNode * const 
   lhs_succ.suc();
   DBM lhs_succ2(lhs_succ);
 
-  DBMList tPlace(*INFTYDBM);
-  restrict_to_invariant(input_pes.invariants(), &tPlace, *sub);
+  DBMList placeholder2(*INFTYDBM);
+  restrict_to_invariant(input_pes.invariants(), &placeholder2, *sub);
 
-  do_proof_place(&lhs_succ, &tPlace, rhs->getRight(), sub);
+  do_proof_place(&lhs_succ, &placeholder2, rhs->getRight(), sub);
   // Reset place parent to NULL
   parentPlaceRef = nullptr;
-  tPlace.cf();
-  if(tPlace.emptiness()){
+  placeholder2.cf();
+  if(placeholder2.emptiness()){
     retVal = false;
     if (cpplogEnabled(cpplogging::debug)) {
-      print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, lhs, &tPlace, sub, rhs->getOpType());
+      print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, lhs, &placeholder2, sub, rhs->getOpType());
       cpplog(cpplogging::debug) <<"----(Invalid) Empty First Placeholder: No Need for additional Placeholder Checks-----" <<  std::endl <<  std::endl;
     }
     return retVal;
   }
 
   retVal = true;
-
-  DBMList placeholder2(tPlace);
 
   /* Now check for the relativization.
    * First, find the subset of the predecessor_< of the placeholder
@@ -1250,13 +1216,13 @@ inline bool prover::do_proof_exists_rel(DBM * const lhs, const ExprNode * const 
   // This provides a preliminary check.
   // If the left hand side and right hand side never hold at the same time, we
   // only need to check whether the right hand side holds immediately
-  DBMList tmpPlaceholder(placeholder1);
-  tmpPlaceholder & placeholder2_predecessor;
-  tmpPlaceholder.cf();
-  if(tmpPlaceholder.emptiness()) {
+  DBMList placeholder1_intersect_placeholder2_pred(placeholder1);
+  placeholder1_intersect_placeholder2_pred & placeholder2_predecessor;
+  placeholder1_intersect_placeholder2_pred.cf();
+  if(placeholder1_intersect_placeholder2_pred.emptiness()) {
 
     if(cpplogEnabled(cpplogging::debug)) {
-      print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, false, &lhs_succ2, &tmpPlaceholder, sub, rhs->getOpType());
+      print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, false, &lhs_succ2, &placeholder1_intersect_placeholder2_pred, sub, rhs->getOpType());
       cpplog(cpplogging::debug) <<"----() Empty Second Placeholder: Relativization Formula \\phi_1 is never true-----" <<  std::endl <<  std::endl;
     }
 
@@ -1293,7 +1259,7 @@ inline bool prover::do_proof_exists_rel(DBM * const lhs, const ExprNode * const 
   // There are locations where both left-hand side and right-hand side hold.
   // we therefore need to check the side-conditions
   /*--- PredCheck code----*/
-  retPlaceDBM = predCheckRule(lhs, &lhs_succ, nullptr, &placeholder1, &placeholder2, &placeholder2_predecessor);
+  predCheckRule(retPlaceDBM, lhs, &lhs_succ, &placeholder1, &placeholder2, &placeholder2_predecessor);
   if(retPlaceDBM->emptiness()) {
     retVal = false;
 
@@ -2326,7 +2292,7 @@ inline DBMList* prover::do_proof_place_forall_rel(DBM* const lhs, DBMList* const
         phi1PredPlace.pre();
         phi1PredPlace.cf();
         /*--- PredCheck code----*/
-        retPlaceDBM = predCheckRule(lhs, &ph, nullptr, &phi2Place, &phi1Place, &phi1PredPlace);
+        predCheckRule(retPlaceDBM, lhs, &ph, &phi2Place, &phi1Place, &phi1PredPlace);
         retPlaceDBM->cf();
 
         cpplog(cpplogging::debug) <<"----() FORALL Rel Exists placeholder obtained as := {"
@@ -2550,7 +2516,7 @@ inline DBMList* prover::do_proof_place_exists_rel(DBM* const lhs, DBMList* const
 
   DBMList currRetPlaceDBM(*retPlaceDBM);
   /*--- PredCheck code----*/
-  retPlaceDBM = predCheckRule(lhs, &ph, nullptr, &phi1Place, phi2Place, phi2PredPlace);
+  predCheckRule(retPlaceDBM, lhs, &ph, &phi1Place, phi2Place, phi2PredPlace);
   if(retPlaceDBM->emptiness()) {
     retVal = false;
 
