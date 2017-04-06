@@ -545,17 +545,22 @@ protected:
 
   /** Performs the succCheck rule of FORALL (and FORALL_REL) rules, including
    * the computing of the premise, the consequent, and the tightening of the
-   * placeholder currPlace.
-   * @param lhs (*) the reference to the left hand sequent
-   * @param currPlace (*) the reference to the current placeholder.
-   * @return the tightened placeholder that satisfies the succCheck, or an
-   * empty placeholder if no such placeholder is possible. */
+   * placeholder placeholder_forall.
+   * @param discrete_state (*) reference to the discrete state for which we are proving
+   * @param lhs (*) the reference to the left hand side of the sequent
+   * @param placeholder (*) the reference to the current placeholder.
+   * @param placeholder_forall (*) the placeholder that is tightened such that
+   *        the side condition on the successors holds. It is the empty placeholder
+   *        if no such placeholder can be found. */
   inline void succCheckRule(const SubstList* const discrete_state,
                             const DBM * const lhs,
                             const DBMList * const placeholder,
                             DBMList * placeholder_forall)
   {
-
+    // Initially guess that the resulting placeholder is the placeholder that
+    // was precomputed, extended with the complement of the invariant of the current
+    // discrete state. The intuition is that we compute the implication:
+    // if the invariant holds, then the placeholder is satisfied.
     *placeholder_forall = *placeholder;
 
     DBMList invariant_region(*INFTYDBM);
@@ -567,28 +572,28 @@ protected:
       placeholder_forall->cf();
     }
 
-    DBM succLHS(*lhs);
-    succLHS.suc();// succLHS == succ(*lhs);
-    succLHS.cf();
+    DBM lhs_succ(*lhs);
+    lhs_succ.suc();
+    lhs_succ.cf();
 
     // intersect with new placeholder
-    DBMList conseq(*placeholder_forall);
-    conseq & succLHS;
-    conseq.cf(); // The consequent
+    DBMList lhs_succ_and_placeholder(*placeholder_forall);
+    lhs_succ_and_placeholder & lhs_succ;
+    lhs_succ_and_placeholder.cf(); // The consequent
 
     /* Computing Premise of Right part of proof */
     /* Compute Succ(Premise and First Placeholder) */
     // succLHS is the successor of the left-hand side, so do not repeat the work
-    DBMList succPrem(*lhs);
-    succPrem & *placeholder_forall;
-    succPrem.cf();
-    succPrem.suc();
-    succPrem.cf();
+    DBMList premise_and_placeholder_succ(*lhs);
+    premise_and_placeholder_succ & *placeholder_forall;
+    premise_and_placeholder_succ.cf();
+    premise_and_placeholder_succ.suc();
+    premise_and_placeholder_succ.cf();
 
     // First start by setting the place holder to the value of the new placeholder
     /* Per our algorithm, initialize place as retPlaceDBM. */
     // Do we need to intersect succLHS with retPlaceDBM somewhere?
-    if(conseq >= succPrem) {
+    if(lhs_succ_and_placeholder >= premise_and_placeholder_succ) {
       *retPlaceDBM = *placeholder_forall;
       return;
     }
@@ -602,8 +607,8 @@ protected:
     // !(badVals || !succPrem || !succLHS) == !badVals && succPrem && succLHS
     !badVals; // All states outside currPlace
     badVals.cf();
-    badVals & succPrem; // that can be reached from lhs & currPlace
-    badVals & succLHS; // *and* that can be reached from lhs -- this should be superfluous
+    badVals & premise_and_placeholder_succ; // that can be reached from lhs & currPlace
+    badVals & lhs_succ; // *and* that can be reached from lhs -- this should be superfluous
     badVals.cf();
     badVals.pre();
     // all states with a delay into those states outside currPlace that can be
@@ -615,7 +620,7 @@ protected:
     // all states for which all delays remain inside currPlace, or can be reached from lhs & currPlace
     badVals.cf();
     // Good values must be after succLHS
-    badVals & succLHS;
+    badVals & lhs_succ;
     // all states for which all delays remain inside currPlace, or can be reached from lhs & currPlace,
     // that can be reached from lhs.
     // really, at this point badVals contains the *good* values
@@ -630,14 +635,14 @@ protected:
     // The placheolder has shrunk; we now check whether the side condition is
     // satisfied.
     // leave conseq unchanged, since that placeholder did not shrink
-    succPrem = *lhs;
-    succPrem & *placeholder_forall;
-    succPrem.cf();
-    succPrem.suc();
-    succPrem.cf();
+    premise_and_placeholder_succ = *lhs;
+    premise_and_placeholder_succ & *placeholder_forall;
+    premise_and_placeholder_succ.cf();
+    premise_and_placeholder_succ.suc();
+    premise_and_placeholder_succ.cf();
 
     // use previously solved place, not new one for right hand side
-    if(!(conseq >= succPrem)) {
+    if(!(lhs_succ_and_placeholder >= premise_and_placeholder_succ)) {
       placeholder_forall->makeEmpty();
     }
     *retPlaceDBM = *placeholder_forall;
