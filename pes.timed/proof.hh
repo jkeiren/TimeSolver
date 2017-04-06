@@ -550,13 +550,29 @@ protected:
    * @param currPlace (*) the reference to the current placeholder.
    * @return the tightened placeholder that satisfies the succCheck, or an
    * empty placeholder if no such placeholder is possible. */
-  inline void succCheckRule(const DBM * const lhs, DBMList * currPlace) {
+  inline void succCheckRule(const SubstList* const discrete_state,
+                            const DBM * const lhs,
+                            const DBMList * const placeholder,
+                            DBMList * placeholder_forall)
+  {
+
+    *placeholder_forall = *placeholder;
+
+    DBMList invariant_region(*INFTYDBM);
+    bool nonempty_invariant = restrict_to_invariant(input_pes.invariants(), &invariant_region, *discrete_state);
+    if(nonempty_invariant) {
+      !invariant_region;
+      invariant_region.cf();
+      placeholder_forall->addDBMList(invariant_region);
+      placeholder_forall->cf();
+    }
+
     DBM succLHS(*lhs);
     succLHS.suc();// succLHS == succ(*lhs);
     succLHS.cf();
 
     // intersect with new placeholder
-    DBMList conseq(*currPlace);
+    DBMList conseq(*placeholder_forall);
     conseq & succLHS;
     conseq.cf(); // The consequent
 
@@ -564,7 +580,7 @@ protected:
     /* Compute Succ(Premise and First Placeholder) */
     // succLHS is the successor of the left-hand side, so do not repeat the work
     DBMList succPrem(*lhs);
-    succPrem & *currPlace;
+    succPrem & *placeholder_forall;
     succPrem.cf();
     succPrem.suc();
     succPrem.cf();
@@ -573,7 +589,7 @@ protected:
     /* Per our algorithm, initialize place as retPlaceDBM. */
     // Do we need to intersect succLHS with retPlaceDBM somewhere?
     if(conseq >= succPrem) {
-      *retPlaceDBM = *currPlace;
+      *retPlaceDBM = *placeholder_forall;
       return;
     }
 
@@ -582,7 +598,7 @@ protected:
      * 2. THe placeholder needs to be tightened so it can pass.
      * Invariants make this tricky */
     // Find the bad zones;
-    DBMList badVals(*currPlace);
+    DBMList badVals(*placeholder_forall);
     // !(badVals || !succPrem || !succLHS) == !badVals && succPrem && succLHS
     !badVals; // All states outside currPlace
     badVals.cf();
@@ -604,10 +620,10 @@ protected:
     // that can be reached from lhs.
     // really, at this point badVals contains the *good* values
     badVals.cf();
-    *currPlace & badVals;
-    currPlace->cf();
-    if(currPlace->emptiness()) {
-      *retPlaceDBM = *currPlace;
+    *placeholder_forall & badVals;
+    placeholder_forall->cf();
+    if(placeholder_forall->emptiness()) {
+      *retPlaceDBM = *placeholder_forall;
       return;
     }
 
@@ -615,19 +631,18 @@ protected:
     // satisfied.
     // leave conseq unchanged, since that placeholder did not shrink
     succPrem = *lhs;
-    succPrem & *currPlace;
+    succPrem & *placeholder_forall;
     succPrem.cf();
     succPrem.suc();
     succPrem.cf();
 
     // use previously solved place, not new one for right hand side
-    if(conseq >= succPrem) {
-      *retPlaceDBM = *currPlace;
-      return;
+    if(!(conseq >= succPrem)) {
+      placeholder_forall->makeEmpty();
     }
-    currPlace->makeEmpty();
-    *retPlaceDBM = *currPlace;
+    *retPlaceDBM = *placeholder_forall;
     return;
+
   }
 
 };
@@ -998,17 +1013,8 @@ inline bool prover::do_proof_forall_rel(DBM * const lhs, const ExprNode * const 
        * (the relativization formula condition) are neither empty
        * nor everything. */
 
-      DBMList invariant_region(*INFTYDBM);
-      DBMList placeholder_forall(placeholder2);
-      bool nonempty_invariant = restrict_to_invariant(input_pes.invariants(), &invariant_region, *sub);
-      if(nonempty_invariant) {
-        !invariant_region;
-        invariant_region.cf();
-        placeholder_forall.addDBMList(invariant_region);
-        placeholder_forall.cf();
-      }
-
-      succCheckRule(lhs, &placeholder_forall);
+      DBMList placeholder_forall(*INFTYDBM);
+      succCheckRule(sub, lhs, &placeholder2, &placeholder_forall);
       placeholder_forall.cf();
 
       if (cpplogEnabled(cpplogging::debug)) {
@@ -2033,19 +2039,9 @@ inline DBMList* prover::do_proof_place_forall(DBM* const lhs, DBMList* const pla
     /* Now do the second proof rule to compute the first placeholder
      */
 
-    /* Note; we union retPlaceDBM with the complement of the invariant.
-     * should we do this if retPlaceDBM is nonempty? */
-    DBMList invariant_complement_placeholder(*INFTYDBM);
-    bool hasInv = restrict_to_invariant(input_pes.invariants(), &invariant_complement_placeholder, *sub);
-    if(hasInv) {
-      invariant_complement_placeholder.cf();
-      !invariant_complement_placeholder;
-      invariant_complement_placeholder.cf();
-      place->addDBMList(invariant_complement_placeholder);
-      place->cf();
-    }
-
-    succCheckRule(lhs, place);
+    DBMList placeholder_forall(*place);
+    succCheckRule(sub, lhs, place, &placeholder_forall);
+    *place = placeholder_forall;
 
     if (cpplogEnabled(cpplogging::debug)) {
       // Result only used for printing the correct value below.
@@ -2123,26 +2119,10 @@ inline DBMList* prover::do_proof_place_forall_rel(DBM* const lhs, DBMList* const
       /* Now do the second proof rule to compute the first placeholder
        */
 
-      DBMList invCompPlace(*INFTYDBM);
-      bool hasInv = restrict_to_invariant(input_pes.invariants(), &invCompPlace, *sub);
-      if(hasInv) {
-        invCompPlace.cf();
-        !invCompPlace;
-        invCompPlace.cf();
-        retPlaceDBM->addDBMList(invCompPlace);
-        retPlaceDBM->cf();
-      }
-
       DBMList currPlace(*retPlaceDBM);
-      succCheckRule(lhs, &currPlace);
-      assert(*retPlaceDBM == currPlace);
+      succCheckRule(sub, lhs, &currPlace, retPlaceDBM);
 
-      if(!(retPlaceDBM->emptiness())){
-        retVal = true;
-      }
-      else {/* proof is false */
-        retVal = false;
-      }
+      retVal = !retPlaceDBM->emptiness();
 
       if(cpplogEnabled(cpplogging::debug)) {
         // This work is done in the succCheck method.
@@ -2262,22 +2242,9 @@ inline DBMList* prover::do_proof_place_forall_rel(DBM* const lhs, DBMList* const
          * (the relativization formula condition) are neither empty
          * nor everything. */
 
-        DBMList invCompPlace(*INFTYDBM);
-        // Do I worry about the invariants here?
-        bool hasInv = restrict_to_invariant(input_pes.invariants(), &invCompPlace, *sub);
-        if(hasInv) {
-          invCompPlace.cf();
-          !invCompPlace;
-          invCompPlace.cf();
-          retPlaceDBM->addDBMList(invCompPlace);
-          retPlaceDBM->cf();
-        }
-
-        DBMList currPlace(*retPlaceDBM);
-        succCheckRule(lhs, &currPlace);
-        assert(*retPlaceDBM == currPlace);
-        retPlaceDBM->cf();
         DBMList forallPlace(*retPlaceDBM);
+        succCheckRule(sub, lhs, retPlaceDBM, &forallPlace);
+        forallPlace.cf();
 
         if(cpplogEnabled(cpplogging::debug)) {
           print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, &phb, fPlace, sub, rhs->getOpType());
