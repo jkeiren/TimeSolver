@@ -552,10 +552,13 @@ protected:
    * empty placeholder if no such placeholder is possible. */
   inline void succCheckRule(const DBM * const lhs, DBMList * currPlace) {
     DBM succLHS(*lhs);
-    succLHS.suc();
+    succLHS.suc();// succLHS == succ(*lhs);
+    succLHS.cf();
+
     // intersect with new placeholder
     DBMList conseq(*currPlace);
     conseq & succLHS;
+    conseq.cf(); // The consequent
 
     /* Computing Premise of Right part of proof */
     /* Compute Succ(Premise and First Placeholder) */
@@ -564,14 +567,11 @@ protected:
     succPrem & *currPlace;
     succPrem.cf();
     succPrem.suc();
+    succPrem.cf();
 
     // First start by setting the place holder to the value of the new placeholder
     /* Per our algorithm, initialize place as retPlaceDBM. */
     // Do we need to intersect succLHS with retPlaceDBM somewhere?
-    conseq.cf(); // The consequent
-    succLHS.cf(); // The succprem
-    succPrem.cf();
-
     if(conseq >= succPrem) {
       *retPlaceDBM = *currPlace;
       return;
@@ -583,19 +583,26 @@ protected:
      * Invariants make this tricky */
     // Find the bad zones;
     DBMList badVals(*currPlace);
-    !badVals;
+    // !(badVals || !succPrem || !succLHS) == !badVals && succPrem && succLHS
+    !badVals; // All states outside currPlace
     badVals.cf();
-    badVals & succPrem;
-    badVals & succLHS;
+    badVals & succPrem; // that can be reached from lhs & currPlace
+    badVals & succLHS; // *and* that can be reached from lhs -- this should be superfluous
     badVals.cf();
     badVals.pre();
+    // all states with a delay into those states outside currPlace that can be
+    // reached from lhs & currPlace
     badVals.cf();
     // At this point, we have the bad valuations. Now intersect their
     // complement
     !badVals;
+    // all states for which all delays remain inside currPlace, or can be reached from lhs & currPlace
     badVals.cf();
     // Good values must be after succLHS
     badVals & succLHS;
+    // all states for which all delays remain inside currPlace, or can be reached from lhs & currPlace,
+    // that can be reached from lhs.
+    // really, at this point badVals contains the *good* values
     badVals.cf();
     *currPlace & badVals;
     currPlace->cf();
@@ -603,19 +610,16 @@ protected:
       *retPlaceDBM = *currPlace;
       return;
     }
-    // Do one more containment check. If this does not work,
-    // then the placeholder is empty
-    succLHS = *lhs;
-    succLHS.suc();
 
+    // The placheolder has shrunk; we now check whether the side condition is
+    // satisfied.
     // leave conseq unchanged, since that placeholder did not shrink
     succPrem = *lhs;
     succPrem & *currPlace;
     succPrem.cf();
     succPrem.suc();
-
-    succLHS.cf();
     succPrem.cf();
+
     // use previously solved place, not new one for right hand side
     if(conseq >= succPrem) {
       *retPlaceDBM = *currPlace;
@@ -1905,6 +1909,7 @@ inline DBMList* prover::do_proof_place_and(DBM* const lhs, DBMList* const place,
 }
 
 // post: *retPlaceDBM == *place
+// [FC14] Proof rule \lor_{s2}
 inline DBMList* prover::do_proof_place_or(DBM* const lhs, DBMList* const place,
                                           const ExprNode* const rhs, SubstList* const sub)
 {
@@ -2002,6 +2007,7 @@ inline DBMList* prover::do_proof_place_or_simple(DBM* const lhs, DBMList* const 
 }
 
 // post: *retPlaceDBM == *place
+// [FC14] Proof rule \forall_{t2}
 inline DBMList* prover::do_proof_place_forall(DBM* const lhs, DBMList* const place,
                                           const ExprNode* const rhs, SubstList* const sub)
 {
