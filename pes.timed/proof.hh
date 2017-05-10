@@ -468,13 +468,17 @@ protected:
    * @param phi2PredPlace (*) the time predecessor of phi2Place; this predecessor
    * may by <= or <, depending on the proof rule that calls this method.
    * @return the output placeholder, which is also retPlaceDBM. */
-  inline void predCheckRule(DBMList* result, const DBM * const lhs, const DBM * const lhs_succ,
+  inline void predCheckRule(DBMList* result,
+                            const DBM * const lhs,
+                            const DBM * const lhs_succ,
                             const DBMList * const placeholder1,
-                            const DBMList * const placeholder2, const DBMList * const placeholder2_strict_predecessor ) {
+                            const DBMList * const placeholder2,
+                            const DBMList * const placeholder2_predecessor ) {
 
     result->makeEmpty();
+
     DBMList placeholder1_complement(*placeholder1);
-    !placeholder1_complement;
+    !placeholder1_complement; // all values outside placeholder1
     placeholder1_complement.cf();
     bool previouslyUpdated = false;
     /* Iterate through each DBM of phi2Place and union the results. */
@@ -487,14 +491,20 @@ protected:
 
       DBMList currDBMList(placeholder1_complement);
       currDBMList & placeholder2_dbm_pred;
-      currDBMList & *lhs_succ;  // Intersect with the successor of the lhs
-
+      currDBMList & *lhs_succ;  // Intersect with the successor of the lhs;
+      // So currDBMList now contains all states that are not in placeholder1,
+      // from which placeholder2 can be reached, and which can be reached from
+      // lhs.
 
       DBMList placeholder2_dbm_complement(**i);
       !placeholder2_dbm_complement;
       placeholder2_dbm_complement.cf();
 
       currDBMList & placeholder2_dbm_complement;
+      // We restrict this to states that furthermore are not in placeholder2.
+      // So currDBMList now contains all states that are not in placeholder1,
+      // from which placeholder2 can be reached, but which are themselves not in
+      // placeholder2, and which can be reached from lhs.
       currDBMList.cf();
       currDBMList.pre();
       currDBMList & *lhs_succ;
@@ -509,22 +519,14 @@ protected:
       // Also, the placeholder cannot be completely contained in this
       currDBMList & *lhs;
       currDBMList.cf();
-      if(currDBMList.emptiness())
+      if(!previouslyUpdated)
       {
-        if(!previouslyUpdated) {
-          previouslyUpdated = true;
-          result->makeEmpty();
-        }
+        previouslyUpdated = true;
       }
-      else
+
+      if(!currDBMList.emptiness())
       {
-        if(!previouslyUpdated) {
-          previouslyUpdated = true;
-          *result = currDBMList;
-        }
-        else{
-          result->addDBMList(currDBMList);
-        }
+        result->addDBMList(currDBMList);
       }
     }
 
@@ -537,10 +539,8 @@ protected:
       // simple empty case
       result->makeEmpty();
     }
-    else {
-      // here, we just need to check for gaps in the DBM and eliminate them.
-      // does this case come up due to how pred check works?
-    }
+    // else, we just need to check for gaps in the DBM and eliminate them.
+    // does this case come up due to how pred check works?
   }
 
   /** Performs the succCheck rule of FORALL (and FORALL_REL) rules, including
@@ -553,9 +553,10 @@ protected:
    *        the side condition on the successors holds. It is the empty placeholder
    *        if no such placeholder can be found. */
   inline void succCheckRule(const SubstList* const discrete_state,
-                            const DBM * const lhs,
-                            const DBMList * const placeholder,
-                            DBMList * placeholder_forall)
+                            const DBM* const lhs,
+                            const DBM* const lhs_succ,
+                            const DBMList* const placeholder,
+                            DBMList* placeholder_forall)
   {
     // Initially guess that the resulting placeholder is the placeholder that
     // was precomputed, extended with the complement of the invariant of the current
@@ -572,13 +573,9 @@ protected:
       placeholder_forall->cf();
     }
 
-    DBM lhs_succ(*lhs);
-    lhs_succ.suc();
-    lhs_succ.cf();
-
     // intersect with new placeholder
     DBMList lhs_succ_and_placeholder(*placeholder_forall);
-    lhs_succ_and_placeholder & lhs_succ;
+    lhs_succ_and_placeholder & *lhs_succ;
     lhs_succ_and_placeholder.cf(); // The consequent
 
     /* Computing Premise of Right part of proof */
@@ -608,7 +605,7 @@ protected:
     !badVals; // All states outside currPlace
     badVals.cf();
     badVals & premise_and_placeholder_succ; // that can be reached from lhs & currPlace
-    badVals & lhs_succ; // *and* that can be reached from lhs -- this should be superfluous
+    badVals & *lhs_succ; // *and* that can be reached from lhs -- this should be superfluous
     badVals.cf();
     badVals.pre();
     // all states with a delay into those states outside currPlace that can be
@@ -620,7 +617,7 @@ protected:
     // all states for which all delays remain inside currPlace, or can be reached from lhs & currPlace
     badVals.cf();
     // Good values must be after succLHS
-    badVals & lhs_succ;
+    badVals & *lhs_succ;
     // all states for which all delays remain inside currPlace, or can be reached from lhs & currPlace,
     // that can be reached from lhs.
     // really, at this point badVals contains the *good* values
@@ -936,14 +933,14 @@ inline bool prover::do_proof_forall_rel(DBM * const lhs, const ExprNode * const 
   lhs_succ.suc();
   // Make sure lhs_succ is not modified; we reuse it for the sake of efficiency.
 
-  DBMList placeholder1(*INFTYDBM);
+  DBMList placeholder1(*INFTYDBM); // phi_{s1}
   restrict_to_invariant(input_pes.invariants(), &placeholder1, *sub);
   DBM lhs_succ1(lhs_succ);
   do_proof_place(&lhs_succ1, &placeholder1, rhs->getLeft(), sub);
+  placeholder1.cf();
 
   // Reset place parent to NULL
   parentPlaceRef = nullptr;
-  placeholder1.cf();
 
   if(placeholder1.emptiness())
   { // Here, \forall phi_2 needs to hold.
@@ -960,9 +957,9 @@ inline bool prover::do_proof_forall_rel(DBM * const lhs, const ExprNode * const 
     /* DBM lhs is copied because it is changed by suc() and invs_chk().
      * The copying here assures that lhs is unchanged when it is returned,
      * allowing multiple branches of AND and OR to have the same lhs. */
-    DBM placeholder2(lhs_succ);
-    restrict_to_invariant(input_pes.invariants(), &placeholder2, *sub);
-    retVal = do_proof(&placeholder2, rhs->getRight(), sub);
+    DBM lhs_succ_invariant(lhs_succ); // that part of lhs_succ that satisfies the location invariant
+    restrict_to_invariant(input_pes.invariants(), &lhs_succ_invariant, *sub);
+    retVal = do_proof(&lhs_succ_invariant, rhs->getRight(), sub);
   }
   else if(placeholder1 >= *lhs)
   {
@@ -1019,7 +1016,7 @@ inline bool prover::do_proof_forall_rel(DBM * const lhs, const ExprNode * const 
        * nor everything. */
 
       DBMList placeholder_forall(*INFTYDBM);
-      succCheckRule(sub, lhs, &placeholder2, &placeholder_forall);
+      succCheckRule(sub, lhs, &lhs_succ, &placeholder2, &placeholder_forall);
       placeholder_forall.cf();
 
       if (cpplogEnabled(cpplogging::debug)) {
@@ -1052,11 +1049,9 @@ inline bool prover::do_proof_forall_rel(DBM * const lhs, const ExprNode * const 
          * after the time elapse */
         /* Extract the new refined placeholder. */
         placeholder_exists & placeholder1;
-        placeholder_exists.cf(); // TODO removing this cf() changes some of the outputs.
+        placeholder_exists.cf();
 
         /* Now check that it works. */
-        /* Since we are not using retPlace anymore, we do not
-         * need to copy it for the check. */
         placeholder_exists.pre();
         /* This cf() is needed. */
         placeholder_exists.cf();
@@ -1075,7 +1070,6 @@ inline bool prover::do_proof_forall_rel(DBM * const lhs, const ExprNode * const 
       bool forallEmpty = placeholder_forall.emptiness();
       bool existsEmpty = placeholder_exists.emptiness();
       if(forallEmpty && existsEmpty) {
-        placeholder_exists.makeEmpty();
         retVal = false;
       }
       else if (existsEmpty)
@@ -1143,8 +1137,6 @@ inline bool prover::do_proof_exists(DBM * const lhs, const ExprNode * const rhs,
   else
   {
     /* Now check that it works. */
-    /* Since we are not using retPlace anymore, we do not
-     * need to copy it for the check. */
     placeholder.pre();
     /* This cf() is needed. */
     placeholder.cf();
@@ -1270,13 +1262,14 @@ inline bool prover::do_proof_exists_rel(DBM * const lhs, const ExprNode * const 
     {
       // There are locations where both left-hand side and right-hand side hold.
       // we therefore need to check the side-conditions
+      DBMList placeholder(placeholder1); // tightened placeholder for the result; copy since placeholder1 is used in the predCheckRule computation
       /*--- PredCheck code----*/
-      predCheckRule(retPlaceDBM, lhs, &lhs_succ, &placeholder1, &placeholder2, &placeholder2_predecessor);
-      if(retPlaceDBM->emptiness()) {
+      predCheckRule(&placeholder, lhs, &lhs_succ, &placeholder1, &placeholder2, &placeholder2_predecessor);
+      if(placeholder.emptiness()) {
         retVal = false;
 
         cpplog(cpplogging::debug) << "----(Invalid) Relativization placeholder failed-----" <<  std::endl
-                                  << "----With resulting Placeholder := {" << *retPlaceDBM << "} ----"<<  std::endl <<  std::endl;
+                                  << "----With resulting Placeholder := {" << placeholder << "} ----"<<  std::endl <<  std::endl;
         return retVal;
       }
       // if it is nonempty, it passes the second check and we continue
@@ -1284,30 +1277,28 @@ inline bool prover::do_proof_exists_rel(DBM * const lhs, const ExprNode * const 
       if(cpplogEnabled(cpplogging::debug)) {
         print_sequent_place(std::cerr, step - 1,  retVal, &lhs_succ2, &placeholder2_predecessor, rhs->getLeft(), sub, rhs->getOpType());
         cpplog(cpplogging::debug) <<"----(Valid) Relativization Placeholder Check Passed (Check Only)-----" <<  std::endl
-        << "----With resulting Placeholder := {" << *retPlaceDBM << "} ----"<<  std::endl <<  std::endl;
+        << "----With resulting Placeholder := {" << placeholder << "} ----"<<  std::endl <<  std::endl;
       }
 
       // Allow for the possibility of the time instant after the elapse
-      retPlaceDBM->closure();
+      placeholder.closure();
       /* Extract the new refined placeholder. */
-      *retPlaceDBM & placeholder2;
-      retPlaceDBM->cf();
+      placeholder & placeholder2;
+      placeholder.cf();
 
 
       /* Now check that it works. */
-      /* Since we are not using retPlace anymore, we do not
-       * need to copy it for the check. */
-      retPlaceDBM->pre();
+      placeholder.pre();
       /* This cf() is needed. */
-      retPlaceDBM->cf();
-      retVal = (*retPlaceDBM) >= (*lhs);
+      placeholder.cf();
+      retVal = placeholder >= (*lhs);
 
 
       if (cpplogEnabled(cpplogging::debug)) {
-        print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, lhs, retPlaceDBM, sub, rhs->getOpType());
+        print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, lhs, &placeholder, sub, rhs->getOpType());
         if(retVal) {
           cpplog(cpplogging::debug) << "----(Valid) Last Placeholder Check Passed (Check Only)-----" <<  std::endl
-                                    << "----With Placeholder := {" << *retPlaceDBM << "} ----"<<  std::endl <<  std::endl;
+                                    << "----With Placeholder := {" << placeholder << "} ----"<<  std::endl <<  std::endl;
 
         }
         else {
@@ -2045,7 +2036,7 @@ inline DBMList* prover::do_proof_place_forall(DBM* const lhs, DBMList* const pla
      */
 
     DBMList placeholder_forall(*place);
-    succCheckRule(sub, lhs, place, &placeholder_forall);
+    succCheckRule(sub, lhs, &lhs_succ, place, &placeholder_forall);
     *place = placeholder_forall;
 
     if (cpplogEnabled(cpplogging::debug)) {
@@ -2094,17 +2085,17 @@ inline DBMList* prover::do_proof_place_forall_rel(DBM* const lhs, DBMList* const
   /* First try to get a new placeholder value that works */
   lhs->cf();
   place->cf();
-  DBM ph(*lhs);
-  ph.suc();
+  DBM lhs_succ(*lhs);
+  lhs_succ.suc();
 
   DBMList * tPlace = new DBMList(*INFTYDBM);
   restrict_to_invariant(input_pes.invariants(), tPlace, *sub);
-  retPlaceDBM = do_proof_place(&ph, tPlace,
+  retPlaceDBM = do_proof_place(&lhs_succ, tPlace,
                                rhs->getLeft(), sub);
   retPlaceDBM->cf();
   if(retPlaceDBM->emptiness()){
     if (cpplogEnabled(cpplogging::debug)) {
-      print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, &ph, retPlaceDBM, sub, rhs->getOpType());
+      print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, &lhs_succ, retPlaceDBM, sub, rhs->getOpType());
       cpplog(cpplogging::debug) <<"--------() Empty Relativization Placeholder: phi1 is never true ----------" <<  std::endl <<  std::endl;
     }
     delete tPlace;
@@ -2125,7 +2116,7 @@ inline DBMList* prover::do_proof_place_forall_rel(DBM* const lhs, DBMList* const
        */
 
       DBMList currPlace(*retPlaceDBM);
-      succCheckRule(sub, lhs, &currPlace, retPlaceDBM);
+      succCheckRule(sub, lhs, &lhs_succ, &currPlace, retPlaceDBM);
 
       retVal = !retPlaceDBM->emptiness();
 
@@ -2218,9 +2209,9 @@ inline DBMList* prover::do_proof_place_forall_rel(DBM* const lhs, DBMList* const
       /* We omit the check that we can elapse to the placeholder;
        * We will check that once at the end */
       DBMList *fPlace = new DBMList(*INFTYDBM);
-      DBM ph(*lhs);
-      ph.suc();
-      DBM phb(ph);
+      DBM lhs_succ(*lhs);
+      lhs_succ.suc();
+      DBM phb(lhs_succ);
       retPlaceDBM = do_proof_place(&phb, fPlace,
                                    rhs->getRight(), sub);
       retPlaceDBM->cf();
@@ -2234,7 +2225,7 @@ inline DBMList* prover::do_proof_place_forall_rel(DBM* const lhs, DBMList* const
       if(retPlaceDBM->emptiness()) {
         retVal = false;
       }
-      else if ((*retPlaceDBM) >= ph) {
+      else if ((*retPlaceDBM) >= lhs_succ) {
         /* In this simple case, all possible times satisfy \phi_2
          * so we can avoid many checks. */
         retVal = true;
@@ -2248,7 +2239,7 @@ inline DBMList* prover::do_proof_place_forall_rel(DBM* const lhs, DBMList* const
          * nor everything. */
 
         DBMList forallPlace(*retPlaceDBM);
-        succCheckRule(sub, lhs, retPlaceDBM, &forallPlace);
+        succCheckRule(sub, lhs, &lhs_succ, retPlaceDBM, &forallPlace);
         forallPlace.cf();
 
         if(cpplogEnabled(cpplogging::debug)) {
@@ -2269,7 +2260,7 @@ inline DBMList* prover::do_proof_place_forall_rel(DBM* const lhs, DBMList* const
         phi1PredPlace.pre();
         phi1PredPlace.cf();
         /*--- PredCheck code----*/
-        predCheckRule(retPlaceDBM, lhs, &ph, &phi2Place, &phi1Place, &phi1PredPlace);
+        predCheckRule(retPlaceDBM, lhs, &lhs_succ, &phi2Place, &phi1Place, &phi1PredPlace);
         retPlaceDBM->cf();
 
         cpplog(cpplogging::debug) <<"----() FORALL Rel Exists placeholder obtained as := {"
@@ -2796,20 +2787,20 @@ inline DBMList* prover::do_proof_place_existact(DBM* const lhs, DBMList* const p
 
     DBMList tempPlace(*place);
     DBM tempLHS(*lhs);
-    // Method tightens lhs and place
+    // Method tightens lhs and place to those subsets satisfying the guard (leftExpr).
     bool tempBool = comp_ph_exist_place(&tempLHS, &tempPlace, *(tempT->getLeftExpr()), *sub);
     if(tempBool == false) {
       cpplog(cpplogging::debug) << "Transition: " << tempT << " cannot be taken." << std::endl;
       continue;
     }
 
-    /* Now check the invariant */
+    /* Now check the invariant of the target location (getEnteringLocation gives the destination
+       location of the transition */
     DBM invCons(*INFTYDBM);
-    SubstList tSub(*sub);
-    const SubstList * sl = tempT->getEnteringLocation(&tSub);
+    const SubstList * sl = tempT->getEnteringLocation(sub);
     bool isInv = restrict_to_invariant(input_pes.invariants(), &invCons, *sl);
     delete sl;
-    if(isInv) {
+    if(isInv) { // the invariant does not hold vacuously.
       invCons.cf();
       const ClockSet * st = tempT->getCSet();
       if(st != nullptr) {
