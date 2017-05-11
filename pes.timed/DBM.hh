@@ -40,7 +40,7 @@ public:
       cc[i] = 0;
     }
     cc[idx] = (0x1 << b);
-  };
+  }
 
   /** Copy Constructor.
    * @param Y (&) The object to copy.
@@ -55,7 +55,7 @@ public:
 
   /** Destructor.  Does nothing.
    * @return [Destructor]. */
-  ~ClockSet() { delete[] cc; };
+  ~ClockSet() { delete[] cc; }
 
   /** This adds a clock to the clock set.
    * @param bit The index of the clock to add.
@@ -65,7 +65,7 @@ public:
     int idx = bit >> 5;
     cc[idx] = cc[idx] | (0x1 << b);
     return this;
-  };
+  }
 
   /** Prints out the list of clocks in the set,
    * printint index _ as clock A
@@ -102,7 +102,7 @@ public:
     int b = bit & 0x1F;
     int idx = bit >> 5;
     return ((cc[idx] >> b) & 0x1);
-  };
+  }
 
 protected:
   /** The array of unsigned ints used to store the clock set.  Each integer
