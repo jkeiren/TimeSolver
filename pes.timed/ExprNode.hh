@@ -244,7 +244,7 @@ public:
   ExprNode(const opType o, ExprNode* q,
            const bidirectional_map<std::string, int>& cs,
            const bidirectional_map<std::string, int>& as)
-      : op(o), left(q), declared_clocks(cs), declared_atomic(as) {
+      : left(q), op(o), declared_clocks(cs), declared_atomic(as) {
     right = nullptr;
     constraint = nullptr;
     cset = nullptr;
@@ -264,7 +264,7 @@ public:
   ExprNode(const opType o, ExprNode* l, ExprNode* r,
            const bidirectional_map<std::string, int>& cs,
            const bidirectional_map<std::string, int>& as)
-      : op(o), left(l), right(r), declared_clocks(cs), declared_atomic(as) {
+      : left(l), right(r), op(o), declared_clocks(cs), declared_atomic(as) {
     constraint = nullptr;
     predicate = nullptr;
     cset = nullptr;
@@ -330,7 +330,7 @@ public:
    * @note Using this constructor with an opType value other than one of
    * the values given above may result in program errors.
    * @return [Constructor]. */
-  ExprNode(const opType o, const int a, const int i,
+  ExprNode(const opType o, const short a, const short i,
            const bidirectional_map<std::string, int>& cs,
            const bidirectional_map<std::string, int>& as)
       : op(o), atomic(a), intVal(i), declared_clocks(cs), declared_atomic(as) {
@@ -359,13 +359,13 @@ public:
    * @note Using this constructor with an opType value other than one of
    * the values given above may result in program errors.
    * @return [Constructor]. */
-  ExprNode(const opType o, const int a, const int i, DBM* c,
+  ExprNode(const opType o, const short a, const short i, DBM* c,
            const bidirectional_map<std::string, int>& cs,
            const bidirectional_map<std::string, int>& as)
-      : op(o),
+      : constraint(c),
+        op(o),
         atomic(a),
         intVal(i),
-        constraint(c),
         declared_clocks(cs),
         declared_atomic(as) {
     left = nullptr;
@@ -382,11 +382,11 @@ public:
    * @note Using this constructor with an opType value other than one of
    * the values given above may result in program errors.
    * @return [Constructor]. */
-  ExprNode(const opType o, const char* a, const int i,
+  ExprNode(const opType o, const char* a, const short i,
            const bidirectional_map<std::string, int>& cs,
            const bidirectional_map<std::string, int>& as)
-      : op(o),
-        predicate(a),
+      : predicate(a),
+        op(o),
         intVal(i),
         declared_clocks(cs),
         declared_atomic(as) {
@@ -409,7 +409,7 @@ public:
   ExprNode(const opType o, ExprNode* l, ClockSet* s,
            const bidirectional_map<std::string, int>& cs,
            const bidirectional_map<std::string, int>& as)
-      : op(o), left(l), cset(s), declared_clocks(cs), declared_atomic(as) {
+      : left(l), cset(s), op(o), declared_clocks(cs), declared_atomic(as) {
     right = nullptr;
     predicate = nullptr;
     constraint = nullptr;
@@ -431,7 +431,7 @@ public:
   ExprNode(const opType o, ExprNode* l, SubstList* s,
            const bidirectional_map<std::string, int>& cs,
            const bidirectional_map<std::string, int>& as)
-      : op(o), left(l), subst(s), declared_clocks(cs), declared_atomic(as) {
+      : left(l), subst(s), op(o), declared_clocks(cs), declared_atomic(as) {
     right = nullptr;
     predicate = nullptr;
     cset = nullptr;
@@ -456,8 +456,8 @@ public:
   ExprNode(const opType o, ExprNode* l, const short int cx, const short int cy,
            const bidirectional_map<std::string, int>& cs,
            const bidirectional_map<std::string, int>& as)
-      : op(o),
-        left(l),
+      : left(l),
+        op(o),
         atomic(cx),
         intVal(cy),
         declared_clocks(cs),
@@ -476,8 +476,8 @@ public:
    * @param E (&) The ExprNode object to make a deep copy of
    * @return [Constructor]. */
   ExprNode(const ExprNode& other)
-      : op(other.op),
-        predicate(other.predicate), // shallow copy good enough
+      : predicate(other.predicate), // shallow copy good enough
+        op(other.op),
         atomic(other.atomic),
         intVal(other.intVal),
         b(other.b),
@@ -634,7 +634,7 @@ public:
    * the block of the expression.
    * @note The integer storing the block can be used for other purposes.
    * @return None.*/
-  void set_Block(const int block) { intVal = block; }
+  void set_Block(const short block) { intVal = block; }
 
   /** Returns the parity of the expression: true = gfp, false = lfp.
    * @return The parity (as a boolean) of the
@@ -732,12 +732,6 @@ protected:
    * The method names give some indication of what the different uses
    * are. */
 
-  /** The "opcode" or Type ID of the Expression Node.
-   * This type determines
-   * which fields are empty or non-empty and the shape of
-   * the expression node. */
-  opType op;
-
   /** The string label of a predicate variable in an expression. */
   const char* predicate;
 
@@ -747,6 +741,27 @@ protected:
   /** The right child of an ExprNode in an expression tree.
    * Possibly empty. */
   ExprNode* right;
+
+  /** The clock constraint of an ExprNode.
+   * Possibly empty. */
+  DBM* constraint;
+
+  /** Represents the set of clocks (a subset of the set of
+   * specified clocks) in an ExprNode, currently used
+   * to specify the set of clocks to reset to 0.  */
+  ClockSet* cset;
+  /** Represents a list of (usually control or atomic) variables and
+   * what values should be substituted into them.
+   * Used in an expression to represent a substitution of variables in a
+   * child expression. The SubstList is often the "state",
+   * giving values to propositions (or control values).  Possibly empty. */
+  SubstList* subst;
+
+  /** The "opcode" or Type ID of the Expression Node.
+   * This type determines
+   * which fields are empty or non-empty and the shape of
+   * the expression node. */
+  opType op;
 
   /** The label for the atomic (location or clock variable)
    * of the expression, depending on the opType.
@@ -766,26 +781,11 @@ protected:
    * to assign to the clock stored in int atomic.*/
   short int intVal;
 
-  /** The clock constraint of an ExprNode.
-   * Possibly empty. */
-  DBM* constraint;
-
   /** Used as the boolean value of an expression or its parity.
    * For opType BOOL: b is the truth of the expression. For
    * opType PREDICATE: b is the parity of the expression, with
    * true = gfp and false = lfp. */
   bool b;
-
-  /** Represents the set of clocks (a subset of the set of
-   * specified clocks) in an ExprNode, currently used
-   * to specify the set of clocks to reset to 0.  */
-  ClockSet* cset;
-  /** Represents a list of (usually control or atomic) variables and
-   * what values should be substituted into them.
-   * Used in an expression to represent a substitution of variables in a
-   * child expression. The SubstList is often the "state",
-   * giving values to propositions (or control values).  Possibly empty. */
-  SubstList* subst;
 
   // FIXME
 public:
