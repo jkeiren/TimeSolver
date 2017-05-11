@@ -11,9 +11,8 @@
  * @note Many functions are inlined for better performance.
  * @version 1.2
  * @date November 2, 2013 */
-class Transition{
+class Transition {
 public:
-
   /** Constructor for transitions. This is used in the parser
    * to form transition objects
    * @param destParent (*) a reference for the expression that is the
@@ -31,19 +30,22 @@ public:
    * @param reset (*) The set of clocks the transition resets. This will be NULL
    * if no clocks are reset.
    * @return [Constructor]. */
-  Transition(ExprNode * const destParent, const ExprNode * const leftExprIn,
-             ExprNode * const rightExprIn, const bool isDestOnLeft,
-             const SubstList * const dest, const ClockSet * const reset,
-             const std::vector<std::pair<short int, short int> > * const clockAssignments) :
-  destPar(destParent),
-  isDestLeft(isDestOnLeft),
-  clockAssignmentList(clockAssignments == 0?NULL:new std::vector<std::pair<short int, short int> >(*clockAssignments)),
-  leftExpr(leftExprIn),
-  rightExpr(rightExprIn),
-  destList(dest),
-  resetList(reset) {
-  };
-
+  Transition(ExprNode* const destParent, const ExprNode* const leftExprIn,
+             ExprNode* const rightExprIn, const bool isDestOnLeft,
+             const SubstList* const dest, const ClockSet* const reset,
+             const std::vector<std::pair<short int, short int>>* const
+                 clockAssignments)
+      : destPar(destParent),
+        isDestLeft(isDestOnLeft),
+        clockAssignmentList(
+            clockAssignments == 0
+                ? NULL
+                : new std::vector<std::pair<short int, short int>>(
+                      *clockAssignments)),
+        leftExpr(leftExprIn),
+        rightExpr(rightExprIn),
+        destList(dest),
+        resetList(reset){};
 
   /** Destructor. Given the referencing of different
    * destination expressions from multiple sources,
@@ -54,13 +56,11 @@ public:
    * @return [Destructor]. */
   ~Transition() {
     /* First set destExpr to NULL to not double delete */
-    if(destPar == NULL && rightExpr != NULL) {
+    if (destPar == NULL && rightExpr != NULL) {
       rightExpr = NULL;
-    }
-    else if(isDestLeft && destPar != NULL) {
+    } else if (isDestLeft && destPar != NULL) {
       destPar->setExprDestLeft(NULL);
-    }
-    else if(destPar != NULL){
+    } else if (destPar != NULL) {
       destPar->setExprDestRight(NULL);
     }
     /* should be superfluous
@@ -80,22 +80,19 @@ public:
    * the enabling condition of the transition.
    * @return The ExprNode describing the enabling conditions of the
    * transition. */
-  const ExprNode * getLeftExpr() const {
-    return leftExpr;
-  };
+  const ExprNode* getLeftExpr() const { return leftExpr; };
 
   /** Retrieve the expression that specifies
    * the destination (state change) of the transition.
    * @return The ExprNode describing the destination (state change) of the
    * transition. */
-  const ExprNode * getRightExpr() const {
-    return rightExpr;
-  };
+  const ExprNode* getRightExpr() const { return rightExpr; };
 
   /** Retrieve the list of clock assignments stored by this transition.
-  * @return the vector containing the ordered list of clock assignments
-  * that occur on the edge of this transition. */
-  const std::vector<std::pair<short int, short int> > * getAssignmentVector() const {
+   * @return the vector containing the ordered list of clock assignments
+   * that occur on the edge of this transition. */
+  const std::vector<std::pair<short int, short int>>* getAssignmentVector()
+      const {
     return clockAssignmentList;
   }
 
@@ -109,15 +106,13 @@ public:
    * @param destExpr (*) the expression that needs to be proven
    * after the transition is executed.
    * @return None. */
-  void getNewTrans(ExprNode * const destExpr) {
-    if(destPar == NULL) {
+  void getNewTrans(ExprNode* const destExpr) {
+    if (destPar == NULL) {
       rightExpr = destExpr;
-    }
-    else {
-      if(isDestLeft) {
+    } else {
+      if (isDestLeft) {
         destPar->setExprDestLeft(destExpr);
-      }
-      else {
+      } else {
         destPar->setExprDestRight(destExpr);
         rightExpr = destExpr;
       }
@@ -128,9 +123,7 @@ public:
 
   /** Returns the clock set of the clocks reset by this transition.
    * @return the clocks reset by this transition. */
-  const ClockSet * getCSet() const {
-    return resetList;
-  }
+  const ClockSet* getCSet() const { return resetList; }
 
   /** Given the location of a state that satisfies the
    * location constraints of the transition, this gives
@@ -140,13 +133,12 @@ public:
    * @param source (*) The leaving location (the discrete state component).
    * @return The entering location if the given location executed this
    * transition. */
-  const SubstList * getEnteringLocation(SubstList * source) const {
+  const SubstList* getEnteringLocation(SubstList* source) const {
     // Since a new substList is created, delete it when finished.
-    SubstList *st = nullptr;
-    if(destList == nullptr) {
+    SubstList* st = nullptr;
+    if (destList == nullptr) {
       st = new SubstList(*source);
-    }
-    else {
+    } else {
       st = new SubstList(destList, source);
     }
 
@@ -154,10 +146,9 @@ public:
   }
 
 private:
-
   /** parent pointer to destination to allow for easy modification
    * of expression for destination sequent. */
-  ExprNode * destPar;
+  ExprNode* destPar;
   /** if false, we have an imply node with the destination at the right.
    * otherwise, true means the destination expression is the left child
    * of destPar. */
@@ -168,21 +159,20 @@ private:
    * sequentially, the list is assumed to have no clock swaps
    * (i.e. no conflicts in clock assignments). By construction,
    * the innermost assignments are at the back. */
-  const std::vector<std::pair<short int, short int> > * clockAssignmentList;
+  const std::vector<std::pair<short int, short int>>* clockAssignmentList;
 
   /** The enabling conditions of the transition. */
-  const ExprNode *leftExpr;
+  const ExprNode* leftExpr;
   /** The destination (state change) of the transition. */
-  ExprNode *rightExpr;
+  ExprNode* rightExpr;
 
   /** A reference to the subList of the transition.
    * If there is no change in location, destList will be NULL. */
-  const SubstList * destList;
+  const SubstList* destList;
 
   /** The set of clocks to reset on the transition. This is NULL
    * if there are no clocks to reset */
-  const ClockSet * resetList;
-
+  const ClockSet* resetList;
 };
 
 /** Prints out the transition to the desired output stream.
@@ -190,29 +180,24 @@ private:
  * @param t (*) The transition to print.
  * @param os (&) The type of output stream to print the output to.
  * @return none */
-inline void print_Transition(const Transition* const t, std::ostream& os)
-{
-  const ExprNode * leftExpr = t->getLeftExpr();
-  const ExprNode * rightExpr = t->getRightExpr();
-  if(leftExpr != NULL) {
+inline void print_Transition(const Transition* const t, std::ostream& os) {
+  const ExprNode* leftExpr = t->getLeftExpr();
+  const ExprNode* rightExpr = t->getRightExpr();
+  if (leftExpr != NULL) {
     print_ExprNodeTrans(leftExpr, os);
   }
   os << "->";
-  if(rightExpr != NULL) {
+  if (rightExpr != NULL) {
     print_ExprNodeTrans(rightExpr, os);
   }
 }
 
-inline
-std::ostream& operator <<(std::ostream& os, const Transition* const t)
-{
+inline std::ostream& operator<<(std::ostream& os, const Transition* const t) {
   print_Transition(t, os);
   return os;
 }
 
-inline
-std::ostream& operator <<(std::ostream& os, const Transition& t)
-{
+inline std::ostream& operator<<(std::ostream& os, const Transition& t) {
   print_Transition(&t, os);
   return os;
 }

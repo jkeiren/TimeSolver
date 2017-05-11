@@ -1,7 +1,7 @@
 /** \file ExprNode.cc
  * Source file for proof classes: Sequents, Expressions and Transitions.
  * This file contains some additional methods not in the header file.
- * @author Peter Fontana, Dezhuang Zhang, and Rance Cleaveland. 
+ * @author Peter Fontana, Dezhuang Zhang, and Rance Cleaveland.
  * @note Many functions are inlined for better performance.
  * @version 1.21
  * @date November 8, 2013 */
@@ -24,25 +24,25 @@ using namespace std;
  * @param av (*) the pointer to the vector of clock assignments.
  * @return None. When finished, av is changed to be the vector of
  * clock assignments.  */
-void makeAssignmentList(const ExprNode * const e, vector<pair<short int,short int> > * av) {
-  if(e->getOpType() == ASSIGN)
-  {
+void makeAssignmentList(const ExprNode* const e,
+                        vector<pair<short int, short int>>* av) {
+  if (e->getOpType() == ASSIGN) {
     av->push_back(std::make_pair(e->getAtomic(), e->getIntVal()));
     makeAssignmentList(e->getExpr(), av);
   }
 }
 
 /** Lookup the name of the clock with id n */
-static inline
-const string& lookup_clock_name(const unsigned int n, const bidirectional_map <string, int>& declared_clocks)
-{
+static inline const string& lookup_clock_name(
+    const unsigned int n,
+    const bidirectional_map<string, int>& declared_clocks) {
   return declared_clocks.reverse_at(n);
 }
 
 /** Lookup the name of the atomic with id n */
-static inline
-const string& lookup_atomic_name(const unsigned int n, const bidirectional_map<std::string, int>& declared_atomic)
-{
+static inline const string& lookup_atomic_name(
+    const unsigned int n,
+    const bidirectional_map<std::string, int>& declared_atomic) {
   return declared_atomic.reverse_at(n);
 }
 
@@ -51,11 +51,10 @@ const string& lookup_atomic_name(const unsigned int n, const bidirectional_map<s
  * @param e (*) The expression to print out.
  * @param os (&) The type of output stream to print the output to.
  * @return None */
-void ExprNode::print(std::ostream& os) const
-{
-  switch (getOpType()){
+void ExprNode::print(std::ostream& os) const {
+  switch (getOpType()) {
     case PREDICATE:
-      os << getPredicate() ;
+      os << getPredicate();
       break;
     case FORALL:
       os << "FORALL.[";
@@ -163,7 +162,7 @@ void ExprNode::print(std::ostream& os) const
       os << getIntVal();
       break;
     case BOOL:
-      os << ((getBool())? "TRUE" : "FALSE");
+      os << ((getBool()) ? "TRUE" : "FALSE");
       break;
     case SUBLIST:
       getExpr()->print(os);
@@ -193,30 +192,29 @@ void ExprNode::print(std::ostream& os) const
  * @param place If true, print for expressions with placeholders. Used for
  * expression types within proof subtrees with placeholders.
  * @return none */
-void print_ExprNodeType(const opType op, std::ostream& os, bool place)
-{
+void print_ExprNodeType(const opType op, std::ostream& os, bool place) {
   os << "**(";
-  switch (op){
+  switch (op) {
     case PREDICATE:
       os << "PREDICATE";
       break;
     case FORALL:
-      os << "FORALL" << (place?" - P2":"");
+      os << "FORALL" << (place ? " - P2" : "");
       break;
     case EXISTS:
-      os << "EXISTS - P" << (place?"2":"");
+      os << "EXISTS - P" << (place ? "2" : "");
       break;
     case FORALL_REL:
-      os << "FORALLREL" << (place?" - P2":"");
+      os << "FORALLREL" << (place ? " - P2" : "");
       break;
     case EXISTS_REL:
-      os << "EXISTSREL - P" << (place?"2":"");
+      os << "EXISTSREL - P" << (place ? "2" : "");
       break;
     case ALLACT:
-      os << "ALLACT" << (place?" - B":"");
+      os << "ALLACT" << (place ? " - B" : "");
       break;
     case EXISTACT:
-      os << "EXISTACT" << (place?" - B":"");
+      os << "EXISTACT" << (place ? " - B" : "");
       break;
     case AND:
       os << "AND - B";
@@ -231,10 +229,10 @@ void print_ExprNodeType(const opType op, std::ostream& os, bool place)
       os << "IMPLY";
       break;
     case RESET:
-      os << "RESET" << (place?" - P2":"");
+      os << "RESET" << (place ? " - P2" : "");
       break;
     case REPLACE:
-      os << "REPLACE" << (place?" - B":"");
+      os << "REPLACE" << (place ? " - B" : "");
       break;
     case CONSTRAINT:
       os << "CONSTRAINT";
@@ -276,22 +274,20 @@ void print_ExprNodeType(const opType op, std::ostream& os, bool place)
   os << ")**";
 }
 
-
 /** Prints out the fed in expression node to the fed in
  * output stream: used in printing of transitions.
  * @param e (*) The ExprNode to print out.
  * @param os (&) The type of output stream to print the output to.
  * @return none */
-void print_ExprNodeTrans(const ExprNode * const e, std::ostream& os)
-{
-  if(e != NULL) {
-    switch (e->getOpType()){
+void print_ExprNodeTrans(const ExprNode* const e, std::ostream& os) {
+  if (e != NULL) {
+    switch (e->getOpType()) {
       case PREDICATE:
-        os << e->getPredicate() ;
+        os << e->getPredicate();
         break;
       case FORALL:
         os << "FORALL.[";
-        print_ExprNodeTrans(e->getQuant(),os);
+        print_ExprNodeTrans(e->getQuant(), os);
         os << "]";
         break;
       case EXISTS:
@@ -301,26 +297,26 @@ void print_ExprNodeTrans(const ExprNode * const e, std::ostream& os)
         break;
       case FORALL_REL:
         os << "FORALLREL.(";
-        print_ExprNodeTrans(e->getLeft(),os);
+        print_ExprNodeTrans(e->getLeft(), os);
         os << ")[";
-        print_ExprNodeTrans(e->getRight(),os);
+        print_ExprNodeTrans(e->getRight(), os);
         os << "]";
         break;
       case EXISTS_REL:
         os << "EXISTSREL.(";
-        print_ExprNodeTrans(e->getLeft(),os);
+        print_ExprNodeTrans(e->getLeft(), os);
         os << ")[";
-        print_ExprNodeTrans(e->getRight(),os);
+        print_ExprNodeTrans(e->getRight(), os);
         os << "]";
         break;
       case ALLACT:
         os << "ALLACT.[";
-        print_ExprNodeTrans(e->getQuant(),os);
+        print_ExprNodeTrans(e->getQuant(), os);
         os << "]";
         break;
       case EXISTACT:
         os << "EXISTACT.[";
-        print_ExprNodeTrans(e->getQuant(),os);
+        print_ExprNodeTrans(e->getQuant(), os);
         os << "]";
         break;
       case AND:
@@ -391,7 +387,7 @@ void print_ExprNodeTrans(const ExprNode * const e, std::ostream& os)
         os << e->getIntVal();
         break;
       case BOOL:
-        os << ((e->getBool())? "TRUE" : "FALSE");
+        os << ((e->getBool()) ? "TRUE" : "FALSE");
         break;
       case SUBLIST:
         print_ExprNodeTrans(e->getExpr(), os);
@@ -414,5 +410,3 @@ void print_ExprNodeTrans(const ExprNode * const e, std::ostream& os)
     }
   }
 }
-
-

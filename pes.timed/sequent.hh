@@ -29,11 +29,11 @@
 class SequentPlace; // forward declaration for parent scope
 
 /** Elements of a DBM set */
-typedef DBM* DBMsetElt;
+typedef DBM *DBMsetElt;
 
 /** This defines a DBMset as a vector of DBM
  * arrays (DBM Arrays). */
-typedef std::vector<DBMsetElt>  DBMset;
+typedef std::vector<DBMsetElt> DBMset;
 
 /** The internal representation of a proof sequent with
  * a clock zone for the clock state. A sequent is a
@@ -49,7 +49,6 @@ typedef std::vector<DBMsetElt>  DBMset;
  * @date November 2, 2013 */
 class Sequent {
 public:
-
   /** Constructor to make an Sequent = (ExprNode, SubstList) object,
    * with an empty set of DBMs. Until a DBM is specified as a clock
    * state, the sequent is empty.
@@ -57,11 +56,8 @@ public:
    * @param sub (*) The discrete state component of the left side
    * of the sequent.
    * @return [Constructor]. */
-  Sequent(const ExprNode * const rhs, const SubstList * const discrete_state)
-  : _rhs(rhs),
-    _discrete_state(new SubstList(*discrete_state)){
-  }
-
+  Sequent(const ExprNode *const rhs, const SubstList *const discrete_state)
+      : _rhs(rhs), _discrete_state(new SubstList(*discrete_state)) {}
 
   /* A default Copy Constructor is implemented by the
    * compiler which performs a member-wise deep copy. */
@@ -72,10 +68,10 @@ public:
    * since each parent sequent (with or without a placeholder) can
    * delete itself, the destructor does not delete parent sequents.
    * @return [Destructor] */
-  ~Sequent(){
+  ~Sequent() {
     delete _discrete_state;
     // Iterate Through and Delete every element of ds
-    for(std::vector<DBM *>::iterator it = ds.begin(); it != ds.end(); it++) {
+    for (std::vector<DBM *>::iterator it = ds.begin(); it != ds.end(); it++) {
       delete *it;
     }
     ds.clear();
@@ -89,57 +85,33 @@ public:
 
   /** Returns the ExprNode element (rhs or consequent) of the Sequent.
    * @return the rhs expression of the ExprNode element of the Sequent. */
-  const ExprNode* rhs() const
-  {
-    return _rhs;
-  }
+  const ExprNode *rhs() const { return _rhs; }
 
   /** Returns the discrete state of the sequent's left (the SubstList).
    * @return the discrete state of the sequent's left (the SubstList). */
-  const SubstList* discrete_state() const
-  {
-    return _discrete_state;
-  }
+  const SubstList *discrete_state() const { return _discrete_state; }
 
   /** Add a parent sequent */
-  void addParent(Sequent* s)
-  {
-    _parent_sequents.push_back(s);
-  }
+  void addParent(Sequent *s) { _parent_sequents.push_back(s); }
 
   /** Add a parent sequent (with placeholder) */
-  void addParent(SequentPlace* s)
-  {
-    _parent_sequents_placeholder.push_back(s);
-  }
+  void addParent(SequentPlace *s) { _parent_sequents_placeholder.push_back(s); }
 
   /** Get parent sequents */
-  const std::vector<Sequent *>& parents() const
-  {
-    return _parent_sequents;
-  }
+  const std::vector<Sequent *> &parents() const { return _parent_sequents; }
 
   /** Get parent sequents (with placeholders) */
-  const std::vector<SequentPlace *>& parents_with_placeholders() const
-  {
+  const std::vector<SequentPlace *> &parents_with_placeholders() const {
     return _parent_sequents_placeholder;
   }
 
-  const DBMset& dbm_set() const
-  {
-    return ds;
-  }
+  const DBMset &dbm_set() const { return ds; }
 
-  DBMset& dbm_set()
-  {
-    return ds;
-  }
+  DBMset &dbm_set() { return ds; }
 
   /** Adds a sequent (better: the left hand side of the sequent), to the set of
    * sequents represented by this Sequent object */
-  void push_sequent(DBM* lhs) {
-    ds.push_back(lhs);
-  }
+  void push_sequent(DBM *lhs) { ds.push_back(lhs); }
 
   /** Removes the last added sequent from the set of sequents represented by
    * this object */
@@ -149,10 +121,8 @@ public:
   }
 
   /** Delete sequents and clear the vector */
-  void delete_sequents()
-  {
-    for (DBMset::iterator it = ds.begin(); it != ds.end(); ++it)
-    {
+  void delete_sequents() {
+    for (DBMset::iterator it = ds.begin(); it != ds.end(); ++it) {
       delete *it;
     }
     ds.clear();
@@ -163,16 +133,18 @@ public:
    * DBM is contained within one of the sequents. This is used for greatest
    * fixpoint circularity (or known true sequents), since by definition
    * of sequents, if sequent B is true and A <= B (the right hand side matches
-   * and the left hand state of A is a subset of the states in B), A is also true.
-   * For this method, each B *(*it) is a known sequent and lhs is the clock state
-   * of A. This method assumes that the right hand side and discrete states match
-   * (and is often called after locate_sequent() or look_for_sequent()); hence,
-   * it only needs to compare clock states.
+   * and the left hand state of A is a subset of the states in B), A is also
+   * true. For this method, each B *(*it) is a known sequent and lhs is the
+   * clock state of A. This method assumes that the right hand side and discrete
+   * states match (and is often called after locate_sequent() or
+   * look_for_sequent()); hence, it only needs to compare clock states.
    * @param lhs (*) The DBM to compare the sequent's DBMs to.
    * @return true: lhs <= some sequent in s
    * (consequently, the sequent is true), false: otherwise.*/
-  inline bool tabled_sequent(const DBM * const lhs) const {
-    return std::find_if(ds.begin(), ds.end(), [&](const DBMsetElt x){return *x >= *lhs; }) != ds.end();
+  inline bool tabled_sequent(const DBM *const lhs) const {
+    return std::find_if(ds.begin(), ds.end(), [&](const DBMsetElt x) {
+             return *x >= *lhs;
+           }) != ds.end();
   }
 
   /** Using that a Sequent object is a set of sequents with matching rhs and
@@ -181,17 +153,18 @@ public:
    * sequents, since by definition
    * of sequents, if sequent B is false and B <= A (the right hand side matches
    * and the left hand state of B is a subset of the states in A), A is false.
-   * For this method, each B *(*it) is a known sequent and lhs is the clock state
-   * of A. This method assumes that the right hand side and discrete states match
-   * (and is often called after locate_sequent() or look_for_sequent()); hence,
-   * it only needs to compare clock states.
+   * For this method, each B *(*it) is a known sequent and lhs is the clock
+   * state of A. This method assumes that the right hand side and discrete
+   * states match (and is often called after locate_sequent() or
+   * look_for_sequent()); hence, it only needs to compare clock states.
    * @param s (*) The sequent that contains a set of DBMs.
    * @param lhs (*) The DBM to compare the sequent's DBMs to.
    * @return true: lhs >= some sequent in s
    * (consequently, the sequent is false), false: otherwise.*/
-  inline bool tabled_false_sequent(const DBM * const lhs) const
-  {
-    return std::find_if(ds.begin(), ds.end(), [&](const DBMsetElt x){return *x <= *lhs; }) != ds.end();
+  inline bool tabled_false_sequent(const DBM *const lhs) const {
+    return std::find_if(ds.begin(), ds.end(), [&](const DBMsetElt x) {
+             return *x <= *lhs;
+           }) != ds.end();
   }
 
   /** Using that a Sequent object is a set of sequents with matching rhs and
@@ -205,8 +178,10 @@ public:
    * @param s (*) The sequent that contains a set of DBMs.
    * @param lhs (*) The DBM to compare the sequent's DBMs to.
    * @return true: lhs == some sequent in s, false: otherwise.*/
-  inline bool tabled_sequent_lfp(const DBM * const lhs){
-    return std::find_if(ds.begin(), ds.end(), [&](const DBMsetElt x){return *x == *lhs; }) != ds.end();
+  inline bool tabled_sequent_lfp(const DBM *const lhs) {
+    return std::find_if(ds.begin(), ds.end(), [&](const DBMsetElt x) {
+             return *x == *lhs;
+           }) != ds.end();
   }
 
   /** Takes in set of known true sequents (s) with a newly
@@ -216,15 +191,14 @@ public:
    * if and only if all of its states satisfy the right hand side. Hence,
    * if any known clock state is contained in lhs (B <= lhs),
    * we can enlarge that clock
-   * state (enlarge B). This is more efficient (for searching) than just adding an
-   * additional sequent.
+   * state (enlarge B). This is more efficient (for searching) than just adding
+   * an additional sequent.
    * @param s (*) The set of known sequents to update.
    * @param lhs (*) The DBM of the newly-established clock state.
    * @return true: the clock state was incorporated into one of s's
    * sequents; false: otherwise (a new sequent was added to s). */
-  inline bool update_sequent(const DBM * const lhs)
-  {
-    for(DBMset::const_iterator it = ds.begin(); it != ds.end(); ++it) {
+  inline bool update_sequent(const DBM *const lhs) {
+    for (DBMset::const_iterator it = ds.begin(); it != ds.end(); ++it) {
       if (*(*it) <= *lhs) {
         *(*it) = *lhs;
         return true;
@@ -242,14 +216,14 @@ public:
    * side. Hence,
    * if any known clock state is contains (B >= lhs),
    * we can refine that clock
-   * state (shrink B). This is more efficient (for searching) than just adding an
-   * additional sequent.
+   * state (shrink B). This is more efficient (for searching) than just adding
+   * an additional sequent.
    * @param s (*) The set of known sequents to update.
    * @param lhs (*) The DBM of the newly-established clock state.
    * @return true: the clock state was incorporated into one of s's
    * sequents; false: otherwise (a new sequent was added to s). */
-  inline bool update_false_sequent(const DBM * const lhs){
-    for(DBMset::iterator it = ds.begin(); it != ds.end(); ++it) {
+  inline bool update_false_sequent(const DBM *const lhs) {
+    for (DBMset::iterator it = ds.begin(); it != ds.end(); ++it) {
       if (*(*it) >= *lhs) {
         *(*it) = *lhs;
         return true;
@@ -317,8 +291,7 @@ typedef std::vector<DBMPlaceSetElt> DBMPlaceSet;
  * @date November 2, 2013 */
 class SequentPlace {
 public:
-
-   /** Constructor to make an Sequent = (ExprNode, SubstList) object,
+  /** Constructor to make an Sequent = (ExprNode, SubstList) object,
    * with an empty set of (DBM, DBMList) pairs. Until a
    * (DBM, DBMList) pair is specified as a clock
    * state, the sequent is empty.
@@ -326,11 +299,8 @@ public:
    * @param sub (*) The discrete state component of the left side
    * of the sequent.
    * @return [Constructor]. */
-  SequentPlace(const ExprNode * const rhs, const SubstList * const sub)
-  : _rhs(rhs),
-    _discrete_state(new SubstList(*sub)) {
-  }
-
+  SequentPlace(const ExprNode *const rhs, const SubstList *const sub)
+      : _rhs(rhs), _discrete_state(new SubstList(*sub)) {}
 
   /* A default Copy Constructor is implemented by the
    * compiler which performs a member-wise deep copy.
@@ -343,13 +313,13 @@ public:
    * since each parent sequent (with or without a placeholder) can
    * delete itself, the destructor does not delete parent sequents.
    * @return [Destructor] */
-  ~SequentPlace(){
+  ~SequentPlace() {
     delete _discrete_state;
     // Iterate Through and Delete every element of ds
-    for(std::vector<std::pair<DBM*, DBMList *> >::iterator it = _dbms.begin();
-        it != _dbms.end(); it++) {
+    for (std::vector<std::pair<DBM *, DBMList *>>::iterator it = _dbms.begin();
+         it != _dbms.end(); it++) {
       DBM *ls = (*it).first;
-      DBMList * lsList = (*it).second;
+      DBMList *lsList = (*it).second;
       delete ls;
       delete lsList;
     }
@@ -365,33 +335,19 @@ public:
 
   /** Returns the ExprNode element (rhs or consequent) of the Sequent.
    * @return the rhs expression of the ExprNode element of the Sequent. */
-  const ExprNode * rhs() const
-  {
-    return _rhs;
-  }
+  const ExprNode *rhs() const { return _rhs; }
 
   /** Returns the discrete state of the sequent's left (the SubstList).
    * @return the discrete state of the sequent's left (the SubstList). */
-  const SubstList * discrete_state() const
-  {
-    return _discrete_state;
-  }
+  const SubstList *discrete_state() const { return _discrete_state; }
 
-  const DBMPlaceSet& dbm_set() const
-  {
-    return _dbms;
-  }
+  const DBMPlaceSet &dbm_set() const { return _dbms; }
 
-  DBMPlaceSet& dbm_set()
-  {
-    return _dbms;
-  }
+  DBMPlaceSet &dbm_set() { return _dbms; }
 
   /** Adds a sequent (better: the left hand side of the sequent), to the set of
    * sequents represented by this Sequent object */
-  void push_sequent(DBMPlaceSetElt s) {
-    _dbms.push_back(s);
-  }
+  void push_sequent(DBMPlaceSetElt s) { _dbms.push_back(s); }
 
   /** Removes the last added sequent from the set of sequents represented by
    * this object */
@@ -403,10 +359,8 @@ public:
   }
 
   /** Delete sequents and clear the vector */
-  void delete_sequents()
-  {
-    for (DBMPlaceSet::iterator it = _dbms.begin(); it != _dbms.end(); ++it)
-    {
+  void delete_sequents() {
+    for (DBMPlaceSet::iterator it = _dbms.begin(); it != _dbms.end(); ++it) {
       delete it->first;
       delete it->second;
     }
@@ -414,26 +368,16 @@ public:
   }
 
   /** Add a parent sequent */
-  void addParent(Sequent* s)
-  {
-    _parent_sequents.push_back(s);
-  }
+  void addParent(Sequent *s) { _parent_sequents.push_back(s); }
 
   /** Add a parent sequent (with placeholder) */
-  void addParent(SequentPlace* s)
-  {
-    _parent_sequents_placeholder.push_back(s);
-  }
+  void addParent(SequentPlace *s) { _parent_sequents_placeholder.push_back(s); }
 
   /** Get parent sequents */
-  const std::vector<Sequent *>& parents() const
-  {
-    return _parent_sequents;
-  }
+  const std::vector<Sequent *> &parents() const { return _parent_sequents; }
 
   /** Get parent sequents (with placeholders) */
-  const std::vector<SequentPlace *>& parents_with_placeholders() const
-  {
+  const std::vector<SequentPlace *> &parents_with_placeholders() const {
     return _parent_sequents_placeholder;
   }
 
@@ -444,11 +388,10 @@ public:
    * to be the largest placeholder possible.
    * This is used for known true sequents, since by definition
    * of sequents, if sequent B is true and A <= B (the right hand side matches
-   * and the left hand state of A is a subset of the states in B), A is also true.
-   * For this method, each B *(*it) is a known sequent
-   * and (lhs, lhsPlace) is the clock state
-   * of A. This method assumes that the right hand side and discrete states match
-   * (and is often called after locate_sequentPlace() or
+   * and the left hand state of A is a subset of the states in B), A is also
+   * true. For this method, each B *(*it) is a known sequent and (lhs, lhsPlace)
+   * is the clock state of A. This method assumes that the right hand side and
+   * discrete states match (and is often called after locate_sequentPlace() or
    * look_for_sequentPlace()); hence,
    * it only needs to compare clock states.
    * @param s (*) The placeholder sequent that
@@ -457,13 +400,10 @@ public:
    * @param lhsPlace (*) The placeholder DBMList of the clock state.
    * @return true: (lhs, lhsPlace) <= some sequent in s
    * (consequently, the sequent is true), false: otherwise.*/
-  bool tabled_sequent(const DBM * const lhs, DBMList * const lhsPlace) const
-  {
-    auto p = [&](const DBMPlaceSetElt x)
-    {
-      if (*(x.first) == *lhs)
-      {
-        *lhsPlace & *(x.second);
+  bool tabled_sequent(const DBM *const lhs, DBMList *const lhsPlace) const {
+    auto p = [&](const DBMPlaceSetElt x) {
+      if (*(x.first) == *lhs) {
+        *lhsPlace &*(x.second);
         lhsPlace->cf();
         return true;
       }
@@ -481,8 +421,8 @@ public:
    * and the left hand state of B is a subset of the states in A), A is false.
    * For this method, each B *(*it) is a known sequent
    * and (lhs, lhsPlace) is the clock state
-   * of A. This method assumes that the right hand side and discrete states match
-   * (and is often called after locate_sequentPlace() or
+   * of A. This method assumes that the right hand side and discrete states
+   * match (and is often called after locate_sequentPlace() or
    * look_for_sequentPlace()); hence,
    * it only needs to compare clock states.
    * @param s (*) The placeholder sequent that
@@ -491,9 +431,11 @@ public:
    * @param lhsPlace (*) The placeholder DBMList of the clock state.
    * @return true: (lhs, lhsPlace) >= some sequent in s
    * (consequently, the sequent is false), false: otherwise.*/
-  inline bool tabled_false_sequent(const DBM * const lhs)
-  {
-    return std::find_if(_dbms.begin(), _dbms.end(), [&](const DBMPlaceSetElt x){return *(x.first) <= *lhs; }) != _dbms.end();
+  inline bool tabled_false_sequent(const DBM *const lhs) {
+    return std::find_if(_dbms.begin(), _dbms.end(),
+                        [&](const DBMPlaceSetElt x) {
+                          return *(x.first) <= *lhs;
+                        }) != _dbms.end();
   }
 
   /** Using that a Sequent object is a set of sequents with matching rhs and
@@ -510,10 +452,12 @@ public:
    * @param lhs (*) The DBM of the clock state to compare the sequent's DBMs to.
    * @param lhsPlace (*) The placeholder DBMList of the clock state.
    * @return true: (lhs, lhsPlace) == some sequent in s, false: otherwise.*/
-  inline bool tabled_sequent_lfp(const DBM * const lhs,
-                                 const DBMList * const lhsPlace){
+  inline bool tabled_sequent_lfp(const DBM *const lhs,
+                                 const DBMList *const lhsPlace) {
     return std::find_if(_dbms.begin(), _dbms.end(),
-                        [&](const DBMPlaceSetElt x){return *(x.first) == *lhs && *(x.second) == *lhsPlace; }) != _dbms.end();
+                        [&](const DBMPlaceSetElt x) {
+                          return *(x.first) == *lhs && *(x.second) == *lhsPlace;
+                        }) != _dbms.end();
   }
 
   /** Using that a Sequent object is a set of sequents with matching rhs and
@@ -522,11 +466,10 @@ public:
    * This is used for greatest
    * fixpoint circularity, since by definition
    * of sequents, if sequent B is true and A <= B (the right hand side matches
-   * and the left hand state of A is a subset of the states in B), A is also true.
-   * For this method, each B *(*it) is a known sequent
-   * and (lhs, lhsPlace) is the clock state
-   * of A. This method assumes that the right hand side and discrete states match
-   * (and is often called after locate_sequentPlace() or
+   * and the left hand state of A is a subset of the states in B), A is also
+   * true. For this method, each B *(*it) is a known sequent and (lhs, lhsPlace)
+   * is the clock state of A. This method assumes that the right hand side and
+   * discrete states match (and is often called after locate_sequentPlace() or
    * look_for_sequentPlace()); hence,
    * it only needs to compare clock states.
    * @param s (*) The placeholder sequent that
@@ -535,29 +478,29 @@ public:
    * @param lhsPlace (*) The placeholder DBMList of the clock state.
    * @return true: (lhs, lhsPlace) <= some sequent in s
    * (consequently, the sequent is true), false: otherwise.*/
-  inline bool tabled_sequent_gfp(const DBM * const lhs,
-                                 const DBMList * const lhsPlace){
+  inline bool tabled_sequent_gfp(const DBM *const lhs,
+                                 const DBMList *const lhsPlace) {
     return std::find_if(_dbms.begin(), _dbms.end(),
-                        [&](const DBMPlaceSetElt x){return *(x.first) == *lhs && *(x.second) >= *lhsPlace; }) != _dbms.end();
+                        [&](const DBMPlaceSetElt x) {
+                          return *(x.first) == *lhs && *(x.second) >= *lhsPlace;
+                        }) != _dbms.end();
   }
 
-  /** Assumes the current sequent is known to be true, and updates it with a newly
-   * established true clock state (lhs, lhsPlace) and adds
-   * clock state (lhs, lhsPlace)
-   * to the set of sequents. In the update, the
-   * DBM lhs and the DBMList lhsPlace are copied.
-   * By definition, a sequent B is true
-   * if and only if all of its states satisfy the right hand side. Hence,
-   * if any known clock state is contained in lhs (B <= lhs),
-   * we can enlarge that clock
-   * state (enlarge B). This is more efficient (for searching) than just adding an
+  /** Assumes the current sequent is known to be true, and updates it with a
+   * newly established true clock state (lhs, lhsPlace) and adds clock state
+   * (lhs, lhsPlace) to the set of sequents. In the update, the DBM lhs and the
+   * DBMList lhsPlace are copied. By definition, a sequent B is true if and only
+   * if all of its states satisfy the right hand side. Hence, if any known clock
+   * state is contained in lhs (B <= lhs), we can enlarge that clock state
+   * (enlarge B). This is more efficient (for searching) than just adding an
    * additional sequent.
    * @param lhs (*) The DBM of the newly-established clock state.
    * @param lhsPlace (*) The DBMList of the newly-established clock state.
    * @return true: the clock state was incorporated into one of s's
    * sequents; false: otherwise (a new sequent was added to s). */
-  inline bool update_sequent(const DBM * const lhs, const DBMList * const lhsPlace){
-    for(DBMPlaceSet::iterator it = _dbms.begin(); it != _dbms.end(); it++) {
+  inline bool update_sequent(const DBM *const lhs,
+                             const DBMList *const lhsPlace) {
+    for (DBMPlaceSet::iterator it = _dbms.begin(); it != _dbms.end(); it++) {
       /* Extra work for placeholders. For now,
        * force equality on LHS sequent and use tabling logic
        * for placeholders. */
@@ -570,24 +513,21 @@ public:
     return false;
   }
 
-  /** Assumes the current sequent is known to be true, and updates it with a newly
-   * established false clock state (lhs, lhsPlace) and adds
-   * clock state (lhs, lhsPlace)
-   * to the set of sequents. In the update, the
-   * DBM lhs and the DBMList lhsPlace are copied.
-   * By definition, a sequent B is false
-   * if and only if it has a clocks state that does not satisfy the right
-   * side. Hence,
+  /** Assumes the current sequent is known to be true, and updates it with a
+   * newly established false clock state (lhs, lhsPlace) and adds clock state
+   * (lhs, lhsPlace) to the set of sequents. In the update, the DBM lhs and the
+   * DBMList lhsPlace are copied. By definition, a sequent B is false if and
+   * only if it has a clocks state that does not satisfy the right side. Hence,
    * if any known clock state contains lhs (B >= lhs),
    * we can refine that clock
-   * state (shrink B). This is more efficient (for searching) than just adding an
-   * additional sequent.
+   * state (shrink B). This is more efficient (for searching) than just adding
+   * an additional sequent.
    * @param lhs (*) The DBM of the newly-established clock state.
    * @param lhsPlace (*) The DBMList of the newly-established clock state.
    * @return true: the clock state was incorporated into one of s's
    * sequents; false: otherwise (a new sequent was added to s). */
-  bool update_false_sequent(const DBM * const lhs){
-    for(DBMPlaceSet::iterator it = _dbms.begin(); it != _dbms.end(); ++it) {
+  bool update_false_sequent(const DBM *const lhs) {
+    for (DBMPlaceSet::iterator it = _dbms.begin(); it != _dbms.end(); ++it) {
       if (*((*it).first) >= *lhs) {
         *((*it).first) = *lhs;
         return true;
@@ -601,18 +541,17 @@ public:
      * so that it represents the empty region
      * (for all clocks x_i, 0 <= x_i <= 0). */
     DBM EMPTY(m->nClocks, m->declared_clocks);
-    for (int i=1; i<EMPTY.nClocks; i++){
-      EMPTY.addConstraint(i,0, 0);
-      EMPTY.addConstraint(0,i, 0);
+    for (int i = 1; i < EMPTY.nClocks; i++) {
+      EMPTY.addConstraint(i, 0, 0);
+      EMPTY.addConstraint(0, i, 0);
     }
     EMPTY.cf();
 
-    _dbms.push_back(std::make_pair(m,new DBMList(EMPTY)));
+    _dbms.push_back(std::make_pair(m, new DBMList(EMPTY)));
     return false;
   }
 
 protected:
-
   /** The right hand side expression of the sequent. */
   const ExprNode *_rhs;
   /** The discrete state of the left of a sequent, represented

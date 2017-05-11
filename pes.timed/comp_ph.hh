@@ -13,47 +13,51 @@
  * @param sublist (*) The discrete location of the left hand side.
  * @return true: the expression evaluates to true, false: otherwise (if
  * the set of discrete and clock states satisfying the premise is empty).*/
-inline bool comp_ph_invs(const ExprNode& e, const SubstList &sublist)
-{
-  switch (e.getOpType())
-  {
-    case ATOMIC : {
+inline bool comp_ph_invs(const ExprNode& e, const SubstList& sublist) {
+  switch (e.getOpType()) {
+    case ATOMIC: {
       return (sublist.at(e.getAtomic()) == e.getIntVal());
-      break; }
-    case ATOMIC_NOT : {
+      break;
+    }
+    case ATOMIC_NOT: {
       return (sublist.at(e.getAtomic()) != e.getIntVal());
-      break; }
-    case ATOMIC_LT : {
+      break;
+    }
+    case ATOMIC_LT: {
       return (sublist.at(e.getAtomic()) < e.getIntVal());
-      break; }
-    case ATOMIC_GT : {
+      break;
+    }
+    case ATOMIC_GT: {
       return (sublist.at(e.getAtomic()) > e.getIntVal());
-      break; }
-    case ATOMIC_LE : {
+      break;
+    }
+    case ATOMIC_LE: {
       return (sublist.at(e.getAtomic()) <= e.getIntVal());
-      break; }
-    case ATOMIC_GE : {
+      break;
+    }
+    case ATOMIC_GE: {
       return (sublist.at(e.getAtomic()) >= e.getIntVal());
-      break; }
-    case AND : {
-      return (comp_ph_invs(*(e.getLeft()), sublist)
-              &&
+      break;
+    }
+    case AND: {
+      return (comp_ph_invs(*(e.getLeft()), sublist) &&
               comp_ph_invs(*(e.getRight()), sublist));
-      break; }
-    case OR :
-    case OR_SIMPLE : {
+      break;
+    }
+    case OR:
+    case OR_SIMPLE: {
       /* We only have atomic booleans so this simplified rule works. */
-      return (comp_ph_invs(*(e.getLeft()), sublist)
-              ||
+      return (comp_ph_invs(*(e.getLeft()), sublist) ||
               comp_ph_invs(*(e.getRight()), sublist));
-      break; }
+      break;
+    }
     default: {
-      std::cerr << "Not a valid condition" <<std::endl;
-      exit(1); }
+      std::cerr << "Not a valid condition" << std::endl;
+      exit(1);
+    }
   }
   return false;
 }
-
 
 /** Takes in the specified DBM and tightens it
  * to satisfy the invariants required of the specified
@@ -68,13 +72,15 @@ inline bool comp_ph_invs(const ExprNode& e, const SubstList &sublist)
  * @param sub (*) The discrete state (location variable assignment)
  * of the sequent.
  * @return true: the model has a non-vacuous invariant; false: otherwise. */
-inline bool restrict_to_invariant(const std::vector<ExprNode *>& invs, DBM * const lhs, const SubstList& sub){
+inline bool restrict_to_invariant(const std::vector<ExprNode*>& invs,
+                                  DBM* const lhs, const SubstList& sub) {
   bool outRes = false;
   if (invs.empty()) return false;
-  for (int i=0; i < sub.nElements(); i++){
-    for (std::vector<ExprNode*>::const_iterator it = invs.begin(); it != invs.end(); ++it){
+  for (int i = 0; i < sub.nElements(); i++) {
+    for (std::vector<ExprNode*>::const_iterator it = invs.begin();
+         it != invs.end(); ++it) {
       if (comp_ph_invs(*(*it), sub)) {
-        (*lhs) & (*(*it)->dbm()) ;
+        (*lhs) & (*(*it)->dbm());
         outRes = true;
       }
     }
@@ -95,11 +101,12 @@ inline bool restrict_to_invariant(const std::vector<ExprNode *>& invs, DBM * con
  * @param sub (*) The discrete state (location variable assignment)
  * of the sequent.
  * @return true: the DBMList is changed; false: otherwise. */
-inline bool restrict_to_invariant(const std::vector<ExprNode *>& invs, DBMList * const lhs, const SubstList& sub){
+inline bool restrict_to_invariant(const std::vector<ExprNode*>& invs,
+                                  DBMList* const lhs, const SubstList& sub) {
   bool outRes = false;
   if (invs.empty()) return false;
-  std::vector<DBM *> * lList = lhs->getDBMList();
-  for(unsigned int i = 0; i < lList->size(); i++) {
+  std::vector<DBM*>* lList = lhs->getDBMList();
+  for (unsigned int i = 0; i < lList->size(); i++) {
     bool temp = restrict_to_invariant(invs, (*lList)[i], sub);
     outRes = temp || outRes;
   }
@@ -129,59 +136,66 @@ inline bool restrict_to_invariant(const std::vector<ExprNode *>& invs, DBMList *
  * tightened to make the expression true), false: otherwise (if
  * the set of discrete and clock states satisfying the premise is empty).
  * @post ph is in canonical form if it was already in canonical form before. */
-inline bool comp_ph(DBM * const ph, const ExprNode& e, const SubstList& sublist)
-{
-  switch (e.getOpType())
-  {
-    case CONSTRAINT : {
+inline bool comp_ph(DBM* const ph, const ExprNode& e,
+                    const SubstList& sublist) {
+  switch (e.getOpType()) {
+    case CONSTRAINT: {
       (*ph) & (*(e.dbm()));
       ph->cf(); // Calls Canonical Form Here.
       return (!(ph->emptiness()));
-      break; }
-    case BOOL : {
+      break;
+    }
+    case BOOL: {
       return (e.getBool());
-      break; }
-    case ATOMIC : {
+      break;
+    }
+    case ATOMIC: {
       return (sublist.at(e.getAtomic()) == e.getIntVal());
-      break; }
-    case ATOMIC_NOT : {
+      break;
+    }
+    case ATOMIC_NOT: {
       return (sublist.at(e.getAtomic()) != e.getIntVal());
-      break; }
-    case ATOMIC_LT : {
+      break;
+    }
+    case ATOMIC_LT: {
       return (sublist.at(e.getAtomic()) < e.getIntVal());
-      break; }
-    case ATOMIC_GT : {
+      break;
+    }
+    case ATOMIC_GT: {
       return (sublist.at(e.getAtomic()) > e.getIntVal());
-      break; }
-    case ATOMIC_LE : {
+      break;
+    }
+    case ATOMIC_LE: {
       return (sublist.at(e.getAtomic()) <= e.getIntVal());
-      break; }
-    case ATOMIC_GE : {
+      break;
+    }
+    case ATOMIC_GE: {
       return (sublist.at(e.getAtomic()) >= e.getIntVal());
-      break; }
-    case AND : {
-      return (comp_ph(ph, *(e.getLeft()), sublist)
-              &&
+      break;
+    }
+    case AND: {
+      return (comp_ph(ph, *(e.getLeft()), sublist) &&
               comp_ph(ph, *(e.getRight()), sublist));
-      break; }
-    case OR :
-    case OR_SIMPLE : {
+      break;
+    }
+    case OR:
+    case OR_SIMPLE: {
       /* This OR rule only works when there is at most one constraint.
        * By definition of its input, we have a discrete state (with
        * && and || notes) conjuncted with an intersection of constraints.
        * By construction of the fed input to this function, the above
        * bad case will never occur. */
-      return (comp_ph(ph, *(e.getLeft()), sublist)
-              ||
+      return (comp_ph(ph, *(e.getLeft()), sublist) ||
               comp_ph(ph, *(e.getRight()), sublist));
-      break; }
+      break;
+    }
     default: {
-      std::cerr << "Not a valid condition" <<std::endl;
-      exit(1); }
+      std::cerr << "Not a valid condition" << std::endl;
+      exit(1);
+    }
   }
   return false;
 }
-
 
 /** Simplified and performance-optimized proof engine for (ExistAct) transitions
  * and AND nodes. This method assumes that the expression e
@@ -201,58 +215,65 @@ inline bool comp_ph(DBM * const ph, const ExprNode& e, const SubstList& sublist)
  * @return true: the expression evaluates to true (and ph is
  * tightened to make the expression true), false: otherwise (if
  * the set of discrete and clock states satisfying the premise is empty).*/
-inline bool comp_ph_exist(DBM * const ph, const ExprNode& e, const SubstList& sublist)
-{
-  switch (e.getOpType())
-  {
-    case CONSTRAINT : {
+inline bool comp_ph_exist(DBM* const ph, const ExprNode& e,
+                          const SubstList& sublist) {
+  switch (e.getOpType()) {
+    case CONSTRAINT: {
       ph->cf();
       return (*ph) <= (*(e.dbm()));
-      break; }
-    case BOOL : {
+      break;
+    }
+    case BOOL: {
       return (e.getBool());
-      break; }
-    case ATOMIC : {
+      break;
+    }
+    case ATOMIC: {
       return (sublist.at(e.getAtomic()) == e.getIntVal());
-      break; }
-    case ATOMIC_NOT : {
+      break;
+    }
+    case ATOMIC_NOT: {
       return (sublist.at(e.getAtomic()) != e.getIntVal());
-      break; }
-    case ATOMIC_LT : {
+      break;
+    }
+    case ATOMIC_LT: {
       return (sublist.at(e.getAtomic()) < e.getIntVal());
-      break; }
-    case ATOMIC_GT : {
+      break;
+    }
+    case ATOMIC_GT: {
       return (sublist.at(e.getAtomic()) > e.getIntVal());
-      break; }
-    case ATOMIC_LE : {
+      break;
+    }
+    case ATOMIC_LE: {
       return (sublist.at(e.getAtomic()) <= e.getIntVal());
-      break; }
-    case ATOMIC_GE : {
+      break;
+    }
+    case ATOMIC_GE: {
       return (sublist.at(e.getAtomic()) >= e.getIntVal());
-      break; }
-    case AND : {
-      return (comp_ph_exist(ph, *(e.getLeft()), sublist)
-              &&
+      break;
+    }
+    case AND: {
+      return (comp_ph_exist(ph, *(e.getLeft()), sublist) &&
               comp_ph_exist(ph, *(e.getRight()), sublist));
-      break; }
-    case OR :
-    case OR_SIMPLE : {
+      break;
+    }
+    case OR:
+    case OR_SIMPLE: {
       /* This OR rule only works when there is at most one constraint.
        * By definition of its input, we have a discrete state (with
        * && and || notes) conjuncted with an intersection of constraints.
        * By construction of the fed input to this function, the above
        * bad case will never occur. */
-      return (comp_ph_exist(ph, *(e.getLeft()), sublist)
-              ||
+      return (comp_ph_exist(ph, *(e.getLeft()), sublist) ||
               comp_ph_exist(ph, *(e.getRight()), sublist));
-      break; }
+      break;
+    }
     default: {
-      std::cerr << "Not a valid condition" <<std::endl;
-      exit(1); }
+      std::cerr << "Not a valid condition" << std::endl;
+      exit(1);
+    }
   }
   return false;
 }
-
 
 /** Simplified and performance-optimized proof engine for (ExistAct) transitions
  * and AND nodes within placeholders. This method assumes that the expression e
@@ -273,72 +294,79 @@ inline bool comp_ph_exist(DBM * const ph, const ExprNode& e, const SubstList& su
  * @return true: the expression evaluates to true (and ph is
  * tightened to make the expression true), false: otherwise (if
  * the set of discrete and clock states satisfying the premise is empty).*/
-inline bool comp_ph_exist_place(DBM * const ph, DBMList * const place,
-                                const ExprNode& e, const SubstList& sublist)
-{
-  switch (e.getOpType())
-  {
-    case CONSTRAINT : {
+inline bool comp_ph_exist_place(DBM* const ph, DBMList* const place,
+                                const ExprNode& e, const SubstList& sublist) {
+  switch (e.getOpType()) {
+    case CONSTRAINT: {
       ph->cf();
-      const DBM * eDBM = e.dbm();
+      const DBM* eDBM = e.dbm();
       bool res = (*ph) <= (*eDBM);
       (*ph) & (*eDBM);
       ph->cf(); // Calls Canonical Form Here.
-      if(res) {
+      if (res) {
         return true;
       }
       // We can only tighten if the constraint is not empty
-      if(ph->emptiness()) {
+      if (ph->emptiness()) {
         return false;
       }
       /* For now, assume that the placeholder
        * becomes the entire constraint.
        * It may be necessary to make placeholder looser than
        * the constraint to not have inequalities that ph satisfies. */
-      *place & (*(e.dbm()));
+      *place&(*(e.dbm()));
       place->cf();
       return !(place->emptiness());
-      break; }
-    case BOOL : {
+      break;
+    }
+    case BOOL: {
       return (e.getBool());
-      break; }
-    case ATOMIC : {
+      break;
+    }
+    case ATOMIC: {
       return (sublist.at(e.getAtomic()) == e.getIntVal());
-      break; }
-    case ATOMIC_NOT : {
+      break;
+    }
+    case ATOMIC_NOT: {
       return (sublist.at(e.getAtomic()) != e.getIntVal());
-      break; }
-    case ATOMIC_LT : {
+      break;
+    }
+    case ATOMIC_LT: {
       return (sublist.at(e.getAtomic()) < e.getIntVal());
-      break; }
-    case ATOMIC_GT : {
+      break;
+    }
+    case ATOMIC_GT: {
       return (sublist.at(e.getAtomic()) > e.getIntVal());
-      break; }
-    case ATOMIC_LE : {
+      break;
+    }
+    case ATOMIC_LE: {
       return (sublist.at(e.getAtomic()) <= e.getIntVal());
-      break; }
-    case ATOMIC_GE : {
+      break;
+    }
+    case ATOMIC_GE: {
       return (sublist.at(e.getAtomic()) >= e.getIntVal());
-      break; }
-    case AND : {
-      return (comp_ph_exist_place(ph, place, *(e.getLeft()), sublist)
-              &&
+      break;
+    }
+    case AND: {
+      return (comp_ph_exist_place(ph, place, *(e.getLeft()), sublist) &&
               comp_ph_exist_place(ph, place, *(e.getRight()), sublist));
-      break; }
-    case OR :
-    case OR_SIMPLE : {
+      break;
+    }
+    case OR:
+    case OR_SIMPLE: {
       /* This OR rule only works when there is at most one constraint.
        * By definition of its input, we have a discrete state (with
        * && and || notes) conjuncted with an intersection of constraints.
        * By construction of the fed input to this function, the above
        * bad case will never occur. */
-      return (comp_ph_exist_place(ph, place, *(e.getLeft()), sublist)
-              ||
+      return (comp_ph_exist_place(ph, place, *(e.getLeft()), sublist) ||
               comp_ph_exist_place(ph, place, *(e.getRight()), sublist));
-      break; }
+      break;
+    }
     default: {
-      std::cerr << "Not a valid condition" <<std::endl;
-      exit(1); }
+      std::cerr << "Not a valid condition" << std::endl;
+      exit(1);
+    }
   }
   return false;
 }
@@ -356,66 +384,73 @@ inline bool comp_ph_exist_place(DBM * const ph, DBMList * const place,
  * @return true: the expression evaluates to true (and ph is
  * tightened to make the expression true), false: otherwise (if
  * the set of discrete and clock states satisfying the premise is empty).*/
-inline bool comp_ph_all_place(DBM * const ph, DBMList * const place,
-                              const ExprNode& e, const SubstList& sublist)
-{
-  switch (e.getOpType())
-  {
-    case CONSTRAINT : {
+inline bool comp_ph_all_place(DBM* const ph, DBMList* const place,
+                              const ExprNode& e, const SubstList& sublist) {
+  switch (e.getOpType()) {
+    case CONSTRAINT: {
       (*ph) & (*(e.dbm()));
       ph->cf(); // Calls Canonical Form Here.
       bool lhEmpty;
       lhEmpty = ph->emptiness();
-      if(lhEmpty) {
+      if (lhEmpty) {
         return false;
       }
-      *place & (*(e.dbm()));
+      *place&(*(e.dbm()));
       place->cf();
-      if(place->emptiness()) {
+      if (place->emptiness()) {
         return false;
       }
       return true;
-      break; }
-    case BOOL : {
+      break;
+    }
+    case BOOL: {
       return (e.getBool());
-      break; }
-    case ATOMIC : {
+      break;
+    }
+    case ATOMIC: {
       return (sublist.at(e.getAtomic()) == e.getIntVal());
-      break; }
-    case ATOMIC_NOT : {
+      break;
+    }
+    case ATOMIC_NOT: {
       return (sublist.at(e.getAtomic()) != e.getIntVal());
-      break; }
-    case ATOMIC_LT : {
+      break;
+    }
+    case ATOMIC_LT: {
       return (sublist.at(e.getAtomic()) < e.getIntVal());
-      break; }
-    case ATOMIC_GT : {
+      break;
+    }
+    case ATOMIC_GT: {
       return (sublist.at(e.getAtomic()) > e.getIntVal());
-      break; }
-    case ATOMIC_LE : {
+      break;
+    }
+    case ATOMIC_LE: {
       return (sublist.at(e.getAtomic()) <= e.getIntVal());
-      break; }
-    case ATOMIC_GE : {
+      break;
+    }
+    case ATOMIC_GE: {
       return (sublist.at(e.getAtomic()) >= e.getIntVal());
-      break; }
-    case AND : {
-      return (comp_ph_all_place(ph, place, *(e.getLeft()), sublist)
-              &&
+      break;
+    }
+    case AND: {
+      return (comp_ph_all_place(ph, place, *(e.getLeft()), sublist) &&
               comp_ph_all_place(ph, place, *(e.getRight()), sublist));
-      break; }
-    case OR :
-    case OR_SIMPLE : {
+      break;
+    }
+    case OR:
+    case OR_SIMPLE: {
       /* This OR rule only works when there is at most one constraint.
        * By definition of its input, we have a discrete state (with
        * && and || notes) conjuncted with an intersection of constraints.
        * By construction of the fed input to this function, the above
        * bad case will never occur. */
-      return (comp_ph_all_place(ph, place, *(e.getLeft()), sublist)
-              ||
+      return (comp_ph_all_place(ph, place, *(e.getLeft()), sublist) ||
               comp_ph_all_place(ph, place, *(e.getRight()), sublist));
-      break; }
+      break;
+    }
     default: {
-      std::cerr << "Not a valid condition" <<std::endl;
-      exit(1); }
+      std::cerr << "Not a valid condition" << std::endl;
+      exit(1);
+    }
   }
   return false;
 }

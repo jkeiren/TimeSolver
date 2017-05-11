@@ -6,66 +6,43 @@
 /** Bidirectional map. Assume the value type is size_t, and that the values are
  *  dense. */
 template <typename KeyType, typename ValueType>
-class bidirectional_map
-{
+class bidirectional_map {
 protected:
-    std::map<KeyType, ValueType> _left;  // left view
-    std::map<ValueType, KeyType> _right; // right view
+  std::map<KeyType, ValueType> _left;  // left view
+  std::map<ValueType, KeyType> _right; // right view
 
 public:
-    bidirectional_map()
-    {}
+  bidirectional_map() {}
 
-    void insert(const KeyType& k, const ValueType& v)
-    {
-      if(_left.find(k) != _left.end())
-      {
-        throw std::runtime_error("Inserting duplicate key into bidirectional map.");
-      }
-      if(_right.find(v) != _right.end())
-      {
-        throw std::runtime_error("Inserting duplicate value into bidirectional map.");
-      }
-      _left[k] = v;
-      _right[v] = k;
+  void insert(const KeyType& k, const ValueType& v) {
+    if (_left.find(k) != _left.end()) {
+      throw std::runtime_error(
+          "Inserting duplicate key into bidirectional map.");
     }
-
-    bool empty() const
-    {
-      return _left.empty();
+    if (_right.find(v) != _right.end()) {
+      throw std::runtime_error(
+          "Inserting duplicate value into bidirectional map.");
     }
+    _left[k] = v;
+    _right[v] = k;
+  }
 
-    std::size_t size() const
-    {
-      return _left.size();
-    }
+  bool empty() const { return _left.empty(); }
 
-    const std::map<KeyType, ValueType>& left() const
-    {
-      return _left;
-    }
+  std::size_t size() const { return _left.size(); }
 
-    const std::map<ValueType, KeyType>& right() const
-    {
-      return _right;
-    }
+  const std::map<KeyType, ValueType>& left() const { return _left; }
 
-    const ValueType& at(const KeyType& k) const
-    {
-      return _left.at(k);
-    }
+  const std::map<ValueType, KeyType>& right() const { return _right; }
 
-    const KeyType& reverse_at(const ValueType& v) const
-    {
-      return _right.at(v);
-    }
+  const ValueType& at(const KeyType& k) const { return _left.at(k); }
 
-    void clear()
-    {
-      _left.clear();
-      _right.clear();
-    }
+  const KeyType& reverse_at(const ValueType& v) const { return _right.at(v); }
 
+  void clear() {
+    _left.clear();
+    _right.clear();
+  }
 };
 
 #endif // BIDIRECTIONAL_MAP_HH

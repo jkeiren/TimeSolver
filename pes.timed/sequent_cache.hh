@@ -1,17 +1,16 @@
 #ifndef SEQUENT_CACHE_HH
 #define SEQUENT_CACHE_HH
 
-class sequent_cache
-{
+class sequent_cache {
 protected:
-    const pes& input_pes;
+  const pes& input_pes;
 
-    /** The maximum number of bits used in the hashing function
-     * when storing discrete states. */
-    int nbits;
+  /** The maximum number of bits used in the hashing function
+   * when storing discrete states. */
+  int nbits;
 
-    /** The size of the Hash table of Sequents: nBits + 1 */
-    int  nHash;
+  /** The size of the Hash table of Sequents: nBits + 1 */
+  int nHash;
 
 public:
   /** XList_pGFP (XList) is an array of stacks, where each stack
@@ -52,19 +51,26 @@ public:
   sequentStackPlace Xlist_false_ph;
 
   sequent_cache(const pes& input_pes, const int nbits, const int size,
-                const int seqStSize, bool& newSequent) :
-    input_pes(input_pes),
-    nbits(nbits),
-    nHash(seqStSize),
-    Xlist_pGFP(input_pes.atomic().size(), nbits, size, seqStSize, input_pes.predicates().size(), newSequent),
-    Xlist_pLFP(input_pes.atomic().size(), nbits, size, seqStSize, input_pes.predicates().size(), newSequent),
-    Xlist_true(input_pes.atomic().size(), nbits, size, seqStSize, input_pes.predicates().size(), newSequent),
-    Xlist_false(input_pes.atomic().size(), nbits, size, seqStSize, input_pes.predicates().size(), newSequent),
-    Xlist_pGFP_ph(input_pes.atomic().size(), nbits, size, seqStSize, input_pes.predicates().size(), newSequent),
-    Xlist_pLFP_ph(input_pes.atomic().size(), nbits, size, seqStSize, input_pes.predicates().size(), newSequent),
-    Xlist_true_ph(input_pes.atomic().size(), nbits, size, seqStSize, input_pes.predicates().size(), newSequent),
-    Xlist_false_ph(input_pes.atomic().size(), nbits, size, seqStSize, input_pes.predicates().size(), newSequent)
-  {}
+                const int seqStSize, bool& newSequent)
+      : input_pes(input_pes),
+        nbits(nbits),
+        nHash(seqStSize),
+        Xlist_pGFP(input_pes.atomic().size(), nbits, size, seqStSize,
+                   input_pes.predicates().size(), newSequent),
+        Xlist_pLFP(input_pes.atomic().size(), nbits, size, seqStSize,
+                   input_pes.predicates().size(), newSequent),
+        Xlist_true(input_pes.atomic().size(), nbits, size, seqStSize,
+                   input_pes.predicates().size(), newSequent),
+        Xlist_false(input_pes.atomic().size(), nbits, size, seqStSize,
+                    input_pes.predicates().size(), newSequent),
+        Xlist_pGFP_ph(input_pes.atomic().size(), nbits, size, seqStSize,
+                      input_pes.predicates().size(), newSequent),
+        Xlist_pLFP_ph(input_pes.atomic().size(), nbits, size, seqStSize,
+                      input_pes.predicates().size(), newSequent),
+        Xlist_true_ph(input_pes.atomic().size(), nbits, size, seqStSize,
+                      input_pes.predicates().size(), newSequent),
+        Xlist_false_ph(input_pes.atomic().size(), nbits, size, seqStSize,
+                       input_pes.predicates().size(), newSequent) {}
 
   /** Purge backpointers from all caches. Purging occurrs
    * until no sequent was purged (not purging a sequent indicates that
@@ -82,9 +88,9 @@ public:
    * placeholder sequents to purge.
    * @return true: something was purged; false: otherwise (nothing was
    * purged).*/
-  bool look_for_and_purge_rhs_backStack(const std::vector<Sequent *>& initialPtr,
-                                        const std::vector<SequentPlace *>& initialPlacePtr)
-  {
+  bool look_for_and_purge_rhs_backStack(
+      const std::vector<Sequent*>& initialPtr,
+      const std::vector<SequentPlace*>& initialPlacePtr) {
     bool madeChange = false;
 
     /* Store a vector of stateBackList, where each sequent only has one DBM */
@@ -92,13 +98,16 @@ public:
     /* Now iterate until the vector sequentQueue is empty,
      * purging backpointers and adding relevant ones in the queue */
     /* For now, implement purging with deques instead of vectors */
-    std::deque <Sequent *> purgeSeqQueue(initialPtr.begin(), initialPtr.end());
-    std::deque <SequentPlace *> purgeSeqPlaceQueue(initialPlacePtr.begin(), initialPlacePtr.end());
+    std::deque<Sequent*> purgeSeqQueue(initialPtr.begin(), initialPtr.end());
+    std::deque<SequentPlace*> purgeSeqPlaceQueue(initialPlacePtr.begin(),
+                                                 initialPlacePtr.end());
 
-    while(!(purgeSeqPlaceQueue.empty())) {
-      SequentPlace * tp = purgeSeqPlaceQueue.front();
+    while (!(purgeSeqPlaceQueue.empty())) {
+      SequentPlace* tp = purgeSeqPlaceQueue.front();
 
-      int pInd = input_pes.lookup_predicate(tp->rhs()->getPredicate())->getIntVal() - 1;
+      int pInd =
+          input_pes.lookup_predicate(tp->rhs()->getPredicate())->getIntVal() -
+          1;
       /* Note: Purging parent sequents still ignores clock states. */
 
       /* Now purge the sequent and the DBM from all lists.
@@ -111,44 +120,47 @@ public:
 
       /* Now find its backpointers to add to the queue
        * Only add backpointers to queue if something is purged. */
-      if( b2 || b2b) {
+      if (b2 || b2b) {
         madeChange = true;
         // Now add sequents
-        purgeSeqQueue.insert(purgeSeqQueue.end(), tp->parents().begin(), tp->parents().end());
+        purgeSeqQueue.insert(purgeSeqQueue.end(), tp->parents().begin(),
+                             tp->parents().end());
         purgeSeqPlaceQueue.insert(purgeSeqPlaceQueue.end(),
-                                  tp->parents_with_placeholders().begin(), tp->parents_with_placeholders().end());
+                                  tp->parents_with_placeholders().begin(),
+                                  tp->parents_with_placeholders().end());
       }
 
       purgeSeqPlaceQueue.pop_front();
     }
 
     /* Now purge the original Sequents */
-    while(!(purgeSeqQueue.empty())) {
+    while (!(purgeSeqQueue.empty())) {
+      Sequent* t = purgeSeqQueue.front();
 
-      Sequent * t = purgeSeqQueue.front();
-
-      int pInd = input_pes.lookup_predicate(t->rhs()->getPredicate())->getIntVal() - 1;
+      int pInd =
+          input_pes.lookup_predicate(t->rhs()->getPredicate())->getIntVal() - 1;
       /* Note: Purging parent sequents still ignores clock states */
 
       /* Now purge the sequent and the DBM from all lists.
        * Circularity caches are correctly maintained; therefore,
        * they are not purged. */
       bool b1 = Xlist_false.look_for_and_purge_rhs_sequent_state(t, pInd);
-     /* If found, Purge Sequent from its cache */
+      /* If found, Purge Sequent from its cache */
       bool b1b = Xlist_true.look_for_and_purge_rhs_sequent_state(t, pInd);
 
       /* Now find its backpointers to add to the queue
        * Only add backpointers to queue if something is purged. */
-      if(b1 || b1b) {
+      if (b1 || b1b) {
         madeChange = true;
         // Now add sequents
-        purgeSeqQueue.insert(purgeSeqQueue.end(), t->parents().begin(), t->parents().end());
+        purgeSeqQueue.insert(purgeSeqQueue.end(), t->parents().begin(),
+                             t->parents().end());
         purgeSeqPlaceQueue.insert(purgeSeqPlaceQueue.end(),
-                                  t->parents_with_placeholders().begin(), t->parents_with_placeholders().end());
+                                  t->parents_with_placeholders().begin(),
+                                  t->parents_with_placeholders().end());
       }
 
       purgeSeqQueue.pop_front();
-
     }
     // For now, do not remove backpointers from backList
     // This may be too conservative.
@@ -156,8 +168,7 @@ public:
     return madeChange;
   }
 
-  void printTabledSequents(std::ostream& os) const
-  {
+  void printTabledSequents(std::ostream& os) const {
     /* If in DEBUG Mode, print out list of Tabled Sequents */
     os << std::endl;
     os << "##--Debug Info: Tabled Sequents===============" << std::endl;
@@ -188,7 +199,6 @@ public:
     os << "----Known True (Placeholder) Cached Sequents---------" << std::endl;
     Xlist_true_ph.print_Xlist(os);
   }
-
 };
 
 #endif // SEQUENT_CACHE_HH
