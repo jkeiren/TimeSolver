@@ -45,7 +45,7 @@ public:
         leftExpr(leftExprIn),
         rightExpr(rightExprIn),
         destList(dest),
-        resetList(reset){};
+        resetList(reset){}
 
   /** Destructor. Given the referencing of different
    * destination expressions from multiple sources,
@@ -74,19 +74,19 @@ public:
     /* Due to how the transitions sets destList and resetList,
      * they are deleted when the expression is deleted. Hence,
      * destList and resetList do not need to be deleted here. */
-  };
+  }
 
   /** Retrieve the expression that specifies
    * the enabling condition of the transition.
    * @return The ExprNode describing the enabling conditions of the
    * transition. */
-  const ExprNode* getLeftExpr() const { return leftExpr; };
+  const ExprNode* getLeftExpr() const { return leftExpr; }
 
   /** Retrieve the expression that specifies
    * the destination (state change) of the transition.
    * @return The ExprNode describing the destination (state change) of the
    * transition. */
-  const ExprNode* getRightExpr() const { return rightExpr; };
+  const ExprNode* getRightExpr() const { return rightExpr; }
 
   /** Retrieve the list of clock assignments stored by this transition.
    * @return the vector containing the ordered list of clock assignments
@@ -145,6 +145,21 @@ public:
     return st;
   }
 
+  /** Prints out the transition to the desired output stream.
+   * The typical output stream is cout.
+   * @param t (*) The transition to print.
+   * @param os (&) The type of output stream to print the output to.
+   * @return none */
+  inline void print(std::ostream& os) const {
+    if (leftExpr != nullptr) {
+      print_ExprNodeTrans(leftExpr, os);
+    }
+    os << "->";
+    if (rightExpr != nullptr) {
+      print_ExprNodeTrans(rightExpr, os);
+    }
+  }
+
 private:
   /** parent pointer to destination to allow for easy modification
    * of expression for destination sequent. */
@@ -175,30 +190,13 @@ private:
   const ClockSet* resetList;
 };
 
-/** Prints out the transition to the desired output stream.
- * The typical output stream is cout.
- * @param t (*) The transition to print.
- * @param os (&) The type of output stream to print the output to.
- * @return none */
-inline void print_Transition(const Transition* const t, std::ostream& os) {
-  const ExprNode* leftExpr = t->getLeftExpr();
-  const ExprNode* rightExpr = t->getRightExpr();
-  if (leftExpr != NULL) {
-    print_ExprNodeTrans(leftExpr, os);
-  }
-  os << "->";
-  if (rightExpr != NULL) {
-    print_ExprNodeTrans(rightExpr, os);
-  }
-}
-
 inline std::ostream& operator<<(std::ostream& os, const Transition* const t) {
-  print_Transition(t, os);
+  t->print(os);
   return os;
 }
 
 inline std::ostream& operator<<(std::ostream& os, const Transition& t) {
-  print_Transition(&t, os);
+  t.print(os);
   return os;
 }
 

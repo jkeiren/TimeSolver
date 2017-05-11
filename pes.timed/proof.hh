@@ -691,12 +691,6 @@ inline bool prover::do_proof_predicate(DBM* const lhs,
   bool retVal = false;
 
   ExprNode* e = input_pes.lookup_equation(rhs->getPredicate());
-  if (e == nullptr) {
-    cpplog(cpplogging::error)
-        << "open predicate variable found: " << rhs->getPredicate()
-        << std::endl;
-    exit(-1);
-  }
 
   // Get Predicate Index for Hashing
   int predicate_index =
@@ -1528,6 +1522,8 @@ inline bool prover::do_proof_existact(DBM* const lhs, const ExprNode* const rhs,
   cpplog(cpplogging::debug) << "\t Proving EXISTACT Transitions:----\n"
                             << std::endl;
 
+  lhs->cf();
+
   /* Use placeholders to split rules */
   DBMList* partialPlace = nullptr;
   for (std::vector<Transition*>::const_iterator it =
@@ -1541,7 +1537,6 @@ inline bool prover::do_proof_existact(DBM* const lhs, const ExprNode* const rhs,
     // because the entire zone must be able to transition
     // or split by placeholders
     DBMList tempPlace(*INFTYDBM);
-    lhs->cf();
     DBM tempLHS(*lhs);
     bool guard_satisfied = comp_ph_exist_place(
         &tempLHS, &tempPlace, *(transition->getLeftExpr()), *sub);
@@ -1820,11 +1815,6 @@ inline DBMList* prover::do_proof_place_predicate(DBM* const lhs,
                                                  const ExprNode* const rhs,
                                                  SubstList* const sub) {
   ExprNode* e = input_pes.lookup_equation(rhs->getPredicate());
-  if (e == nullptr) {
-    std::cerr << "open predicate variable found: " << rhs->getPredicate()
-              << std::endl;
-    exit(-1);
-  }
 
   // Get Predicate Index for Hashing
   int predicate_index =

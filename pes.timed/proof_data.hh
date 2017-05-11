@@ -26,7 +26,7 @@ protected:
   typedef std::vector<DBMsetElementType> DBMsetType;
   stack_t* Xlist;
 
-  int atomic_size; // number of atomics in PES.
+  std::size_t atomic_size; // number of atomics in PES.
   int nbits;
   int size;
   int seqStSize;
@@ -43,11 +43,11 @@ protected:
    * to save space.
    * @param sub (*) The discrete state to hash into a bin.
    * @return The hashed bin index for that discrete state.*/
-  int hash_func(const SubstList* const sub, const int atomic_size,
+  int hash_func(const SubstList* const sub, const std::size_t atomic_size,
                 const int nbits) const {
     // From demo.7.cc (instead of from demo.cc) of previous code
     int sum = 0;
-    for (int i = 0; i < atomic_size; i++) {
+    for (std::size_t i = 0; i < atomic_size; i++) {
       sum += (sub->at(i) & nbits);
       sum = sum & nbits;
     }
@@ -96,7 +96,7 @@ protected:
   DBM* getDBM(DBM* p) const { return p; }
 
 public:
-  sequentStackT(const int aSize, const int nbits, const int size,
+  sequentStackT(const std::size_t aSize, const int nbits, const int size,
                 const int seqStSize, const int predicateInd, bool& newSequent)
       : Xlist(new stack_t[size]),
         atomic_size(aSize),

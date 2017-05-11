@@ -57,7 +57,7 @@ protected:
    * This is constructed by the parser while the ExprNode Trees
    * are being generated.
    * @see pes.y and pes.tab.c (parser files). */
-  std::vector<ExprNode*> _invariants;
+  std::vector<const ExprNode*> _invariants;
 
   /** The list of transitions of the state machine
    * from the timed automaton and/or PES description. */
@@ -74,7 +74,7 @@ public:
    *  parser. This is to avoid double frees */
   void free_all_pointers() {
     // Delete all allocated invariants
-    for (std::vector<ExprNode*>::iterator it = _invariants.begin();
+    for (std::vector<const ExprNode*>::iterator it = _invariants.begin();
          it != _invariants.end(); it++) {
       delete *it;
     }
@@ -190,17 +190,18 @@ public:
   }
 
   /** Looks up a predicate with label s and returns the expression in
-   * the list if it is there and NULL otherwise.
+   * the list if it is there. Throws a runtime error otherwise.
    * @param s (*) The label of the predicate to look up.
    * @return The reference to the Expression that the predicate is if in the
-   * list and NULL otherwise. */
+   * list and NULL otherwise.
+   * @throws runtime error when predicate variable not found. */
   ExprNode* lookup_predicate(const std::string& name) const {
     std::map<std::string, ExprNode*>::const_iterator it =
         _predicates.find(name);
     if (it != _predicates.end()) {
       return it->second;
     } else {
-      return nullptr;
+      throw std::runtime_error("open predicate variable found: " + name);
     }
   }
 
@@ -210,8 +211,8 @@ public:
     for (std::map<std::string, ExprNode*>::const_iterator it =
              _predicates.begin();
          it != _predicates.end(); ++it) {
-      os << it->first << "  ";
-      os << "ind: " << (it->second)->getIntVal() << "  ";
+      os << it->first << "  "
+         << "ind: " << (it->second)->getIntVal() << "  ";
     }
   }
 
@@ -266,21 +267,22 @@ public:
 
   /** Tries to find the RHS expression of an equation with a given predicate
    * variable label,
-   * and returns the equation, or NULL if there is no such equation.
+   * and returns the equation, or throws runtime error if there is no such equation.
    * @param s (*) The label of the equation.
    * @return The Expression (a reference) if found in the list, or NULL if not
-   * found in the list of equations. */
+   * found in the list of equations.
+   * @throws runtime_error when no equation found. */
   ExprNode* lookup_equation(const std::string& name) const {
     std::map<std::string, ExprNode*>::const_iterator it = _equations.find(name);
     if (it != _equations.end()) {
       return it->second;
     } else {
-      return nullptr;
+      throw std::runtime_error("open predicate variable found: " + name);
     }
   }
 
   /** Get all invariants */
-  const std::vector<ExprNode*>& invariants() const { return _invariants; }
+  const std::vector<const ExprNode*>& invariants() const { return _invariants; }
 
   /** Add an invariant */
   void add_invariant(ExprNode* inv) { _invariants.push_back(inv); }

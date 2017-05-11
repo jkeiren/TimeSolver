@@ -1,6 +1,9 @@
 #ifndef SEQUENT_CACHE_HH
 #define SEQUENT_CACHE_HH
 
+#include "pes.hh"
+#include "proof_data.hh"
+
 class sequent_cache {
 protected:
   const pes& input_pes;
