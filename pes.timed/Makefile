@@ -66,6 +66,11 @@ FLEX = flex
 BISON = bison
 INCL_PATH = -I. -Iexternal/cpplogging/include
 
+SRC_FILES := $(wildcard *.cc)
+GENERATED_SRC_FILES := pes.lex.cc pes.tab.cc
+HEADER_FILES := $(wildcard *.hh)
+CHECK_FILES := $(filter-out $(GENERATED_SRC_FILES), $(SRC_FILES) $(HEADER_FILES))
+
 .PHONY: default
 default: all
 
@@ -127,3 +132,9 @@ clean:
 	-rm -f gmon.out
 	$(MAKE) -C test clean
 	$(MAKE) -C external/cpplogging clean
+
+# Formatting using clang-format
+# This uses .clang-format as specification for the rules.
+clang-format:
+	clang-format -style=file -i $(CHECK_FILES)
+	
