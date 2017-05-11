@@ -72,12 +72,12 @@ inline bool comp_ph_invs(const ExprNode& e, const SubstList& sublist) {
  * @param sub (*) The discrete state (location variable assignment)
  * of the sequent.
  * @return true: the model has a non-vacuous invariant; false: otherwise. */
-inline bool restrict_to_invariant(const std::vector<ExprNode*>& invs,
+inline bool restrict_to_invariant(const std::vector<const ExprNode*>& invs,
                                   DBM* const lhs, const SubstList& sub) {
   bool outRes = false;
   if (invs.empty()) return false;
   for (int i = 0; i < sub.nElements(); i++) {
-    for (std::vector<ExprNode*>::const_iterator it = invs.begin();
+    for (std::vector<const ExprNode*>::const_iterator it = invs.begin();
          it != invs.end(); ++it) {
       if (comp_ph_invs(*(*it), sub)) {
         (*lhs) & (*(*it)->dbm());
@@ -101,7 +101,7 @@ inline bool restrict_to_invariant(const std::vector<ExprNode*>& invs,
  * @param sub (*) The discrete state (location variable assignment)
  * of the sequent.
  * @return true: the DBMList is changed; false: otherwise. */
-inline bool restrict_to_invariant(const std::vector<ExprNode*>& invs,
+inline bool restrict_to_invariant(const std::vector<const ExprNode*>& invs,
                                   DBMList* const lhs, const SubstList& sub) {
   bool outRes = false;
   if (invs.empty()) return false;
@@ -143,40 +143,31 @@ inline bool comp_ph(DBM* const ph, const ExprNode& e,
       (*ph) & (*(e.dbm()));
       ph->cf(); // Calls Canonical Form Here.
       return (!(ph->emptiness()));
-      break;
     }
     case BOOL: {
       return (e.getBool());
-      break;
     }
     case ATOMIC: {
       return (sublist.at(e.getAtomic()) == e.getIntVal());
-      break;
     }
     case ATOMIC_NOT: {
       return (sublist.at(e.getAtomic()) != e.getIntVal());
-      break;
     }
     case ATOMIC_LT: {
       return (sublist.at(e.getAtomic()) < e.getIntVal());
-      break;
     }
     case ATOMIC_GT: {
       return (sublist.at(e.getAtomic()) > e.getIntVal());
-      break;
     }
     case ATOMIC_LE: {
       return (sublist.at(e.getAtomic()) <= e.getIntVal());
-      break;
     }
     case ATOMIC_GE: {
       return (sublist.at(e.getAtomic()) >= e.getIntVal());
-      break;
     }
     case AND: {
       return (comp_ph(ph, *(e.getLeft()), sublist) &&
               comp_ph(ph, *(e.getRight()), sublist));
-      break;
     }
     case OR:
     case OR_SIMPLE: {
@@ -187,14 +178,12 @@ inline bool comp_ph(DBM* const ph, const ExprNode& e,
        * bad case will never occur. */
       return (comp_ph(ph, *(e.getLeft()), sublist) ||
               comp_ph(ph, *(e.getRight()), sublist));
-      break;
     }
     default: {
       std::cerr << "Not a valid condition" << std::endl;
       exit(1);
     }
   }
-  return false;
 }
 
 /** Simplified and performance-optimized proof engine for (ExistAct) transitions
@@ -221,40 +210,31 @@ inline bool comp_ph_exist(DBM* const ph, const ExprNode& e,
     case CONSTRAINT: {
       ph->cf();
       return (*ph) <= (*(e.dbm()));
-      break;
     }
     case BOOL: {
       return (e.getBool());
-      break;
     }
     case ATOMIC: {
       return (sublist.at(e.getAtomic()) == e.getIntVal());
-      break;
     }
     case ATOMIC_NOT: {
       return (sublist.at(e.getAtomic()) != e.getIntVal());
-      break;
     }
     case ATOMIC_LT: {
       return (sublist.at(e.getAtomic()) < e.getIntVal());
-      break;
     }
     case ATOMIC_GT: {
       return (sublist.at(e.getAtomic()) > e.getIntVal());
-      break;
     }
     case ATOMIC_LE: {
       return (sublist.at(e.getAtomic()) <= e.getIntVal());
-      break;
     }
     case ATOMIC_GE: {
       return (sublist.at(e.getAtomic()) >= e.getIntVal());
-      break;
     }
     case AND: {
       return (comp_ph_exist(ph, *(e.getLeft()), sublist) &&
               comp_ph_exist(ph, *(e.getRight()), sublist));
-      break;
     }
     case OR:
     case OR_SIMPLE: {
@@ -265,14 +245,12 @@ inline bool comp_ph_exist(DBM* const ph, const ExprNode& e,
        * bad case will never occur. */
       return (comp_ph_exist(ph, *(e.getLeft()), sublist) ||
               comp_ph_exist(ph, *(e.getRight()), sublist));
-      break;
     }
     default: {
       std::cerr << "Not a valid condition" << std::endl;
       exit(1);
     }
   }
-  return false;
 }
 
 /** Simplified and performance-optimized proof engine for (ExistAct) transitions
@@ -317,40 +295,31 @@ inline bool comp_ph_exist_place(DBM* const ph, DBMList* const place,
       *place&(*(e.dbm()));
       place->cf();
       return !(place->emptiness());
-      break;
     }
     case BOOL: {
       return (e.getBool());
-      break;
     }
     case ATOMIC: {
       return (sublist.at(e.getAtomic()) == e.getIntVal());
-      break;
     }
     case ATOMIC_NOT: {
       return (sublist.at(e.getAtomic()) != e.getIntVal());
-      break;
     }
     case ATOMIC_LT: {
       return (sublist.at(e.getAtomic()) < e.getIntVal());
-      break;
     }
     case ATOMIC_GT: {
       return (sublist.at(e.getAtomic()) > e.getIntVal());
-      break;
     }
     case ATOMIC_LE: {
       return (sublist.at(e.getAtomic()) <= e.getIntVal());
-      break;
     }
     case ATOMIC_GE: {
       return (sublist.at(e.getAtomic()) >= e.getIntVal());
-      break;
     }
     case AND: {
       return (comp_ph_exist_place(ph, place, *(e.getLeft()), sublist) &&
               comp_ph_exist_place(ph, place, *(e.getRight()), sublist));
-      break;
     }
     case OR:
     case OR_SIMPLE: {
@@ -361,14 +330,12 @@ inline bool comp_ph_exist_place(DBM* const ph, DBMList* const place,
        * bad case will never occur. */
       return (comp_ph_exist_place(ph, place, *(e.getLeft()), sublist) ||
               comp_ph_exist_place(ph, place, *(e.getRight()), sublist));
-      break;
     }
     default: {
       std::cerr << "Not a valid condition" << std::endl;
       exit(1);
     }
   }
-  return false;
 }
 
 /** Simplified and performance-optimized proof engine for (AllAct) transitions
@@ -397,44 +364,32 @@ inline bool comp_ph_all_place(DBM* const ph, DBMList* const place,
       }
       *place&(*(e.dbm()));
       place->cf();
-      if (place->emptiness()) {
-        return false;
-      }
-      return true;
-      break;
+      return !place->emptiness();;
     }
     case BOOL: {
       return (e.getBool());
-      break;
     }
     case ATOMIC: {
       return (sublist.at(e.getAtomic()) == e.getIntVal());
-      break;
     }
     case ATOMIC_NOT: {
       return (sublist.at(e.getAtomic()) != e.getIntVal());
-      break;
     }
     case ATOMIC_LT: {
       return (sublist.at(e.getAtomic()) < e.getIntVal());
-      break;
     }
     case ATOMIC_GT: {
       return (sublist.at(e.getAtomic()) > e.getIntVal());
-      break;
     }
     case ATOMIC_LE: {
       return (sublist.at(e.getAtomic()) <= e.getIntVal());
-      break;
     }
     case ATOMIC_GE: {
       return (sublist.at(e.getAtomic()) >= e.getIntVal());
-      break;
     }
     case AND: {
       return (comp_ph_all_place(ph, place, *(e.getLeft()), sublist) &&
               comp_ph_all_place(ph, place, *(e.getRight()), sublist));
-      break;
     }
     case OR:
     case OR_SIMPLE: {
@@ -445,14 +400,12 @@ inline bool comp_ph_all_place(DBM* const ph, DBMList* const place,
        * bad case will never occur. */
       return (comp_ph_all_place(ph, place, *(e.getLeft()), sublist) ||
               comp_ph_all_place(ph, place, *(e.getRight()), sublist));
-      break;
     }
     default: {
       std::cerr << "Not a valid condition" << std::endl;
       exit(1);
     }
   }
-  return false;
 }
 
 #endif // COMP_PH_HH
