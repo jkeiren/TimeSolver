@@ -1767,8 +1767,9 @@ inline bool prover::do_proof_assign(DBM* const lhs, const ExprNode* const rhs,
 
 inline bool prover::do_proof_replace(DBM* const lhs, const ExprNode* const rhs,
                                      SubstList* const sub) {
-  sub->operator[](rhs->getcX()) = sub->operator[](rhs->getcY());
-  return do_proof(lhs, rhs->getExpr(), sub);
+  SubstList sub_(*sub);
+  sub_[rhs->getcX()] = sub->at(rhs->getcY());
+  return do_proof(lhs, rhs->getExpr(), &sub_);
 }
 
 inline bool prover::do_proof_ablewaitinf(DBM* const lhs, SubstList* const sub) {
@@ -3376,8 +3377,9 @@ inline DBMList* prover::do_proof_place_replace(DBM* const lhs,
                                                DBMList* const place,
                                                const ExprNode* const rhs,
                                                SubstList* const sub) {
-  sub->operator[](rhs->getcX()) = sub->at(rhs->getcY());
-  do_proof_place(lhs, place, rhs->getExpr(), sub);
+  SubstList sub_(*sub);
+  sub_[rhs->getcX()] = sub->at(rhs->getcY());
+  do_proof_place(lhs, place, rhs->getExpr(), &sub_);
   *retPlaceDBM = *place;
   return retPlaceDBM;
 }

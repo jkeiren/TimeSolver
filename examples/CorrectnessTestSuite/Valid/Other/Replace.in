@@ -1,0 +1,9 @@
+CLOCKS: {x}
+CONTROL: {p,q}
+PREDICATE: {X,Y}
+START: X
+EQUATIONS: {
+1: nu X = (Y[p=0,q=1])
+2: nu Y = (p == 1 && q == 1)[p=q] && p == 0 && q != 0
+}
+	
