@@ -12,4 +12,13 @@ void delete_vector_elements(std::vector<T*>& vec)
   }
 }
 
+template<typename T>
+void deep_copy(std::vector<T*>& out, const std::vector<T*>& in)
+{
+  for(typename std::vector<T*>::const_iterator it = in.begin(); it != in.end(); ++it)
+  {
+    out.push_back(new T(**it));
+  }
+}
+
 #endif // UTILITIES_HH

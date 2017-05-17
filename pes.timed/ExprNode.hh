@@ -111,7 +111,7 @@ public:
             const bidirectional_map<std::string, int>& as)
       : OneDIntArray(numElements), declared_atomic(as) {
     for (int i = 0; i < numElements; i++) this->operatorAccess(i) = 0;
-  };
+  }
 
   /** 2-list Copy Constructor. Creates a substitution list
    * by assigning the values in the first substitution list into the second.
@@ -130,13 +130,13 @@ public:
       else
         this->operatorAccess(i) = st2->operatorAccess(i);
     }
-  };
+  }
 
   /** Copy Constructor.
    * @param Y (&) The object to copy.
    * @return [Constructor]. */
   SubstList(const SubstList& Y)
-      : OneDIntArray(Y), declared_atomic(Y.declared_atomic){};
+      : OneDIntArray(Y), declared_atomic(Y.declared_atomic){}
 
   /** Destructor.  Does nothing.
    * @return [Destructor]. */
