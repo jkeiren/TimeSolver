@@ -9,6 +9,7 @@
 #ifndef DBM_H
 #define DBM_H
 
+#include <functional>
 #include <iostream>
 #include <vector>
 #include "OneDIntArray.hh"
@@ -177,6 +178,37 @@ private:
     short int *p = (short int *)&(storage[offset]);
     // Dereference p
     return (*p);
+  }
+
+  /** Performs comparison checks;
+   * This is done by doing an elementwise comparison.
+   * Only other is required to be in canonical form.
+   * @param other (&) The right DBM.
+   * @param cmp The elementwise comparison. If cmp fails for some element, the
+   * result is false.
+   * @return true: cmp succeeds for all elements in elementwise comparison. */
+  template<class BinaryPredicate>
+  bool compare(const DBM& other, BinaryPredicate cmp) const
+  {
+    for (short int j = 1; j < nClocks; j++) {
+      if (cmp(this->operatorRead(0, j), other.operatorRead(0, j))) {
+        return false;
+      }
+    }
+    for (short int i = 1; i < nClocks; i++) {
+      if (cmp(this->operatorRead(i, 0), other.operatorRead(i, 0))) {
+        return false;
+      }
+    }
+    for (short int i = 1; i < nClocks; i++) {
+      for (short int j = 1; j < nClocks; j++) {
+        if (cmp(this->operatorRead(i, j), other.operatorRead(i, j))) {
+          return false;
+        }
+      }
+    }
+
+    return true;
   }
 
 protected:
@@ -370,7 +402,7 @@ public:
    * canonical form, and does not preserve canonical form of the DBM. The
    * calling DBM is changed.
    * @param Y (&) The DBM to intersect */
-  void intersect(const DBM& Y) {
+  DBM& intersect(const DBM& Y) {
     /* Should we check for same number of clocks (?)
      * Currently, the code does not. */
     for (short int i = 0; i < nClocks; i++) {
@@ -382,7 +414,10 @@ public:
       }
     }
     isCf = false;
+    return *this;
   }
+
+
 
   /** Performs subset checks;
    * X <= Y if and only if all the constraints of X are at least
@@ -392,34 +427,8 @@ public:
    * only Y is required to be in canonical form.
    * @param Y (&) The right DBM.
    * @return true: *this <= Y; false: otherwise. */
-  bool operator<=(const DBM &Y) {
-    /* Change constraint comparison order:
-     * 1. First, check all single-clock lower bound constraints.
-     * 2. Second, check all single-clock upper bound constraints.
-     * 3. Then, check all the clock-difference constraints.
-     * In this process, we include checking the diagonals
-     * but exclude the cell (0,0). Also note that this
-     * code assumes that both DBMs have the same
-     * number of clocks. */
-    for (short int j = 1; j < nClocks; j++) {
-      if (this->operatorRead(0, j) > Y.operatorRead(0, j)) {
-        return false;
-      }
-    }
-    for (short int i = 1; i < nClocks; i++) {
-      if (this->operatorRead(i, 0) > Y.operatorRead(i, 0)) {
-        return false;
-      }
-    }
-    for (short int i = 1; i < nClocks; i++) {
-      for (short int j = 1; j < nClocks; j++) {
-        if (this->operatorRead(i, j) > Y.operatorRead(i, j)) {
-          return false;
-        }
-      }
-    }
-
-    return true;
+  bool operator<=(const DBM &Y) const {
+    return compare(Y, std::greater<short int>());
   }
 
   /** Performs superset checks; X >= Y if and only
@@ -428,34 +437,8 @@ public:
    * @param Y (&) The right DBM.
    * @return true: the calling DBM is a superset of Y,
    * false: otherwise */
-  bool operator>=(const DBM &Y) {
-    /* Change constraint comparison order:
-     * 1. First, check all single-clock lower bound constraints.
-     * 2. Second, check all single-clock upper bound constraints.
-     * 3. Then, check all the clock-difference constraints.
-     * In this process, we include checking the diagonals
-     * but exclude the cell (0,0). Also note that this
-     * code assumes that both DBMs have the same
-     * number of clocks. */
-    for (short int j = 1; j < nClocks; j++) {
-      if (this->operatorRead(0, j) < Y.operatorRead(0, j)) {
-        return false;
-      }
-    }
-    for (short int i = 1; i < nClocks; i++) {
-      if (this->operatorRead(i, 0) < Y.operatorRead(i, 0)) {
-        return false;
-      }
-    }
-    for (short int i = 1; i < nClocks; i++) {
-      for (short int j = 1; j < nClocks; j++) {
-        if (this->operatorRead(i, j) < Y.operatorRead(i, j)) {
-          return false;
-        }
-      }
-    }
-
-    return true;
+  bool operator>=(const DBM &Y) const {
+    return compare(Y, std::less<short int>());
   }
 
   /** Performs equality checks;
@@ -467,33 +450,7 @@ public:
    * @param Y (&) The right DBM
    * @return true: the calling DBM equals Y, false: otherwise. */
   bool operator==(const DBM &Y) const {
-    /* Change constraint comparison order:
-     * 1. First, check all single-clock lower bound constraints.
-     * 2. Second, check all single-clock upper bound constraints.
-     * 3. Then, check all the clock-difference constraints.
-     * In this process, we include checking the diagonals
-     * but exclude the cell (0,0). Also note that this
-     * code assumes that both DBMs have the same
-     * number of clocks. */
-    for (short int j = 1; j < nClocks; j++) {
-      if (this->operatorRead(0, j) != Y.operatorRead(0, j)) {
-        return false;
-      }
-    }
-    for (short int i = 1; i < nClocks; i++) {
-      if (this->operatorRead(i, 0) != Y.operatorRead(i, 0)) {
-        return false;
-      }
-    }
-    for (short int i = 1; i < nClocks; i++) {
-      for (short int j = 1; j < nClocks; j++) {
-        if (this->operatorRead(i, j) != Y.operatorRead(i, j)) {
-          return false;
-        }
-      }
-    }
-
-    return true;
+    return compare(Y, std::not_equal_to<short int>());
   }
 
   /** Checks and returns the relation comparing the calling DBM
