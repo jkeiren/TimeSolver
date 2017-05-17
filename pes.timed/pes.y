@@ -452,7 +452,7 @@ constraints
   DBM tt(*($1));
   /* Intersection of two DBMs to represent
    * an intersection of DBM clock constraints. */
-  tt & *($3);
+  tt.intersect(*($3));
   $$ = new DBM(tt);
   $$->cf();
   delete $1;
@@ -665,7 +665,7 @@ constraints
   /* Can be optimized with andguard()
    * To reduce number of calls to canonical
    * Form.  */
-  tt & *($3) ;
+  tt.intersect(*($3)) ;
   $$ = new DBM(tt);
   $$->cf();
   delete $1;
@@ -782,7 +782,7 @@ TOK_FORALL TOK_TIME TOK_LPAREN expr TOK_RPAREN
   if ($1->getOpType() == CONSTRAINT && $3->getOpType() == CONSTRAINT){
     /* Copy DBM to eliminate a memory leak */
     DBM * newDBM = new DBM(*($1->dbm()));
-    *newDBM & *($3->dbm());
+    newDBM->intersect(*($3->dbm()));
     newDBM->cf();
     $$ = new ExprNode(CONSTRAINT, newDBM, input_pes.clocks(), input_pes.atomic());
     delete $1;

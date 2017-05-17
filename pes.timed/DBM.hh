@@ -356,7 +356,7 @@ public:
    * Preserves canonical form.
    * @param Y (&) The object to copy.
    * @return A reference to the copied object, which is the LHS object. */
-  DBM &operator=(const DBM &Y) {
+  DBM& operator=(const DBM &Y) {
     quantity = Y.quantity;
     nClocks = Y.nClocks;
     memcpy(storage, Y.storage, quantity * sizeof(short int));
@@ -365,14 +365,12 @@ public:
     return *this;
   }
 
-  /** Intersects two DBMs by performing the constraint-by-constraint
+  /** Intersects this DBM with a second DBM by performing the constraint-by-constraint
    * intersections of the DBM. This method does not require DBMs to be in
    * canonical form, and does not preserve canonical form of the DBM. The
    * calling DBM is changed.
-   * @param Y (&) The DBM to intersect
-   * @return The reference to the intersected DBM (which is the now changed
-   * calling DBM). */
-  DBM &operator&(const DBM &Y) {
+   * @param Y (&) The DBM to intersect */
+  void intersect(const DBM& Y) {
     /* Should we check for same number of clocks (?)
      * Currently, the code does not. */
     for (short int i = 0; i < nClocks; i++) {
@@ -384,7 +382,6 @@ public:
       }
     }
     isCf = false;
-    return *this;
   }
 
   /** Performs subset checks;

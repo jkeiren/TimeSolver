@@ -328,7 +328,7 @@ TEST(DBMListTest, Intersection)
     DBMList list7orig = testDBMList7();
     DBMList list7 = testDBMList7();
 
-    list7 & list7orig;
+    list7.intersect(list7orig);
     DBMList expected = list7orig;
     DBM test8(testDBM8());
     DBM test9(testDBM9());
@@ -352,7 +352,7 @@ TEST(DBMListTest, CopyAndIntersectSelf)
     EXPECT_TRUE(list5 >= *list5copy);
     EXPECT_TRUE(list5 == *list5copy);
 
-    list5 & *list5copy;
+    list5.intersect(*list5copy);
     DBMList expected = testDBMList5();
     DBM test4(testDBM4());
     DBM test5(testDBM5());

@@ -343,7 +343,7 @@ TEST(DBMTest, IntersectDBM7DBM6)
     DBM right(testDBM6());
     right.cf();
 
-    left & right;
+    left.intersect(right);
     EXPECT_FALSE(left.emptiness());
 
     DBM expected(3, make_c3());
@@ -368,7 +368,7 @@ TEST(DBMTest, IntersectDBM8DBM6)
     DBM right(testDBM6());
     right.cf();
 
-    left & right;
+    left.intersect(right);
     EXPECT_FALSE(left.emptiness());
 
     DBM expected(3, make_c3());
@@ -395,7 +395,7 @@ TEST(DBMTest, IntersectDBM8DBM6heap)
     DBM right(testDBM6());
     right.cf();
 
-    *left & right;
+    left->intersect(right);
     EXPECT_FALSE(left->emptiness());
 
     DBM expected(3, make_c3());
@@ -424,7 +424,7 @@ TEST(DBMTest, IntersectDBM8DBM6reference)
     DBM right(testDBM6());
     right.cf();
 
-    *left & right;
+    left->intersect(right);
     EXPECT_FALSE(left->emptiness());
 
     DBM expected(3, make_c3());
@@ -873,7 +873,7 @@ TEST(DBMTest, IntersectDBM11DBM8)
   DBM left(testDBM11());
   left.cf();
   DBM right(testDBM8());
-  left & right;
+  left.intersect(right);
 
   DBM expected(4, make_c4());
   expected.addConstraint(0,0, 0x1);
@@ -921,7 +921,7 @@ TEST(DBMTest, IntersectDBM11DBM9)
 {
   DBM left(testDBM11());
   DBM right(testDBM9());
-  left & right;
+  left.intersect(right);
 
   DBM expected(4, make_c4());
   expected.addConstraint(0,0, 0x1);
@@ -968,7 +968,7 @@ TEST(DBMTest, IntersectDBM11DBM10)
 {
   DBM left(testDBM11());
   DBM right(testDBM10());
-  left & right;
+  left.intersect(right);
 
   DBM expected(4, make_c4());
   expected.addConstraint(0,0, 0x1);

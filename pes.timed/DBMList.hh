@@ -311,7 +311,7 @@ public:
       }
       for (unsigned int j = 1; j < dbmVec.size(); j++) {
         this->cf();
-        *this &*(dbmVec[j]);
+        intersect(*(dbmVec[j]));
       }
       // Now delete tempList
       for (std::vector<DBM *>::iterator it = tempList->begin();
@@ -335,93 +335,78 @@ public:
     return *this;
   }
 
-  /** Intersects a DBMList with a DBM converting the intersection to
+  /** Intersects this DBMList with a DBM converting the intersection to
    * disjunctive normal form. This involves intersecting
    * each DBM in the DBMList with the given DBM.
    * This method does not require the DBMList or the DBM to be in
    * canonical form, and does not preserve canonical form of the DBMList. The
    * calling DBMList is changed.
    * @param Y (&) The DBM to intersect
-   * @return The reference to the intersected DBMList (which is the now changed
-   * calling DBMList). */
-  DBMList &operator&(const DBM &Y) {
+   */
+  void intersect(const DBM& Y) {
     if (dbmListVec->size() ==
         1) { // Do you really want to treat 1 as a special case?
-      *((*dbmListVec)[0]) & Y;
-      isCf = false;
-      return *this;
+      (*dbmListVec)[0]->intersect(Y);
     }
-
-    /* This forms a new list by distributing the DBMs */
-    for (unsigned int i = 0; i < dbmListVec->size(); i++) {
-      /* Since the vector of DBMs stores the pointers
-       * hopefully this updates the vector for the correct DBMs */
-      DBM *tD = (*dbmListVec)[i];
-      *tD &Y;
+    else
+    {
+      /* This forms a new list by distributing the DBMs */
+      for (unsigned int i = 0; i < dbmListVec->size(); i++) {
+        /* Since the vector of DBMs stores the pointers
+         * hopefully this updates the vector for the correct DBMs */
+        DBM *tD = (*dbmListVec)[i];
+        tD->intersect(Y);
+      }
     }
     isCf = false;
-    return *this;
   }
 
-  /** Intersects two DBMLists by converting the intersection to
+  /** Intersects this DBMList with another by converting the intersection to
    * disjunctive normal form. This involves intersecting
    * DBM by DBM in the list of DBMs.
    * This method does not require the DBMLists to be in
-   * canonical form, and does not preserve canonical form of the DBMList. The
-   * calling DBMList is changed.
-   * @param Y (&) The DBMList to intersect
-   * @return The reference to the intersected DBMList (which is the now changed
-   * calling DBMList). */
-  DBMList &operator&(const DBMList &Y) {
+   * canonical form, and does not preserve canonical form of the DBMList. This
+   * DBMList is changed.
+   * @param Y (&) The DBMList to intersect */
+  void intersect(const DBMList &Y) {
     if (dbmListVec->size() == 1 && Y.numDBMs() == 1) {
-      *((*dbmListVec)[0]) & *((*(Y.getDBMList()))[0]);
-      isCf = false;
-      return *this;
-    }
-    if (dbmListVec->size() == 1) {
-      std::vector<DBM *> *tempList = dbmListVec;
-      // Vector constructor makes a deep copy of the pointers (not of the
-      // objects that the pointers point to). Make a deep copy of the DBM
-      // objects here
-      std::vector<DBM *> *currList = Y.getDBMList();
-      dbmListVec = new std::vector<DBM *>;
-      for (unsigned int i = 0; i < currList->size(); i++) {
-        dbmListVec->push_back(new DBM(*((*currList)[i])));
-      }
-      for (unsigned int i = 0; i < Y.dbmListVec->size(); i++) {
-        /* Since the std::vector of DBMs stores the pointers
-         * hopefully this updates the vector for the correct DBMs */
-        DBM *tD = (*dbmListVec)[i];
-        *tD &*((*tempList)[0]);
-      }
-      // We have to delete element by element
-      // Now delete tempList
-      for (std::vector<DBM *>::iterator it = tempList->begin();
-           it != tempList->end(); it++) {
-        DBM *tD = *it;
-        delete tD;
-      }
-      tempList->clear();
-      delete tempList;
+      (*dbmListVec)[0]->intersect(*(*(Y.getDBMList()))[0]);
     } else {
-      /* Iterate through Y dbmListVec times */
       std::vector<DBM *> *tempList = dbmListVec;
-      dbmListVec = new std::vector<DBM *>;
-      for (unsigned int i = 0; i < tempList->size(); i++) {
-        for (unsigned int j = 0; j < Y.dbmListVec->size(); j++) {
-          /* Since the vector of DBMs stores the pointers
+      if (dbmListVec->size() == 1) {
+        // Vector constructor makes a deep copy of the pointers (not of the
+        // objects that the pointers point to). Make a deep copy of the DBM
+        // objects here
+        std::vector<DBM *> *currList = Y.getDBMList();
+        dbmListVec = new std::vector<DBM *>;
+        for (unsigned int i = 0; i < currList->size(); i++) {
+          dbmListVec->push_back(new DBM(*((*currList)[i])));
+        }
+        for (unsigned int i = 0; i < Y.dbmListVec->size(); i++) {
+          /* Since the std::vector of DBMs stores the pointers
            * hopefully this updates the vector for the correct DBMs */
-          DBM *copyDBM = new DBM(*((*tempList)[i]));
-          *copyDBM &*((*(Y.dbmListVec))[j]);
-          dbmListVec->push_back(copyDBM);
+          DBM *tD = (*dbmListVec)[i];
+          tD->intersect(*((*tempList)[0]));
+        }
+      } else {
+        /* Iterate through Y dbmListVec times */
+        dbmListVec = new std::vector<DBM *>;
+        for (unsigned int i = 0; i < tempList->size(); i++) {
+          for (unsigned int j = 0; j < Y.dbmListVec->size(); j++) {
+            /* Since the vector of DBMs stores the pointers
+             * hopefully this updates the vector for the correct DBMs */
+            DBM *copyDBM = new DBM(*((*tempList)[i]));
+            copyDBM->intersect(*((*(Y.dbmListVec))[j]));
+            dbmListVec->push_back(copyDBM);
+          }
         }
       }
+
       // We have to delete element by element
       // Now delete tempList
       for (std::vector<DBM *>::iterator it = tempList->begin();
            it != tempList->end(); it++) {
-        DBM *tD = *it;
-        delete tD;
+        delete *it;
       }
       tempList->clear();
       delete tempList;
@@ -430,7 +415,6 @@ public:
     /* Should we check for same number of clocks (?)
      * Currently, the code does not. */
     isCf = false;
-    return *this;
   }
 
   /** Performs subset checks;
@@ -474,7 +458,7 @@ public:
       delete tempDBMList;
       return true;
     }
-    (*tempDBMList) & *this;
+    tempDBMList->intersect(*this);
     tempDBMList->cf();
     bool isEmpty = tempDBMList->emptiness();
     delete tempDBMList;
@@ -503,7 +487,7 @@ public:
         delete tempDBMList;
         return true;
       }
-      (*tempDBMList) & Y;
+      tempDBMList->intersect(Y);
       tempDBMList->cf();
       bool isEmpty = tempDBMList->emptiness();
       delete tempDBMList;
@@ -532,7 +516,7 @@ public:
       delete tempDBMList;
       return true;
     }
-    (*tempDBMList) & Y;
+    tempDBMList->intersect(Y);
     tempDBMList->cf();
     bool isEmpty = tempDBMList->emptiness();
     delete tempDBMList;

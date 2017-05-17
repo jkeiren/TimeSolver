@@ -524,8 +524,8 @@ protected:
       placeholder2_dbm_pred.cf();
 
       DBMList currDBMList(placeholder1_complement);
-      currDBMList& placeholder2_dbm_pred;
-      currDBMList&* lhs_succ; // Intersect with the successor of the lhs;
+      currDBMList.intersect(placeholder2_dbm_pred);
+      currDBMList.intersect(*lhs_succ); // Intersect with the successor of the lhs;
       // So currDBMList now contains all states that are not in placeholder1,
       // from which placeholder2 can be reached, and which can be reached from
       // lhs.
@@ -534,14 +534,14 @@ protected:
       !placeholder2_dbm_complement;
       placeholder2_dbm_complement.cf();
 
-      currDBMList& placeholder2_dbm_complement;
+      currDBMList.intersect(placeholder2_dbm_complement);
       // We restrict this to states that furthermore are not in placeholder2.
       // So currDBMList now contains all states that are not in placeholder1,
       // from which placeholder2 can be reached, but which are themselves not in
       // placeholder2, and which can be reached from lhs.
       currDBMList.cf();
       currDBMList.pre();
-      currDBMList&* lhs_succ;
+      currDBMList.intersect(*lhs_succ);
       currDBMList.cf();
       // currDBMList currently is the set of bad times; LHS must have
       // no such times in this.
@@ -551,7 +551,7 @@ protected:
       }
       /* If this is nonempty, then we have something to deal with */
       // Also, the placeholder cannot be completely contained in this
-      currDBMList&* lhs;
+      currDBMList.intersect(*lhs);
       currDBMList.cf();
       if (!previouslyUpdated) {
         previouslyUpdated = true;
@@ -607,14 +607,14 @@ protected:
 
     // intersect with new placeholder
     DBMList lhs_succ_and_placeholder(*placeholder_forall);
-    lhs_succ_and_placeholder&* lhs_succ;
+    lhs_succ_and_placeholder.intersect(*lhs_succ);
     lhs_succ_and_placeholder.cf(); // The consequent
 
     /* Computing Premise of Right part of proof */
     /* Compute Succ(Premise and First Placeholder) */
     // succLHS is the successor of the left-hand side, so do not repeat the work
     DBMList premise_and_placeholder_succ(*lhs);
-    premise_and_placeholder_succ&* placeholder_forall;
+    premise_and_placeholder_succ.intersect(*placeholder_forall);
     premise_and_placeholder_succ.cf();
     premise_and_placeholder_succ.suc();
     premise_and_placeholder_succ.cf();
@@ -637,9 +637,9 @@ protected:
     // !(badVals || !succPrem || !succLHS) == !badVals && succPrem && succLHS
     !badVals; // All states outside currPlace
     badVals.cf();
-    badVals& premise_and_placeholder_succ; // that can be reached from lhs &
+    badVals.intersect(premise_and_placeholder_succ); // that can be reached from lhs &
                                            // currPlace
-    badVals&* lhs_succ;                    // *and* that can be reached from lhs -- this should be
+    badVals.intersect(*lhs_succ);          // *and* that can be reached from lhs -- this should be
                                            // superfluous
     badVals.cf();
     badVals.pre();
@@ -653,12 +653,12 @@ protected:
     // reached from lhs & currPlace
     badVals.cf();
     // Good values must be after succLHS
-    badVals&* lhs_succ;
+    badVals.intersect(*lhs_succ);
     // all states for which all delays remain inside currPlace, or can be
     // reached from lhs & currPlace, that can be reached from lhs. really, at
     // this point badVals contains the *good* values
     badVals.cf();
-    *placeholder_forall& badVals;
+    placeholder_forall->intersect(badVals);
     placeholder_forall->cf();
     if (placeholder_forall->emptiness()) {
       *retPlaceDBM = *placeholder_forall;
@@ -669,7 +669,7 @@ protected:
     // satisfied.
     // leave conseq unchanged, since that placeholder did not shrink
     premise_and_placeholder_succ = *lhs;
-    premise_and_placeholder_succ&* placeholder_forall;
+    premise_and_placeholder_succ.intersect(*placeholder_forall);
     premise_and_placeholder_succ.cf();
     premise_and_placeholder_succ.suc();
     premise_and_placeholder_succ.cf();
@@ -1113,7 +1113,7 @@ inline bool prover::do_proof_forall_rel(DBM* const lhs,
          * Given the FORALL rule rewrite, do not allow the instance
          * after the time elapse */
         /* Extract the new refined placeholder. */
-        placeholder_exists& placeholder1;
+        placeholder_exists.intersect(placeholder1);
         placeholder_exists.cf();
 
         /* Now check that it works. */
@@ -1299,7 +1299,7 @@ inline bool prover::do_proof_exists_rel(DBM* const lhs,
     // If the left hand side and right hand side never hold at the same time, we
     // only need to check whether the right hand side holds immediately
     DBMList placeholder1_intersect_placeholder2_pred(placeholder1);
-    placeholder1_intersect_placeholder2_pred& placeholder2_predecessor;
+    placeholder1_intersect_placeholder2_pred.intersect(placeholder2_predecessor);
     placeholder1_intersect_placeholder2_pred.cf();
     if (placeholder1_intersect_placeholder2_pred.emptiness()) {
       if (cpplogEnabled(cpplogging::debug)) {
@@ -1317,7 +1317,7 @@ inline bool prover::do_proof_exists_rel(DBM* const lhs,
        * If so, make a non-empty placeholder. In this case, the third
        * Check will be true by default and can be skipped.
        * Else, return empty and break */
-      placeholder2&* lhs; // lhs here is before the time elapse
+      placeholder2.intersect(*lhs); // lhs here is before the time elapse
       placeholder2.cf();
       if (placeholder2.emptiness()) {
         retVal = false;
@@ -1386,7 +1386,7 @@ inline bool prover::do_proof_exists_rel(DBM* const lhs,
       // Allow for the possibility of the time instant after the elapse
       placeholder.closure();
       /* Extract the new refined placeholder. */
-      placeholder& placeholder2;
+      placeholder.intersect(placeholder2);
       placeholder.cf();
 
       /* Now check that it works. */
@@ -1471,7 +1471,7 @@ inline bool prover::do_proof_allact(DBM* const lhs, const ExprNode& rhs,
         }
       }
 
-      tempLHS& invariant_region;
+      tempLHS.intersect(invariant_region);
       tempLHS.cf();
       if (tempLHS.emptiness()) {
         cpplog(cpplogging::debug)
@@ -1575,7 +1575,7 @@ inline bool prover::do_proof_existact(DBM* const lhs, const ExprNode& rhs,
        * If not, tighten the placeholder */
       if (!(tempLHS <= invariant_region)) {
         // for performance reasons, also tighten the left hand side
-        tempPlace& invariant_region;
+        tempPlace.intersect(invariant_region);
         tempPlace.cf();
         if (tempPlace.emptiness()) {
           cpplog(cpplogging::debug)
@@ -1586,7 +1586,7 @@ inline bool prover::do_proof_existact(DBM* const lhs, const ExprNode& rhs,
 
           continue;
         }
-        tempLHS& invariant_region;
+        tempLHS.intersect(invariant_region);
         tempLHS.cf();
       }
     }
@@ -2063,9 +2063,9 @@ inline DBMList* prover::do_proof_place_and(DBM* const lhs, DBMList* const place,
   do_proof_place(lhs, place, *rhs.getLeft(), sub);
   place->cf();
   if (!place->emptiness()) {
-    placeholder_right&* place;
+    placeholder_right.intersect(*place);
     do_proof_place(lhs, &placeholder_right, *rhs.getRight(), sub);
-    *place& placeholder_right;
+    place->intersect(placeholder_right);
   }
   *retPlaceDBM = *place;
   return retPlaceDBM;
@@ -2211,7 +2211,7 @@ inline DBMList* prover::do_proof_place_forall(DBM* const lhs,
       succLHS.suc();
       succLHS.cf();
       DBMList succRuleConseq(*lhs);
-      succRuleConseq&* place;
+      succRuleConseq.intersect(*place);
       succRuleConseq.cf();
       succRuleConseq.suc();
       succRuleConseq.cf();
@@ -2297,7 +2297,7 @@ inline DBMList* prover::do_proof_place_forall_rel(DBM* const lhs,
         succLHS.suc();
         succLHS.cf();
         DBMList succRuleConseq(*lhs);
-        succRuleConseq&* retPlaceDBM;
+        succRuleConseq.intersect(*retPlaceDBM);
         succRuleConseq.cf();
         succRuleConseq.suc();
         succRuleConseq.cf();
@@ -2345,7 +2345,7 @@ inline DBMList* prover::do_proof_place_forall_rel(DBM* const lhs,
 
         // No Successor Check required since this is for no time elapse
         infPlace.cf();
-        infPlace&* retPlaceDBM;
+        infPlace.intersect(*retPlaceDBM);
         infPlace.cf();
         /* Now do the containment check
          * and use to compute the value of the place holder *place */
@@ -2458,7 +2458,7 @@ inline DBMList* prover::do_proof_place_forall_rel(DBM* const lhs,
            * Given the FORALL rule rewrite, do not allow the instance
            * after the time elapse. */
           /* Extract the new refined placeholder. */
-          *retPlaceDBM& phi1Place;
+          retPlaceDBM->intersect(phi1Place);
           retPlaceDBM->cf();
 
           /* Now check that it works. */
@@ -2548,7 +2548,7 @@ inline DBMList* prover::do_proof_place_exists(DBM* const lhs,
      * For the placeholder rule, we use this check
      * to give us the value of the old placeholder */
     placeholder.pre();
-    *place& placeholder;
+    place->intersect(placeholder);
     place->cf();
 
     if (cpplogEnabled(cpplogging::debug)) {
@@ -2636,7 +2636,7 @@ inline DBMList* prover::do_proof_place_exists_rel(DBM* const lhs,
       << "} ----" << std::endl
       << std::endl;
 
-  *retPlaceDBM&* phi2PredPlace;
+  retPlaceDBM->intersect(*phi2PredPlace);
   retPlaceDBM->cf();
   if (retPlaceDBM->emptiness()) {
     *place = *retPlaceDBM;
@@ -2657,7 +2657,7 @@ inline DBMList* prover::do_proof_place_exists_rel(DBM* const lhs,
      * If so, make a non-empty placeholder. In this case, the third
      * Check will be true by default and can be skipped.
      * Else, return empty and break */
-    *phi2Place&* lhs; // lhs here is before the time elapse
+    phi2Place->intersect(*lhs); // lhs here is before the time elapse
     phi2Place->cf();
     if (phi2Place->emptiness()) {
       retVal = false;
@@ -2730,7 +2730,7 @@ inline DBMList* prover::do_proof_place_exists_rel(DBM* const lhs,
   // Allow for the possibility of the time instant after the elapse
   retPlaceDBM->closure();
   /* Extract the new refined placeholder */
-  *phi2Place&* retPlaceDBM;
+  phi2Place->intersect(*retPlaceDBM);
   phi2Place->cf();
 
   /* Now check that it works (the new placeholder can be
@@ -2738,7 +2738,7 @@ inline DBMList* prover::do_proof_place_exists_rel(DBM* const lhs,
    * For the placeholder rule, we use this check
    * to give us the value of the old placeholder */
   phi2Place->pre();
-  (*place) & (*phi2Place);
+  place->intersect(*phi2Place);
   place->cf();
   *retPlaceDBM = (*place);
   if (retPlaceDBM->emptiness()) {
@@ -2839,7 +2839,7 @@ inline DBMList* prover::do_proof_place_allact(DBM* const lhs,
        * If not, tighten the placeholder */
 
       if (!(phLHS <= invPlace)) {
-        phLHS& invPlace;
+        phLHS.intersect(invPlace);
         phLHS.cf();
         if (phLHS.emptiness()) {
           cpplog(cpplogging::debug)
@@ -2849,7 +2849,7 @@ inline DBMList* prover::do_proof_place_allact(DBM* const lhs,
 
           continue;
         }
-        transPlace& invPlace;
+        transPlace.intersect(invPlace);
         transPlace.cf();
       }
     }
@@ -2907,7 +2907,7 @@ inline DBMList* prover::do_proof_place_allact(DBM* const lhs,
       continue;
     }
     DBMList tempPlace(transPlace);
-    tempPlace& phLHS;
+    tempPlace.intersect(phLHS);
     tempPlace.cf();
     if (*retPlaceDBM >= tempPlace) {
       /* This is the good case, since our placeholder need not
@@ -2968,7 +2968,7 @@ inline DBMList* prover::do_proof_place_allact(DBM* const lhs,
     for (std::vector<DBMList*>::iterator it = transPlaceHolders.begin();
          it != transPlaceHolders.end(); it++) {
       /* Intersecting alone is not good enough, so need to do both */
-      *retPlaceDBM&*(*it);
+      retPlaceDBM->intersect(*(*it));
       retPlaceDBM->cf();
     }
   }
@@ -3049,7 +3049,7 @@ inline DBMList* prover::do_proof_place_existact(DBM* const lhs,
        * If not, tighten the placeholder */
       // For performace reasons, also tighten the left hand side
       if (!(tempLHS <= invCons)) {
-        tempPlace& invCons;
+        tempPlace.intersect(invCons);
         tempPlace.cf();
         if (tempPlace.emptiness()) {
           cpplog(cpplogging::debug)
@@ -3059,7 +3059,7 @@ inline DBMList* prover::do_proof_place_existact(DBM* const lhs,
 
           continue;
         }
-        tempLHS& invCons;
+        tempLHS.intersect(invCons);
         tempLHS.cf();
       }
     }
@@ -3160,12 +3160,12 @@ inline DBMList* prover::do_proof_place_constraint(DBM* const lhs,
      * DBM will tighten only to match the single constraint
      * Since multiple constraints are represented as an
      * AND of Constraints */
-    *place&(*(rhs.dbm()));
+    place->intersect(*(rhs.dbm()));
     place->cf();
 
     // Now test constraint
     DBMList tPlace(*place);
-    tPlace&* lhs;
+    tPlace.intersect(*lhs);
     tPlace.cf();
 
     if (tPlace.emptiness()) {
@@ -3301,7 +3301,7 @@ inline DBMList* prover::do_proof_place_reset(DBM* const lhs,
     p2Copy.preset(rhs.getClockSet());
 
     // Use the rule to compute what the old place holder should be
-    (*place) & p2Copy;
+    place->intersect(p2Copy);
     place->cf();
     bool retVal = !place->emptiness();
 
@@ -3348,7 +3348,7 @@ inline DBMList* prover::do_proof_place_assign(DBM* const lhs,
     placeB.preset(cX, cY);
 
     // Now assign the old placeholder accordingly
-    (*place) & placeB;
+    place->intersect(placeB);
     place->cf();
 
     if (cpplogEnabled(cpplogging::debug)) {
@@ -3389,7 +3389,7 @@ inline DBMList* prover::do_proof_place_ablewaitinf(DBM* const lhs,
                                                    const SubstList& sub) {
   lhs->cf();
   DBMList ph(*lhs);
-  ph&* place;
+  ph.intersect(*place);
   ph.cf();
   ph.suc();
   restrict_to_invariant(input_pes.invariants(), &ph, sub);
@@ -3424,7 +3424,7 @@ inline DBMList* prover::do_proof_place_unablewaitinf(DBM* const lhs,
                                                      const SubstList& sub) {
   lhs->cf();
   DBMList ph(*lhs);
-  ph&* place;
+  ph.intersect(*place);
   ph.cf();
   ph.suc();
   restrict_to_invariant(input_pes.invariants(), &ph, sub);

@@ -403,7 +403,7 @@ public:
   bool tabled_sequent(const DBM *const lhs, DBMList *const lhsPlace) const {
     auto p = [&](const DBMPlaceSetElt x) {
       if (*(x.first) == *lhs) {
-        *lhsPlace &*(x.second);
+        lhsPlace->intersect(*(x.second));
         lhsPlace->cf();
         return true;
       }

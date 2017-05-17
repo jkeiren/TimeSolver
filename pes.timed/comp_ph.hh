@@ -80,7 +80,7 @@ inline bool restrict_to_invariant(const std::vector<const ExprNode*>& invs,
     for (std::vector<const ExprNode*>::const_iterator it = invs.begin();
          it != invs.end(); ++it) {
       if (comp_ph_invs(*(*it), sub)) {
-        (*lhs) & (*(*it)->dbm());
+        lhs->intersect(*(*it)->dbm());
         outRes = true;
       }
     }
@@ -140,7 +140,7 @@ inline bool comp_ph(DBM* const ph, const ExprNode& e,
                     const SubstList& sublist) {
   switch (e.getOpType()) {
     case CONSTRAINT: {
-      (*ph) & (*(e.dbm()));
+      ph->intersect(*(e.dbm()));
       ph->cf(); // Calls Canonical Form Here.
       return (!(ph->emptiness()));
     }
@@ -279,7 +279,7 @@ inline bool comp_ph_exist_place(DBM* const ph, DBMList* const place,
       ph->cf();
       const DBM* eDBM = e.dbm();
       bool res = (*ph) <= (*eDBM);
-      (*ph) & (*eDBM);
+      ph->intersect(*eDBM);
       ph->cf(); // Calls Canonical Form Here.
       if (res) {
         return true;
@@ -292,7 +292,7 @@ inline bool comp_ph_exist_place(DBM* const ph, DBMList* const place,
        * becomes the entire constraint.
        * It may be necessary to make placeholder looser than
        * the constraint to not have inequalities that ph satisfies. */
-      *place&(*(e.dbm()));
+      place->intersect(*(e.dbm()));
       place->cf();
       return !(place->emptiness());
     }
@@ -355,14 +355,14 @@ inline bool comp_ph_all_place(DBM* const ph, DBMList* const place,
                               const ExprNode& e, const SubstList& sublist) {
   switch (e.getOpType()) {
     case CONSTRAINT: {
-      (*ph) & (*(e.dbm()));
+      ph->intersect(*e.dbm());
       ph->cf(); // Calls Canonical Form Here.
       bool lhEmpty;
       lhEmpty = ph->emptiness();
       if (lhEmpty) {
         return false;
       }
-      *place&(*(e.dbm()));
+      place->intersect(*(e.dbm()));
       place->cf();
       return !place->emptiness();;
     }
