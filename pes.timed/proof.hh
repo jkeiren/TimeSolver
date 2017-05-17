@@ -77,11 +77,11 @@ public:
         step(0),
         numLocations(1),
         MAXC(MAXC),
-        cache(input_pes, nbits, input_pes.predicates().size() * nHash, nHash,
-              newSequent),
         parentRef(nullptr),
         parentPlaceRef(nullptr),
-        newSequent(true) {
+        newSequent(true),
+        cache(input_pes, nbits, input_pes.predicates().size() * nHash, nHash,
+              newSequent) {
     /* This is initialized to be the largest (loosest)
      * possible DBM
      * @see DBM Constructor (Default Constructor). */
