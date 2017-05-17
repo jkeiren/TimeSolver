@@ -78,7 +78,10 @@ public:
         numLocations(1),
         MAXC(MAXC),
         cache(input_pes, nbits, input_pes.predicates().size() * nHash, nHash,
-              newSequent) {
+              newSequent),
+        parentRef(nullptr),
+        parentPlaceRef(nullptr),
+        newSequent(true) {
     /* This is initialized to be the largest (loosest)
      * possible DBM
      * @see DBM Constructor (Default Constructor). */
@@ -86,12 +89,6 @@ public:
     INFTYDBM->cf();
 
     retPlaceDBM = new DBMList(*INFTYDBM);
-
-    /* Initialize parent sequents */
-    parentRef = nullptr;
-    parentPlaceRef = nullptr;
-
-    newSequent = true;
   }
 
   ~prover() {
@@ -116,15 +113,15 @@ public:
    * @return True if the expression evaluates to True given the other parameters
    * and False otherwise (if the expression evaluates to False).*/
   __attribute__((flatten)) bool do_proof(DBM* const lhs,
-                                         const ExprNode* const rhs,
-                                         SubstList* const sub) {
+                                         const ExprNode& rhs,
+                                         const SubstList& sub) {
     bool result = false;
     if (cpplogEnabled(cpplogging::debug)) {
-      print_sequent(std::cerr, step, result, lhs, rhs, sub, rhs->getOpType());
+      print_sequent(std::cerr, step, result, lhs, &rhs, &sub, rhs.getOpType());
     }
     ++step;
 
-    switch (rhs->getOpType()) {
+    switch (rhs.getOpType()) {
       case PREDICATE: {
         result = do_proof_predicate(lhs, rhs, sub);
         break;
@@ -249,20 +246,20 @@ public:
    * and the return value. */
   __attribute__((flatten)) DBMList* do_proof_place(DBM* const lhs,
                                                    DBMList* const place,
-                                                   const ExprNode* const rhs,
-                                                   SubstList* const sub) {
+                                                   const ExprNode& rhs,
+                                                   const SubstList& sub) {
     /* do_proof_place() written by Peter Fontana, needed for support
      * of EXISTS Quantifiers. */
 
     if (cpplogEnabled(cpplogging::debug)) {
-      print_sequent_place(std::cerr, step, false, lhs, place, rhs, sub,
-                          rhs->getOpType());
+      print_sequent_place(std::cerr, step, false, lhs, place, &rhs, &sub,
+                          rhs.getOpType());
     }
 
     ++step;
     DBMList* result = nullptr;
 
-    switch (rhs->getOpType()) {
+    switch (rhs.getOpType()) {
       case PREDICATE: {
         result = do_proof_place_predicate(lhs, place, rhs, sub);
         break;
@@ -376,120 +373,122 @@ public:
   }
 
 protected:
-  bool do_proof_predicate(DBM* const lhs, const ExprNode* const rhs,
-                          SubstList* const sub);
-  bool do_proof_and(DBM* const lhs, const ExprNode* const rhs,
-                    SubstList* const sub);
-  bool do_proof_or(DBM* const lhs, const ExprNode* const rhs,
-                   SubstList* const sub);
-  bool do_proof_or_simple(DBM* const lhs, const ExprNode* const rhs,
-                          SubstList* const sub);
-  bool do_proof_forall(DBM* const lhs, const ExprNode* const rhs,
-                       SubstList* const sub);
-  bool do_proof_forall_rel(DBM* const lhs, const ExprNode* const rhs,
-                           SubstList* const sub);
-  bool do_proof_exists(DBM* const lhs, const ExprNode* const rhs,
-                       SubstList* const sub);
-  bool do_proof_exists_rel(DBM* const lhs, const ExprNode* const rhs,
-                           SubstList* const sub);
-  bool do_proof_allact(DBM* const lhs, const ExprNode* const rhs,
-                       SubstList* const sub);
-  bool do_proof_existact(DBM* const lhs, const ExprNode* const rhs,
-                         SubstList* const sub);
-  bool do_proof_imply(DBM* const lhs, const ExprNode* const rhs,
-                      SubstList* const sub);
-  bool do_proof_constraint(DBM* const lhs, const ExprNode* const rhs);
-  bool do_proof_bool(const ExprNode* const rhs);
-  bool do_proof_atomic(const ExprNode* const rhs, const SubstList* const sub);
-  bool do_proof_atomic_not(const ExprNode* const rhs,
-                           const SubstList* const sub);
-  bool do_proof_atomic_lt(const ExprNode* const rhs,
-                          const SubstList* const sub);
-  bool do_proof_atomic_gt(const ExprNode* const rhs,
-                          const SubstList* const sub);
-  bool do_proof_atomic_le(const ExprNode* const rhs,
-                          const SubstList* const sub);
-  bool do_proof_atomic_ge(const ExprNode* const rhs,
-                          const SubstList* const sub);
-  bool do_proof_sublist(DBM* const lhs, const ExprNode* const rhs,
-                        const SubstList* const sub);
-  bool do_proof_reset(DBM* const lhs, const ExprNode* const rhs,
-                      SubstList* const sub);
-  bool do_proof_assign(DBM* const lhs, const ExprNode* const rhs,
-                       SubstList* const sub);
-  bool do_proof_replace(DBM* const lhs, const ExprNode* const rhs,
-                        SubstList* const sub);
-  bool do_proof_ablewaitinf(DBM* const lhs, SubstList* const sub);
-  bool do_proof_unablewaitinf(DBM* const lhs, SubstList* const sub);
+  bool do_proof_predicate(DBM* const lhs, const ExprNode& rhs,
+                          const SubstList& sub);
+  bool do_proof_and(DBM* const lhs, const ExprNode& rhs,
+                    const SubstList& sub);
+  bool do_proof_or(DBM* const lhs, const ExprNode& rhs,
+                   const SubstList& sub);
+  bool do_proof_or_simple(DBM* const lhs, const ExprNode& rhs,
+                          const SubstList& sub);
+  bool do_proof_forall(DBM* const lhs, const ExprNode& rhs,
+                       const SubstList& sub);
+  bool do_proof_forall_rel(DBM* const lhs, const ExprNode& rhs,
+                           const SubstList& sub);
+  bool do_proof_exists(DBM* const lhs, const ExprNode& rhs,
+                       const SubstList& sub);
+  bool do_proof_exists_rel(DBM* const lhs, const ExprNode& rhs,
+                           const SubstList& sub);
+  bool do_proof_allact(DBM* const lhs, const ExprNode& rhs,
+                       const SubstList& sub);
+  bool do_proof_existact(DBM* const lhs, const ExprNode& rhs,
+                         const SubstList& sub);
+  bool do_proof_imply(DBM* const lhs, const ExprNode& rhs,
+                      const SubstList& sub);
+  bool do_proof_constraint(DBM* const lhs, const ExprNode& rhs);
+  bool do_proof_bool(const ExprNode& rhs);
+  bool do_proof_atomic(const ExprNode& rhs, const SubstList& sub);
+  bool do_proof_atomic_not(const ExprNode& rhs,
+                           const SubstList& sub);
+  bool do_proof_atomic_lt(const ExprNode& rhs,
+                          const SubstList& sub);
+  bool do_proof_atomic_gt(const ExprNode& rhs,
+                          const SubstList& sub);
+  bool do_proof_atomic_le(const ExprNode& rhs,
+                          const SubstList& sub);
+  bool do_proof_atomic_ge(const ExprNode& rhs,
+                          const SubstList& sub);
+  bool do_proof_sublist(DBM* const lhs, const ExprNode& rhs,
+                        const SubstList& sub);
+  bool do_proof_reset(DBM* const lhs, const ExprNode& rhs,
+                      const SubstList& sub);
+  bool do_proof_assign(DBM* const lhs, const ExprNode& rhs,
+                       const SubstList& sub);
+  bool do_proof_replace(DBM* const lhs, const ExprNode& rhs,
+                        const SubstList& sub);
+  bool do_proof_ablewaitinf(DBM* const lhs, const SubstList& sub);
+  bool do_proof_unablewaitinf(DBM* const lhs, const SubstList& sub);
 
   DBMList* do_proof_place_predicate(DBM* const lhs, DBMList* const place,
-                                    const ExprNode* const rhs,
-                                    SubstList* const sub);
+                                    const ExprNode& rhs,
+                                    const SubstList& sub);
   DBMList* do_proof_place_and(DBM* const lhs, DBMList* const place,
-                              const ExprNode* const rhs, SubstList* const sub);
+                              const ExprNode& rhs,
+                              const SubstList& sub);
   DBMList* do_proof_place_or(DBM* const lhs, DBMList* const place,
-                             const ExprNode* const rhs, SubstList* const sub);
+                             const ExprNode& rhs,
+                             const SubstList& sub);
   DBMList* do_proof_place_or_simple(DBM* const lhs, DBMList* const place,
-                                    const ExprNode* const rhs,
-                                    SubstList* const sub);
+                                    const ExprNode& rhs,
+                                    const SubstList& sub);
   DBMList* do_proof_place_forall(DBM* const lhs, DBMList* const place,
-                                 const ExprNode* const rhs,
-                                 SubstList* const sub);
+                                 const ExprNode& rhs,
+                                 const SubstList& sub);
   DBMList* do_proof_place_forall_rel(DBM* const lhs, DBMList* const place,
-                                     const ExprNode* const rhs,
-                                     SubstList* const sub);
+                                     const ExprNode& rhs,
+                                     const SubstList& sub);
   DBMList* do_proof_place_exists(DBM* const lhs, DBMList* const place,
-                                 const ExprNode* const rhs,
-                                 SubstList* const sub);
+                                 const ExprNode& rhs,
+                                 const SubstList& sub);
   DBMList* do_proof_place_exists_rel(DBM* const lhs, DBMList* const place,
-                                     const ExprNode* const rhs,
-                                     SubstList* const sub);
+                                     const ExprNode& rhs,
+                                     const SubstList& sub);
   DBMList* do_proof_place_allact(DBM* const lhs, DBMList* const place,
-                                 const ExprNode* const rhs,
-                                 SubstList* const sub);
+                                 const ExprNode& rhs,
+                                 const SubstList& sub);
   DBMList* do_proof_place_existact(DBM* const lhs, DBMList* const place,
-                                   const ExprNode* const rhs,
-                                   SubstList* const sub);
+                                   const ExprNode& rhs,
+                                   const SubstList& sub);
   DBMList* do_proof_place_imply(DBM* const lhs, DBMList* const place,
-                                const ExprNode* const rhs,
-                                SubstList* const sub);
+                                const ExprNode& rhs,
+                                const SubstList& sub);
   DBMList* do_proof_place_constraint(DBM* const lhs, DBMList* const place,
-                                     const ExprNode* const rhs);
-  DBMList* do_proof_place_bool(DBMList* const place, const ExprNode* const rhs);
+                                     const ExprNode& rhs);
+  DBMList* do_proof_place_bool(DBMList* const place, const ExprNode& rhs);
   DBMList* do_proof_place_atomic(DBMList* const place,
-                                 const ExprNode* const rhs,
-                                 SubstList* const sub);
+                                 const ExprNode& rhs,
+                                 const SubstList& sub);
   DBMList* do_proof_place_atomic_not(DBMList* const place,
-                                     const ExprNode* const rhs,
-                                     SubstList* const sub);
+                                     const ExprNode& rhs,
+                                     const SubstList& sub);
   DBMList* do_proof_place_atomic_lt(DBMList* const place,
-                                    const ExprNode* const rhs,
-                                    SubstList* const sub);
+                                    const ExprNode& rhs,
+                                    const SubstList& sub);
   DBMList* do_proof_place_atomic_gt(DBMList* const place,
-                                    const ExprNode* const rhs,
-                                    SubstList* const sub);
+                                    const ExprNode& rhs,
+                                    const SubstList& sub);
   DBMList* do_proof_place_atomic_le(DBMList* const place,
-                                    const ExprNode* const rhs,
-                                    SubstList* const sub);
+                                    const ExprNode& rhs,
+                                    const SubstList& sub);
   DBMList* do_proof_place_atomic_ge(DBMList* const place,
-                                    const ExprNode* const rhs,
-                                    SubstList* const sub);
+                                    const ExprNode& rhs,
+                                    const SubstList& sub);
   DBMList* do_proof_place_sublist(DBM* const lhs, DBMList* const place,
-                                  const ExprNode* const rhs,
-                                  SubstList* const sub);
+                                  const ExprNode& rhs,
+                                  const SubstList& sub);
   DBMList* do_proof_place_reset(DBM* const lhs, DBMList* const place,
-                                const ExprNode* const rhs,
-                                SubstList* const sub);
+                                const ExprNode& rhs,
+                                const SubstList& sub);
   DBMList* do_proof_place_assign(DBM* const lhs, DBMList* const place,
-                                 const ExprNode* const rhs,
-                                 SubstList* const sub);
+                                 const ExprNode& rhs,
+                                 const SubstList& sub);
   DBMList* do_proof_place_replace(DBM* const lhs, DBMList* const place,
-                                  const ExprNode* const rhs,
-                                  SubstList* const sub);
+                                  const ExprNode& rhs,
+                                  const SubstList& sub);
   DBMList* do_proof_place_ablewaitinf(DBM* const lhs, DBMList* const place,
-                                      SubstList* const sub);
+                                      const SubstList& sub);
   DBMList* do_proof_place_unablewaitinf(DBM* const lhs, DBMList* const place,
-                                        SubstList* const sub);
+                                        const SubstList& sub);
 
   /** Method to compute the predecessor check of relativized exists operators.
    * This method is inlined for performance reasons.
@@ -686,17 +685,17 @@ protected:
 
 /* IMPLEMENTATION PROOF WITHOUT PLACEHOLDERS */
 inline bool prover::do_proof_predicate(DBM* const lhs,
-                                       const ExprNode* const rhs,
-                                       SubstList* const sub) {
+                                       const ExprNode& rhs,
+                                       const SubstList& sub) {
   bool retVal = false;
 
-  ExprNode* e = input_pes.lookup_equation(rhs->getPredicate());
+  ExprNode* e = input_pes.lookup_equation(rhs.getPredicate());
 
   // Get Predicate Index for Hashing
   int predicate_index =
-      input_pes.lookup_predicate(rhs->getPredicate())->getIntVal() - 1;
+      input_pes.lookup_predicate(rhs.getPredicate())->getIntVal() - 1;
   prevParityGfp = currParityGfp;
-  currParityGfp = rhs->get_Parity();
+  currParityGfp = rhs.get_Parity();
   lhs->cf();
 
   /* Look in Known True and Known False Sequent Caches */
@@ -704,7 +703,7 @@ inline bool prover::do_proof_predicate(DBM* const lhs,
     /* First look in known False Sequent table */
     { // Restricted scope for looking up false sequents
       Sequent* cached_sequent =
-          cache.Xlist_false.look_for_sequent(sub, predicate_index);
+          cache.Xlist_false.look_for_sequent(&sub, predicate_index);
       if (cached_sequent != nullptr &&
           cached_sequent->tabled_false_sequent(lhs)) {
         cpplog(cpplogging::debug)
@@ -720,7 +719,7 @@ inline bool prover::do_proof_predicate(DBM* const lhs,
     /* Now look in known True Sequent table */
     { // Restricted scope for looking up true sequents
       Sequent* cached_sequent =
-          cache.Xlist_true.look_for_sequent(sub, predicate_index);
+          cache.Xlist_true.look_for_sequent(&sub, predicate_index);
       if (cached_sequent != nullptr && cached_sequent->tabled_sequent(lhs)) {
         cpplog(cpplogging::debug)
             << "---(Valid) Located a Known True Sequent ----" << std::endl
@@ -737,7 +736,7 @@ inline bool prover::do_proof_predicate(DBM* const lhs,
    * fixpoint circularity */
   Sequent* h = nullptr;
   { // Restricted scope for detecting circularities
-    Sequent* t = new Sequent(rhs, sub);
+    Sequent* t = new Sequent(&rhs, &sub);
     if (currParityGfp) { // Thus a Greatest Fixpoint
       h = cache.Xlist_pGFP.locate_sequent(t, predicate_index);
       if ((!newSequent) && h->tabled_sequent(lhs)) {
@@ -752,7 +751,7 @@ inline bool prover::do_proof_predicate(DBM* const lhs,
 
         // Add sequent to known true cache
         if (useCaching) {
-          Sequent* true_sequent = new Sequent(rhs, sub);
+          Sequent* true_sequent = new Sequent(&rhs, &sub);
           Sequent* cached_true_sequent =
               cache.Xlist_true.locate_sequent(true_sequent, predicate_index);
           cached_true_sequent->update_sequent(lhs);
@@ -774,7 +773,7 @@ inline bool prover::do_proof_predicate(DBM* const lhs,
 
         // Now Put Sequent in False Cache
         if (useCaching) {
-          Sequent* false_sequent = new Sequent(rhs, sub);
+          Sequent* false_sequent = new Sequent(&rhs, &sub);
           Sequent* cached_false_sequent =
               cache.Xlist_false.locate_sequent(false_sequent, predicate_index);
           cached_false_sequent->update_false_sequent(lhs);
@@ -797,7 +796,7 @@ inline bool prover::do_proof_predicate(DBM* const lhs,
   /* Get the current variable: do a shallow, not deep copy */
   parentRef = h;
 
-  retVal = do_proof(lhs, e, sub);
+  retVal = do_proof(lhs, *e, sub);
 
   lhs->cf();
 
@@ -817,7 +816,7 @@ inline bool prover::do_proof_predicate(DBM* const lhs,
     if (retVal) {
       /* First look in opposite parity Caches */
       bool madeEmpty = false;
-      Sequent* true_sequent = new Sequent(rhs, sub);
+      Sequent* true_sequent = new Sequent(&rhs, &sub);
       /* If found, Purge Sequent from its cache */
       Sequent* cached_false_sequent =
           cache.Xlist_false.look_for_and_purge_rhs_sequent(
@@ -842,7 +841,7 @@ inline bool prover::do_proof_predicate(DBM* const lhs,
       }
     } else { // !retVal
       /* True cache (not gfp caches) */
-      Sequent* false_sequent = new Sequent(rhs, sub);
+      Sequent* false_sequent = new Sequent(&rhs, &sub);
       bool madeEmpty = false;
       /* If found, Purge Sequent from its cache */
       Sequent* cached_true_sequent =
@@ -875,13 +874,13 @@ inline bool prover::do_proof_predicate(DBM* const lhs,
 }
 
 // [FC14] Proof rule \land
-inline bool prover::do_proof_and(DBM* const lhs, const ExprNode* const rhs,
-                                 SubstList* const sub) {
+inline bool prover::do_proof_and(DBM* const lhs, const ExprNode& rhs,
+                                 const SubstList& sub) {
   /* Because lhs is only changed after it is copied, it can
    * be passed to both branches. */
-  bool retVal = do_proof(lhs, rhs->getLeft(), sub);
+  bool retVal = do_proof(lhs, *rhs.getLeft(), sub);
   if (retVal) {
-    retVal = do_proof(lhs, rhs->getRight(), sub);
+    retVal = do_proof(lhs, *rhs.getRight(), sub);
   }
   return retVal;
 }
@@ -892,13 +891,13 @@ inline bool prover::do_proof_and(DBM* const lhs, const ExprNode* const rhs,
  * - the proof for l covers a strict, non-empty subset of lhs
  */
 // [FC14] Proof rule based on \lor_{s_2}
-inline bool prover::do_proof_or(DBM* const lhs, const ExprNode* const rhs,
-                                SubstList* const sub) {
+inline bool prover::do_proof_or(DBM* const lhs, const ExprNode& rhs,
+                                const SubstList& sub) {
   bool retVal = false;
 
   /* Use two placeholders to provide split here */
   DBMList placeholder1(*INFTYDBM);
-  do_proof_place(lhs, &placeholder1, rhs->getLeft(), sub);
+  do_proof_place(lhs, &placeholder1, *rhs.getLeft(), sub);
   placeholder1.cf();
 
   // We optimise on proving the right hand side, depending on the placeholder.
@@ -909,7 +908,7 @@ inline bool prover::do_proof_or(DBM* const lhs, const ExprNode* const rhs,
   // Reset place parent to NULL
   parentPlaceRef = nullptr;
   if (placeholder1.emptiness()) {
-    retVal = do_proof(lhs, rhs->getRight(), sub);
+    retVal = do_proof(lhs, *rhs.getRight(), sub);
   } else if (placeholder1 >= *lhs) {
     retVal = true;
   } else {
@@ -917,7 +916,7 @@ inline bool prover::do_proof_or(DBM* const lhs, const ExprNode* const rhs,
      * OR Split rule, so we try to establish whether part of lhs is covered by
      * l, and the other part is covered by rhs. */
     DBMList placeholder2(*INFTYDBM);
-    do_proof_place(lhs, &placeholder2, rhs->getRight(), sub);
+    do_proof_place(lhs, &placeholder2, *rhs.getRight(), sub);
     placeholder2.cf();
 
     // Reset place parent to NULL
@@ -938,19 +937,19 @@ inline bool prover::do_proof_or(DBM* const lhs, const ExprNode* const rhs,
 
 // [FC14], rules \lor_{l} and \lor_{r}
 inline bool prover::do_proof_or_simple(DBM* const lhs,
-                                       const ExprNode* const rhs,
-                                       SubstList* const sub) {
+                                       const ExprNode& rhs,
+                                       const SubstList& sub) {
   /* Simplified OR does not need to split on placeholders */
-  bool retVal = do_proof(lhs, rhs->getLeft(), sub);
+  bool retVal = do_proof(lhs, *rhs.getLeft(), sub);
   if (!retVal) {
-    retVal = do_proof(lhs, rhs->getRight(), sub);
+    retVal = do_proof(lhs, *rhs.getRight(), sub);
   }
   return retVal;
 }
 
 // [FC14] Rule \forall_{t1}
-inline bool prover::do_proof_forall(DBM* const lhs, const ExprNode* const rhs,
-                                    SubstList* const sub) {
+inline bool prover::do_proof_forall(DBM* const lhs, const ExprNode& rhs,
+                                    const SubstList& sub) {
   /* Here the model checker looks at the zone of
    * all time sucessors and then substitutes in
    * the substitued constraints and sees if the
@@ -960,15 +959,15 @@ inline bool prover::do_proof_forall(DBM* const lhs, const ExprNode* const rhs,
    * allowing multiple branches of AND and OR to have the same lhs. */
   DBM succ_lhs(*lhs);
   succ_lhs.suc();
-  restrict_to_invariant(input_pes.invariants(), &succ_lhs, *sub);
+  restrict_to_invariant(input_pes.invariants(), &succ_lhs, sub);
 
-  return do_proof(&succ_lhs, rhs->getQuant(), sub);
+  return do_proof(&succ_lhs, *rhs.getQuant(), sub);
 }
 
 // [FC14] Proof rules \forall_{ro1}, \forall_{ro2}, \forall_{ro3}
 inline bool prover::do_proof_forall_rel(DBM* const lhs,
-                                        const ExprNode* const rhs,
-                                        SubstList* const sub) {
+                                        const ExprNode& rhs,
+                                        const SubstList& sub) {
   /* Proof methodology:
    * first, see if \phi_1 is satisfied during the time advance.
    * If it is, check that phi_2 is true both at and before those
@@ -987,9 +986,9 @@ inline bool prover::do_proof_forall_rel(DBM* const lhs,
   // Make sure lhs_succ is not modified; we reuse it for the sake of efficiency.
 
   DBMList placeholder1(*INFTYDBM); // phi_{s1}
-  restrict_to_invariant(input_pes.invariants(), &placeholder1, *sub);
+  restrict_to_invariant(input_pes.invariants(), &placeholder1, sub);
   DBM lhs_succ1(lhs_succ);
-  do_proof_place(&lhs_succ1, &placeholder1, rhs->getLeft(), sub);
+  do_proof_place(&lhs_succ1, &placeholder1, *rhs.getLeft(), sub);
   placeholder1.cf();
 
   // Reset place parent to NULL
@@ -998,8 +997,8 @@ inline bool prover::do_proof_forall_rel(DBM* const lhs,
   if (placeholder1.emptiness()) { // Here, \forall phi_2 needs to hold.
     // [FC14] derived rule? of \forall_{ro1} TODO
     if (cpplogEnabled(cpplogging::debug)) {
-      print_sequentCheck(std::cerr, step - 1, retVal, lhs, &placeholder1, sub,
-                         rhs->getOpType());
+      print_sequentCheck(std::cerr, step - 1, retVal, lhs, &placeholder1, &sub,
+                         rhs.getOpType());
       cpplog(cpplogging::debug)
           << "----() Empty Relativization Placeholder: phi1 is never true -----"
           << std::endl
@@ -1014,8 +1013,8 @@ inline bool prover::do_proof_forall_rel(DBM* const lhs,
      * allowing multiple branches of AND and OR to have the same lhs. */
     DBM lhs_succ_invariant(lhs_succ); // that part of lhs_succ that satisfies
                                       // the location invariant
-    restrict_to_invariant(input_pes.invariants(), &lhs_succ_invariant, *sub);
-    retVal = do_proof(&lhs_succ_invariant, rhs->getRight(), sub);
+    restrict_to_invariant(input_pes.invariants(), &lhs_succ_invariant, sub);
+    retVal = do_proof(&lhs_succ_invariant, *rhs.getRight(), sub);
   } else if (placeholder1 >= *lhs) {
     // placeholder1 nonempty
     /* First check for the simplest case: no time elapse is needed */
@@ -1025,7 +1024,7 @@ inline bool prover::do_proof_forall_rel(DBM* const lhs,
     // [FC14] proof rule \forall_{ro2};
     if (cpplogEnabled(cpplogging::debug)) {
       print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, lhs,
-                         &placeholder1, sub, rhs->getOpType());
+                         &placeholder1, &sub, rhs.getOpType());
       cpplog(cpplogging::debug) << "----(Valid) Placeholder indicates no time "
                                    "elapse is needed (Check Only)-----"
                                 << std::endl
@@ -1035,7 +1034,7 @@ inline bool prover::do_proof_forall_rel(DBM* const lhs,
     }
 
     // If here, we neither need a placeholder nor to elapse time
-    retVal = do_proof(lhs, rhs->getRight(), sub);
+    retVal = do_proof(lhs, *rhs.getRight(), sub);
   } else {
     retVal = true;
     // This is the more complicated case that requires a placeholder
@@ -1051,7 +1050,7 @@ inline bool prover::do_proof_forall_rel(DBM* const lhs,
      * We will check that once at the end */
     DBMList placeholder2(*INFTYDBM);
     DBM lhs_succ2(lhs_succ); // copy to avoid modifying lhs_succ
-    do_proof_place(&lhs_succ2, &placeholder2, rhs->getRight(), sub);
+    do_proof_place(&lhs_succ2, &placeholder2, *rhs.getRight(), sub);
     placeholder2.cf();
 
     cpplog(cpplogging::debug)
@@ -1075,12 +1074,12 @@ inline bool prover::do_proof_forall_rel(DBM* const lhs,
        * nor everything. */
 
       DBMList placeholder_forall(*INFTYDBM);
-      succCheckRule(sub, lhs, &lhs_succ, &placeholder2, &placeholder_forall);
+      succCheckRule(&sub, lhs, &lhs_succ, &placeholder2, &placeholder_forall);
       placeholder_forall.cf();
 
       if (cpplogEnabled(cpplogging::debug)) {
         print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal,
-                           &lhs_succ2, &placeholder2, sub, rhs->getOpType());
+                           &lhs_succ2, &placeholder2, &sub, rhs.getOpType());
         cpplog(cpplogging::debug)
             << "----() FORALL (of FORALL_REL) Placeholder Check obtained  FA "
                "Placeholder := {"
@@ -1127,7 +1126,7 @@ inline bool prover::do_proof_forall_rel(DBM* const lhs,
 
         if (cpplogEnabled(cpplogging::debug)) {
           print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal,
-                             lhs, &placeholder_exists, sub, rhs->getOpType());
+                             lhs, &placeholder_exists, &sub, rhs.getOpType());
           cpplog(cpplogging::debug)
               << "----() FORALL Rel Exists placeholder after time elapse check "
                  "is := {"
@@ -1156,7 +1155,7 @@ inline bool prover::do_proof_forall_rel(DBM* const lhs,
       // Debug information here?
       if (cpplogEnabled(cpplogging::debug)) {
         print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, lhs,
-                           &placeholder_exists, sub, rhs->getOpType());
+                           &placeholder_exists, &sub, rhs.getOpType());
         cpplog(cpplogging::debug)
             << "----() Final FORALL REL Placeholder is := {"
             << placeholder_exists << "} ----" << std::endl
@@ -1169,8 +1168,8 @@ inline bool prover::do_proof_forall_rel(DBM* const lhs,
 }
 
 // [FC14] Proof rule \exists_{t1}
-inline bool prover::do_proof_exists(DBM* const lhs, const ExprNode* const rhs,
-                                    SubstList* const sub) {
+inline bool prover::do_proof_exists(DBM* const lhs, const ExprNode& rhs,
+                                    const SubstList& sub) {
   bool retVal = false;
 
   /* Support for exists(), written by Peter Fontana */
@@ -1187,9 +1186,9 @@ inline bool prover::do_proof_exists(DBM* const lhs, const ExprNode* const rhs,
   /* The proper derivation for EXISTS is to incorporate the invariant
    * in the placeholder, and not the LHS. */
   DBMList placeholder(*INFTYDBM);
-  restrict_to_invariant(input_pes.invariants(), &placeholder, *sub);
+  restrict_to_invariant(input_pes.invariants(), &placeholder, sub);
 
-  do_proof_place(&lhs_succ, &placeholder, rhs->getQuant(), sub);
+  do_proof_place(&lhs_succ, &placeholder, *rhs.getQuant(), sub);
   // Reset place parent to NULL
   parentPlaceRef = nullptr;
   placeholder.cf();
@@ -1197,7 +1196,7 @@ inline bool prover::do_proof_exists(DBM* const lhs, const ExprNode* const rhs,
     retVal = false;
     if (cpplogEnabled(cpplogging::debug)) {
       print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, lhs,
-                         &placeholder, sub, rhs->getOpType());
+                         &placeholder, &sub, rhs.getOpType());
       cpplog(cpplogging::debug) << "----(Invalid) Empty Placeholder: No Need "
                                    "for Placeholder Check-----"
                                 << std::endl
@@ -1213,7 +1212,7 @@ inline bool prover::do_proof_exists(DBM* const lhs, const ExprNode* const rhs,
 
     if (cpplogEnabled(cpplogging::debug)) {
       print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, lhs,
-                         &placeholder, sub, rhs->getOpType());
+                         &placeholder, &sub, rhs.getOpType());
       if (retVal) {
         cpplog(cpplogging::debug)
             << "----(Valid) Placeholder Check Passed (Check Only)-----"
@@ -1234,8 +1233,8 @@ inline bool prover::do_proof_exists(DBM* const lhs, const ExprNode* const rhs,
 }
 
 inline bool prover::do_proof_exists_rel(DBM* const lhs,
-                                        const ExprNode* const rhs,
-                                        SubstList* const sub) {
+                                        const ExprNode& rhs,
+                                        const SubstList& sub) {
   bool retVal = false;
 
   /* First Try to get a placeholder value that works */
@@ -1246,9 +1245,9 @@ inline bool prover::do_proof_exists_rel(DBM* const lhs,
   DBM lhs_succ2(lhs_succ);
 
   DBMList placeholder2(*INFTYDBM);
-  restrict_to_invariant(input_pes.invariants(), &placeholder2, *sub);
+  restrict_to_invariant(input_pes.invariants(), &placeholder2, sub);
 
-  do_proof_place(&lhs_succ, &placeholder2, rhs->getRight(), sub);
+  do_proof_place(&lhs_succ, &placeholder2, *rhs.getRight(), sub);
   // Reset place parent to NULL
   parentPlaceRef = nullptr;
   placeholder2.cf();
@@ -1256,7 +1255,7 @@ inline bool prover::do_proof_exists_rel(DBM* const lhs,
     retVal = false;
     if (cpplogEnabled(cpplogging::debug)) {
       print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, lhs,
-                         &placeholder2, sub, rhs->getOpType());
+                         &placeholder2, &sub, rhs.getOpType());
       cpplog(cpplogging::debug) << "----(Invalid) Empty First Placeholder: No "
                                    "Need for additional Placeholder Checks-----"
                                 << std::endl
@@ -1287,7 +1286,7 @@ inline bool prover::do_proof_exists_rel(DBM* const lhs,
     DBMList placeholder1(*INFTYDBM);
     // Since invariants are past closed, we do not need to intersect
     // this placeholder with the invariant.
-    do_proof_place(&lhs_succ2, &placeholder1, rhs->getLeft(), sub);
+    do_proof_place(&lhs_succ2, &placeholder1, *rhs.getLeft(), sub);
     /* Second step: tighten and check the predecessor */
     // Must check for emptiness to handle the corner case when it is empty
 
@@ -1306,7 +1305,7 @@ inline bool prover::do_proof_exists_rel(DBM* const lhs,
       if (cpplogEnabled(cpplogging::debug)) {
         print_sequentCheck(
             cpplogGet(cpplogging::debug), step - 1, false, &lhs_succ2,
-            &placeholder1_intersect_placeholder2_pred, sub, rhs->getOpType());
+            &placeholder1_intersect_placeholder2_pred, &sub, rhs.getOpType());
         cpplog(cpplogging::debug)
             << "----() Empty Second Placeholder: Relativization Formula "
                "\\phi_1 is never true-----"
@@ -1374,8 +1373,8 @@ inline bool prover::do_proof_exists_rel(DBM* const lhs,
 
       if (cpplogEnabled(cpplogging::debug)) {
         print_sequent_place(std::cerr, step - 1, retVal, &lhs_succ2,
-                            &placeholder2_predecessor, rhs->getLeft(), sub,
-                            rhs->getOpType());
+                            &placeholder2_predecessor, rhs.getLeft(), &sub,
+                            rhs.getOpType());
         cpplog(cpplogging::debug) << "----(Valid) Relativization Placeholder "
                                      "Check Passed (Check Only)-----"
                                   << std::endl
@@ -1398,7 +1397,7 @@ inline bool prover::do_proof_exists_rel(DBM* const lhs,
 
       if (cpplogEnabled(cpplogging::debug)) {
         print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, lhs,
-                           &placeholder, sub, rhs->getOpType());
+                           &placeholder, &sub, rhs.getOpType());
         if (retVal) {
           cpplog(cpplogging::debug)
               << "----(Valid) Last Placeholder Check Passed (Check Only)-----"
@@ -1419,8 +1418,8 @@ inline bool prover::do_proof_exists_rel(DBM* const lhs,
   return retVal;
 }
 
-inline bool prover::do_proof_allact(DBM* const lhs, const ExprNode* const rhs,
-                                    SubstList* const sub) {
+inline bool prover::do_proof_allact(DBM* const lhs, const ExprNode& rhs,
+                                    const SubstList& sub) {
   bool retVal = true;
   /* Enumerate through all transitions */
   cpplog(cpplogging::debug) << "\t Proving ALLACT Transitions:----\n"
@@ -1434,7 +1433,7 @@ inline bool prover::do_proof_allact(DBM* const lhs, const ExprNode* const rhs,
     DBM tempLHS(*lhs);
 
     bool guard_satisfied =
-        comp_ph(&tempLHS, *(transition->getLeftExpr()), *sub);
+        comp_ph(&tempLHS, *(transition->getLeftExpr()), sub);
     if (!guard_satisfied) {
       cpplog(cpplogging::debug)
           << "Transition: " << transition << " cannot be taken." << std::endl;
@@ -1445,7 +1444,7 @@ inline bool prover::do_proof_allact(DBM* const lhs, const ExprNode* const rhs,
        left hand side to be the part of the left hand side that satisfies the
        location invariant. */
     DBM invariant_region(*INFTYDBM);
-    const SubstList* source_location = transition->getEnteringLocation(sub);
+    const SubstList* source_location = transition->getEnteringLocation(&sub);
     bool invariant_satisfiable = restrict_to_invariant(
         input_pes.invariants(), &invariant_region, *source_location);
     delete source_location;
@@ -1483,7 +1482,7 @@ inline bool prover::do_proof_allact(DBM* const lhs, const ExprNode* const rhs,
       }
     }
 
-    transition->getNewTrans(rhs->getQuant());
+    transition->getNewTrans(rhs.getQuant());
 
     /* Constraints are bounded by MAXC */
     /* This is to extend the LHS to make sure that
@@ -1493,14 +1492,14 @@ inline bool prover::do_proof_allact(DBM* const lhs, const ExprNode* const rhs,
      * exceed a certain constant value. */
     tempLHS.cf();
     tempLHS.bound(MAXC);
-    SubstList tempSub(*sub);
+    SubstList tempSub(sub);
 
     cpplog(cpplogging::debug)
         << "Executing transition (with destination) " << transition << std::endl
         << "\tExtra invariant condition: " << invariant_region << std::endl;
 
     numLocations++;
-    retVal = do_proof(&tempLHS, transition->getRightExpr(), &tempSub);
+    retVal = do_proof(&tempLHS, *transition->getRightExpr(), tempSub);
     if (!retVal) {
       cpplog(cpplogging::debug)
           << "Trainsition: " << transition << std::endl
@@ -1514,8 +1513,8 @@ inline bool prover::do_proof_allact(DBM* const lhs, const ExprNode* const rhs,
   return retVal;
 }
 
-inline bool prover::do_proof_existact(DBM* const lhs, const ExprNode* const rhs,
-                                      SubstList* const sub) {
+inline bool prover::do_proof_existact(DBM* const lhs, const ExprNode& rhs,
+                                      const SubstList& sub) {
   bool retVal = false;
   /* Enumerate through all transitions */
 
@@ -1539,7 +1538,7 @@ inline bool prover::do_proof_existact(DBM* const lhs, const ExprNode* const rhs,
     DBMList tempPlace(*INFTYDBM);
     DBM tempLHS(*lhs);
     bool guard_satisfied = comp_ph_exist_place(
-        &tempLHS, &tempPlace, *(transition->getLeftExpr()), *sub);
+        &tempLHS, &tempPlace, *(transition->getLeftExpr()), sub);
     if (!guard_satisfied) {
       cpplog(cpplogging::debug)
           << "Transition: " << transition << " cannot be taken." << std::endl;
@@ -1548,7 +1547,7 @@ inline bool prover::do_proof_existact(DBM* const lhs, const ExprNode* const rhs,
 
     /* Now check the invariant */
     DBM invariant_region(*INFTYDBM);
-    const SubstList* source_location = transition->getEnteringLocation(sub);
+    const SubstList* source_location = transition->getEnteringLocation(&sub);
     bool invariant_satisfiable = restrict_to_invariant(
         input_pes.invariants(), &invariant_region, *source_location);
     delete source_location;
@@ -1592,7 +1591,7 @@ inline bool prover::do_proof_existact(DBM* const lhs, const ExprNode* const rhs,
       }
     }
 
-    transition->getNewTrans(rhs->getQuant());
+    transition->getNewTrans(rhs.getQuant());
     /* Constraints are bounded by MAXC */
     /* This is to extend the LHS to make sure that
      * the RHS is satisfied by any zone that satisfies
@@ -1601,14 +1600,14 @@ inline bool prover::do_proof_existact(DBM* const lhs, const ExprNode* const rhs,
      * exceed a certain constant value. */
 
     tempLHS.bound(MAXC);
-    SubstList tempSub(*sub);
+    SubstList tempSub(sub);
     // Above placeholder restricted to satisfy incoming invariant
 
     cpplog(cpplogging::debug) << "Executing transition (with destination) "
                               << transition << std::endl;
     numLocations++;
     retPlaceDBM = do_proof_place(&tempLHS, &tempPlace,
-                                 transition->getRightExpr(), &tempSub);
+                                 *transition->getRightExpr(), tempSub);
 
     // Reset place parent to NULL
     parentPlaceRef = nullptr;
@@ -1641,12 +1640,12 @@ inline bool prover::do_proof_existact(DBM* const lhs, const ExprNode* const rhs,
   return retVal;
 }
 
-inline bool prover::do_proof_imply(DBM* const lhs, const ExprNode* const rhs,
-                                   SubstList* const sub) {
+inline bool prover::do_proof_imply(DBM* const lhs, const ExprNode& rhs,
+                                   const SubstList& sub) {
   bool retVal = false;
   /* Here is the one call to comp_ph(...) outside of comp_ph(...) */
   DBM tempLHS(*lhs);
-  if (comp_ph(&tempLHS, *(rhs->getLeft()), *sub)) {
+  if (comp_ph(&tempLHS, *(rhs.getLeft()), sub)) {
     /* Constraints are bounded by MAXC */
     /* This is to extend the LHS to make sure that
      * the RHS is satisfied by any zone that satisfies
@@ -1656,7 +1655,7 @@ inline bool prover::do_proof_imply(DBM* const lhs, const ExprNode* const rhs,
     tempLHS.cf();
     tempLHS.bound(MAXC);
 
-    retVal = do_proof(&tempLHS, rhs->getRight(), sub);
+    retVal = do_proof(&tempLHS, *rhs.getRight(), sub);
   } else {
     /* The set of states does not satisfy the premises of the IF
      * so thus the proof is true */
@@ -1670,9 +1669,9 @@ inline bool prover::do_proof_imply(DBM* const lhs, const ExprNode* const rhs,
 }
 
 inline bool prover::do_proof_constraint(DBM* const lhs,
-                                        const ExprNode* const rhs) {
+                                        const ExprNode& rhs) {
   lhs->cf();
-  bool retVal = (*lhs <= *(rhs->dbm()));
+  bool retVal = (*lhs <= *(rhs.dbm()));
   cpplog(cpplogging::debug)
       << "---(" << (retVal ? "V" : "Inv")
       << "alid) Leaf DBM (CONSTRAINT) Reached----" << std::endl
@@ -1680,103 +1679,103 @@ inline bool prover::do_proof_constraint(DBM* const lhs,
   return retVal;
 }
 
-inline bool prover::do_proof_bool(const ExprNode* const rhs) {
-  bool retVal = (rhs->getBool());
+inline bool prover::do_proof_bool(const ExprNode& rhs) {
+  bool retVal = (rhs.getBool());
   cpplog(cpplogging::debug) << "---(" << (retVal ? "V" : "Inv")
                             << "alid) Leaf BOOL Reached----" << std::endl
                             << std::endl;
   return retVal;
 }
 
-inline bool prover::do_proof_atomic(const ExprNode* const rhs,
-                                    const SubstList* const sub) {
-  bool retVal = (sub->at(rhs->getAtomic()) == rhs->getIntVal());
+inline bool prover::do_proof_atomic(const ExprNode& rhs,
+                                    const SubstList& sub) {
+  bool retVal = (sub.at(rhs.getAtomic()) == rhs.getIntVal());
   cpplog(cpplogging::debug) << "---(" << (retVal ? "V" : "Inv")
                             << "alid) Leaf ATOMIC == Reached----" << std::endl
                             << std::endl;
   return retVal;
 }
 
-inline bool prover::do_proof_atomic_not(const ExprNode* const rhs,
-                                        const SubstList* const sub) {
-  bool retVal = (sub->at(rhs->getAtomic()) != rhs->getIntVal());
+inline bool prover::do_proof_atomic_not(const ExprNode& rhs,
+                                        const SubstList& sub) {
+  bool retVal = (sub.at(rhs.getAtomic()) != rhs.getIntVal());
   cpplog(cpplogging::debug) << "---(" << (retVal ? "V" : "Inv")
                             << "alid) Leaf ATOMIC != Reached----" << std::endl
                             << std::endl;
   return retVal;
 }
 
-inline bool prover::do_proof_atomic_lt(const ExprNode* const rhs,
-                                       const SubstList* const sub) {
-  bool retVal = (sub->at(rhs->getAtomic()) < rhs->getIntVal());
+inline bool prover::do_proof_atomic_lt(const ExprNode& rhs,
+                                       const SubstList& sub) {
+  bool retVal = (sub.at(rhs.getAtomic()) < rhs.getIntVal());
   cpplog(cpplogging::debug) << "---(" << (retVal ? "V" : "Inv")
                             << "alid) Leaf ATOMIC < Reached----" << std::endl
                             << std::endl;
   return retVal;
 }
 
-inline bool prover::do_proof_atomic_gt(const ExprNode* const rhs,
-                                       const SubstList* const sub) {
-  bool retVal = (sub->at(rhs->getAtomic()) > rhs->getIntVal());
+inline bool prover::do_proof_atomic_gt(const ExprNode& rhs,
+                                       const SubstList& sub) {
+  bool retVal = (sub.at(rhs.getAtomic()) > rhs.getIntVal());
   cpplog(cpplogging::debug) << "---(" << (retVal ? "V" : "Inv")
                             << "alid) Leaf ATOMIC > Reached----" << std::endl
                             << std::endl;
   return retVal;
 }
 
-inline bool prover::do_proof_atomic_le(const ExprNode* const rhs,
-                                       const SubstList* const sub) {
-  bool retVal = (sub->at(rhs->getAtomic()) <= rhs->getIntVal());
+inline bool prover::do_proof_atomic_le(const ExprNode& rhs,
+                                       const SubstList& sub) {
+  bool retVal = (sub.at(rhs.getAtomic()) <= rhs.getIntVal());
   cpplog(cpplogging::debug) << "---(" << (retVal ? "V" : "Inv")
                             << "alid) Leaf ATOMIC < Reached----" << std::endl
                             << std::endl;
   return retVal;
 }
 
-inline bool prover::do_proof_atomic_ge(const ExprNode* const rhs,
-                                       const SubstList* const sub) {
-  bool retVal = (sub->at(rhs->getAtomic()) >= rhs->getIntVal());
+inline bool prover::do_proof_atomic_ge(const ExprNode& rhs,
+                                       const SubstList& sub) {
+  bool retVal = (sub.at(rhs.getAtomic()) >= rhs.getIntVal());
   cpplog(cpplogging::debug) << "---(" << (retVal ? "V" : "Inv")
                             << "alid) Leaf ATOMIC > Reached----" << std::endl
                             << std::endl;
   return retVal;
 }
 
-inline bool prover::do_proof_sublist(DBM* const lhs, const ExprNode* const rhs,
-                                     const SubstList* const sub) {
-  SubstList st(rhs->getSublist(), sub);
-  return do_proof(lhs, rhs->getExpr(), &st);
+inline bool prover::do_proof_sublist(DBM* const lhs, const ExprNode& rhs,
+                                     const SubstList& sub) {
+  SubstList st(rhs.getSublist(), &sub);
+  return do_proof(lhs, *rhs.getExpr(), st);
 }
 
-inline bool prover::do_proof_reset(DBM* const lhs, const ExprNode* const rhs,
-                                   SubstList* const sub) {
+inline bool prover::do_proof_reset(DBM* const lhs, const ExprNode& rhs,
+                                   const SubstList& sub) {
   DBM lhs_reset(*lhs);
-  lhs_reset.reset(rhs->getClockSet());
-  return do_proof(&lhs_reset, rhs->getExpr(), sub);
+  lhs_reset.reset(rhs.getClockSet());
+  return do_proof(&lhs_reset, *rhs.getExpr(), sub);
 }
 
-inline bool prover::do_proof_assign(DBM* const lhs, const ExprNode* const rhs,
-                                    SubstList* const sub) {
+inline bool prover::do_proof_assign(DBM* const lhs, const ExprNode& rhs,
+                                    const SubstList& sub) {
   DBM lhs_assign(*lhs);
   /* Here the DBM zone is where the value of
    * clock x is reset to clock y, which is possibly
    * a constant or a value*/
-  lhs_assign.reset(rhs->getcX(), rhs->getcY());
-  return do_proof(&lhs_assign, rhs->getExpr(), sub);
+  lhs_assign.reset(rhs.getcX(), rhs.getcY());
+  return do_proof(&lhs_assign, *rhs.getExpr(), sub);
 }
 
-inline bool prover::do_proof_replace(DBM* const lhs, const ExprNode* const rhs,
-                                     SubstList* const sub) {
-  SubstList sub_(*sub);
-  sub_[rhs->getcX()] = sub->at(rhs->getcY());
-  return do_proof(lhs, rhs->getExpr(), &sub_);
+inline bool prover::do_proof_replace(DBM* const lhs, const ExprNode& rhs,
+                                     const SubstList& sub) {
+  SubstList sub_(sub);
+  sub_[rhs.getcX()] = sub.at(rhs.getcY());
+  return do_proof(lhs, *rhs.getExpr(), sub_);
 }
 
-inline bool prover::do_proof_ablewaitinf(DBM* const lhs, SubstList* const sub) {
+inline bool prover::do_proof_ablewaitinf(DBM* const lhs, const SubstList& sub) {
   lhs->cf();
   DBM ph(*lhs);
   ph.suc();
-  restrict_to_invariant(input_pes.invariants(), &ph, *sub);
+  restrict_to_invariant(input_pes.invariants(), &ph, sub);
   ph.cf();
   /* Time can diverge if and only if there are no upper bound
    * constraints in the successor */
@@ -1792,11 +1791,11 @@ inline bool prover::do_proof_ablewaitinf(DBM* const lhs, SubstList* const sub) {
 
 // FIXME: eliminate duplication with do_proof_ablewaitinf
 inline bool prover::do_proof_unablewaitinf(DBM* const lhs,
-                                           SubstList* const sub) {
+                                           const SubstList& sub) {
   lhs->cf();
   DBM ph(*lhs);
   ph.suc();
-  restrict_to_invariant(input_pes.invariants(), &ph, *sub);
+  restrict_to_invariant(input_pes.invariants(), &ph, sub);
   ph.cf();
   /* Time cannot diverge if and only if there is an upper bound
    * constraint in the successor */
@@ -1813,15 +1812,15 @@ inline bool prover::do_proof_unablewaitinf(DBM* const lhs,
 // post: *retPlaceDBM == *place
 inline DBMList* prover::do_proof_place_predicate(DBM* const lhs,
                                                  DBMList* const place,
-                                                 const ExprNode* const rhs,
-                                                 SubstList* const sub) {
-  ExprNode* e = input_pes.lookup_equation(rhs->getPredicate());
+                                                 const ExprNode& rhs,
+                                                 const SubstList& sub) {
+  ExprNode* e = input_pes.lookup_equation(rhs.getPredicate());
 
   // Get Predicate Index for Hashing
   int predicate_index =
-      input_pes.lookup_predicate(rhs->getPredicate())->getIntVal() - 1;
+      input_pes.lookup_predicate(rhs.getPredicate())->getIntVal() - 1;
   prevParityGfp = currParityGfp;
-  currParityGfp = rhs->get_Parity();
+  currParityGfp = rhs.get_Parity();
   lhs->cf();
   place->cf();
 
@@ -1832,7 +1831,7 @@ inline DBMList* prover::do_proof_place_predicate(DBM* const lhs,
        * Note: The False sequents with placeholders do not
        * need to store placeholders. */
       SequentPlace* cached_sequent =
-          cache.Xlist_false_ph.look_for_sequent(sub, predicate_index);
+          cache.Xlist_false_ph.look_for_sequent(&sub, predicate_index);
       if (cached_sequent != nullptr &&
           cached_sequent->tabled_false_sequent(lhs)) {
         // Found known false
@@ -1858,7 +1857,7 @@ inline DBMList* prover::do_proof_place_predicate(DBM* const lhs,
     /* Next look in known True Sequent tables. */
     { // restricted block for known true sequents
       SequentPlace* cached_sequent =
-          cache.Xlist_true_ph.look_for_sequent(sub, predicate_index);
+          cache.Xlist_true_ph.look_for_sequent(&sub, predicate_index);
       DBMList cached_placeholder(*INFTYDBM);
       /* Note: tempPlace is changed by tabled_sequentPlace() */
       if (cached_sequent != nullptr &&
@@ -1896,7 +1895,7 @@ inline DBMList* prover::do_proof_place_predicate(DBM* const lhs,
   /* Now deal with greatest fixpoint and least fixpoint circularity */
   SequentPlace* h = nullptr;
   { // Restricted scope for detecting circularities
-    SequentPlace* t = new SequentPlace(rhs, sub);
+    SequentPlace* t = new SequentPlace(&rhs, &sub);
     if (currParityGfp) { // Thus a Greatest Fixpoint
       /* Already looked in known false so no need to do so */
       h = cache.Xlist_pGFP_ph.locate_sequent(t, predicate_index);
@@ -1916,7 +1915,7 @@ inline DBMList* prover::do_proof_place_predicate(DBM* const lhs,
 
         // Add sequent to known true cache
         if (useCaching) {
-          SequentPlace* true_sequent = new SequentPlace(rhs, sub);
+          SequentPlace* true_sequent = new SequentPlace(&rhs, &sub);
           SequentPlace* cached_true_sequent =
               cache.Xlist_true_ph.locate_sequent(true_sequent, predicate_index);
           cached_true_sequent->update_sequent(lhs, place);
@@ -1946,7 +1945,7 @@ inline DBMList* prover::do_proof_place_predicate(DBM* const lhs,
 
         // Now Put Sequent in False Cache
         if (useCaching) {
-          SequentPlace* false_sequent = new SequentPlace(rhs, sub);
+          SequentPlace* false_sequent = new SequentPlace(&rhs, &sub);
           SequentPlace* cached_false_sequent =
               cache.Xlist_false_ph.locate_sequent(false_sequent,
                                                   predicate_index);
@@ -1972,7 +1971,7 @@ inline DBMList* prover::do_proof_place_predicate(DBM* const lhs,
   /* Get the current variable */
   parentPlaceRef = h;
 
-  do_proof_place(lhs, place, e, sub);
+  do_proof_place(lhs, place, *e, sub);
 
   lhs->cf();
 
@@ -1998,7 +1997,7 @@ inline DBMList* prover::do_proof_place_predicate(DBM* const lhs,
     if (!place->emptiness()) {
       /* First look in opposite parity Caches */
       bool madeEmpty = false;
-      SequentPlace* true_sequent = new SequentPlace(rhs, sub);
+      SequentPlace* true_sequent = new SequentPlace(&rhs, &sub);
       SequentPlace* cached_false_sequent =
           cache.Xlist_false_ph.look_for_and_purge_rhs_sequent(
               std::make_pair(lhs, place), true_sequent, predicate_index, false,
@@ -2026,7 +2025,7 @@ inline DBMList* prover::do_proof_place_predicate(DBM* const lhs,
       /* First look in opposite parity Cache */
       // Now look in placeholder caches
       bool madeEmpty = false;
-      SequentPlace* false_sequent = new SequentPlace(rhs, sub);
+      SequentPlace* false_sequent = new SequentPlace(&rhs, &sub);
       SequentPlace* cached_true_sequent =
           cache.Xlist_true_ph.look_for_and_purge_rhs_sequent(
               std::make_pair(lhs, place), false_sequent, predicate_index, true,
@@ -2058,14 +2057,14 @@ inline DBMList* prover::do_proof_place_predicate(DBM* const lhs,
 
 // post: *retPlaceDBM == *place
 inline DBMList* prover::do_proof_place_and(DBM* const lhs, DBMList* const place,
-                                           const ExprNode* const rhs,
-                                           SubstList* const sub) {
+                                           const ExprNode& rhs,
+                                           const SubstList& sub) {
   DBMList placeholder_right(*place);
-  do_proof_place(lhs, place, rhs->getLeft(), sub);
+  do_proof_place(lhs, place, *rhs.getLeft(), sub);
   place->cf();
   if (!place->emptiness()) {
     placeholder_right&* place;
-    do_proof_place(lhs, &placeholder_right, rhs->getRight(), sub);
+    do_proof_place(lhs, &placeholder_right, *rhs.getRight(), sub);
     *place& placeholder_right;
   }
   *retPlaceDBM = *place;
@@ -2075,12 +2074,12 @@ inline DBMList* prover::do_proof_place_and(DBM* const lhs, DBMList* const place,
 // post: *retPlaceDBM == *place
 // [FC14] Proof rule \lor_{s2}
 inline DBMList* prover::do_proof_place_or(DBM* const lhs, DBMList* const place,
-                                          const ExprNode* const rhs,
-                                          SubstList* const sub) {
+                                          const ExprNode& rhs,
+                                          const SubstList& sub) {
   place->cf();
   DBMList placeholder_left(*place); // FIXME: why initialise with *place here?
 
-  do_proof_place(lhs, &placeholder_left, rhs->getLeft(), sub);
+  do_proof_place(lhs, &placeholder_left, *rhs.getLeft(), sub);
   placeholder_left.cf();
 
   // Now do the right proof, and take the right if its placeholder is
@@ -2098,13 +2097,13 @@ inline DBMList* prover::do_proof_place_or(DBM* const lhs, DBMList* const place,
   // We use place here, since the result of the second call is likely to be
   // part of the result anyway. If not, we will roll back later.
   // *place is thus placeholder_right.
-  do_proof_place(lhs, place, rhs->getRight(), sub);
+  do_proof_place(lhs, place, *rhs.getRight(), sub);
   place->cf();
 
   if (cpplogEnabled(cpplogging::debug)) {
     // Check Debugging Here to make sure it is giving the right output
     print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, false, lhs,
-                       &placeholder_left, sub, rhs->getOpType());
+                       &placeholder_left, &sub, rhs.getOpType());
     cpplog(cpplogging::debug)
         << "Left Placeholder of OR (P): " << placeholder_left
         << "\nRight Placeholder of OR (P): " << *place << std::endl;
@@ -2131,14 +2130,14 @@ inline DBMList* prover::do_proof_place_or(DBM* const lhs, DBMList* const place,
 // post: *retPlaceDBM == *place
 inline DBMList* prover::do_proof_place_or_simple(DBM* const lhs,
                                                  DBMList* const place,
-                                                 const ExprNode* const rhs,
-                                                 SubstList* const sub) {
+                                                 const ExprNode& rhs,
+                                                 const SubstList& sub) {
   /* In OR_SIMPLE, the placeholder will either be empty or completely full
    * in one of the two cases. Hence, fewer comparisons with unions of zones
    * are needed. */
   place->cf();
   DBMList placeholder_left(*place);
-  do_proof_place(lhs, &placeholder_left, rhs->getLeft(), sub);
+  do_proof_place(lhs, &placeholder_left, *rhs.getLeft(), sub);
   placeholder_left.cf();
 
   // Now do the right proof, and take the right if its placeholder is
@@ -2152,7 +2151,7 @@ inline DBMList* prover::do_proof_place_or_simple(DBM* const lhs,
 
   // We anticipate the right placeholder is the correct result here.
   // if not, we roll back later.
-  do_proof_place(lhs, place, rhs->getRight(), sub);
+  do_proof_place(lhs, place, *rhs.getRight(), sub);
   place->cf();
 
   /* If the left is simple, then we have an empty left or
@@ -2176,8 +2175,8 @@ inline DBMList* prover::do_proof_place_or_simple(DBM* const lhs,
 // [FC14] Proof rule \forall_{t2}
 inline DBMList* prover::do_proof_place_forall(DBM* const lhs,
                                               DBMList* const place,
-                                              const ExprNode* const rhs,
-                                              SubstList* const sub) {
+                                              const ExprNode& rhs,
+                                              const SubstList& sub) {
   /* Here the model checker looks at the zone of
    * all time sucessors and then substitutes in
    * the substitued constraints and sees if the
@@ -2190,7 +2189,7 @@ inline DBMList* prover::do_proof_place_forall(DBM* const lhs,
    * do not incorporate the invariant into the FORALL here */
   *place = *INFTYDBM;
 
-  do_proof_place(&lhs_succ, place, rhs->getQuant(), sub);
+  do_proof_place(&lhs_succ, place, *rhs.getQuant(), sub);
   place->cf();
 
   // must we consider not the invariant even if the placeholder is empty. (?)
@@ -2200,7 +2199,7 @@ inline DBMList* prover::do_proof_place_forall(DBM* const lhs,
      */
 
     DBMList placeholder_forall(*place);
-    succCheckRule(sub, lhs, &lhs_succ, place, &placeholder_forall);
+    succCheckRule(&sub, lhs, &lhs_succ, place, &placeholder_forall);
     *place = placeholder_forall;
 
     if (cpplogEnabled(cpplogging::debug)) {
@@ -2217,7 +2216,7 @@ inline DBMList* prover::do_proof_place_forall(DBM* const lhs,
       succRuleConseq.suc();
       succRuleConseq.cf();
       print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, result,
-                         &succLHS, &succRuleConseq, sub, rhs->getOpType());
+                         &succLHS, &succRuleConseq, &sub, rhs.getOpType());
       if (result) {
         cpplog(cpplogging::debug)
             << "----(Valid) Placeholder Check Passed-----" << std::endl
@@ -2238,8 +2237,8 @@ inline DBMList* prover::do_proof_place_forall(DBM* const lhs,
 // post: *retPlaceDBM == *place
 inline DBMList* prover::do_proof_place_forall_rel(DBM* const lhs,
                                                   DBMList* const place,
-                                                  const ExprNode* const rhs,
-                                                  SubstList* const sub) {
+                                                  const ExprNode& rhs,
+                                                  const SubstList& sub) {
   bool retVal = false;
   /* Proof methodology:
    * first, see if \phi_1 is satisfied during the time advance.
@@ -2257,13 +2256,13 @@ inline DBMList* prover::do_proof_place_forall_rel(DBM* const lhs,
   lhs_succ.suc();
 
   DBMList* tPlace = new DBMList(*INFTYDBM);
-  restrict_to_invariant(input_pes.invariants(), tPlace, *sub);
-  retPlaceDBM = do_proof_place(&lhs_succ, tPlace, rhs->getLeft(), sub);
+  restrict_to_invariant(input_pes.invariants(), tPlace, sub);
+  retPlaceDBM = do_proof_place(&lhs_succ, tPlace, *rhs.getLeft(), sub);
   retPlaceDBM->cf();
   if (retPlaceDBM->emptiness()) {
     if (cpplogEnabled(cpplogging::debug)) {
       print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal,
-                         &lhs_succ, retPlaceDBM, sub, rhs->getOpType());
+                         &lhs_succ, retPlaceDBM, &sub, rhs.getOpType());
       cpplog(cpplogging::debug) << "--------() Empty Relativization "
                                    "Placeholder: phi1 is never true ----------"
                                 << std::endl
@@ -2280,14 +2279,14 @@ inline DBMList* prover::do_proof_place_forall_rel(DBM* const lhs,
     ph.suc();
 
     DBMList newPlace(*INFTYDBM);
-    retPlaceDBM = do_proof_place(&ph, &newPlace, rhs->getRight(), sub);
+    retPlaceDBM = do_proof_place(&ph, &newPlace, *rhs.getRight(), sub);
     retPlaceDBM->cf();
     if (!(retPlaceDBM->emptiness())) { // Only do if a nonempty placeholder
       /* Now do the second proof rule to compute the first placeholder
        */
 
       DBMList currPlace(*retPlaceDBM);
-      succCheckRule(sub, lhs, &lhs_succ, &currPlace, retPlaceDBM);
+      succCheckRule(&sub, lhs, &lhs_succ, &currPlace, retPlaceDBM);
 
       retVal = !retPlaceDBM->emptiness();
 
@@ -2303,7 +2302,7 @@ inline DBMList* prover::do_proof_place_forall_rel(DBM* const lhs,
         succRuleConseq.suc();
         succRuleConseq.cf();
         print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal,
-                           &succLHS, &succRuleConseq, sub, rhs->getOpType());
+                           &succLHS, &succRuleConseq, &sub, rhs.getOpType());
         if (retVal) {
           cpplog(cpplogging::debug)
               << "----(Valid) FORALL (FORALL_REL) Placeholder Check Passed-----"
@@ -2326,7 +2325,7 @@ inline DBMList* prover::do_proof_place_forall_rel(DBM* const lhs,
     if ((*retPlaceDBM) == (*INFTYDBM)) {
       if (cpplogEnabled(cpplogging::debug)) {
         print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, lhs,
-                           retPlaceDBM, sub, rhs->getOpType());
+                           retPlaceDBM, &sub, rhs.getOpType());
         cpplog(cpplogging::debug)
             << "----(Valid) EXISTS (in FORALL_REL) Placeholder indicates no "
                "time elapse is needed (Check Only)-----"
@@ -2339,7 +2338,7 @@ inline DBMList* prover::do_proof_place_forall_rel(DBM* const lhs,
       // If here, we neither need a placeholder nor to elapse time
       DBM phb(*lhs);
       DBMList infPlace(*INFTYDBM);
-      retPlaceDBM = do_proof_place(&phb, &infPlace, rhs->getRight(), sub);
+      retPlaceDBM = do_proof_place(&phb, &infPlace, *rhs.getRight(), sub);
       retPlaceDBM->cf();
       if (!(retPlaceDBM->emptiness())) { // Only do if a nonempty placeholder
         /* Now do the second proof rule to compute the first placeholder */
@@ -2360,7 +2359,7 @@ inline DBMList* prover::do_proof_place_forall_rel(DBM* const lhs,
 
         if (cpplogEnabled(cpplogging::debug)) {
           print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal,
-                             &phb, &infPlace, sub, rhs->getOpType());
+                             &phb, &infPlace, &sub, rhs.getOpType());
           if (retVal) {
             cpplog(cpplogging::debug)
                 << "----(Valid) Placeholder Check Passed-----" << std::endl
@@ -2393,7 +2392,7 @@ inline DBMList* prover::do_proof_place_forall_rel(DBM* const lhs,
       DBM lhs_succ(*lhs);
       lhs_succ.suc();
       DBM phb(lhs_succ);
-      retPlaceDBM = do_proof_place(&phb, fPlace, rhs->getRight(), sub);
+      retPlaceDBM = do_proof_place(&phb, fPlace, *rhs.getRight(), sub);
       retPlaceDBM->cf();
       DBMList phi2Place(*retPlaceDBM);
 
@@ -2420,12 +2419,12 @@ inline DBMList* prover::do_proof_place_forall_rel(DBM* const lhs,
          * nor everything. */
 
         DBMList forallPlace(*retPlaceDBM);
-        succCheckRule(sub, lhs, &lhs_succ, retPlaceDBM, &forallPlace);
+        succCheckRule(&sub, lhs, &lhs_succ, retPlaceDBM, &forallPlace);
         forallPlace.cf();
 
         if (cpplogEnabled(cpplogging::debug)) {
           print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal,
-                             &phb, fPlace, sub, rhs->getOpType());
+                             &phb, fPlace, &sub, rhs.getOpType());
           cpplog(cpplogging::debug)
               << "----() FORALL (of FORALL_REL) Placeholder Check obtained  FA "
                  "Placeholder := {"
@@ -2472,7 +2471,7 @@ inline DBMList* prover::do_proof_place_forall_rel(DBM* const lhs,
 
           if (cpplogEnabled(cpplogging::debug)) {
             print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal,
-                               lhs, retPlaceDBM, sub, rhs->getOpType());
+                               lhs, retPlaceDBM, &sub, rhs.getOpType());
             cpplog(cpplogging::debug) << "----() FORALL Rel Exists placeholder "
                                          "after time elapse check is := {"
                                       << *retPlaceDBM << "} ----" << std::endl
@@ -2518,8 +2517,8 @@ inline DBMList* prover::do_proof_place_forall_rel(DBM* const lhs,
 // post: *retPlaceDBM == *place
 inline DBMList* prover::do_proof_place_exists(DBM* const lhs,
                                               DBMList* const place,
-                                              const ExprNode* const rhs,
-                                              SubstList* const sub) {
+                                              const ExprNode& rhs,
+                                              const SubstList& sub) {
   /* First try to get a new placeholder value that works */
   lhs->cf();
   place->cf();
@@ -2528,15 +2527,15 @@ inline DBMList* prover::do_proof_place_exists(DBM* const lhs,
 
   // The invariant goes into the placeholder, not the left hand side
   DBMList placeholder(*INFTYDBM);
-  restrict_to_invariant(input_pes.invariants(), &placeholder, *sub);
+  restrict_to_invariant(input_pes.invariants(), &placeholder, sub);
 
-  do_proof_place(&lhs_succ, &placeholder, rhs->getQuant(), sub);
+  do_proof_place(&lhs_succ, &placeholder, *rhs.getQuant(), sub);
   placeholder.cf();
 
   if (placeholder.emptiness()) {
     if (cpplogEnabled(cpplogging::debug)) {
       print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, false,
-                         &lhs_succ, &placeholder, sub, rhs->getOpType());
+                         &lhs_succ, &placeholder, &sub, rhs.getOpType());
       cpplog(cpplogging::debug) << "----(Invalid) Empty First Placeholder: No "
                                    "Need for additional Placeholder Checks-----"
                                 << std::endl
@@ -2555,7 +2554,7 @@ inline DBMList* prover::do_proof_place_exists(DBM* const lhs,
     if (cpplogEnabled(cpplogging::debug)) {
       bool result = !place->emptiness();
       print_sequent_placeCheck(std::cerr, step - 1, result, lhs, place, place,
-                               sub, rhs->getOpType());
+                               &sub, rhs.getOpType());
       if (result) {
         cpplog(cpplogging::debug)
             << "----(Valid) Placeholder Check Passed-----" << std::endl
@@ -2576,8 +2575,8 @@ inline DBMList* prover::do_proof_place_exists(DBM* const lhs,
 // post: *retPlaceDBM == *place
 inline DBMList* prover::do_proof_place_exists_rel(DBM* const lhs,
                                                   DBMList* const place,
-                                                  const ExprNode* const rhs,
-                                                  SubstList* const sub) {
+                                                  const ExprNode& rhs,
+                                                  const SubstList& sub) {
   bool retVal = false;
   /* First Try to get a placeholder value that works */
   lhs->cf();
@@ -2587,9 +2586,9 @@ inline DBMList* prover::do_proof_place_exists_rel(DBM* const lhs,
   DBM phb(ph);
 
   DBMList* tPlace = new DBMList(*INFTYDBM);
-  restrict_to_invariant(input_pes.invariants(), tPlace, *sub);
+  restrict_to_invariant(input_pes.invariants(), tPlace, sub);
 
-  retPlaceDBM = do_proof_place(&ph, tPlace, rhs->getRight(), sub);
+  retPlaceDBM = do_proof_place(&ph, tPlace, *rhs.getRight(), sub);
   // Reset place parent to nullptr
   parentPlaceRef = nullptr;
   retPlaceDBM->cf();
@@ -2597,7 +2596,7 @@ inline DBMList* prover::do_proof_place_exists_rel(DBM* const lhs,
     retVal = false;
     if (cpplogEnabled(cpplogging::debug)) {
       print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, lhs,
-                         retPlaceDBM, sub, rhs->getOpType());
+                         retPlaceDBM, &sub, rhs.getOpType());
       cpplog(cpplogging::debug) << "----(Invalid) Empty First Placeholder: No "
                                    "Need for additional Placeholder Checks-----"
                                 << std::endl
@@ -2627,7 +2626,7 @@ inline DBMList* prover::do_proof_place_exists_rel(DBM* const lhs,
    * with the time predecessor of the phi_2 placeholders. */
   DBMList* phi2Place = new DBMList(*retPlaceDBM);
   DBMList place1Temp(*INFTYDBM);
-  retPlaceDBM = do_proof_place(&phb, &place1Temp, rhs->getLeft(), sub);
+  retPlaceDBM = do_proof_place(&phb, &place1Temp, *rhs.getLeft(), sub);
   /* Second step: tighten and check the predecessor */
   // Must check for emptiness to handle the corner case when it is empty
   DBMList phi1Place(*retPlaceDBM);
@@ -2645,7 +2644,7 @@ inline DBMList* prover::do_proof_place_exists_rel(DBM* const lhs,
 
     if (cpplogEnabled(cpplogging::debug)) {
       print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, &phb,
-                         retPlaceDBM, sub, rhs->getOpType());
+                         retPlaceDBM, &sub, rhs.getOpType());
 
       cpplog(cpplogging::debug)
           << "----() Empty Second Placeholder: Relativization Formula \\phi_1 "
@@ -2719,7 +2718,7 @@ inline DBMList* prover::do_proof_place_exists_rel(DBM* const lhs,
 
   if (cpplogEnabled(cpplogging::debug)) {
     print_sequent_place(std::cerr, step - 1, retVal, &phb, phi2PredPlace,
-                        rhs->getLeft(), sub, rhs->getOpType());
+                        rhs.getLeft(), &sub, rhs.getOpType());
     cpplog(cpplogging::debug) << "----(Valid) Relativization Placeholder Check "
                                  "Passed (Check Only)-----"
                               << std::endl
@@ -2750,7 +2749,7 @@ inline DBMList* prover::do_proof_place_exists_rel(DBM* const lhs,
 
   if (cpplogEnabled(cpplogging::debug)) {
     print_sequent_placeCheck(std::cerr, step - 1, retVal, lhs, place,
-                             retPlaceDBM, sub, rhs->getOpType());
+                             retPlaceDBM, &sub, rhs.getOpType());
     if (retVal) {
       cpplog(cpplogging::debug)
           << "----(Valid) Final Placeholder Check Passed-----" << std::endl
@@ -2772,8 +2771,8 @@ inline DBMList* prover::do_proof_place_exists_rel(DBM* const lhs,
 // post: *retPlaceDBM == *place
 inline DBMList* prover::do_proof_place_allact(DBM* const lhs,
                                               DBMList* const place,
-                                              const ExprNode* const rhs,
-                                              SubstList* const sub) {
+                                              const ExprNode& rhs,
+                                              const SubstList& sub) {
   *retPlaceDBM = (*place);
   /* Enumerate through all transitions */
   cpplog(cpplogging::debug) << "\t Proving ALLACT Transitions:----\n"
@@ -2795,7 +2794,7 @@ inline DBMList* prover::do_proof_place_allact(DBM* const lhs,
 
     DBMList guardPlace(*place);
     bool tempBool =
-        comp_ph_all_place(&tempLHS, &guardPlace, *(tempT->getLeftExpr()), *sub);
+        comp_ph_all_place(&tempLHS, &guardPlace, *(tempT->getLeftExpr()), sub);
     if (tempBool == false) {
       cpplog(cpplogging::debug)
           << "Transition: " << tempT << " cannot be taken." << std::endl;
@@ -2809,7 +2808,7 @@ inline DBMList* prover::do_proof_place_allact(DBM* const lhs,
     DBMList transPlace(*place);
     DBM phLHS(tempLHS);
     DBM invPlace(*INFTYDBM);
-    SubstList tSub(*sub);
+    SubstList tSub(sub);
     const SubstList* sl = tempT->getEnteringLocation(&tSub);
     bool isInv = restrict_to_invariant(input_pes.invariants(), &invPlace, *sl);
     delete sl;
@@ -2855,7 +2854,7 @@ inline DBMList* prover::do_proof_place_allact(DBM* const lhs,
       }
     }
 
-    tempT->getNewTrans(rhs->getQuant());
+    tempT->getNewTrans(rhs.getQuant());
     /* Constraints are bounded by MAXC */
     /* This is to extend the LHS to make sure that
      * the RHS is satisfied by any zone that satisfies
@@ -2864,7 +2863,7 @@ inline DBMList* prover::do_proof_place_allact(DBM* const lhs,
      * exceed a certain constant value. */
     phLHS.cf();
     phLHS.bound(MAXC);
-    SubstList tempSub(*sub);
+    SubstList tempSub(sub);
     // The transition RHS handles resets and substitutions
     cpplog(cpplogging::debug)
         << "Executing transition (with destination) " << tempT << std::endl;
@@ -2872,7 +2871,7 @@ inline DBMList* prover::do_proof_place_allact(DBM* const lhs,
     // the invariant
     numLocations++;
     retPlaceDBM =
-        do_proof_place(&phLHS, &transPlace, tempT->getRightExpr(), &tempSub);
+        do_proof_place(&phLHS, &transPlace, *tempT->getRightExpr(), tempSub);
     retPlaceDBM->cf();
     /* Given ALLAct, this segment may require zone unions. */
     if (retPlaceDBM->emptiness()) {
@@ -2994,8 +2993,8 @@ inline DBMList* prover::do_proof_place_allact(DBM* const lhs,
 // post: *retPlaceDBM == *place
 inline DBMList* prover::do_proof_place_existact(DBM* const lhs,
                                                 DBMList* const place,
-                                                const ExprNode* const rhs,
-                                                SubstList* const sub) {
+                                                const ExprNode& rhs,
+                                                const SubstList& sub) {
   retPlaceDBM->makeEmpty();
   /* Enumerate through all transitions */
   cpplog(cpplogging::debug) << "\t Proving EXISTACT Transitions:----\n"
@@ -3013,7 +3012,7 @@ inline DBMList* prover::do_proof_place_existact(DBM* const lhs,
     // Method tightens lhs and place to those subsets satisfying the guard
     // (leftExpr).
     bool tempBool = comp_ph_exist_place(&tempLHS, &tempPlace,
-                                        *(tempT->getLeftExpr()), *sub);
+                                        *(tempT->getLeftExpr()), sub);
     if (tempBool == false) {
       cpplog(cpplogging::debug)
           << "Transition: " << tempT << " cannot be taken." << std::endl;
@@ -3023,7 +3022,7 @@ inline DBMList* prover::do_proof_place_existact(DBM* const lhs,
     /* Now check the invariant of the target location (getEnteringLocation gives
        the destination location of the transition */
     DBM invCons(*INFTYDBM);
-    const SubstList* sl = tempT->getEnteringLocation(sub);
+    const SubstList* sl = tempT->getEnteringLocation(&sub);
     bool isInv = restrict_to_invariant(input_pes.invariants(), &invCons, *sl);
     delete sl;
     if (isInv) { // the invariant does not hold vacuously.
@@ -3065,7 +3064,7 @@ inline DBMList* prover::do_proof_place_existact(DBM* const lhs,
       }
     }
 
-    tempT->getNewTrans(rhs->getQuant());
+    tempT->getNewTrans(rhs.getQuant());
     /* Constraints are bounded by MAXC */
     /* This is to extend the LHS to make sure that
      * the RHS is satisfied by any zone that satisfies
@@ -3076,7 +3075,7 @@ inline DBMList* prover::do_proof_place_existact(DBM* const lhs,
     // for performance reasons, also tighten LHS with invariant
 
     tempLHS.bound(MAXC);
-    SubstList tempSub(*sub);
+    SubstList tempSub(sub);
     DBMList tPlace1(tempPlace);
     DBMList prevDBM(*retPlaceDBM);
 
@@ -3086,7 +3085,7 @@ inline DBMList* prover::do_proof_place_existact(DBM* const lhs,
 
     numLocations++;
     retPlaceDBM =
-        do_proof_place(&tempLHS, &tPlace1, tempT->getRightExpr(), &tempSub);
+        do_proof_place(&tempLHS, &tPlace1, *tempT->getRightExpr(), tempSub);
     retPlaceDBM->cf();
     /* placeholder logic partially incomplete
      * due to not addressing when new placeholder
@@ -3119,11 +3118,11 @@ inline DBMList* prover::do_proof_place_existact(DBM* const lhs,
 // post: *retPlaceDBM == *place
 inline DBMList* prover::do_proof_place_imply(DBM* const lhs,
                                              DBMList* const place,
-                                             const ExprNode* const rhs,
-                                             SubstList* const sub) {
+                                             const ExprNode& rhs,
+                                             const SubstList& sub) {
   DBM lhs_copy(*lhs);
   /* call comp_ph() for efficient proving of IMPLY's left. */
-  if (comp_ph(&lhs_copy, *(rhs->getLeft()), *sub)) {
+  if (comp_ph(&lhs_copy, *(rhs.getLeft()), sub)) {
     /* Constraints are bounded by MAXC */
     /* This is to extend the LHS to make sure that
      * the RHS is satisfied by any zone that satisfies
@@ -3132,7 +3131,7 @@ inline DBMList* prover::do_proof_place_imply(DBM* const lhs,
      * exceed a certain constant value. */
     lhs_copy.cf();
     lhs_copy.bound(MAXC);
-    do_proof_place(&lhs_copy, place, rhs->getRight(), sub);
+    do_proof_place(&lhs_copy, place, *rhs.getRight(), sub);
   } else {
     /* The set of states does not satisfy the premises of the IF
      * so thus the proof is true */
@@ -3148,10 +3147,10 @@ inline DBMList* prover::do_proof_place_imply(DBM* const lhs,
 // post: *retPlaceDBM == *place
 inline DBMList* prover::do_proof_place_constraint(DBM* const lhs,
                                                   DBMList* const place,
-                                                  const ExprNode* const rhs) {
+                                                  const ExprNode& rhs) {
   lhs->cf();
   // The line: (rhs->dbm())->cf(); is not needed.
-  if (*lhs <= *(rhs->dbm())) {
+  if (*lhs <= *(rhs.dbm())) {
     cpplog(cpplogging::debug) << "---(Valid) Leaf DBM (CONSTRAINT) Reached "
                                  "with no need for Placeholder----"
                               << std::endl
@@ -3161,7 +3160,7 @@ inline DBMList* prover::do_proof_place_constraint(DBM* const lhs,
      * DBM will tighten only to match the single constraint
      * Since multiple constraints are represented as an
      * AND of Constraints */
-    *place&(*(rhs->dbm()));
+    *place&(*(rhs.dbm()));
     place->cf();
 
     // Now test constraint
@@ -3192,7 +3191,7 @@ inline DBMList* prover::do_proof_place_constraint(DBM* const lhs,
 
 // post: *retPlaceDBM == *place
 inline DBMList* prover::do_proof_place_bool(DBMList* const place,
-                                            const ExprNode* const rhs) {
+                                            const ExprNode& rhs) {
   if (!do_proof_bool(rhs)) {
     place->makeEmpty();
   }
@@ -3202,8 +3201,8 @@ inline DBMList* prover::do_proof_place_bool(DBMList* const place,
 
 // post: *retPlaceDBM == *place
 inline DBMList* prover::do_proof_place_atomic(DBMList* const place,
-                                              const ExprNode* const rhs,
-                                              SubstList* const sub) {
+                                              const ExprNode& rhs,
+                                              const SubstList& sub) {
   if (!do_proof_atomic(rhs, sub)) {
     place->makeEmpty();
   }
@@ -3213,8 +3212,8 @@ inline DBMList* prover::do_proof_place_atomic(DBMList* const place,
 
 // post: *retPlaceDBM == *place
 inline DBMList* prover::do_proof_place_atomic_not(DBMList* const place,
-                                                  const ExprNode* const rhs,
-                                                  SubstList* const sub) {
+                                                  const ExprNode& rhs,
+                                                  const SubstList& sub) {
   if (!do_proof_atomic_not(rhs, sub)) {
     place->makeEmpty();
   }
@@ -3224,8 +3223,8 @@ inline DBMList* prover::do_proof_place_atomic_not(DBMList* const place,
 
 // post: *retPlaceDBM == *place
 inline DBMList* prover::do_proof_place_atomic_lt(DBMList* const place,
-                                                 const ExprNode* const rhs,
-                                                 SubstList* const sub) {
+                                                 const ExprNode& rhs,
+                                                 const SubstList& sub) {
   if (!do_proof_atomic_lt(rhs, sub)) {
     place->makeEmpty();
   }
@@ -3235,8 +3234,8 @@ inline DBMList* prover::do_proof_place_atomic_lt(DBMList* const place,
 
 // post: *retPlaceDBM == *place
 inline DBMList* prover::do_proof_place_atomic_gt(DBMList* const place,
-                                                 const ExprNode* const rhs,
-                                                 SubstList* const sub) {
+                                                 const ExprNode& rhs,
+                                                 const SubstList& sub) {
   if (!do_proof_atomic_gt(rhs, sub)) {
     place->makeEmpty();
   }
@@ -3246,8 +3245,8 @@ inline DBMList* prover::do_proof_place_atomic_gt(DBMList* const place,
 
 // post: *retPlaceDBM == *place
 inline DBMList* prover::do_proof_place_atomic_le(DBMList* const place,
-                                                 const ExprNode* const rhs,
-                                                 SubstList* const sub) {
+                                                 const ExprNode& rhs,
+                                                 const SubstList& sub) {
   if (!do_proof_atomic_le(rhs, sub)) {
     place->makeEmpty();
   }
@@ -3257,8 +3256,8 @@ inline DBMList* prover::do_proof_place_atomic_le(DBMList* const place,
 
 // post: *retPlaceDBM == *place
 inline DBMList* prover::do_proof_place_atomic_ge(DBMList* const place,
-                                                 const ExprNode* const rhs,
-                                                 SubstList* const sub) {
+                                                 const ExprNode& rhs,
+                                                 const SubstList& sub) {
   if (!do_proof_atomic_ge(rhs, sub)) {
     place->makeEmpty();
   }
@@ -3269,10 +3268,10 @@ inline DBMList* prover::do_proof_place_atomic_ge(DBMList* const place,
 // post: *place == *retPlaceDBM
 inline DBMList* prover::do_proof_place_sublist(DBM* const lhs,
                                                DBMList* const place,
-                                               const ExprNode* const rhs,
-                                               SubstList* const sub) {
-  SubstList st(rhs->getSublist(), sub);
-  do_proof_place(lhs, place, rhs->getExpr(), &st);
+                                               const ExprNode& rhs,
+                                               const SubstList& sub) {
+  SubstList st(rhs.getSublist(), &sub);
+  do_proof_place(lhs, place, *rhs.getExpr(), st);
   *retPlaceDBM = *place;
   return retPlaceDBM;
 }
@@ -3280,17 +3279,17 @@ inline DBMList* prover::do_proof_place_sublist(DBM* const lhs,
 // post: *place == *retPlaceDBM
 inline DBMList* prover::do_proof_place_reset(DBM* const lhs,
                                              DBMList* const place,
-                                             const ExprNode* const rhs,
-                                             SubstList* const sub) {
+                                             const ExprNode& rhs,
+                                             const SubstList& sub) {
   // Bound the LHS to prevent infinite proofs
   lhs->cf();
   lhs->bound(MAXC);
   lhs->cf();
   DBM lhs_reset(*lhs);
-  lhs_reset.reset(rhs->getClockSet());
+  lhs_reset.reset(rhs.getClockSet());
 
   DBMList tPlace(*INFTYDBM);
-  do_proof_place(&lhs_reset, &tPlace, rhs->getExpr(), sub);
+  do_proof_place(&lhs_reset, &tPlace, *rhs.getExpr(), sub);
   tPlace.cf();
   if (tPlace.emptiness()) {
     *place = tPlace;
@@ -3299,7 +3298,7 @@ inline DBMList* prover::do_proof_place_reset(DBM* const lhs,
      * the previous placeholder. by setting it to such */
     DBMList p2Copy(tPlace);
     // Apply the reset (weakest precondition operator)
-    p2Copy.preset(rhs->getClockSet());
+    p2Copy.preset(rhs.getClockSet());
 
     // Use the rule to compute what the old place holder should be
     (*place) & p2Copy;
@@ -3308,7 +3307,7 @@ inline DBMList* prover::do_proof_place_reset(DBM* const lhs,
 
     if (cpplogEnabled(cpplogging::debug)) {
       print_sequent_placeCheck(std::cerr, step - 1, retVal, lhs, place, &p2Copy,
-                               sub, rhs->getOpType());
+                               &sub, rhs.getOpType());
       if (retVal) {
         cpplog(cpplogging::debug)
             << "----(Valid) Placeholder Check Passed-----" << std::endl
@@ -3328,19 +3327,19 @@ inline DBMList* prover::do_proof_place_reset(DBM* const lhs,
 // post: *place == *retPlaceDBM
 inline DBMList* prover::do_proof_place_assign(DBM* const lhs,
                                               DBMList* const place,
-                                              const ExprNode* const rhs,
-                                              SubstList* const sub) {
+                                              const ExprNode& rhs,
+                                              const SubstList& sub) {
   // use lhs->cf() for more efficiency
   lhs->cf();
   DBM lhs_assign(*lhs);
   /* Here the DBM zone is where the value of
    * clock x is reset to clock y, which is possibly
    * a constant or a value*/
-  short int cX = rhs->getcX();
-  short int cY = rhs->getcY();
+  short int cX = rhs.getcX();
+  short int cY = rhs.getcY();
   lhs_assign.reset(cX, cY);
   DBMList placeB(*INFTYDBM);
-  do_proof_place(&lhs_assign, &placeB, rhs->getExpr(), sub);
+  do_proof_place(&lhs_assign, &placeB, *rhs.getExpr(), sub);
   placeB.cf();
   if (placeB.emptiness()) {
     *place = placeB;
@@ -3355,7 +3354,7 @@ inline DBMList* prover::do_proof_place_assign(DBM* const lhs,
     if (cpplogEnabled(cpplogging::debug)) {
       bool retVal = !place->emptiness();
       print_sequent_placeCheck(std::cerr, step - 1, retVal, lhs, place, &placeB,
-                               sub, rhs->getOpType());
+                               &sub, rhs.getOpType());
       if (retVal) {
         cpplog(cpplogging::debug)
             << "----(Valid) Placeholder Check Passed-----" << std::endl
@@ -3375,11 +3374,11 @@ inline DBMList* prover::do_proof_place_assign(DBM* const lhs,
 // post: *place == *retPlaceDBM
 inline DBMList* prover::do_proof_place_replace(DBM* const lhs,
                                                DBMList* const place,
-                                               const ExprNode* const rhs,
-                                               SubstList* const sub) {
-  SubstList sub_(*sub);
-  sub_[rhs->getcX()] = sub->at(rhs->getcY());
-  do_proof_place(lhs, place, rhs->getExpr(), &sub_);
+                                               const ExprNode& rhs,
+                                               const SubstList& sub) {
+  SubstList sub_(sub);
+  sub_[rhs.getcX()] = sub.at(rhs.getcY());
+  do_proof_place(lhs, place, *rhs.getExpr(), sub_);
   *retPlaceDBM = *place;
   return retPlaceDBM;
 }
@@ -3387,13 +3386,13 @@ inline DBMList* prover::do_proof_place_replace(DBM* const lhs,
 // post: *place == *retPlaceDBM
 inline DBMList* prover::do_proof_place_ablewaitinf(DBM* const lhs,
                                                    DBMList* const place,
-                                                   SubstList* const sub) {
+                                                   const SubstList& sub) {
   lhs->cf();
   DBMList ph(*lhs);
   ph&* place;
   ph.cf();
   ph.suc();
-  restrict_to_invariant(input_pes.invariants(), &ph, *sub);
+  restrict_to_invariant(input_pes.invariants(), &ph, sub);
   ph.cf();
   /* Time can diverge if and only if there are no upper bound
    * constraints in the successor. By design of succ() and invariants,
@@ -3422,13 +3421,13 @@ inline DBMList* prover::do_proof_place_ablewaitinf(DBM* const lhs,
 // post: *place == *retPlaceDBM
 inline DBMList* prover::do_proof_place_unablewaitinf(DBM* const lhs,
                                                      DBMList* const place,
-                                                     SubstList* const sub) {
+                                                     const SubstList& sub) {
   lhs->cf();
   DBMList ph(*lhs);
   ph&* place;
   ph.cf();
   ph.suc();
-  restrict_to_invariant(input_pes.invariants(), &ph, *sub);
+  restrict_to_invariant(input_pes.invariants(), &ph, sub);
   ph.cf();
   /* Time cannot diverge if and only if there is an upper bound
    * constraint in the successor. By design of succ() and invariants,

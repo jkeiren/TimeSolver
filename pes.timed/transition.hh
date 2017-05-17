@@ -133,7 +133,7 @@ public:
    * @param source (*) The leaving location (the discrete state component).
    * @return The entering location if the given location executed this
    * transition. */
-  const SubstList* getEnteringLocation(SubstList* source) const {
+  const SubstList* getEnteringLocation(const SubstList* const source) const {
     // Since a new substList is created, delete it when finished.
     SubstList* st = nullptr;
     if (destList == nullptr) {

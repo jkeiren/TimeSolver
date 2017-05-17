@@ -317,9 +317,9 @@ int main(int argc, char** argv) {
   if (InitC != nullptr) {
     InitC->setIsCfFalse();
     InitC->cf();
-    suc = p.do_proof(InitC, start, &sublist);
+    suc = p.do_proof(InitC, *start, sublist);
   } else {
-    suc = p.do_proof(&dbm, start, &sublist);
+    suc = p.do_proof(&dbm, *start, sublist);
   }
 
   /* Now finished with the proof/disproof, so output the result of the Model
