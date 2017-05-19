@@ -231,7 +231,7 @@ trans_left_list TOK_IMPLY trans_dest_list_top trans_reset_list_top trans_replace
   vector<pair<short int, short int> > * assignVector = NULL;
   if($5 != NULL) {
     assignVector = new vector<pair<short int, short int> >(0);
-    makeAssignmentList($5, assignVector);
+    makeAssignmentList(*$5, assignVector);
   }
   Transition * t = new Transition(parExpr, leftExpr, rightExpr, leftBool, $3, $4, assignVector);
   input_pes.add_transition(t);
@@ -323,7 +323,7 @@ trans_left_list TOK_IMPLY trans_dest_list_top trans_reset_list_top trans_replace
   vector<pair<short int, short int> > * assignVector = NULL;
   if($6 != NULL) {
     assignVector = new vector<pair<short int, short int> >(0);
-    makeAssignmentList($6, assignVector);
+    makeAssignmentList(*$6, assignVector);
   }
   Transition * t = new Transition(parExpr, leftExpr, rightExpr, leftBool, $4, $5, assignVector);
   input_pes.add_transition(t);

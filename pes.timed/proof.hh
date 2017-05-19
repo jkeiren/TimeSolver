@@ -131,7 +131,7 @@ protected:
                                          const SubstList& discrete_state) {
     bool result = false;
     if (cpplogEnabled(cpplogging::debug)) {
-      print_sequent(std::cerr, step, result, zone, &formula, &discrete_state, formula.getOpType());
+      print_sequent(std::cerr, step, result, *zone, formula, discrete_state, formula.getOpType());
     }
     ++step;
 
@@ -266,8 +266,8 @@ protected:
      * of EXISTS Quantifiers. */
 
     if (cpplogEnabled(cpplogging::debug)) {
-      print_sequent_place(std::cerr, step, false, zone, place, &formula, &discrete_state,
-                          formula.getOpType());
+      print_sequent_place(std::cerr, step, false, *zone, *place, formula,
+                          discrete_state, formula.getOpType());
     }
 
     ++step;
@@ -1006,8 +1006,8 @@ inline bool prover::do_proof_forall_rel(DBM* const zone,
   if (placeholder1.emptiness()) { // Here, \forall phi_2 needs to hold.
     // [FC14] derived rule? of \forall_{ro1} TODO
     if (cpplogEnabled(cpplogging::debug)) {
-      print_sequentCheck(std::cerr, step - 1, retVal, zone, &placeholder1, &discrete_state,
-                         formula.getOpType());
+      print_sequentCheck(std::cerr, step - 1, retVal, *zone, placeholder1,
+                         discrete_state, formula.getOpType());
       cpplog(cpplogging::debug)
           << "----() Empty Relativization Placeholder: phi1 is never true -----"
           << std::endl
@@ -1032,8 +1032,8 @@ inline bool prover::do_proof_forall_rel(DBM* const zone,
     retVal = true;
     // [FC14] proof rule \forall_{ro2};
     if (cpplogEnabled(cpplogging::debug)) {
-      print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, zone,
-                         &placeholder1, &discrete_state, formula.getOpType());
+      print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, *zone,
+                         placeholder1, discrete_state, formula.getOpType());
       cpplog(cpplogging::debug) << "----(Valid) Placeholder indicates no time "
                                    "elapse is needed (Check Only)-----"
                                 << std::endl
@@ -1088,7 +1088,7 @@ inline bool prover::do_proof_forall_rel(DBM* const zone,
 
       if (cpplogEnabled(cpplogging::debug)) {
         print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal,
-                           &lhs_succ2, &placeholder2, &discrete_state, formula.getOpType());
+                           lhs_succ2, placeholder2, discrete_state, formula.getOpType());
         cpplog(cpplogging::debug)
             << "----() FORALL (of FORALL_REL) Placeholder Check obtained  FA "
                "Placeholder := {"
@@ -1135,7 +1135,7 @@ inline bool prover::do_proof_forall_rel(DBM* const zone,
 
         if (cpplogEnabled(cpplogging::debug)) {
           print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal,
-                             zone, &placeholder_exists, &discrete_state, formula.getOpType());
+                             *zone, placeholder_exists, discrete_state, formula.getOpType());
           cpplog(cpplogging::debug)
               << "----() FORALL Rel Exists placeholder after time elapse check "
                  "is := {"
@@ -1163,8 +1163,8 @@ inline bool prover::do_proof_forall_rel(DBM* const zone,
 
       // Debug information here?
       if (cpplogEnabled(cpplogging::debug)) {
-        print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, zone,
-                           &placeholder_exists, &discrete_state, formula.getOpType());
+        print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal,* zone,
+                           placeholder_exists, discrete_state, formula.getOpType());
         cpplog(cpplogging::debug)
             << "----() Final FORALL REL Placeholder is := {"
             << placeholder_exists << "} ----" << std::endl
@@ -1204,8 +1204,8 @@ inline bool prover::do_proof_exists(DBM* const zone, const ExprNode& formula,
   if (placeholder.emptiness()) {
     retVal = false;
     if (cpplogEnabled(cpplogging::debug)) {
-      print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, zone,
-                         &placeholder, &discrete_state, formula.getOpType());
+      print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, *zone,
+                         placeholder, discrete_state, formula.getOpType());
       cpplog(cpplogging::debug) << "----(Invalid) Empty Placeholder: No Need "
                                    "for Placeholder Check-----"
                                 << std::endl
@@ -1220,8 +1220,8 @@ inline bool prover::do_proof_exists(DBM* const zone, const ExprNode& formula,
     retVal = placeholder >= *zone;
 
     if (cpplogEnabled(cpplogging::debug)) {
-      print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, zone,
-                         &placeholder, &discrete_state, formula.getOpType());
+      print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, *zone,
+                         placeholder, discrete_state, formula.getOpType());
       if (retVal) {
         cpplog(cpplogging::debug)
             << "----(Valid) Placeholder Check Passed (Check Only)-----"
@@ -1263,8 +1263,8 @@ inline bool prover::do_proof_exists_rel(DBM* const zone,
   if (placeholder2.emptiness()) {
     retVal = false;
     if (cpplogEnabled(cpplogging::debug)) {
-      print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, zone,
-                         &placeholder2, &discrete_state, formula.getOpType());
+      print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, *zone,
+                         placeholder2, discrete_state, formula.getOpType());
       cpplog(cpplogging::debug) << "----(Invalid) Empty First Placeholder: No "
                                    "Need for additional Placeholder Checks-----"
                                 << std::endl
@@ -1313,8 +1313,8 @@ inline bool prover::do_proof_exists_rel(DBM* const zone,
     if (placeholder1_intersect_placeholder2_pred.emptiness()) {
       if (cpplogEnabled(cpplogging::debug)) {
         print_sequentCheck(
-            cpplogGet(cpplogging::debug), step - 1, false, &lhs_succ2,
-            &placeholder1_intersect_placeholder2_pred, &discrete_state, formula.getOpType());
+            cpplogGet(cpplogging::debug), step - 1, false, lhs_succ2,
+            placeholder1_intersect_placeholder2_pred, discrete_state, formula.getOpType());
         cpplog(cpplogging::debug)
             << "----() Empty Second Placeholder: Relativization Formula "
                "\\phi_1 is never true-----"
@@ -1381,9 +1381,9 @@ inline bool prover::do_proof_exists_rel(DBM* const zone,
       // if it is nonempty, it passes the second check and we continue
 
       if (cpplogEnabled(cpplogging::debug)) {
-        print_sequent_place(std::cerr, step - 1, retVal, &lhs_succ2,
-                            &placeholder2_predecessor, formula.getLeft(), &discrete_state,
-                            formula.getOpType());
+        print_sequent_place(std::cerr, step - 1, retVal, lhs_succ2,
+                            placeholder2_predecessor, *formula.getLeft(),
+                            discrete_state, formula.getOpType());
         cpplog(cpplogging::debug) << "----(Valid) Relativization Placeholder "
                                      "Check Passed (Check Only)-----"
                                   << std::endl
@@ -1405,8 +1405,8 @@ inline bool prover::do_proof_exists_rel(DBM* const zone,
       retVal = placeholder >= (*zone);
 
       if (cpplogEnabled(cpplogging::debug)) {
-        print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, zone,
-                           &placeholder, &discrete_state, formula.getOpType());
+        print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, *zone,
+                           placeholder, discrete_state, formula.getOpType());
         if (retVal) {
           cpplog(cpplogging::debug)
               << "----(Valid) Last Placeholder Check Passed (Check Only)-----"
@@ -2111,8 +2111,8 @@ inline DBMList* prover::do_proof_place_or(DBM* const zone, DBMList* const place,
 
   if (cpplogEnabled(cpplogging::debug)) {
     // Check Debugging Here to make sure it is giving the right output
-    print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, false, zone,
-                       &placeholder_left, &discrete_state, formula.getOpType());
+    print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, false, *zone,
+                       placeholder_left, discrete_state, formula.getOpType());
     cpplog(cpplogging::debug)
         << "Left Placeholder of OR (P): " << placeholder_left
         << "\nRight Placeholder of OR (P): " << *place << std::endl;
@@ -2225,7 +2225,7 @@ inline DBMList* prover::do_proof_place_forall(DBM* const zone,
       succRuleConseq.suc();
       succRuleConseq.cf();
       print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, result,
-                         &succLHS, &succRuleConseq, &discrete_state, formula.getOpType());
+                         succLHS, succRuleConseq, discrete_state, formula.getOpType());
       if (result) {
         cpplog(cpplogging::debug)
             << "----(Valid) Placeholder Check Passed-----" << std::endl
@@ -2271,7 +2271,7 @@ inline DBMList* prover::do_proof_place_forall_rel(DBM* const zone,
   if (retPlaceDBM->emptiness()) {
     if (cpplogEnabled(cpplogging::debug)) {
       print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal,
-                         &lhs_succ, retPlaceDBM, &discrete_state, formula.getOpType());
+                         lhs_succ, *retPlaceDBM, discrete_state, formula.getOpType());
       cpplog(cpplogging::debug) << "--------() Empty Relativization "
                                    "Placeholder: phi1 is never true ----------"
                                 << std::endl
@@ -2311,7 +2311,7 @@ inline DBMList* prover::do_proof_place_forall_rel(DBM* const zone,
         succRuleConseq.suc();
         succRuleConseq.cf();
         print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal,
-                           &succLHS, &succRuleConseq, &discrete_state, formula.getOpType());
+                           succLHS, succRuleConseq, discrete_state, formula.getOpType());
         if (retVal) {
           cpplog(cpplogging::debug)
               << "----(Valid) FORALL (FORALL_REL) Placeholder Check Passed-----"
@@ -2333,8 +2333,8 @@ inline DBMList* prover::do_proof_place_forall_rel(DBM* const zone,
      * given the proof rules. */
     if ((*retPlaceDBM) == (*INFTYDBM)) {
       if (cpplogEnabled(cpplogging::debug)) {
-        print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, zone,
-                           retPlaceDBM, &discrete_state, formula.getOpType());
+        print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, *zone,
+                           *retPlaceDBM, discrete_state, formula.getOpType());
         cpplog(cpplogging::debug)
             << "----(Valid) EXISTS (in FORALL_REL) Placeholder indicates no "
                "time elapse is needed (Check Only)-----"
@@ -2368,7 +2368,7 @@ inline DBMList* prover::do_proof_place_forall_rel(DBM* const zone,
 
         if (cpplogEnabled(cpplogging::debug)) {
           print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal,
-                             &phb, &infPlace, &discrete_state, formula.getOpType());
+                             phb, infPlace, discrete_state, formula.getOpType());
           if (retVal) {
             cpplog(cpplogging::debug)
                 << "----(Valid) Placeholder Check Passed-----" << std::endl
@@ -2433,7 +2433,7 @@ inline DBMList* prover::do_proof_place_forall_rel(DBM* const zone,
 
         if (cpplogEnabled(cpplogging::debug)) {
           print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal,
-                             &phb, fPlace, &discrete_state, formula.getOpType());
+                             phb, *fPlace, discrete_state, formula.getOpType());
           cpplog(cpplogging::debug)
               << "----() FORALL (of FORALL_REL) Placeholder Check obtained  FA "
                  "Placeholder := {"
@@ -2480,7 +2480,7 @@ inline DBMList* prover::do_proof_place_forall_rel(DBM* const zone,
 
           if (cpplogEnabled(cpplogging::debug)) {
             print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal,
-                               zone, retPlaceDBM, &discrete_state, formula.getOpType());
+                               *zone, *retPlaceDBM, discrete_state, formula.getOpType());
             cpplog(cpplogging::debug) << "----() FORALL Rel Exists placeholder "
                                          "after time elapse check is := {"
                                       << *retPlaceDBM << "} ----" << std::endl
@@ -2544,7 +2544,7 @@ inline DBMList* prover::do_proof_place_exists(DBM* const zone,
   if (placeholder.emptiness()) {
     if (cpplogEnabled(cpplogging::debug)) {
       print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, false,
-                         &lhs_succ, &placeholder, &discrete_state, formula.getOpType());
+                         lhs_succ, placeholder, discrete_state, formula.getOpType());
       cpplog(cpplogging::debug) << "----(Invalid) Empty First Placeholder: No "
                                    "Need for additional Placeholder Checks-----"
                                 << std::endl
@@ -2562,8 +2562,8 @@ inline DBMList* prover::do_proof_place_exists(DBM* const zone,
 
     if (cpplogEnabled(cpplogging::debug)) {
       bool result = !place->emptiness();
-      print_sequent_placeCheck(std::cerr, step - 1, result, zone, place, place,
-                               &discrete_state, formula.getOpType());
+      print_sequent_placeCheck(std::cerr, step - 1, result, *zone, *place, *place,
+                               discrete_state, formula.getOpType());
       if (result) {
         cpplog(cpplogging::debug)
             << "----(Valid) Placeholder Check Passed-----" << std::endl
@@ -2604,8 +2604,8 @@ inline DBMList* prover::do_proof_place_exists_rel(DBM* const zone,
   if (retPlaceDBM->emptiness()) {
     retVal = false;
     if (cpplogEnabled(cpplogging::debug)) {
-      print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, zone,
-                         retPlaceDBM, &discrete_state, formula.getOpType());
+      print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, *zone,
+                         *retPlaceDBM, discrete_state, formula.getOpType());
       cpplog(cpplogging::debug) << "----(Invalid) Empty First Placeholder: No "
                                    "Need for additional Placeholder Checks-----"
                                 << std::endl
@@ -2652,8 +2652,8 @@ inline DBMList* prover::do_proof_place_exists_rel(DBM* const zone,
     retVal = false;
 
     if (cpplogEnabled(cpplogging::debug)) {
-      print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, &phb,
-                         retPlaceDBM, &discrete_state, formula.getOpType());
+      print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, phb,
+                         *place, discrete_state, formula.getOpType());
 
       cpplog(cpplogging::debug)
           << "----() Empty Second Placeholder: Relativization Formula \\phi_1 "
@@ -2726,8 +2726,8 @@ inline DBMList* prover::do_proof_place_exists_rel(DBM* const zone,
   //}
 
   if (cpplogEnabled(cpplogging::debug)) {
-    print_sequent_place(std::cerr, step - 1, retVal, &phb, phi2PredPlace,
-                        formula.getLeft(), &discrete_state, formula.getOpType());
+    print_sequent_place(std::cerr, step - 1, retVal, phb, *phi2PredPlace,
+                        *formula.getLeft(), discrete_state, formula.getOpType());
     cpplog(cpplogging::debug) << "----(Valid) Relativization Placeholder Check "
                                  "Passed (Check Only)-----"
                               << std::endl
@@ -2757,8 +2757,8 @@ inline DBMList* prover::do_proof_place_exists_rel(DBM* const zone,
   }
 
   if (cpplogEnabled(cpplogging::debug)) {
-    print_sequent_placeCheck(std::cerr, step - 1, retVal, zone, place,
-                             retPlaceDBM, &discrete_state, formula.getOpType());
+    print_sequent_placeCheck(std::cerr, step - 1, retVal, *zone, *place,
+                             *place, discrete_state, formula.getOpType());
     if (retVal) {
       cpplog(cpplogging::debug)
           << "----(Valid) Final Placeholder Check Passed-----" << std::endl
@@ -3315,8 +3315,8 @@ inline DBMList* prover::do_proof_place_reset(DBM* const zone,
     bool retVal = !place->emptiness();
 
     if (cpplogEnabled(cpplogging::debug)) {
-      print_sequent_placeCheck(std::cerr, step - 1, retVal, zone, place, &p2Copy,
-                               &discrete_state, formula.getOpType());
+      print_sequent_placeCheck(std::cerr, step - 1, retVal, *zone, *place, p2Copy,
+                               discrete_state, formula.getOpType());
       if (retVal) {
         cpplog(cpplogging::debug)
             << "----(Valid) Placeholder Check Passed-----" << std::endl
@@ -3362,8 +3362,8 @@ inline DBMList* prover::do_proof_place_assign(DBM* const zone,
 
     if (cpplogEnabled(cpplogging::debug)) {
       bool retVal = !place->emptiness();
-      print_sequent_placeCheck(std::cerr, step - 1, retVal, zone, place, &placeB,
-                               &discrete_state, formula.getOpType());
+      print_sequent_placeCheck(std::cerr, step - 1, retVal, *zone, *place, placeB,
+                               discrete_state, formula.getOpType());
       if (retVal) {
         cpplog(cpplogging::debug)
             << "----(Valid) Placeholder Check Passed-----" << std::endl
