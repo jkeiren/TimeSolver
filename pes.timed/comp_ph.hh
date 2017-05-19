@@ -17,46 +17,37 @@ inline bool comp_ph_invs(const ExprNode& e, const SubstList& sublist) {
   switch (e.getOpType()) {
     case ATOMIC: {
       return (sublist.at(e.getAtomic()) == e.getIntVal());
-      break;
     }
     case ATOMIC_NOT: {
       return (sublist.at(e.getAtomic()) != e.getIntVal());
-      break;
     }
     case ATOMIC_LT: {
       return (sublist.at(e.getAtomic()) < e.getIntVal());
-      break;
     }
     case ATOMIC_GT: {
       return (sublist.at(e.getAtomic()) > e.getIntVal());
-      break;
     }
     case ATOMIC_LE: {
       return (sublist.at(e.getAtomic()) <= e.getIntVal());
-      break;
     }
     case ATOMIC_GE: {
       return (sublist.at(e.getAtomic()) >= e.getIntVal());
-      break;
     }
     case AND: {
       return (comp_ph_invs(*(e.getLeft()), sublist) &&
               comp_ph_invs(*(e.getRight()), sublist));
-      break;
     }
     case OR:
     case OR_SIMPLE: {
       /* We only have atomic booleans so this simplified rule works. */
       return (comp_ph_invs(*(e.getLeft()), sublist) ||
               comp_ph_invs(*(e.getRight()), sublist));
-      break;
     }
     default: {
       std::cerr << "Not a valid condition" << std::endl;
       exit(1);
     }
   }
-  return false;
 }
 
 /** Takes in the specified DBM and tightens it
@@ -106,9 +97,9 @@ inline bool restrict_to_invariant(const std::vector<const ExprNode*>& invs,
   bool outRes = false;
   if (invs.empty()) return false;
   std::vector<DBM*>* lList = lhs->getDBMList();
-  for (unsigned int i = 0; i < lList->size(); i++) {
-    bool temp = restrict_to_invariant(invs, (*lList)[i], sub);
-    outRes = temp || outRes;
+  for (std::vector<DBM*>::iterator it = lList->begin(); it != lList->end();
+       ++it) {
+    outRes = restrict_to_invariant(invs, *it, sub) || outRes; // order is important
   }
   return outRes;
 }
@@ -277,24 +268,23 @@ inline bool comp_ph_exist_place(DBM* const ph, DBMList* const place,
   switch (e.getOpType()) {
     case CONSTRAINT: {
       ph->cf();
-      const DBM* eDBM = e.dbm();
-      bool res = (*ph) <= (*eDBM);
-      ph->intersect(*eDBM);
+      bool res = (*ph) <= (*e.dbm());
+      ph->intersect(*e.dbm());
       ph->cf(); // Calls Canonical Form Here.
       if (res) {
         return true;
-      }
-      // We can only tighten if the constraint is not empty
-      if (ph->emptiness()) {
+      } else if (ph->emptiness()) {
+        // We can only tighten if the constraint is not empty
         return false;
+      } else {
+        /* For now, assume that the placeholder
+         * becomes the entire constraint.
+         * It may be necessary to make placeholder looser than
+         * the constraint to not have inequalities that ph satisfies. */
+        place->intersect(*e.dbm());
+        place->cf();
+        return !(place->emptiness());
       }
-      /* For now, assume that the placeholder
-       * becomes the entire constraint.
-       * It may be necessary to make placeholder looser than
-       * the constraint to not have inequalities that ph satisfies. */
-      place->intersect(*(e.dbm()));
-      place->cf();
-      return !(place->emptiness());
     }
     case BOOL: {
       return (e.getBool());
@@ -357,12 +347,10 @@ inline bool comp_ph_all_place(DBM* const ph, DBMList* const place,
     case CONSTRAINT: {
       ph->intersect(*e.dbm());
       ph->cf(); // Calls Canonical Form Here.
-      bool lhEmpty;
-      lhEmpty = ph->emptiness();
-      if (lhEmpty) {
+      if (ph->emptiness()) {
         return false;
       }
-      place->intersect(*(e.dbm()));
+      place->intersect(*e.dbm());
       place->cf();
       return !place->emptiness();;
     }
