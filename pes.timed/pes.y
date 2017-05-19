@@ -40,7 +40,7 @@
   }
   char lastToken[1024];
 
-  extern void yyerror(bool debug, pes& input_pes, int& MAXC, DBM*& InitC, char *s);
+  extern void yyerror(bool debug, pes& input_pes, char *s);
   extern int yylex();
   extern int yyline;
 
@@ -54,8 +54,6 @@
   // TODO: clean up by providing a simple structure/class interface.
 %parse-param {bool debug}
 %parse-param {pes& input_pes}
-%parse-param {int& MAXC}
-%parse-param {DBM*& InitC}
 
 %start pes
 
@@ -645,7 +643,7 @@ atomic_list: /* empty */
 initial_Decl:
 TOK_INITIALLY TOK_COLON initial_list
 {
-  InitC = $3;
+  input_pes.set_initial_clock_zone($3);
   if(debug) {
     std::cerr << "initial condition defined" <<endl;
   }
@@ -941,10 +939,10 @@ TOK_TRUE { $$ = new ExprNode(BOOL, true, input_pes.clocks(), input_pes.atomic())
   delete $1;
 };
 
-/** Here we find the maximum constant MAXC,
- * the max constant in any constraint involving
- * any clock, and add MAXC as the maximum constant for
- * all DBMs.
+/** Here we find the maximum constant,
+ * in any constraint involving
+ * any clock, and add this as the maximum constant for
+ * all DBMs in the PES.
  *
  * These rules do not convert the DBM
  * to canonical form (each constraint is just added to the DBM).
@@ -954,7 +952,7 @@ constraints:
 TOK_ID_CLOCK TOK_GE TOK_INT
 {
   $$ = new DBM(input_pes.spaceDimension(), input_pes.clocks());
-  MAXC = (MAXC < $3) ? $3 : MAXC ;
+  input_pes.update_max_constant($3);
   int x = input_pes.lookup_clock($1);
   if ( x!= -1){
     $$->addConstraint(0, x, ((-$3) <<1) + 1);
@@ -972,7 +970,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
     errPrtExit("macro not defined");
   }
   int v = (*it).second;
-  MAXC = (MAXC < v) ? v : MAXC ;
+  input_pes.update_max_constant(v);
   int x = input_pes.lookup_clock($1);;
   if ( x!= -1){
     $$->addConstraint(0, x, ((-v) <<1) + 1);
@@ -986,7 +984,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 |TOK_ID_CLOCK TOK_GT TOK_INT
 {
   $$ = new DBM(input_pes.spaceDimension(), input_pes.clocks());
-  MAXC = (MAXC < $3) ? $3 : MAXC ;
+  input_pes.update_max_constant($3);
   int x = input_pes.lookup_clock($1);;
   if ( x!= -1){
     $$->addConstraint(0, x, (-$3) <<1);
@@ -1004,7 +1002,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
     errPrtExit("macro not defined");
   }
   int v = (*it).second;
-  MAXC = (MAXC < v) ? v : MAXC ;
+  input_pes.update_max_constant(v);
   int x = input_pes.lookup_clock($1);;
   if ( x!= -1){
     $$->addConstraint(0, x, (-v) <<1);
@@ -1018,8 +1016,8 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 |TOK_ID_CLOCK TOK_LE TOK_INT
 {
   $$ = new DBM(input_pes.spaceDimension(), input_pes.clocks());
-  MAXC = (MAXC < $3) ? $3 : MAXC ;
-  int x = input_pes.lookup_clock($1);;
+  input_pes.update_max_constant($3);
+  int x = input_pes.lookup_clock($1);
   if ( x!= -1){
     $$->addConstraint(x, 0, ($3 <<1) + 1);
   }
@@ -1036,7 +1034,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
     errPrtExit("macro not defined");
   }
   int v = (*it).second;
-  MAXC = (MAXC < v) ? v : MAXC ;
+  input_pes.update_max_constant(v);
   int x = input_pes.lookup_clock($1);;
   if ( x!= -1){
     $$->addConstraint(x, 0, (v <<1) + 1);
@@ -1050,7 +1048,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 |TOK_ID_CLOCK TOK_LT TOK_INT
 {
   $$ = new DBM(input_pes.spaceDimension(), input_pes.clocks());
-  MAXC = (MAXC < $3) ? $3 : MAXC ;
+  input_pes.update_max_constant($3);
   int x = input_pes.lookup_clock($1);;
   if ( x!= -1){
     $$->addConstraint(x, 0, ($3 <<1));
@@ -1068,7 +1066,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
     errPrtExit("macro not defined");
   }
   int v = (*it).second;
-  MAXC = (MAXC < v) ? v : MAXC ;
+  input_pes.update_max_constant(v);
   int x = input_pes.lookup_clock($1);;
   if ( x!= -1){
     $$->addConstraint(x, 0, (v <<1));
@@ -1082,7 +1080,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 |TOK_ID_CLOCK TOK_EQ TOK_INT
 {
   $$ = new DBM(input_pes.spaceDimension(), input_pes.clocks());
-  MAXC = (MAXC < $3) ? $3 : MAXC ;
+  input_pes.update_max_constant($3);
   int x = input_pes.lookup_clock($1);;
   if ( x!= -1){
     $$->addConstraint(x, 0, ($3 <<1) + 1);
@@ -1101,7 +1099,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
     errPrtExit("macro not defined");
   }
   int v = (*it).second;
-  MAXC = (MAXC < v) ? v : MAXC ;
+  input_pes.update_max_constant(v);
   int x = input_pes.lookup_clock($1);;
   if ( x!= -1){
     $$->addConstraint(x, 0, (v <<1) + 1);
@@ -1116,7 +1114,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 |TOK_ID_CLOCK TOK_MINUS TOK_ID_CLOCK TOK_GE TOK_INT
 {
   $$ = new DBM(input_pes.spaceDimension(), input_pes.clocks());
-  MAXC = (MAXC < $5) ? $5 : MAXC ;
+  input_pes.update_max_constant($5);
   int x = input_pes.lookup_clock($1);;
   int y = input_pes.lookup_clock($3);;
   if ( x != -1 && y != -1) {
@@ -1131,9 +1129,9 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 |TOK_ID_CLOCK TOK_MINUS TOK_ID_CLOCK TOK_GT TOK_INT
 {
   $$ = new DBM(input_pes.spaceDimension(), input_pes.clocks());
-  MAXC = (MAXC < $5) ? $5 : MAXC ;
-  int x = input_pes.lookup_clock($1);;
-  int y = input_pes.lookup_clock($3);;
+  input_pes.update_max_constant($5);
+  int x = input_pes.lookup_clock($1);
+  int y = input_pes.lookup_clock($3);
   if ( x != -1 && y != -1) {
     $$->addConstraint(y, x, (-$5) <<1);
   }
@@ -1146,7 +1144,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 |TOK_ID_CLOCK TOK_MINUS TOK_ID_CLOCK TOK_LE TOK_INT
 {
   $$ = new DBM(input_pes.spaceDimension(), input_pes.clocks());
-  MAXC = (MAXC < $5) ? $5 : MAXC ;
+  input_pes.update_max_constant($5);
   int x = input_pes.lookup_clock($1);;
   int y = input_pes.lookup_clock($3);;
   if ( x != -1 && y != -1) {
@@ -1161,7 +1159,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 |TOK_ID_CLOCK TOK_MINUS TOK_ID_CLOCK TOK_LT TOK_INT
 {
   $$ = new DBM(input_pes.spaceDimension(), input_pes.clocks());
-  MAXC = (MAXC < $5) ? $5 : MAXC ;
+  input_pes.update_max_constant($5);
   int x = input_pes.lookup_clock($1);;
   int y = input_pes.lookup_clock($3);;
   if ( x != -1 && y != -1) {
@@ -1176,7 +1174,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 |TOK_ID_CLOCK TOK_MINUS TOK_ID_CLOCK TOK_EQ TOK_INT
 {
   $$ = new DBM(input_pes.spaceDimension(), input_pes.clocks());
-  MAXC = (MAXC < $5) ? $5 : MAXC ;
+  input_pes.update_max_constant($5);
   int x = input_pes.lookup_clock($1);;
   int y = input_pes.lookup_clock($3);;
   if ( x != -1 && y != -1){

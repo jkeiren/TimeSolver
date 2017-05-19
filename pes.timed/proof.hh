@@ -28,12 +28,6 @@ protected:
 
   size_t numLocations;
 
-  /** This parameter is the size of the maximum
-   * constant (in the clock constraints).  There
-   * is one constant for all of the clocks
-   * This is modified by the program and the parser. */
-  const int MAXC;
-
   /** This DBM is a copy of a DBM initially
    * that represents the unconstrained DBM in
    * canonical form. */
@@ -68,15 +62,13 @@ protected:
   sequent_cache cache;
 
 public:
-  prover(const pes& input_pes, bool currParityGfp, bool prevParityGfp,
-         bool useCaching, int nHash, int MAXC, int nbits)
+  prover(const pes& input_pes, bool useCaching, int nHash, int nbits)
       : input_pes(input_pes),
-        currParityGfp(currParityGfp),
-        prevParityGfp(prevParityGfp),
+        currParityGfp(false),
+        prevParityGfp(false),
         useCaching(useCaching),
         step(0),
         numLocations(1),
-        MAXC(MAXC),
         parentRef(nullptr),
         parentPlaceRef(nullptr),
         newSequent(true),
@@ -98,6 +90,28 @@ public:
 
   size_t getNumLocations() const { return numLocations; }
 
+  /** Prove a given property for the provided PES. */
+  bool do_proof_init(pes& p)
+  {
+    const ExprNode* start_pred = p.lookup_predicate(p.start_predicate());
+
+    /* A Placeholder to remember the current parity;
+     * false = lfp parity, true = gfp parity. */
+    currParityGfp = start_pred->get_Parity();
+    /* A Placeholder to remember the previous parity;
+     * false = lfp parity, true = gfp parity. */
+    prevParityGfp = currParityGfp;
+
+   return  do_proof(p.initial_clock_zone(),
+                   *start_pred,
+                   p.initial_state());
+  }
+
+  void printTabledSequents(std::ostream& os) const {
+    cache.printTabledSequents(os);
+  }
+
+protected:
   /** The prover function to prove whether a sequent is true or false.
    * @param step The "tree level" of the sequent in the proof tree.
    * A lower number is closer to the root, and a higher level is close
@@ -368,11 +382,6 @@ public:
     return result;
   }
 
-  void printTabledSequents(std::ostream& os) const {
-    cache.printTabledSequents(os);
-  }
-
-protected:
   bool do_proof_predicate(DBM* const lhs, const ExprNode& rhs,
                           const SubstList& sub);
   bool do_proof_and(DBM* const lhs, const ExprNode& rhs,
@@ -928,7 +937,7 @@ inline bool prover::do_proof_or(DBM* const lhs, const ExprNode& rhs,
     } else {
       placeholder2.addDBMList(placeholder1); // here placeholder2 is placeholder
                                              // \phi_{\lor} from [FC14]
-      retVal = placeholder2 >= *lhs;         // if the union of both placeholders covers
+      retVal = placeholder2 >= *lhs; // if the union of both placeholders covers
                                      // the set of states, we are still happy
     }
   }
@@ -1484,14 +1493,14 @@ inline bool prover::do_proof_allact(DBM* const lhs, const ExprNode& rhs,
 
     transition->getNewTrans(rhs.getQuant());
 
-    /* Constraints are bounded by MAXC */
+    /* Constraints are bounded by input_pes.max_constant() */
     /* This is to extend the LHS to make sure that
      * the RHS is satisfied by any zone that satisfies
      * the LHS by expanding the zone so it contains
      * all the proper regions where the clocks
      * exceed a certain constant value. */
     tempLHS.cf();
-    tempLHS.bound(MAXC);
+    tempLHS.bound(input_pes.max_constant());
     SubstList tempSub(sub);
 
     cpplog(cpplogging::debug)
@@ -1592,14 +1601,14 @@ inline bool prover::do_proof_existact(DBM* const lhs, const ExprNode& rhs,
     }
 
     transition->getNewTrans(rhs.getQuant());
-    /* Constraints are bounded by MAXC */
+    /* Constraints are bounded by input_pes.max_constant() */
     /* This is to extend the LHS to make sure that
      * the RHS is satisfied by any zone that satisfies
      * the LHS by expanding the zone so it contains
      * all the proper regions where the clocks
      * exceed a certain constant value. */
 
-    tempLHS.bound(MAXC);
+    tempLHS.bound(input_pes.max_constant());
     SubstList tempSub(sub);
     // Above placeholder restricted to satisfy incoming invariant
 
@@ -1646,14 +1655,14 @@ inline bool prover::do_proof_imply(DBM* const lhs, const ExprNode& rhs,
   /* Here is the one call to comp_ph(...) outside of comp_ph(...) */
   DBM tempLHS(*lhs);
   if (comp_ph(&tempLHS, *(rhs.getLeft()), sub)) {
-    /* Constraints are bounded by MAXC */
+    /* Constraints are bounded by input_pes.max_constant() */
     /* This is to extend the LHS to make sure that
      * the RHS is satisfied by any zone that satisfies
      * the LHS by expanding the zone so it contains
      * all the proper regions where the clocks
      * exceed a certain constant value. */
     tempLHS.cf();
-    tempLHS.bound(MAXC);
+    tempLHS.bound(input_pes.max_constant());
 
     retVal = do_proof(&tempLHS, *rhs.getRight(), sub);
   } else {
@@ -2855,14 +2864,14 @@ inline DBMList* prover::do_proof_place_allact(DBM* const lhs,
     }
 
     tempT->getNewTrans(rhs.getQuant());
-    /* Constraints are bounded by MAXC */
+    /* Constraints are bounded by input_pes.max_constant() */
     /* This is to extend the LHS to make sure that
      * the RHS is satisfied by any zone that satisfies
      * the LHS by expanding the zone so it contains
      * all the proper regions where the clocks
      * exceed a certain constant value. */
     phLHS.cf();
-    phLHS.bound(MAXC);
+    phLHS.bound(input_pes.max_constant());
     SubstList tempSub(sub);
     // The transition RHS handles resets and substitutions
     cpplog(cpplogging::debug)
@@ -3065,7 +3074,7 @@ inline DBMList* prover::do_proof_place_existact(DBM* const lhs,
     }
 
     tempT->getNewTrans(rhs.getQuant());
-    /* Constraints are bounded by MAXC */
+    /* Constraints are bounded by input_pes.max_constant() */
     /* This is to extend the LHS to make sure that
      * the RHS is satisfied by any zone that satisfies
      * the LHS by expanding the zone so it contains
@@ -3074,7 +3083,7 @@ inline DBMList* prover::do_proof_place_existact(DBM* const lhs,
 
     // for performance reasons, also tighten LHS with invariant
 
-    tempLHS.bound(MAXC);
+    tempLHS.bound(input_pes.max_constant());
     SubstList tempSub(sub);
     DBMList tPlace1(tempPlace);
     DBMList prevDBM(*retPlaceDBM);
@@ -3123,14 +3132,14 @@ inline DBMList* prover::do_proof_place_imply(DBM* const lhs,
   DBM lhs_copy(*lhs);
   /* call comp_ph() for efficient proving of IMPLY's left. */
   if (comp_ph(&lhs_copy, *(rhs.getLeft()), sub)) {
-    /* Constraints are bounded by MAXC */
+    /* Constraints are bounded by input_pes.max_constant() */
     /* This is to extend the LHS to make sure that
      * the RHS is satisfied by any zone that satisfies
      * the LHS by expanding the zone so it contains
      * all the proper regions where the clocks
      * exceed a certain constant value. */
     lhs_copy.cf();
-    lhs_copy.bound(MAXC);
+    lhs_copy.bound(input_pes.max_constant());
     do_proof_place(&lhs_copy, place, *rhs.getRight(), sub);
   } else {
     /* The set of states does not satisfy the premises of the IF
@@ -3283,7 +3292,7 @@ inline DBMList* prover::do_proof_place_reset(DBM* const lhs,
                                              const SubstList& sub) {
   // Bound the LHS to prevent infinite proofs
   lhs->cf();
-  lhs->bound(MAXC);
+  lhs->bound(input_pes.max_constant());
   lhs->cf();
   DBM lhs_reset(*lhs);
   lhs_reset.reset(rhs.getClockSet());
