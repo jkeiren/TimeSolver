@@ -822,7 +822,7 @@ inline std::ostream& operator<<(std::ostream& os, const ExprNode& e) {
  * @param av (*) the pointer to the vector of clock assignments.
  * @return None. When finished, av is changed to be the vector of
  * clock assignments.  */
-void makeAssignmentList(const ExprNode* const e,
+void makeAssignmentList(const ExprNode& e,
                         std::vector<std::pair<short int, short int>>* av);
 
 /** Prints out a sequent in a proof tree.
@@ -835,14 +835,10 @@ void makeAssignmentList(const ExprNode* const e,
  * model checker applies to continue the proof.
  * @return None */
 inline void print_sequent(std::ostream& os, const int step, const bool retVal,
-                          const DBM* const lhs, const ExprNode* const rhs,
-                          const SubstList* const sub, const opType op) {
-  assert(lhs != nullptr);
-  assert(sub != nullptr);
-  assert(rhs != nullptr);
-
-  os << "seq#" << step << "  " << retVal << "  " << *lhs << ", " << *sub
-     << "\t|-  " << *rhs << "\t" << op << std::endl;
+                          const DBM& lhs, const ExprNode& rhs,
+                          const SubstList& sub, const opType op) {
+  os << "seq#" << step << "  " << retVal << "  " << lhs << ", " << sub
+     << "\t|-  " << rhs << "\t" << op << std::endl;
 }
 
 /** Prints out a placeholder check sequent in the proof tree; used for
@@ -857,15 +853,11 @@ inline void print_sequent(std::ostream& os, const int step, const bool retVal,
  * model checker applies to continue the proof.
  * @return None */
 inline void print_sequentCheck(std::ostream& os, const int step,
-                               const bool retVal, const DBM* const lhs,
-                               const DBMList* const rhsList,
-                               const SubstList* const sub, const opType op) {
-  assert(lhs != nullptr);
-  assert(sub != nullptr);
-  assert(rhsList != nullptr);
-
-  os << "seq#" << step << "  " << retVal << "  " << *lhs << ", " << *sub
-     << "\t|-  " << *rhsList << "\t" << op << std::endl;
+                               const bool retVal, const DBM& lhs,
+                               const DBMList& rhsList,
+                               const SubstList& sub, const opType op) {
+  os << "seq#" << step << "  " << retVal << "  " << lhs << ", " << sub
+     << "\t|-  " << rhsList << "\t" << op << std::endl;
 }
 
 /** Prints out a sequent with a placeholder clock state in a proof tree.
@@ -879,18 +871,11 @@ inline void print_sequentCheck(std::ostream& os, const int step,
  * model checker applies to continue the proof.
  * @return None */
 inline void print_sequent_place(std::ostream& os, const int step,
-                                const bool retVal, const DBM* const lhs,
-                                const DBMList* const place,
-                                const ExprNode* const rhs,
-                                const SubstList* const sub, const opType op) {
-  assert(lhs != nullptr);
-  assert(place != nullptr);
-  assert(sub != nullptr);
-  assert(rhs != nullptr);
-
-  os << "seq#" << step << "  " << retVal << "  " << *lhs << " plhold: {"
-     << *place << "}"
-     << ", " << *sub << "\t|-  " << *rhs << "\t";
+                                const bool retVal, const DBM& lhs,
+                                const DBMList& place, const ExprNode& rhs,
+                                const SubstList& sub, const opType op) {
+  os << "seq#" << step << "  " << retVal << "  " << lhs << " plhold: {"
+     << place << "}" << ", " << sub << "\t|-  " << rhs << "\t";
   print_ExprNodeType(op, os, true);
   os << std::endl;
 }
@@ -909,19 +894,13 @@ inline void print_sequent_place(std::ostream& os, const int step,
  * model checker applies to continue the proof.
  * @return None */
 inline void print_sequent_placeCheck(std::ostream& os, const int step,
-                                     const bool retVal, const DBM* const lhs,
-                                     const DBMList* const place,
-                                     const DBMList* const rhsList,
-                                     const SubstList* const sub,
+                                     const bool retVal, const DBM& lhs,
+                                     const DBMList& place,
+                                     const DBMList& rhsList,
+                                     const SubstList& sub,
                                      const opType op) {
-  assert(lhs != nullptr);
-  assert(place != nullptr);
-  assert(sub != nullptr);
-  assert(rhsList != nullptr);
-
-  os << "seq#" << step << "  " << retVal << "  " << *lhs << " plhold: {"
-     << *place << "}"
-     << ", " << *sub << "\t|-  " << *rhsList << "\t";
+  os << "seq#" << step << "  " << retVal << "  " << lhs << " plhold: {"
+     << place << "}" << ", " << sub << "\t|-  " << rhsList << "\t";
   print_ExprNodeType(op, os, true);
   os << std::endl;
 }

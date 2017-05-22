@@ -24,11 +24,11 @@ using namespace std;
  * @param av (*) the pointer to the vector of clock assignments.
  * @return None. When finished, av is changed to be the vector of
  * clock assignments.  */
-void makeAssignmentList(const ExprNode* const e,
-                        vector<pair<short int, short int>>* av) {
-  if (e->getOpType() == ASSIGN) {
-    av->push_back(std::make_pair(e->getAtomic(), e->getIntVal()));
-    makeAssignmentList(e->getExpr(), av);
+void makeAssignmentList(const ExprNode& e,
+                        std::vector<std::pair<short int, short int>>* av) {
+  if (e.getOpType() == ASSIGN) {
+    av->push_back(std::make_pair(e.getAtomic(), e.getIntVal()));
+    makeAssignmentList(*e.getExpr(), av);
   }
 }
 
