@@ -102,9 +102,7 @@ public:
      * false = lfp parity, true = gfp parity. */
     prevParityGfp = currParityGfp;
 
-   return  do_proof(*p.initial_clock_zone(),
-                   *start_pred,
-                   p.initial_state());
+   return  do_proof(p.initial_state(), *p.initial_clock_zone(), *start_pred);
   }
 
   void printTabledSequents(std::ostream& os) const {
@@ -126,9 +124,9 @@ protected:
    * atomic "state" of the Sequent.
    * @return True if the expression evaluates to True given the other parameters
    * and False otherwise (if the expression evaluates to False).*/
-  __attribute__((flatten)) bool do_proof(const DBM& zone,
-                                         const ExprNode& formula,
-                                         const SubstList& discrete_state) {
+  __attribute__((flatten)) bool do_proof(const SubstList& discrete_state,
+                                         const DBM& zone,
+                                         const ExprNode& formula) {
     assert(zone.isInCf());
     bool result = false;
     if (cpplogEnabled(cpplogging::debug)) {
@@ -138,47 +136,47 @@ protected:
 
     switch (formula.getOpType()) {
       case PREDICATE: {
-        result = do_proof_predicate(zone, formula, discrete_state);
+        result = do_proof_predicate(discrete_state, zone, formula);
         break;
       }
       case AND: {
-        result = do_proof_and(zone, formula, discrete_state);
+        result = do_proof_and(discrete_state, zone, formula);
         break;
       }
       case OR: {
-        result = do_proof_or(zone, formula, discrete_state);
+        result = do_proof_or(discrete_state, zone, formula);
         break;
       }
       case OR_SIMPLE: {
-        result = do_proof_or_simple(zone, formula, discrete_state);
+        result = do_proof_or_simple(discrete_state, zone, formula);
         break;
       }
       case FORALL: {
-        result = do_proof_forall(zone, formula, discrete_state);
+        result = do_proof_forall(discrete_state, zone, formula);
         break;
       }
       case FORALL_REL: {
-        result = do_proof_forall_rel(zone, formula, discrete_state);
+        result = do_proof_forall_rel(discrete_state, zone, formula);
         break;
       }
       case EXISTS: {
-        result = do_proof_exists(zone, formula, discrete_state);
+        result = do_proof_exists(discrete_state, zone, formula);
         break;
       }
       case EXISTS_REL: {
-        result = do_proof_exists_rel(zone, formula, discrete_state);
+        result = do_proof_exists_rel(discrete_state, zone, formula);
         break;
       }
       case ALLACT: {
-        result = do_proof_allact(zone, formula, discrete_state);
+        result = do_proof_allact(discrete_state, zone, formula);
         break;
       }
       case EXISTACT: {
-        result = do_proof_existact(zone, formula, discrete_state);
+        result = do_proof_existact(discrete_state, zone, formula);
         break;
       }
       case IMPLY: {
-        result = do_proof_imply(zone, formula, discrete_state);
+        result = do_proof_imply(discrete_state, zone, formula);
         break;
       }
       case CONSTRAINT: {
@@ -190,51 +188,51 @@ protected:
         break;
       }
       case ATOMIC: {
-        result = do_proof_atomic(formula, discrete_state);
+        result = do_proof_atomic(discrete_state, formula);
         break;
       }
       case ATOMIC_NOT: {
-        result = do_proof_atomic_not(formula, discrete_state);
+        result = do_proof_atomic_not(discrete_state, formula);
         break;
       }
       case ATOMIC_LT: {
-        result = do_proof_atomic_lt(formula, discrete_state);
+        result = do_proof_atomic_lt(discrete_state, formula);
         break;
       }
       case ATOMIC_GT: {
-        result = do_proof_atomic_gt(formula, discrete_state);
+        result = do_proof_atomic_gt(discrete_state, formula);
         break;
       }
       case ATOMIC_LE: {
-        result = do_proof_atomic_le(formula, discrete_state);
+        result = do_proof_atomic_le(discrete_state, formula);
         break;
       }
       case ATOMIC_GE: {
-        result = do_proof_atomic_ge(formula, discrete_state);
+        result = do_proof_atomic_ge(discrete_state, formula);
         break;
       }
       case SUBLIST: {
-        result = do_proof_sublist(zone, formula, discrete_state);
+        result = do_proof_sublist(discrete_state, zone, formula);
         break;
       }
       case RESET: {
-        result = do_proof_reset(zone, formula, discrete_state);
+        result = do_proof_reset(discrete_state, zone, formula);
         break;
       }
       case ASSIGN: {
-        result = do_proof_assign(zone, formula, discrete_state);
+        result = do_proof_assign(discrete_state, zone, formula);
         break;
       }
       case REPLACE: {
-        result = do_proof_replace(zone, formula, discrete_state);
+        result = do_proof_replace(discrete_state, zone, formula);
         break;
       }
       case ABLEWAITINF: {
-        result = do_proof_ablewaitinf(zone, discrete_state);
+        result = do_proof_ablewaitinf(discrete_state, zone);
         break;
       }
       case UNABLEWAITINF: {
-        result = do_proof_unablewaitinf(zone, discrete_state);
+        result = do_proof_unablewaitinf(discrete_state, zone);
         break;
       }
     }
@@ -384,51 +382,52 @@ protected:
     return result;
   }
 
-  bool do_proof_predicate(const DBM& zone, const ExprNode& formula,
-                          const SubstList& discrete_state);
-  bool do_proof_and(const DBM& zone, const ExprNode& formula,
-                    const SubstList& discrete_state);
-  bool do_proof_or(const DBM& zone, const ExprNode& formula,
-                   const SubstList& discrete_state);
-  bool do_proof_or_simple(const DBM& zone, const ExprNode& formula,
-                          const SubstList& discrete_state);
-  bool do_proof_forall(const DBM& zone, const ExprNode& formula,
-                       const SubstList& discrete_state);
-  bool do_proof_forall_rel(const DBM& zone, const ExprNode& formula,
-                           const SubstList& discrete_state);
-  bool do_proof_exists(const DBM& zone, const ExprNode& formula,
-                       const SubstList& discrete_state);
-  bool do_proof_exists_rel(const DBM& zone, const ExprNode& formula,
-                           const SubstList& discrete_state);
-  bool do_proof_allact(const DBM& zone, const ExprNode& formula,
-                       const SubstList& discrete_state);
-  bool do_proof_existact(const DBM& zone, const ExprNode& formula,
-                         const SubstList& discrete_state);
-  bool do_proof_imply(const DBM& zone, const ExprNode& formula,
-                      const SubstList& discrete_state);
+  bool do_proof_predicate(const SubstList& discrete_state, const DBM& zone,
+                          const ExprNode& formula);
+  bool do_proof_and(const SubstList& discrete_state, const DBM& zone,
+                    const ExprNode& formula);
+  bool do_proof_or(const SubstList& discrete_state, const DBM& zone,
+                   const ExprNode& formula);
+  bool do_proof_or_simple(const SubstList& discrete_state, const DBM& zone,
+                          const ExprNode& formula);
+  bool do_proof_forall(const SubstList& discrete_state, const DBM& zone,
+                       const ExprNode& formula);
+  bool do_proof_forall_rel(const SubstList& discrete_state, const DBM& zone,
+                           const ExprNode& formula);
+  bool do_proof_exists(const SubstList& discrete_state, const DBM& zone,
+                       const ExprNode& formula);
+  bool do_proof_exists_rel(const SubstList& discrete_state, const DBM& zone,
+                           const ExprNode& formula);
+  bool do_proof_allact(const SubstList& discrete_state, const DBM& zone,
+                       const ExprNode& formula);
+  bool do_proof_existact(const SubstList& discrete_state, const DBM& zone,
+                         const ExprNode& formula);
+  bool do_proof_imply(const SubstList& discrete_state, const DBM& zone,
+                      const ExprNode& formula);
   bool do_proof_constraint(const DBM& zone, const ExprNode& formula);
   bool do_proof_bool(const ExprNode& formula);
-  bool do_proof_atomic(const ExprNode& formula, const SubstList& discrete_state);
-  bool do_proof_atomic_not(const ExprNode& formula,
-                           const SubstList& discrete_state);
-  bool do_proof_atomic_lt(const ExprNode& formula,
-                          const SubstList& discrete_state);
-  bool do_proof_atomic_gt(const ExprNode& formula,
-                          const SubstList& discrete_state);
-  bool do_proof_atomic_le(const ExprNode& formula,
-                          const SubstList& discrete_state);
-  bool do_proof_atomic_ge(const ExprNode& formula,
-                          const SubstList& discrete_state);
-  bool do_proof_sublist(const DBM& zone, const ExprNode& formula,
-                        const SubstList& discrete_state);
-  bool do_proof_reset(const DBM& zone, const ExprNode& formula,
-                      const SubstList& discrete_state);
-  bool do_proof_assign(const DBM& zone, const ExprNode& formula,
-                       const SubstList& discrete_state);
-  bool do_proof_replace(const DBM& zone, const ExprNode& formula,
-                        const SubstList& discrete_state);
-  bool do_proof_ablewaitinf(const DBM& zone, const SubstList& discrete_state);
-  bool do_proof_unablewaitinf(const DBM& zone, const SubstList& discrete_state);
+  bool do_proof_atomic(const SubstList& discrete_state,
+                       const ExprNode& formula);
+  bool do_proof_atomic_not(const SubstList& discrete_state,
+                           const ExprNode& formula);
+  bool do_proof_atomic_lt(const SubstList& discrete_state,
+                          const ExprNode& formula);
+  bool do_proof_atomic_gt(const SubstList& discrete_state,
+                          const ExprNode& formula);
+  bool do_proof_atomic_le(const SubstList& discrete_state,
+                          const ExprNode& formula);
+  bool do_proof_atomic_ge(const SubstList& discrete_state,
+                          const ExprNode& formula);
+  bool do_proof_sublist(const SubstList& discrete_state, const DBM& zone,
+                        const ExprNode& formula);
+  bool do_proof_reset(const SubstList& discrete_state, const DBM& zone,
+                      const ExprNode& formula);
+  bool do_proof_assign(const SubstList& discrete_state, const DBM& zone,
+                       const ExprNode& formula);
+  bool do_proof_replace(const SubstList& discrete_state, const DBM& zone,
+                        const ExprNode& formula);
+  bool do_proof_ablewaitinf(const SubstList& discrete_state, const DBM& zone);
+  bool do_proof_unablewaitinf(const SubstList& discrete_state, const DBM& zone);
 
   DBMList* do_proof_place_predicate(const DBM& zone, DBMList* place,
                                     const ExprNode& formula,
@@ -695,9 +694,9 @@ protected:
 };
 
 /* IMPLEMENTATION PROOF WITHOUT PLACEHOLDERS */
-inline bool prover::do_proof_predicate(const DBM& zone,
-                                       const ExprNode& formula,
-                                       const SubstList& discrete_state) {
+inline bool prover::do_proof_predicate(const SubstList& discrete_state,
+                                       const DBM& zone,
+                                       const ExprNode& formula) {
   bool retVal = false;
 
   ExprNode* e = input_pes.lookup_equation(formula.getPredicate());
@@ -806,7 +805,7 @@ inline bool prover::do_proof_predicate(const DBM& zone,
   /* Get the current variable: do a shallow, not deep copy */
   parentRef = h;
 
-  retVal = do_proof(zone, *e, discrete_state);
+  retVal = do_proof(discrete_state, zone, *e);
 
     /* Now update the parent so it points to the previous parent, and not this
    * predicate */
@@ -882,13 +881,13 @@ inline bool prover::do_proof_predicate(const DBM& zone,
 }
 
 // [FC14] Proof rule \land
-inline bool prover::do_proof_and(const DBM& zone, const ExprNode& formula,
-                                 const SubstList& discrete_state) {
+inline bool prover::do_proof_and(const SubstList& discrete_state,
+                                 const DBM& zone, const ExprNode& formula) {
   /* Because zone is only changed after it is copied, it can
    * be passed to both branches. */
-  bool retVal = do_proof(zone, *formula.getLeft(), discrete_state);
+  bool retVal = do_proof(discrete_state, zone, *formula.getLeft());
   if (retVal) {
-    retVal = do_proof(zone, *formula.getRight(), discrete_state);
+    retVal = do_proof(discrete_state, zone, *formula.getRight());
   }
   return retVal;
 }
@@ -899,8 +898,8 @@ inline bool prover::do_proof_and(const DBM& zone, const ExprNode& formula,
  * - the proof for l covers a strict, non-empty subset of zone
  */
 // [FC14] Proof rule based on \lor_{s_2}
-inline bool prover::do_proof_or(const DBM& zone, const ExprNode& formula,
-                                const SubstList& discrete_state) {
+inline bool prover::do_proof_or(const SubstList& discrete_state,
+                                const DBM& zone, const ExprNode& formula) {
   bool retVal = false;
 
   /* Use two placeholders to provide split here */
@@ -916,7 +915,7 @@ inline bool prover::do_proof_or(const DBM& zone, const ExprNode& formula,
   // Reset place parent to NULL
   parentPlaceRef = nullptr;
   if (placeholder1.emptiness()) {
-    retVal = do_proof(zone, *formula.getRight(), discrete_state);
+    retVal = do_proof(discrete_state, zone, *formula.getRight());
   } else if (placeholder1 >= zone) {
     retVal = true;
   } else {
@@ -944,20 +943,20 @@ inline bool prover::do_proof_or(const DBM& zone, const ExprNode& formula,
 }
 
 // [FC14], rules \lor_{l} and \lor_{r}
-inline bool prover::do_proof_or_simple(const DBM& zone,
-                                       const ExprNode& formula,
-                                       const SubstList& discrete_state) {
+inline bool prover::do_proof_or_simple(const SubstList& discrete_state,
+                                       const DBM& zone,
+                                       const ExprNode& formula) {
   /* Simplified OR does not need to split on placeholders */
-  bool retVal = do_proof(zone, *formula.getLeft(), discrete_state);
+  bool retVal = do_proof(discrete_state, zone, *formula.getLeft());
   if (!retVal) {
-    retVal = do_proof(zone, *formula.getRight(), discrete_state);
+    retVal = do_proof(discrete_state, zone, *formula.getRight());
   }
   return retVal;
 }
 
 // [FC14] Rule \forall_{t1}
-inline bool prover::do_proof_forall(const DBM& zone, const ExprNode& formula,
-                                    const SubstList& discrete_state) {
+inline bool prover::do_proof_forall(const SubstList& discrete_state,
+                                    const DBM& zone, const ExprNode& formula) {
   /* Here the model checker looks at the zone of
    * all time sucessors and then substitutes in
    * the substitued constraints and sees if the
@@ -970,13 +969,13 @@ inline bool prover::do_proof_forall(const DBM& zone, const ExprNode& formula,
   restrict_to_invariant(input_pes.invariants(), &succ_lhs, discrete_state);
   succ_lhs.cf();
 
-  return do_proof(succ_lhs, *formula.getQuant(), discrete_state);
+  return do_proof(discrete_state, succ_lhs, *formula.getQuant());
 }
 
 // [FC14] Proof rules \forall_{ro1}, \forall_{ro2}, \forall_{ro3}
-inline bool prover::do_proof_forall_rel(const DBM& zone,
-                                        const ExprNode& formula,
-                                        const SubstList& discrete_state) {
+inline bool prover::do_proof_forall_rel(const SubstList& discrete_state,
+                                        const DBM& zone,
+                                        const ExprNode& formula) {
   /* Proof methodology:
    * first, see if \phi_1 is satisfied during the time advance.
    * If it is, check that phi_2 is true both at and before those
@@ -1022,7 +1021,7 @@ inline bool prover::do_proof_forall_rel(const DBM& zone,
                                       // the location invariant
     restrict_to_invariant(input_pes.invariants(), &lhs_succ_invariant, discrete_state);
     lhs_succ_invariant.cf();
-    retVal = do_proof(lhs_succ_invariant, *formula.getRight(), discrete_state);
+    retVal = do_proof(discrete_state, lhs_succ_invariant, *formula.getRight());
   } else if (placeholder1 >= zone) {
     // placeholder1 nonempty
     /* First check for the simplest case: no time elapse is needed */
@@ -1042,7 +1041,7 @@ inline bool prover::do_proof_forall_rel(const DBM& zone,
     }
 
     // If here, we neither need a placeholder nor to elapse time
-    retVal = do_proof(zone, *formula.getRight(), discrete_state);
+    retVal = do_proof(discrete_state, zone, *formula.getRight());
   } else {
     retVal = true;
     // This is the more complicated case that requires a placeholder
@@ -1176,8 +1175,8 @@ inline bool prover::do_proof_forall_rel(const DBM& zone,
 }
 
 // [FC14] Proof rule \exists_{t1}
-inline bool prover::do_proof_exists(const DBM& zone, const ExprNode& formula,
-                                    const SubstList& discrete_state) {
+inline bool prover::do_proof_exists(const SubstList& discrete_state,
+                                    const DBM& zone, const ExprNode& formula) {
   bool retVal = false;
 
   /* Support for exists(), written by Peter Fontana */
@@ -1239,9 +1238,9 @@ inline bool prover::do_proof_exists(const DBM& zone, const ExprNode& formula,
   }
 }
 
-inline bool prover::do_proof_exists_rel(const DBM& zone,
-                                        const ExprNode& formula,
-                                        const SubstList& discrete_state) {
+inline bool prover::do_proof_exists_rel(const SubstList& discrete_state,
+                                        const DBM& zone,
+                                        const ExprNode& formula) {
   bool retVal = false;
 
   /* First Try to get a placeholder value that works */
@@ -1424,8 +1423,8 @@ inline bool prover::do_proof_exists_rel(const DBM& zone,
   return retVal;
 }
 
-inline bool prover::do_proof_allact(const DBM& zone, const ExprNode& formula,
-                                    const SubstList& discrete_state) {
+inline bool prover::do_proof_allact(const SubstList& discrete_state,
+                                    const DBM& zone, const ExprNode& formula) {
   bool retVal = true;
   /* Enumerate through all transitions */
   cpplog(cpplogging::debug) << "\t Proving ALLACT Transitions:----\n"
@@ -1506,7 +1505,7 @@ inline bool prover::do_proof_allact(const DBM& zone, const ExprNode& formula,
         << "\tExtra invariant condition: " << invariant_region << std::endl;
 
     numLocations++;
-    retVal = do_proof(tempLHS, *transition->getRightExpr(), tempSub);
+    retVal = do_proof(tempSub, tempLHS, *transition->getRightExpr());
     if (!retVal) {
       cpplog(cpplogging::debug)
           << "Trainsition: " << transition << std::endl
@@ -1520,8 +1519,9 @@ inline bool prover::do_proof_allact(const DBM& zone, const ExprNode& formula,
   return retVal;
 }
 
-inline bool prover::do_proof_existact(const DBM& zone, const ExprNode& formula,
-                                      const SubstList& discrete_state) {
+inline bool prover::do_proof_existact(const SubstList& discrete_state,
+                                      const DBM& zone,
+                                      const ExprNode& formula) {
   bool retVal = false;
   /* Enumerate through all transitions */
 
@@ -1646,8 +1646,8 @@ inline bool prover::do_proof_existact(const DBM& zone, const ExprNode& formula,
   return retVal;
 }
 
-inline bool prover::do_proof_imply(const DBM& zone, const ExprNode& formula,
-                                   const SubstList& discrete_state) {
+inline bool prover::do_proof_imply(const SubstList& discrete_state,
+                                   const DBM& zone, const ExprNode& formula) {
   bool retVal = false;
   /* Here is the one call to comp_ph(...) outside of comp_ph(...) */
   DBM tempLHS(zone);
@@ -1662,7 +1662,7 @@ inline bool prover::do_proof_imply(const DBM& zone, const ExprNode& formula,
     tempLHS.bound(input_pes.max_constant());
     tempLHS.cf();
 
-    retVal = do_proof(tempLHS, *formula.getRight(), discrete_state);
+    retVal = do_proof(discrete_state, tempLHS, *formula.getRight());
   } else {
     /* The set of states does not satisfy the premises of the IF
      * so thus the proof is true */
@@ -1693,8 +1693,8 @@ inline bool prover::do_proof_bool(const ExprNode& formula) {
   return retVal;
 }
 
-inline bool prover::do_proof_atomic(const ExprNode& formula,
-                                    const SubstList& discrete_state) {
+inline bool prover::do_proof_atomic(const SubstList& discrete_state,
+                                    const ExprNode& formula) {
   bool retVal = (discrete_state.at(formula.getAtomic()) == formula.getIntVal());
   cpplog(cpplogging::debug) << "---(" << (retVal ? "V" : "Inv")
                             << "alid) Leaf ATOMIC == Reached----" << std::endl
@@ -1702,8 +1702,8 @@ inline bool prover::do_proof_atomic(const ExprNode& formula,
   return retVal;
 }
 
-inline bool prover::do_proof_atomic_not(const ExprNode& formula,
-                                        const SubstList& discrete_state) {
+inline bool prover::do_proof_atomic_not(const SubstList& discrete_state,
+                                        const ExprNode& formula) {
   bool retVal = (discrete_state.at(formula.getAtomic()) != formula.getIntVal());
   cpplog(cpplogging::debug) << "---(" << (retVal ? "V" : "Inv")
                             << "alid) Leaf ATOMIC != Reached----" << std::endl
@@ -1711,8 +1711,8 @@ inline bool prover::do_proof_atomic_not(const ExprNode& formula,
   return retVal;
 }
 
-inline bool prover::do_proof_atomic_lt(const ExprNode& formula,
-                                       const SubstList& discrete_state) {
+inline bool prover::do_proof_atomic_lt(const SubstList& discrete_state,
+                                       const ExprNode& formula) {
   bool retVal = (discrete_state.at(formula.getAtomic()) < formula.getIntVal());
   cpplog(cpplogging::debug) << "---(" << (retVal ? "V" : "Inv")
                             << "alid) Leaf ATOMIC < Reached----" << std::endl
@@ -1720,8 +1720,8 @@ inline bool prover::do_proof_atomic_lt(const ExprNode& formula,
   return retVal;
 }
 
-inline bool prover::do_proof_atomic_gt(const ExprNode& formula,
-                                       const SubstList& discrete_state) {
+inline bool prover::do_proof_atomic_gt(const SubstList& discrete_state,
+                                       const ExprNode& formula) {
   bool retVal = (discrete_state.at(formula.getAtomic()) > formula.getIntVal());
   cpplog(cpplogging::debug) << "---(" << (retVal ? "V" : "Inv")
                             << "alid) Leaf ATOMIC > Reached----" << std::endl
@@ -1729,8 +1729,8 @@ inline bool prover::do_proof_atomic_gt(const ExprNode& formula,
   return retVal;
 }
 
-inline bool prover::do_proof_atomic_le(const ExprNode& formula,
-                                       const SubstList& discrete_state) {
+inline bool prover::do_proof_atomic_le(const SubstList& discrete_state,
+                                       const ExprNode& formula) {
   bool retVal = (discrete_state.at(formula.getAtomic()) <= formula.getIntVal());
   cpplog(cpplogging::debug) << "---(" << (retVal ? "V" : "Inv")
                             << "alid) Leaf ATOMIC < Reached----" << std::endl
@@ -1738,8 +1738,8 @@ inline bool prover::do_proof_atomic_le(const ExprNode& formula,
   return retVal;
 }
 
-inline bool prover::do_proof_atomic_ge(const ExprNode& formula,
-                                       const SubstList& discrete_state) {
+inline bool prover::do_proof_atomic_ge(const SubstList& discrete_state,
+                                       const ExprNode& formula) {
   bool retVal = (discrete_state.at(formula.getAtomic()) >= formula.getIntVal());
   cpplog(cpplogging::debug) << "---(" << (retVal ? "V" : "Inv")
                             << "alid) Leaf ATOMIC > Reached----" << std::endl
@@ -1747,39 +1747,40 @@ inline bool prover::do_proof_atomic_ge(const ExprNode& formula,
   return retVal;
 }
 
-inline bool prover::do_proof_sublist(const DBM& zone, const ExprNode& formula,
-                                     const SubstList& discrete_state) {
+inline bool prover::do_proof_sublist(const SubstList& discrete_state,
+                                     const DBM& zone, const ExprNode& formula) {
   SubstList st(formula.getSublist(), &discrete_state);
-  return do_proof(zone, *formula.getExpr(), st);
+  return do_proof(st, zone, *formula.getExpr());
 }
 
-inline bool prover::do_proof_reset(const DBM& zone, const ExprNode& formula,
-                                   const SubstList& discrete_state) {
+inline bool prover::do_proof_reset(const SubstList& discrete_state,
+                                   const DBM& zone, const ExprNode& formula) {
   DBM lhs_reset(zone);
   lhs_reset.reset(formula.getClockSet());
   lhs_reset.cf();
-  return do_proof(lhs_reset, *formula.getExpr(), discrete_state);
+  return do_proof(discrete_state, lhs_reset, *formula.getExpr());
 }
 
-inline bool prover::do_proof_assign(const DBM& zone, const ExprNode& formula,
-                                    const SubstList& discrete_state) {
+inline bool prover::do_proof_assign(const SubstList& discrete_state,
+                                    const DBM& zone, const ExprNode& formula) {
   DBM lhs_assign(zone);
   /* Here the DBM zone is where the value of
    * clock x is reset to clock y, which is possibly
    * a constant or a value*/
   lhs_assign.reset(formula.getcX(), formula.getcY());
   lhs_assign.cf();
-  return do_proof(lhs_assign, *formula.getExpr(), discrete_state);
+  return do_proof(discrete_state, lhs_assign, *formula.getExpr());
 }
 
-inline bool prover::do_proof_replace(const DBM& zone, const ExprNode& formula,
-                                     const SubstList& discrete_state) {
+inline bool prover::do_proof_replace(const SubstList& discrete_state,
+                                     const DBM& zone, const ExprNode& formula) {
   SubstList sub_(discrete_state);
   sub_[formula.getcX()] = discrete_state.at(formula.getcY());
-  return do_proof(zone, *formula.getExpr(), sub_);
+  return do_proof(sub_, zone, *formula.getExpr());
 }
 
-inline bool prover::do_proof_ablewaitinf(const DBM& zone, const SubstList& discrete_state) {
+inline bool prover::do_proof_ablewaitinf(const SubstList& discrete_state,
+                                         const DBM& zone) {
   DBM ph(zone);
   ph.suc();
   restrict_to_invariant(input_pes.invariants(), &ph, discrete_state);
@@ -1797,8 +1798,8 @@ inline bool prover::do_proof_ablewaitinf(const DBM& zone, const SubstList& discr
 }
 
 // FIXME: eliminate duplication with do_proof_ablewaitinf
-inline bool prover::do_proof_unablewaitinf(const DBM& zone,
-                                           const SubstList& discrete_state) {
+inline bool prover::do_proof_unablewaitinf(const SubstList& discrete_state,
+                                           const DBM& zone) {
   DBM ph(zone);
   ph.suc();
   restrict_to_invariant(input_pes.invariants(), &ph, discrete_state);
@@ -3203,7 +3204,7 @@ inline DBMList* prover::do_proof_place_bool(DBMList* place,
 inline DBMList* prover::do_proof_place_atomic(DBMList* place,
                                               const ExprNode& formula,
                                               const SubstList& discrete_state) {
-  if (!do_proof_atomic(formula, discrete_state)) {
+  if (!do_proof_atomic(discrete_state, formula)) {
     place->makeEmpty();
   }
   *retPlaceDBM = *place;
@@ -3214,7 +3215,7 @@ inline DBMList* prover::do_proof_place_atomic(DBMList* place,
 inline DBMList* prover::do_proof_place_atomic_not(DBMList* place,
                                                   const ExprNode& formula,
                                                   const SubstList& discrete_state) {
-  if (!do_proof_atomic_not(formula, discrete_state)) {
+  if (!do_proof_atomic_not(discrete_state, formula)) {
     place->makeEmpty();
   }
   *retPlaceDBM = *place;
@@ -3225,7 +3226,7 @@ inline DBMList* prover::do_proof_place_atomic_not(DBMList* place,
 inline DBMList* prover::do_proof_place_atomic_lt(DBMList* place,
                                                  const ExprNode& formula,
                                                  const SubstList& discrete_state) {
-  if (!do_proof_atomic_lt(formula, discrete_state)) {
+  if (!do_proof_atomic_lt(discrete_state, formula)) {
     place->makeEmpty();
   }
   *retPlaceDBM = *place;
@@ -3236,7 +3237,7 @@ inline DBMList* prover::do_proof_place_atomic_lt(DBMList* place,
 inline DBMList* prover::do_proof_place_atomic_gt(DBMList* place,
                                                  const ExprNode& formula,
                                                  const SubstList& discrete_state) {
-  if (!do_proof_atomic_gt(formula, discrete_state)) {
+  if (!do_proof_atomic_gt(discrete_state, formula)) {
     place->makeEmpty();
   }
   *retPlaceDBM = *place;
@@ -3247,7 +3248,7 @@ inline DBMList* prover::do_proof_place_atomic_gt(DBMList* place,
 inline DBMList* prover::do_proof_place_atomic_le(DBMList* place,
                                                  const ExprNode& formula,
                                                  const SubstList& discrete_state) {
-  if (!do_proof_atomic_le(formula, discrete_state)) {
+  if (!do_proof_atomic_le(discrete_state, formula)) {
     place->makeEmpty();
   }
   *retPlaceDBM = *place;
@@ -3258,7 +3259,7 @@ inline DBMList* prover::do_proof_place_atomic_le(DBMList* place,
 inline DBMList* prover::do_proof_place_atomic_ge(DBMList* place,
                                                  const ExprNode& formula,
                                                  const SubstList& discrete_state) {
-  if (!do_proof_atomic_ge(formula, discrete_state)) {
+  if (!do_proof_atomic_ge(discrete_state, formula)) {
     place->makeEmpty();
   }
   *retPlaceDBM = *place;
