@@ -138,9 +138,9 @@ public:
    * @param lhs (*) The DBM to compare the sequent's DBMs to.
    * @return true: lhs <= some sequent in s
    * (consequently, the sequent is true), false: otherwise.*/
-  inline bool tabled_sequent(const DBM *const lhs) const {
+  inline bool tabled_sequent(const DBM& lhs) const {
     return std::find_if(ds.begin(), ds.end(), [&](const DBM* x) {
-             return *x >= *lhs;
+             return *x >= lhs;
            }) != ds.end();
   }
 
@@ -158,9 +158,9 @@ public:
    * @param lhs (*) The DBM to compare the sequent's DBMs to.
    * @return true: lhs >= some sequent in s
    * (consequently, the sequent is false), false: otherwise.*/
-  inline bool tabled_false_sequent(const DBM *const lhs) const {
+  inline bool tabled_false_sequent(const DBM& lhs) const {
     return std::find_if(ds.begin(), ds.end(), [&](const DBM* x) {
-             return *x <= *lhs;
+             return *x <= lhs;
            }) != ds.end();
   }
 
@@ -175,9 +175,9 @@ public:
    * @param s (*) The sequent that contains a set of DBMs.
    * @param lhs (*) The DBM to compare the sequent's DBMs to.
    * @return true: lhs == some sequent in s, false: otherwise.*/
-  inline bool tabled_sequent_lfp(const DBM *const lhs) {
+  inline bool tabled_sequent_lfp(const DBM& lhs) {
     return std::find_if(ds.begin(), ds.end(), [&](const DBM* x) {
-             return *x == *lhs;
+             return *x == lhs;
            }) != ds.end();
   }
 
@@ -194,14 +194,14 @@ public:
    * @param lhs (*) The DBM of the newly-established clock state.
    * @return true: the clock state was incorporated into one of s's
    * sequents; false: otherwise (a new sequent was added to s). */
-  inline bool update_sequent(const DBM *const lhs) {
+  inline bool update_sequent(const DBM& lhs) {
     for (DBMset::const_iterator it = ds.begin(); it != ds.end(); ++it) {
-      if (*(*it) <= *lhs) {
-        *(*it) = *lhs;
+      if (*(*it) <= lhs) {
+        *(*it) = lhs;
         return true;
       }
     }
-    ds.push_back(new DBM(*lhs));
+    ds.push_back(new DBM(lhs));
     return false;
   }
 
@@ -219,14 +219,14 @@ public:
    * @param lhs (*) The DBM of the newly-established clock state.
    * @return true: the clock state was incorporated into one of s's
    * sequents; false: otherwise (a new sequent was added to s). */
-  inline bool update_false_sequent(const DBM *const lhs) {
+  inline bool update_false_sequent(const DBM& lhs) {
     for (DBMset::iterator it = ds.begin(); it != ds.end(); ++it) {
-      if (*(*it) >= *lhs) {
-        *(*it) = *lhs;
+      if (*(*it) >= lhs) {
+        *(*it) = lhs;
         return true;
       }
     }
-    ds.push_back(new DBM(*lhs));
+    ds.push_back(new DBM(lhs));
     return false;
   }
 
@@ -394,9 +394,9 @@ public:
    * @param lhsPlace (*) The placeholder DBMList of the clock state.
    * @return true: (lhs, lhsPlace) <= some sequent in s
    * (consequently, the sequent is true), false: otherwise.*/
-  bool tabled_sequent(const DBM *const lhs, DBMList *const lhsPlace) const {
+  bool tabled_sequent(const DBM& lhs, DBMList* const lhsPlace) const {
     auto p = [&](const std::pair<const DBM *, DBMList *> x) {
-      if (*(x.first) == *lhs) {
+      if (*(x.first) == lhs) {
         lhsPlace->intersect(*(x.second));
         lhsPlace->cf();
         return true;
@@ -425,10 +425,10 @@ public:
    * @param lhsPlace (*) The placeholder DBMList of the clock state.
    * @return true: (lhs, lhsPlace) >= some sequent in s
    * (consequently, the sequent is false), false: otherwise.*/
-  inline bool tabled_false_sequent(const DBM *const lhs) {
+  inline bool tabled_false_sequent(const DBM& lhs) {
     return std::find_if(_dbms.begin(), _dbms.end(),
                         [&](const std::pair<const DBM *, const DBMList *> x) {
-                          return *(x.first) <= *lhs;
+                          return *(x.first) <= lhs;
                         }) != _dbms.end();
   }
 
@@ -446,11 +446,11 @@ public:
    * @param lhs (*) The DBM of the clock state to compare the sequent's DBMs to.
    * @param lhsPlace (*) The placeholder DBMList of the clock state.
    * @return true: (lhs, lhsPlace) == some sequent in s, false: otherwise.*/
-  inline bool tabled_sequent_lfp(const DBM *const lhs,
+  inline bool tabled_sequent_lfp(const DBM& lhs,
                                  const DBMList *const lhsPlace) {
     return std::find_if(_dbms.begin(), _dbms.end(),
                         [&](const std::pair<const DBM *, const DBMList *> x) {
-                          return *(x.first) == *lhs && *(x.second) == *lhsPlace;
+                          return *(x.first) == lhs && *(x.second) == *lhsPlace;
                         }) != _dbms.end();
   }
 
@@ -472,11 +472,11 @@ public:
    * @param lhsPlace (*) The placeholder DBMList of the clock state.
    * @return true: (lhs, lhsPlace) <= some sequent in s
    * (consequently, the sequent is true), false: otherwise.*/
-  inline bool tabled_sequent_gfp(const DBM *const lhs,
+  inline bool tabled_sequent_gfp(const DBM& lhs,
                                  const DBMList *const lhsPlace) {
     return std::find_if(_dbms.begin(), _dbms.end(),
                         [&](const std::pair<const DBM *, const DBMList *> x) {
-                          return *(x.first) == *lhs && *(x.second) >= *lhsPlace;
+                          return *(x.first) == lhs && *(x.second) >= *lhsPlace;
                         }) != _dbms.end();
   }
 
@@ -492,18 +492,18 @@ public:
    * @param lhsPlace (*) The DBMList of the newly-established clock state.
    * @return true: the clock state was incorporated into one of s's
    * sequents; false: otherwise (a new sequent was added to s). */
-  inline bool update_sequent(const DBM *const lhs,
+  inline bool update_sequent(const DBM& lhs,
                              const DBMList *const lhsPlace) {
     for (DBMPlaceSet::iterator it = _dbms.begin(); it != _dbms.end(); it++) {
       /* Extra work for placeholders. For now,
        * force equality on LHS sequent and use tabling logic
        * for placeholders. */
-      if (*((*it).first) == *lhs && *((*it).second) <= *lhsPlace) {
+      if (*((*it).first) == lhs && *((*it).second) <= *lhsPlace) {
         *((*it).second) = *lhsPlace;
         return true;
       }
     }
-    _dbms.push_back(std::make_pair(new DBM(*lhs), new DBMList(*lhsPlace)));
+    _dbms.push_back(std::make_pair(new DBM(lhs), new DBMList(*lhsPlace)));
     return false;
   }
 
@@ -520,14 +520,14 @@ public:
    * @param lhsPlace (*) The DBMList of the newly-established clock state.
    * @return true: the clock state was incorporated into one of s's
    * sequents; false: otherwise (a new sequent was added to s). */
-  bool update_false_sequent(const DBM *const lhs) {
+  bool update_false_sequent(const DBM& lhs) {
     for (DBMPlaceSet::iterator it = _dbms.begin(); it != _dbms.end(); ++it) {
-      if (*((*it).first) >= *lhs) {
-        *((*it).first) = *lhs;
+      if (*((*it).first) >= lhs) {
+        *((*it).first) = lhs;
         return true;
       }
     }
-    DBM *m = new DBM(*lhs);
+    DBM *m = new DBM(lhs);
     /* I would like this to be NULL, but it is checked in the program */
 
     /** This DBM is used as a DBM with

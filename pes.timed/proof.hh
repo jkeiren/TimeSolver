@@ -102,7 +102,7 @@ public:
      * false = lfp parity, true = gfp parity. */
     prevParityGfp = currParityGfp;
 
-   return  do_proof(p.initial_clock_zone(),
+   return  do_proof(*p.initial_clock_zone(),
                    *start_pred,
                    p.initial_state());
   }
@@ -126,13 +126,13 @@ protected:
    * atomic "state" of the Sequent.
    * @return True if the expression evaluates to True given the other parameters
    * and False otherwise (if the expression evaluates to False).*/
-  __attribute__((flatten)) bool do_proof(const DBM* const zone,
+  __attribute__((flatten)) bool do_proof(const DBM& zone,
                                          const ExprNode& formula,
                                          const SubstList& discrete_state) {
-    assert(zone->isInCf());
+    assert(zone.isInCf());
     bool result = false;
     if (cpplogEnabled(cpplogging::debug)) {
-      print_sequent(std::cerr, step, result, *zone, formula, discrete_state, formula.getOpType());
+      print_sequent(std::cerr, step, result, zone, formula, discrete_state, formula.getOpType());
     }
     ++step;
 
@@ -259,16 +259,16 @@ protected:
    * no valid value for the placeholder exists (thus proof is Invalid).
    * The sequent is valid for the clock valuations in the intersection of zone
    * and the return value. */
-  __attribute__((flatten)) DBMList* do_proof_place(const DBM* const zone,
+  __attribute__((flatten)) DBMList* do_proof_place(const DBM& zone,
                                                    DBMList* place,
                                                    const ExprNode& formula,
                                                    const SubstList& discrete_state) {
     /* do_proof_place() written by Peter Fontana, needed for support
      * of EXISTS Quantifiers. */
-    assert(zone->isInCf());
+    assert(zone.isInCf());
 
     if (cpplogEnabled(cpplogging::debug)) {
-      print_sequent_place(std::cerr, step, false, *zone, *place, formula,
+      print_sequent_place(std::cerr, step, false, zone, *place, formula,
                           discrete_state, formula.getOpType());
     }
 
@@ -384,29 +384,29 @@ protected:
     return result;
   }
 
-  bool do_proof_predicate(const DBM* const zone, const ExprNode& formula,
+  bool do_proof_predicate(const DBM& zone, const ExprNode& formula,
                           const SubstList& discrete_state);
-  bool do_proof_and(const DBM* const zone, const ExprNode& formula,
+  bool do_proof_and(const DBM& zone, const ExprNode& formula,
                     const SubstList& discrete_state);
-  bool do_proof_or(const DBM* const zone, const ExprNode& formula,
+  bool do_proof_or(const DBM& zone, const ExprNode& formula,
                    const SubstList& discrete_state);
-  bool do_proof_or_simple(const DBM* const zone, const ExprNode& formula,
+  bool do_proof_or_simple(const DBM& zone, const ExprNode& formula,
                           const SubstList& discrete_state);
-  bool do_proof_forall(const DBM* const zone, const ExprNode& formula,
+  bool do_proof_forall(const DBM& zone, const ExprNode& formula,
                        const SubstList& discrete_state);
-  bool do_proof_forall_rel(const DBM* const zone, const ExprNode& formula,
+  bool do_proof_forall_rel(const DBM& zone, const ExprNode& formula,
                            const SubstList& discrete_state);
-  bool do_proof_exists(const DBM* const zone, const ExprNode& formula,
+  bool do_proof_exists(const DBM& zone, const ExprNode& formula,
                        const SubstList& discrete_state);
-  bool do_proof_exists_rel(const DBM* const zone, const ExprNode& formula,
+  bool do_proof_exists_rel(const DBM& zone, const ExprNode& formula,
                            const SubstList& discrete_state);
-  bool do_proof_allact(const DBM* const zone, const ExprNode& formula,
+  bool do_proof_allact(const DBM& zone, const ExprNode& formula,
                        const SubstList& discrete_state);
-  bool do_proof_existact(const DBM* const zone, const ExprNode& formula,
+  bool do_proof_existact(const DBM& zone, const ExprNode& formula,
                          const SubstList& discrete_state);
-  bool do_proof_imply(const DBM* const zone, const ExprNode& formula,
+  bool do_proof_imply(const DBM& zone, const ExprNode& formula,
                       const SubstList& discrete_state);
-  bool do_proof_constraint(const DBM* const zone, const ExprNode& formula);
+  bool do_proof_constraint(const DBM& zone, const ExprNode& formula);
   bool do_proof_bool(const ExprNode& formula);
   bool do_proof_atomic(const ExprNode& formula, const SubstList& discrete_state);
   bool do_proof_atomic_not(const ExprNode& formula,
@@ -419,51 +419,51 @@ protected:
                           const SubstList& discrete_state);
   bool do_proof_atomic_ge(const ExprNode& formula,
                           const SubstList& discrete_state);
-  bool do_proof_sublist(const DBM* const zone, const ExprNode& formula,
+  bool do_proof_sublist(const DBM& zone, const ExprNode& formula,
                         const SubstList& discrete_state);
-  bool do_proof_reset(const DBM* const zone, const ExprNode& formula,
+  bool do_proof_reset(const DBM& zone, const ExprNode& formula,
                       const SubstList& discrete_state);
-  bool do_proof_assign(const DBM* const zone, const ExprNode& formula,
+  bool do_proof_assign(const DBM& zone, const ExprNode& formula,
                        const SubstList& discrete_state);
-  bool do_proof_replace(const DBM* const zone, const ExprNode& formula,
+  bool do_proof_replace(const DBM& zone, const ExprNode& formula,
                         const SubstList& discrete_state);
-  bool do_proof_ablewaitinf(const DBM* const zone, const SubstList& discrete_state);
-  bool do_proof_unablewaitinf(const DBM* const zone, const SubstList& discrete_state);
+  bool do_proof_ablewaitinf(const DBM& zone, const SubstList& discrete_state);
+  bool do_proof_unablewaitinf(const DBM& zone, const SubstList& discrete_state);
 
-  DBMList* do_proof_place_predicate(const DBM* const zone, DBMList* place,
+  DBMList* do_proof_place_predicate(const DBM& zone, DBMList* place,
                                     const ExprNode& formula,
                                     const SubstList& discrete_state);
-  DBMList* do_proof_place_and(const DBM* const zone, DBMList* place,
+  DBMList* do_proof_place_and(const DBM& zone, DBMList* place,
                               const ExprNode& formula,
                               const SubstList& discrete_state);
-  DBMList* do_proof_place_or(const DBM* const zone, DBMList* place,
+  DBMList* do_proof_place_or(const DBM& zone, DBMList* place,
                              const ExprNode& formula,
                              const SubstList& discrete_state);
-  DBMList* do_proof_place_or_simple(const DBM* const zone, DBMList* place,
+  DBMList* do_proof_place_or_simple(const DBM& zone, DBMList* place,
                                     const ExprNode& formula,
                                     const SubstList& discrete_state);
-  DBMList* do_proof_place_forall(const DBM* const zone, DBMList* place,
+  DBMList* do_proof_place_forall(const DBM& zone, DBMList* place,
                                  const ExprNode& formula,
                                  const SubstList& discrete_state);
-  DBMList* do_proof_place_forall_rel(const DBM* const zone, DBMList* place,
+  DBMList* do_proof_place_forall_rel(const DBM& zone, DBMList* place,
                                      const ExprNode& formula,
                                      const SubstList& discrete_state);
-  DBMList* do_proof_place_exists(const DBM* const zone, DBMList* place,
+  DBMList* do_proof_place_exists(const DBM& zone, DBMList* place,
                                  const ExprNode& formula,
                                  const SubstList& discrete_state);
-  DBMList* do_proof_place_exists_rel(const DBM* const zone, DBMList* place,
+  DBMList* do_proof_place_exists_rel(const DBM& zone, DBMList* place,
                                      const ExprNode& formula,
                                      const SubstList& discrete_state);
-  DBMList* do_proof_place_allact(const DBM* const zone, DBMList* place,
+  DBMList* do_proof_place_allact(const DBM& zone, DBMList* place,
                                  const ExprNode& formula,
                                  const SubstList& discrete_state);
-  DBMList* do_proof_place_existact(const DBM* const zone, DBMList* place,
+  DBMList* do_proof_place_existact(const DBM& zone, DBMList* place,
                                    const ExprNode& formula,
                                    const SubstList& discrete_state);
-  DBMList* do_proof_place_imply(const DBM* const zone, DBMList* place,
+  DBMList* do_proof_place_imply(const DBM& zone, DBMList* place,
                                 const ExprNode& formula,
                                 const SubstList& discrete_state);
-  DBMList* do_proof_place_constraint(const DBM* const zone, DBMList* place,
+  DBMList* do_proof_place_constraint(const DBM& zone, DBMList* place,
                                      const ExprNode& formula);
   DBMList* do_proof_place_bool(DBMList* place, const ExprNode& formula);
   DBMList* do_proof_place_atomic(DBMList* place,
@@ -484,21 +484,21 @@ protected:
   DBMList* do_proof_place_atomic_ge(DBMList* place,
                                     const ExprNode& formula,
                                     const SubstList& discrete_state);
-  DBMList* do_proof_place_sublist(const DBM* const zone, DBMList* place,
+  DBMList* do_proof_place_sublist(const DBM& zone, DBMList* place,
                                   const ExprNode& formula,
                                   const SubstList& discrete_state);
-  DBMList* do_proof_place_reset(const DBM* const zone, DBMList* place,
+  DBMList* do_proof_place_reset(const DBM& zone, DBMList* place,
                                 const ExprNode& formula,
                                 const SubstList& discrete_state);
-  DBMList* do_proof_place_assign(const DBM* const zone, DBMList* place,
+  DBMList* do_proof_place_assign(const DBM& zone, DBMList* place,
                                  const ExprNode& formula,
                                  const SubstList& discrete_state);
-  DBMList* do_proof_place_replace(const DBM* const zone, DBMList* place,
+  DBMList* do_proof_place_replace(const DBM& zone, DBMList* place,
                                   const ExprNode& formula,
                                   const SubstList& discrete_state);
-  DBMList* do_proof_place_ablewaitinf(const DBM* const zone, DBMList* place,
+  DBMList* do_proof_place_ablewaitinf(const DBM& zone, DBMList* place,
                                       const SubstList& discrete_state);
-  DBMList* do_proof_place_unablewaitinf(const DBM* const zone, DBMList* place,
+  DBMList* do_proof_place_unablewaitinf(const DBM& zone, DBMList* place,
                                         const SubstList& discrete_state);
 
   /** Method to compute the predecessor check of relativized exists operators.
@@ -514,7 +514,7 @@ protected:
    * predecessor may by <= or <, depending on the proof rule that calls this
    * method.
    * @return the output placeholder, which is also retPlaceDBM. */
-  inline void predCheckRule(DBMList* result, const DBM* const zone,
+  inline void predCheckRule(DBMList* result, const DBM& zone,
                             const DBM* const lhs_succ,
                             const DBMList* placeholder1,
                             const DBMList* placeholder2,
@@ -562,7 +562,7 @@ protected:
       }
       /* If this is nonempty, then we have something to deal with */
       // Also, the placeholder cannot be completely contained in this
-      currDBMList.intersect(*zone);
+      currDBMList.intersect(zone);
       currDBMList.cf();
       if (!previouslyUpdated) {
         previouslyUpdated = true;
@@ -578,7 +578,7 @@ protected:
      * by taking the predecessor
      * and intersecting it with succ(\Gamma). We need phi1Place to be
      * the entire predecessor, and not just the upper part of it. */
-    if (!(*result >= *zone)) {
+    if (!(*result >= zone)) {
       // simple empty case
       result->makeEmpty();
     }
@@ -597,7 +597,7 @@ protected:
    *        the side condition on the successors holds. It is the empty
    * placeholder if no such placeholder can be found. */
   inline void succCheckRule(const SubstList* const discrete_state,
-                            const DBM* const zone, const DBM* const lhs_succ,
+                            const DBM& zone, const DBM* const lhs_succ,
                             const DBMList* placeholder,
                             DBMList* placeholder_forall) {
     // Initially guess that the resulting placeholder is the placeholder that
@@ -624,7 +624,7 @@ protected:
     /* Computing Premise of Right part of proof */
     /* Compute Succ(Premise and First Placeholder) */
     // succLHS is the successor of the left-hand side, so do not repeat the work
-    DBMList premise_and_placeholder_succ(*zone);
+    DBMList premise_and_placeholder_succ(zone);
     premise_and_placeholder_succ.intersect(*placeholder_forall);
     premise_and_placeholder_succ.cf();
     premise_and_placeholder_succ.suc();
@@ -679,7 +679,7 @@ protected:
     // The placheolder has shrunk; we now check whether the side condition is
     // satisfied.
     // leave conseq unchanged, since that placeholder did not shrink
-    premise_and_placeholder_succ = *zone;
+    premise_and_placeholder_succ = zone;
     premise_and_placeholder_succ.intersect(*placeholder_forall);
     premise_and_placeholder_succ.cf();
     premise_and_placeholder_succ.suc();
@@ -695,7 +695,7 @@ protected:
 };
 
 /* IMPLEMENTATION PROOF WITHOUT PLACEHOLDERS */
-inline bool prover::do_proof_predicate(const DBM* const zone,
+inline bool prover::do_proof_predicate(const DBM& zone,
                                        const ExprNode& formula,
                                        const SubstList& discrete_state) {
   bool retVal = false;
@@ -769,7 +769,7 @@ inline bool prover::do_proof_predicate(const DBM* const zone,
         return true; // greatest fixed point circularity found
       }
 
-      h->push_sequent(new DBM(*zone));
+      h->push_sequent(new DBM(zone));
     } else { // Thus, a least fixpoint
       // Now look for a Circularity
       h = cache.Xlist_pLFP.locate_sequent(t, predicate_index);
@@ -791,7 +791,7 @@ inline bool prover::do_proof_predicate(const DBM* const zone,
         return false; // least fixed point circularity found
       }
 
-      h->push_sequent(new DBM(*zone));
+      h->push_sequent(new DBM(zone));
     }
   } // End scope for circularity
   assert(h != nullptr);
@@ -828,7 +828,7 @@ inline bool prover::do_proof_predicate(const DBM* const zone,
       /* If found, Purge Sequent from its cache */
       Sequent* cached_false_sequent =
           cache.Xlist_false.look_for_and_purge_rhs_sequent(
-              zone, true_sequent, predicate_index, false, &madeEmpty);
+              &zone, true_sequent, predicate_index, false, &madeEmpty);
 
       /* Now purge backpointers */
       if (cached_false_sequent != nullptr) {
@@ -854,7 +854,7 @@ inline bool prover::do_proof_predicate(const DBM* const zone,
       /* If found, Purge Sequent from its cache */
       Sequent* cached_true_sequent =
           cache.Xlist_true.look_for_and_purge_rhs_sequent(
-              zone, false_sequent, predicate_index, true, &madeEmpty);
+              &zone, false_sequent, predicate_index, true, &madeEmpty);
 
       /* Now purge backpointers.
        * Ignore circularity booleans because they do not form backpointers */
@@ -882,7 +882,7 @@ inline bool prover::do_proof_predicate(const DBM* const zone,
 }
 
 // [FC14] Proof rule \land
-inline bool prover::do_proof_and(const DBM* const zone, const ExprNode& formula,
+inline bool prover::do_proof_and(const DBM& zone, const ExprNode& formula,
                                  const SubstList& discrete_state) {
   /* Because zone is only changed after it is copied, it can
    * be passed to both branches. */
@@ -899,7 +899,7 @@ inline bool prover::do_proof_and(const DBM* const zone, const ExprNode& formula,
  * - the proof for l covers a strict, non-empty subset of zone
  */
 // [FC14] Proof rule based on \lor_{s_2}
-inline bool prover::do_proof_or(const DBM* const zone, const ExprNode& formula,
+inline bool prover::do_proof_or(const DBM& zone, const ExprNode& formula,
                                 const SubstList& discrete_state) {
   bool retVal = false;
 
@@ -917,7 +917,7 @@ inline bool prover::do_proof_or(const DBM* const zone, const ExprNode& formula,
   parentPlaceRef = nullptr;
   if (placeholder1.emptiness()) {
     retVal = do_proof(zone, *formula.getRight(), discrete_state);
-  } else if (placeholder1 >= *zone) {
+  } else if (placeholder1 >= zone) {
     retVal = true;
   } else {
     /* Here we get the corner case where we have to use the
@@ -931,12 +931,12 @@ inline bool prover::do_proof_or(const DBM* const zone, const ExprNode& formula,
     parentPlaceRef = nullptr;
     if (placeholder2.emptiness()) {
       retVal = false;
-    } else if (placeholder2 >= *zone) {
+    } else if (placeholder2 >= zone) {
       retVal = true;
     } else {
       placeholder2.addDBMList(placeholder1); // here placeholder2 is placeholder
                                              // \phi_{\lor} from [FC14]
-      retVal = placeholder2 >= *zone; // if the union of both placeholders covers
+      retVal = placeholder2 >= zone; // if the union of both placeholders covers
                                      // the set of states, we are still happy
     }
   }
@@ -944,7 +944,7 @@ inline bool prover::do_proof_or(const DBM* const zone, const ExprNode& formula,
 }
 
 // [FC14], rules \lor_{l} and \lor_{r}
-inline bool prover::do_proof_or_simple(const DBM* const zone,
+inline bool prover::do_proof_or_simple(const DBM& zone,
                                        const ExprNode& formula,
                                        const SubstList& discrete_state) {
   /* Simplified OR does not need to split on placeholders */
@@ -956,7 +956,7 @@ inline bool prover::do_proof_or_simple(const DBM* const zone,
 }
 
 // [FC14] Rule \forall_{t1}
-inline bool prover::do_proof_forall(const DBM* const zone, const ExprNode& formula,
+inline bool prover::do_proof_forall(const DBM& zone, const ExprNode& formula,
                                     const SubstList& discrete_state) {
   /* Here the model checker looks at the zone of
    * all time sucessors and then substitutes in
@@ -965,16 +965,16 @@ inline bool prover::do_proof_forall(const DBM* const zone, const ExprNode& formu
   /* DBM zone is copied because it is changed by suc() and invs_chk().
    * The copying here assures that zone is unchanged when it is returned,
    * allowing multiple branches of AND and OR to have the same zone. */
-  DBM succ_lhs(*zone);
+  DBM succ_lhs(zone);
   succ_lhs.suc();
   restrict_to_invariant(input_pes.invariants(), &succ_lhs, discrete_state);
   succ_lhs.cf();
 
-  return do_proof(&succ_lhs, *formula.getQuant(), discrete_state);
+  return do_proof(succ_lhs, *formula.getQuant(), discrete_state);
 }
 
 // [FC14] Proof rules \forall_{ro1}, \forall_{ro2}, \forall_{ro3}
-inline bool prover::do_proof_forall_rel(const DBM* const zone,
+inline bool prover::do_proof_forall_rel(const DBM& zone,
                                         const ExprNode& formula,
                                         const SubstList& discrete_state) {
   /* Proof methodology:
@@ -988,14 +988,14 @@ inline bool prover::do_proof_forall_rel(const DBM* const zone,
 
   /* First, see if \exists(phi_1) is true. The common case is that it
    * will not be. */
-  DBM lhs_succ(*zone);
+  DBM lhs_succ(zone);
   lhs_succ.suc();
   // Make sure lhs_succ is not modified; we reuse it for the sake of efficiency.
 
   DBMList placeholder1(*INFTYDBM); // phi_{s1}
   restrict_to_invariant(input_pes.invariants(), &placeholder1, discrete_state);
   DBM lhs_succ1(lhs_succ);
-  do_proof_place(&lhs_succ1, &placeholder1, *formula.getLeft(), discrete_state);
+  do_proof_place(lhs_succ1, &placeholder1, *formula.getLeft(), discrete_state);
   placeholder1.cf();
 
   // Reset place parent to NULL
@@ -1004,7 +1004,7 @@ inline bool prover::do_proof_forall_rel(const DBM* const zone,
   if (placeholder1.emptiness()) { // Here, \forall phi_2 needs to hold.
     // [FC14] derived rule? of \forall_{ro1} TODO
     if (cpplogEnabled(cpplogging::debug)) {
-      print_sequentCheck(std::cerr, step - 1, retVal, *zone, placeholder1,
+      print_sequentCheck(std::cerr, step - 1, retVal, zone, placeholder1,
                          discrete_state, formula.getOpType());
       cpplog(cpplogging::debug)
           << "----() Empty Relativization Placeholder: phi1 is never true -----"
@@ -1022,8 +1022,8 @@ inline bool prover::do_proof_forall_rel(const DBM* const zone,
                                       // the location invariant
     restrict_to_invariant(input_pes.invariants(), &lhs_succ_invariant, discrete_state);
     lhs_succ_invariant.cf();
-    retVal = do_proof(&lhs_succ_invariant, *formula.getRight(), discrete_state);
-  } else if (placeholder1 >= *zone) {
+    retVal = do_proof(lhs_succ_invariant, *formula.getRight(), discrete_state);
+  } else if (placeholder1 >= zone) {
     // placeholder1 nonempty
     /* First check for the simplest case: no time elapse is needed */
     /* For improved performance, first ask if the formula
@@ -1031,7 +1031,7 @@ inline bool prover::do_proof_forall_rel(const DBM* const zone,
     retVal = true;
     // [FC14] proof rule \forall_{ro2};
     if (cpplogEnabled(cpplogging::debug)) {
-      print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, *zone,
+      print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, zone,
                          placeholder1, discrete_state, formula.getOpType());
       cpplog(cpplogging::debug) << "----(Valid) Placeholder indicates no time "
                                    "elapse is needed (Check Only)-----"
@@ -1058,7 +1058,7 @@ inline bool prover::do_proof_forall_rel(const DBM* const zone,
      * We will check that once at the end */
     DBMList placeholder2(*INFTYDBM);
     DBM lhs_succ2(lhs_succ); // copy to avoid modifying lhs_succ
-    do_proof_place(&lhs_succ2, &placeholder2, *formula.getRight(), discrete_state);
+    do_proof_place(lhs_succ2, &placeholder2, *formula.getRight(), discrete_state);
     placeholder2.cf();
 
     cpplog(cpplogging::debug)
@@ -1134,7 +1134,7 @@ inline bool prover::do_proof_forall_rel(const DBM* const zone,
 
         if (cpplogEnabled(cpplogging::debug)) {
           print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal,
-                             *zone, placeholder_exists, discrete_state, formula.getOpType());
+                             zone, placeholder_exists, discrete_state, formula.getOpType());
           cpplog(cpplogging::debug)
               << "----() FORALL Rel Exists placeholder after time elapse check "
                  "is := {"
@@ -1158,11 +1158,11 @@ inline bool prover::do_proof_forall_rel(const DBM* const zone,
           placeholder_exists.addDBMList(placeholder_forall);
         }
       }
-      retVal = placeholder_exists >= *zone;
+      retVal = placeholder_exists >= zone;
 
       // Debug information here?
       if (cpplogEnabled(cpplogging::debug)) {
-        print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal,* zone,
+        print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, zone,
                            placeholder_exists, discrete_state, formula.getOpType());
         cpplog(cpplogging::debug)
             << "----() Final FORALL REL Placeholder is := {"
@@ -1176,7 +1176,7 @@ inline bool prover::do_proof_forall_rel(const DBM* const zone,
 }
 
 // [FC14] Proof rule \exists_{t1}
-inline bool prover::do_proof_exists(const DBM* const zone, const ExprNode& formula,
+inline bool prover::do_proof_exists(const DBM& zone, const ExprNode& formula,
                                     const SubstList& discrete_state) {
   bool retVal = false;
 
@@ -1187,7 +1187,7 @@ inline bool prover::do_proof_exists(const DBM* const zone, const ExprNode& formu
   // to solve for the placeholders.
 
   /* First Try to get a placeholder value that works */
-  DBM lhs_succ(*zone);
+  DBM lhs_succ(zone);
   lhs_succ.suc();
 
   /* The proper derivation for EXISTS is to incorporate the invariant
@@ -1195,14 +1195,14 @@ inline bool prover::do_proof_exists(const DBM* const zone, const ExprNode& formu
   DBMList placeholder(*INFTYDBM);
   restrict_to_invariant(input_pes.invariants(), &placeholder, discrete_state);
 
-  do_proof_place(&lhs_succ, &placeholder, *formula.getQuant(), discrete_state);
+  do_proof_place(lhs_succ, &placeholder, *formula.getQuant(), discrete_state);
   // Reset place parent to NULL
   parentPlaceRef = nullptr;
   placeholder.cf();
   if (placeholder.emptiness()) {
     retVal = false;
     if (cpplogEnabled(cpplogging::debug)) {
-      print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, *zone,
+      print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, zone,
                          placeholder, discrete_state, formula.getOpType());
       cpplog(cpplogging::debug) << "----(Invalid) Empty Placeholder: No Need "
                                    "for Placeholder Check-----"
@@ -1215,10 +1215,10 @@ inline bool prover::do_proof_exists(const DBM* const zone, const ExprNode& formu
     placeholder.pre();
     /* This cf() is needed. */
     placeholder.cf();
-    retVal = placeholder >= *zone;
+    retVal = placeholder >= zone;
 
     if (cpplogEnabled(cpplogging::debug)) {
-      print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, *zone,
+      print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, zone,
                          placeholder, discrete_state, formula.getOpType());
       if (retVal) {
         cpplog(cpplogging::debug)
@@ -1239,13 +1239,13 @@ inline bool prover::do_proof_exists(const DBM* const zone, const ExprNode& formu
   }
 }
 
-inline bool prover::do_proof_exists_rel(const DBM* const zone,
+inline bool prover::do_proof_exists_rel(const DBM& zone,
                                         const ExprNode& formula,
                                         const SubstList& discrete_state) {
   bool retVal = false;
 
   /* First Try to get a placeholder value that works */
-  DBM lhs_succ(*zone);
+  DBM lhs_succ(zone);
   // Note: zone is unchanged
   lhs_succ.suc();
   DBM lhs_succ2(lhs_succ);
@@ -1253,14 +1253,14 @@ inline bool prover::do_proof_exists_rel(const DBM* const zone,
   DBMList placeholder2(*INFTYDBM);
   restrict_to_invariant(input_pes.invariants(), &placeholder2, discrete_state);
 
-  do_proof_place(&lhs_succ, &placeholder2, *formula.getRight(), discrete_state);
+  do_proof_place(lhs_succ, &placeholder2, *formula.getRight(), discrete_state);
   // Reset place parent to NULL
   parentPlaceRef = nullptr;
   placeholder2.cf();
   if (placeholder2.emptiness()) {
     retVal = false;
     if (cpplogEnabled(cpplogging::debug)) {
-      print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, *zone,
+      print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, zone,
                          placeholder2, discrete_state, formula.getOpType());
       cpplog(cpplogging::debug) << "----(Invalid) Empty First Placeholder: No "
                                    "Need for additional Placeholder Checks-----"
@@ -1292,7 +1292,7 @@ inline bool prover::do_proof_exists_rel(const DBM* const zone,
     DBMList placeholder1(*INFTYDBM);
     // Since invariants are past closed, we do not need to intersect
     // this placeholder with the invariant.
-    do_proof_place(&lhs_succ2, &placeholder1, *formula.getLeft(), discrete_state);
+    do_proof_place(lhs_succ2, &placeholder1, *formula.getLeft(), discrete_state);
     /* Second step: tighten and check the predecessor */
     // Must check for emptiness to handle the corner case when it is empty
 
@@ -1323,7 +1323,7 @@ inline bool prover::do_proof_exists_rel(const DBM* const zone,
        * If so, make a non-empty placeholder. In this case, the third
        * Check will be true by default and can be skipped.
        * Else, return empty and break */
-      placeholder2.intersect(*zone); // zone here is before the time elapse
+      placeholder2.intersect(zone); // zone here is before the time elapse
       placeholder2.cf();
       if (placeholder2.emptiness()) {
         retVal = false;
@@ -1335,7 +1335,7 @@ inline bool prover::do_proof_exists_rel(const DBM* const zone,
       } else {
         /* While a time elapse is not required, the placeholder
          * must span all of zone */
-        retVal = placeholder2 >= (*zone);
+        retVal = placeholder2 >= zone;
 
         if (retVal) {
           cpplog(cpplogging::debug)
@@ -1399,10 +1399,10 @@ inline bool prover::do_proof_exists_rel(const DBM* const zone,
       placeholder.pre();
       /* This cf() is needed. */
       placeholder.cf();
-      retVal = placeholder >= (*zone);
+      retVal = placeholder >= zone;
 
       if (cpplogEnabled(cpplogging::debug)) {
-        print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, *zone,
+        print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, zone,
                            placeholder, discrete_state, formula.getOpType());
         if (retVal) {
           cpplog(cpplogging::debug)
@@ -1424,7 +1424,7 @@ inline bool prover::do_proof_exists_rel(const DBM* const zone,
   return retVal;
 }
 
-inline bool prover::do_proof_allact(const DBM* const zone, const ExprNode& formula,
+inline bool prover::do_proof_allact(const DBM& zone, const ExprNode& formula,
                                     const SubstList& discrete_state) {
   bool retVal = true;
   /* Enumerate through all transitions */
@@ -1436,7 +1436,7 @@ inline bool prover::do_proof_allact(const DBM* const zone, const ExprNode& formu
        it != input_pes.transitions().end(); ++it) {
     Transition* transition = *it;
     /* Obtain the entire ExprNode and prove it */
-    DBM tempLHS(*zone);
+    DBM tempLHS(zone);
 
     bool guard_satisfied =
         comp_ph(&tempLHS, *(transition->getLeftExpr()), discrete_state);
@@ -1506,7 +1506,7 @@ inline bool prover::do_proof_allact(const DBM* const zone, const ExprNode& formu
         << "\tExtra invariant condition: " << invariant_region << std::endl;
 
     numLocations++;
-    retVal = do_proof(&tempLHS, *transition->getRightExpr(), tempSub);
+    retVal = do_proof(tempLHS, *transition->getRightExpr(), tempSub);
     if (!retVal) {
       cpplog(cpplogging::debug)
           << "Trainsition: " << transition << std::endl
@@ -1520,7 +1520,7 @@ inline bool prover::do_proof_allact(const DBM* const zone, const ExprNode& formu
   return retVal;
 }
 
-inline bool prover::do_proof_existact(const DBM* const zone, const ExprNode& formula,
+inline bool prover::do_proof_existact(const DBM& zone, const ExprNode& formula,
                                       const SubstList& discrete_state) {
   bool retVal = false;
   /* Enumerate through all transitions */
@@ -1541,7 +1541,7 @@ inline bool prover::do_proof_existact(const DBM* const zone, const ExprNode& for
     // because the entire zone must be able to transition
     // or split by placeholders
     DBMList tempPlace(*INFTYDBM);
-    DBM tempLHS(*zone);
+    DBM tempLHS(zone);
     bool guard_satisfied = comp_ph_exist_place(
         &tempLHS, &tempPlace, *(transition->getLeftExpr()), discrete_state);
     if (!guard_satisfied) {
@@ -1612,14 +1612,14 @@ inline bool prover::do_proof_existact(const DBM* const zone, const ExprNode& for
     cpplog(cpplogging::debug) << "Executing transition (with destination) "
                               << transition << std::endl;
     numLocations++;
-    retPlaceDBM = do_proof_place(&tempLHS, &tempPlace,
+    retPlaceDBM = do_proof_place(tempLHS, &tempPlace,
                                  *transition->getRightExpr(), tempSub);
 
     // Reset place parent to NULL
     parentPlaceRef = nullptr;
     if (!retPlaceDBM->emptiness()) {
       // At least a partial solution for the existence of a transition was found
-      if (*retPlaceDBM >= *zone) {
+      if (*retPlaceDBM >= zone) {
         // This transition covers the entire left hand side, we're done.
         retVal = true;
         break;
@@ -1635,7 +1635,7 @@ inline bool prover::do_proof_existact(const DBM* const zone, const ExprNode& for
 
   if (!retVal && partialPlace != nullptr) {
     /* Here compare to make sure our partial placeholders are enough */
-    retVal = (*partialPlace >= *zone);
+    retVal = (*partialPlace >= zone);
   }
 
   // clean up memory if needed.
@@ -1646,11 +1646,11 @@ inline bool prover::do_proof_existact(const DBM* const zone, const ExprNode& for
   return retVal;
 }
 
-inline bool prover::do_proof_imply(const DBM* const zone, const ExprNode& formula,
+inline bool prover::do_proof_imply(const DBM& zone, const ExprNode& formula,
                                    const SubstList& discrete_state) {
   bool retVal = false;
   /* Here is the one call to comp_ph(...) outside of comp_ph(...) */
-  DBM tempLHS(*zone);
+  DBM tempLHS(zone);
   if (comp_ph(&tempLHS, *(formula.getLeft()), discrete_state)) {
     /* Constraints are bounded by input_pes.max_constant() */
     /* This is to extend the LHS to make sure that
@@ -1662,7 +1662,7 @@ inline bool prover::do_proof_imply(const DBM* const zone, const ExprNode& formul
     tempLHS.bound(input_pes.max_constant());
     tempLHS.cf();
 
-    retVal = do_proof(&tempLHS, *formula.getRight(), discrete_state);
+    retVal = do_proof(tempLHS, *formula.getRight(), discrete_state);
   } else {
     /* The set of states does not satisfy the premises of the IF
      * so thus the proof is true */
@@ -1675,9 +1675,9 @@ inline bool prover::do_proof_imply(const DBM* const zone, const ExprNode& formul
   return retVal;
 }
 
-inline bool prover::do_proof_constraint(const DBM* const zone,
+inline bool prover::do_proof_constraint(const DBM& zone,
                                         const ExprNode& formula) {
-  bool retVal = (*zone <= *(formula.dbm()));
+  bool retVal = (zone <= *(formula.dbm()));
   cpplog(cpplogging::debug)
       << "---(" << (retVal ? "V" : "Inv")
       << "alid) Leaf DBM (CONSTRAINT) Reached----" << std::endl
@@ -1747,40 +1747,40 @@ inline bool prover::do_proof_atomic_ge(const ExprNode& formula,
   return retVal;
 }
 
-inline bool prover::do_proof_sublist(const DBM* const zone, const ExprNode& formula,
+inline bool prover::do_proof_sublist(const DBM& zone, const ExprNode& formula,
                                      const SubstList& discrete_state) {
   SubstList st(formula.getSublist(), &discrete_state);
   return do_proof(zone, *formula.getExpr(), st);
 }
 
-inline bool prover::do_proof_reset(const DBM* const zone, const ExprNode& formula,
+inline bool prover::do_proof_reset(const DBM& zone, const ExprNode& formula,
                                    const SubstList& discrete_state) {
-  DBM lhs_reset(*zone);
+  DBM lhs_reset(zone);
   lhs_reset.reset(formula.getClockSet());
   lhs_reset.cf();
-  return do_proof(&lhs_reset, *formula.getExpr(), discrete_state);
+  return do_proof(lhs_reset, *formula.getExpr(), discrete_state);
 }
 
-inline bool prover::do_proof_assign(const DBM* const zone, const ExprNode& formula,
+inline bool prover::do_proof_assign(const DBM& zone, const ExprNode& formula,
                                     const SubstList& discrete_state) {
-  DBM lhs_assign(*zone);
+  DBM lhs_assign(zone);
   /* Here the DBM zone is where the value of
    * clock x is reset to clock y, which is possibly
    * a constant or a value*/
   lhs_assign.reset(formula.getcX(), formula.getcY());
   lhs_assign.cf();
-  return do_proof(&lhs_assign, *formula.getExpr(), discrete_state);
+  return do_proof(lhs_assign, *formula.getExpr(), discrete_state);
 }
 
-inline bool prover::do_proof_replace(const DBM* const zone, const ExprNode& formula,
+inline bool prover::do_proof_replace(const DBM& zone, const ExprNode& formula,
                                      const SubstList& discrete_state) {
   SubstList sub_(discrete_state);
   sub_[formula.getcX()] = discrete_state.at(formula.getcY());
   return do_proof(zone, *formula.getExpr(), sub_);
 }
 
-inline bool prover::do_proof_ablewaitinf(const DBM* const zone, const SubstList& discrete_state) {
-  DBM ph(*zone);
+inline bool prover::do_proof_ablewaitinf(const DBM& zone, const SubstList& discrete_state) {
+  DBM ph(zone);
   ph.suc();
   restrict_to_invariant(input_pes.invariants(), &ph, discrete_state);
   ph.cf();
@@ -1797,9 +1797,9 @@ inline bool prover::do_proof_ablewaitinf(const DBM* const zone, const SubstList&
 }
 
 // FIXME: eliminate duplication with do_proof_ablewaitinf
-inline bool prover::do_proof_unablewaitinf(const DBM* const zone,
+inline bool prover::do_proof_unablewaitinf(const DBM& zone,
                                            const SubstList& discrete_state) {
-  DBM ph(*zone);
+  DBM ph(zone);
   ph.suc();
   restrict_to_invariant(input_pes.invariants(), &ph, discrete_state);
   ph.cf();
@@ -1816,7 +1816,7 @@ inline bool prover::do_proof_unablewaitinf(const DBM* const zone,
 
 /* IMPLEMENTATION PROVER WITH PLACEHOLDERS */
 // post: *retPlaceDBM == *place
-inline DBMList* prover::do_proof_place_predicate(const DBM* const zone,
+inline DBMList* prover::do_proof_place_predicate(const DBM& zone,
                                                  DBMList* place,
                                                  const ExprNode& formula,
                                                  const SubstList& discrete_state) {
@@ -1929,7 +1929,7 @@ inline DBMList* prover::do_proof_place_predicate(const DBM* const zone,
         return retPlaceDBM;
       }
 
-      h->push_sequent(std::make_pair(new DBM(*zone), new DBMList(*place)));
+      h->push_sequent(std::make_pair(new DBM(zone), new DBMList(*place)));
     } else { // Thus, a least fixpoint
       // Now look in lfp circularity cache
       h = cache.Xlist_pLFP_ph.locate_sequent(t, predicate_index);
@@ -1960,7 +1960,7 @@ inline DBMList* prover::do_proof_place_predicate(const DBM* const zone,
         return retPlaceDBM;
       }
 
-      h->push_sequent(std::make_pair(new DBM(*zone), new DBMList(*place)));
+      h->push_sequent(std::make_pair(new DBM(zone), new DBMList(*place)));
     }
   } // End scope for circularity
 
@@ -2003,7 +2003,7 @@ inline DBMList* prover::do_proof_place_predicate(const DBM* const zone,
       SequentPlace* true_sequent = new SequentPlace(&formula, &discrete_state);
       SequentPlace* cached_false_sequent =
           cache.Xlist_false_ph.look_for_and_purge_rhs_sequent(
-              std::make_pair(zone, place), true_sequent, predicate_index, false,
+              std::make_pair(&zone, place), true_sequent, predicate_index, false,
               &madeEmpty);
 
       /* Now purge backpointers */
@@ -2031,7 +2031,7 @@ inline DBMList* prover::do_proof_place_predicate(const DBM* const zone,
       SequentPlace* false_sequent = new SequentPlace(&formula, &discrete_state);
       SequentPlace* cached_true_sequent =
           cache.Xlist_true_ph.look_for_and_purge_rhs_sequent(
-              std::make_pair(zone, place), false_sequent, predicate_index, true,
+              std::make_pair(&zone, place), false_sequent, predicate_index, true,
               &madeEmpty);
 
       /* Now purge backpointers.
@@ -2059,7 +2059,7 @@ inline DBMList* prover::do_proof_place_predicate(const DBM* const zone,
 }
 
 // post: *retPlaceDBM == *place
-inline DBMList* prover::do_proof_place_and(const DBM* const zone, DBMList* place,
+inline DBMList* prover::do_proof_place_and(const DBM& zone, DBMList* place,
                                            const ExprNode& formula,
                                            const SubstList& discrete_state) {
   DBMList placeholder_right(*place);
@@ -2076,7 +2076,7 @@ inline DBMList* prover::do_proof_place_and(const DBM* const zone, DBMList* place
 
 // post: *retPlaceDBM == *place
 // [FC14] Proof rule \lor_{s2}
-inline DBMList* prover::do_proof_place_or(const DBM* const zone, DBMList* place,
+inline DBMList* prover::do_proof_place_or(const DBM& zone, DBMList* place,
                                           const ExprNode& formula,
                                           const SubstList& discrete_state) {
   place->cf();
@@ -2089,7 +2089,7 @@ inline DBMList* prover::do_proof_place_or(const DBM* const zone, DBMList* place,
   // larger that from the left side.
   if (!placeholder_left.emptiness() &&
       placeholder_left >=
-          *place) { // why compare to *place; it seems this should be *zone
+          *place) { // why compare to *place; it seems this should be zone
     /* Here, the current transition successful;
      * we are done */
     *place = placeholder_left;
@@ -2105,7 +2105,7 @@ inline DBMList* prover::do_proof_place_or(const DBM* const zone, DBMList* place,
 
   if (cpplogEnabled(cpplogging::debug)) {
     // Check Debugging Here to make sure it is giving the right output
-    print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, false, *zone,
+    print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, false, zone,
                        placeholder_left, discrete_state, formula.getOpType());
     cpplog(cpplogging::debug)
         << "Left Placeholder of OR (P): " << placeholder_left
@@ -2131,7 +2131,7 @@ inline DBMList* prover::do_proof_place_or(const DBM* const zone, DBMList* place,
 }
 
 // post: *retPlaceDBM == *place
-inline DBMList* prover::do_proof_place_or_simple(const DBM* const zone,
+inline DBMList* prover::do_proof_place_or_simple(const DBM& zone,
                                                  DBMList* place,
                                                  const ExprNode& formula,
                                                  const SubstList& discrete_state) {
@@ -2176,7 +2176,7 @@ inline DBMList* prover::do_proof_place_or_simple(const DBM* const zone,
 
 // post: *retPlaceDBM == *place
 // [FC14] Proof rule \forall_{t2}
-inline DBMList* prover::do_proof_place_forall(const DBM* const zone,
+inline DBMList* prover::do_proof_place_forall(const DBM& zone,
                                               DBMList* place,
                                               const ExprNode& formula,
                                               const SubstList& discrete_state) {
@@ -2184,14 +2184,14 @@ inline DBMList* prover::do_proof_place_forall(const DBM* const zone,
    * all time sucessors and then substitutes in
    * the substitued constraints and sees if the
    * zone satifies the constraints */
-  DBM lhs_succ(*zone);
+  DBM lhs_succ(zone);
   lhs_succ.suc();
 
   /* Per proof rules with the placeholder,
    * do not incorporate the invariant into the FORALL here */
   *place = *INFTYDBM;
 
-  do_proof_place(&lhs_succ, place, *formula.getQuant(), discrete_state);
+  do_proof_place(lhs_succ, place, *formula.getQuant(), discrete_state);
   place->cf();
 
   // must we consider not the invariant even if the placeholder is empty. (?)
@@ -2209,10 +2209,10 @@ inline DBMList* prover::do_proof_place_forall(const DBM* const zone,
       bool result = !place->emptiness();
       // This work is done in the succCheck method.
       // Perhaps I should move the debug rule there?
-      DBM succLHS(*zone);
+      DBM succLHS(zone);
       succLHS.suc();
       succLHS.cf();
-      DBMList succRuleConseq(*zone);
+      DBMList succRuleConseq(zone);
       succRuleConseq.intersect(*place);
       succRuleConseq.cf();
       succRuleConseq.suc();
@@ -2237,7 +2237,7 @@ inline DBMList* prover::do_proof_place_forall(const DBM* const zone,
 }
 
 // post: *retPlaceDBM == *place
-inline DBMList* prover::do_proof_place_forall_rel(const DBM* const zone,
+inline DBMList* prover::do_proof_place_forall_rel(const DBM& zone,
                                                   DBMList* place,
                                                   const ExprNode& formula,
                                                   const SubstList& discrete_state) {
@@ -2253,12 +2253,12 @@ inline DBMList* prover::do_proof_place_forall_rel(const DBM* const zone,
    * will not be. */
   /* First try to get a new placeholder value that works */
   place->cf();
-  DBM lhs_succ(*zone);
+  DBM lhs_succ(zone);
   lhs_succ.suc();
 
   DBMList* tPlace = new DBMList(*INFTYDBM);
   restrict_to_invariant(input_pes.invariants(), tPlace, discrete_state);
-  retPlaceDBM = do_proof_place(&lhs_succ, tPlace, *formula.getLeft(), discrete_state);
+  retPlaceDBM = do_proof_place(lhs_succ, tPlace, *formula.getLeft(), discrete_state);
   retPlaceDBM->cf();
   if (retPlaceDBM->emptiness()) {
     if (cpplogEnabled(cpplogging::debug)) {
@@ -2275,11 +2275,11 @@ inline DBMList* prover::do_proof_place_forall_rel(const DBM* const zone,
      * all time sucessors and then substitutes in
      * the substitued constraints and sees if the
      * zone satifies the constraints */
-    DBM ph(*zone);
+    DBM ph(zone);
     ph.suc();
 
     DBMList newPlace(*INFTYDBM);
-    retPlaceDBM = do_proof_place(&ph, &newPlace, *formula.getRight(), discrete_state);
+    retPlaceDBM = do_proof_place(ph, &newPlace, *formula.getRight(), discrete_state);
     retPlaceDBM->cf();
     if (!(retPlaceDBM->emptiness())) { // Only do if a nonempty placeholder
       /* Now do the second proof rule to compute the first placeholder
@@ -2293,10 +2293,10 @@ inline DBMList* prover::do_proof_place_forall_rel(const DBM* const zone,
       if (cpplogEnabled(cpplogging::debug)) {
         // This work is done in the succCheck method.
         // Perhaps I should move the debug rule there?
-        DBM succLHS(*zone);
+        DBM succLHS(zone);
         succLHS.suc();
         succLHS.cf();
-        DBMList succRuleConseq(*zone);
+        DBMList succRuleConseq(zone);
         succRuleConseq.intersect(*retPlaceDBM);
         succRuleConseq.cf();
         succRuleConseq.suc();
@@ -2324,7 +2324,7 @@ inline DBMList* prover::do_proof_place_forall_rel(const DBM* const zone,
      * given the proof rules. */
     if ((*retPlaceDBM) == (*INFTYDBM)) {
       if (cpplogEnabled(cpplogging::debug)) {
-        print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, *zone,
+        print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, zone,
                            *retPlaceDBM, discrete_state, formula.getOpType());
         cpplog(cpplogging::debug)
             << "----(Valid) EXISTS (in FORALL_REL) Placeholder indicates no "
@@ -2336,9 +2336,9 @@ inline DBMList* prover::do_proof_place_forall_rel(const DBM* const zone,
       }
 
       // If here, we neither need a placeholder nor to elapse time
-      DBM phb(*zone);
+      DBM phb(zone);
       DBMList infPlace(*INFTYDBM);
-      retPlaceDBM = do_proof_place(&phb, &infPlace, *formula.getRight(), discrete_state);
+      retPlaceDBM = do_proof_place(phb, &infPlace, *formula.getRight(), discrete_state);
       retPlaceDBM->cf();
       if (!(retPlaceDBM->emptiness())) { // Only do if a nonempty placeholder
         /* Now do the second proof rule to compute the first placeholder */
@@ -2389,10 +2389,10 @@ inline DBMList* prover::do_proof_place_forall_rel(const DBM* const zone,
       /* We omit the check that we can elapse to the placeholder;
        * We will check that once at the end */
       DBMList* fPlace = new DBMList(*INFTYDBM);
-      DBM lhs_succ(*zone);
+      DBM lhs_succ(zone);
       lhs_succ.suc();
       DBM phb(lhs_succ);
-      retPlaceDBM = do_proof_place(&phb, fPlace, *formula.getRight(), discrete_state);
+      retPlaceDBM = do_proof_place(phb, fPlace, *formula.getRight(), discrete_state);
       retPlaceDBM->cf();
       DBMList phi2Place(*retPlaceDBM);
 
@@ -2471,7 +2471,7 @@ inline DBMList* prover::do_proof_place_forall_rel(const DBM* const zone,
 
           if (cpplogEnabled(cpplogging::debug)) {
             print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal,
-                               *zone, *retPlaceDBM, discrete_state, formula.getOpType());
+                               zone, *retPlaceDBM, discrete_state, formula.getOpType());
             cpplog(cpplogging::debug) << "----() FORALL Rel Exists placeholder "
                                          "after time elapse check is := {"
                                       << *retPlaceDBM << "} ----" << std::endl
@@ -2515,20 +2515,20 @@ inline DBMList* prover::do_proof_place_forall_rel(const DBM* const zone,
 }
 
 // post: *retPlaceDBM == *place
-inline DBMList* prover::do_proof_place_exists(const DBM* const zone,
+inline DBMList* prover::do_proof_place_exists(const DBM& zone,
                                               DBMList* place,
                                               const ExprNode& formula,
                                               const SubstList& discrete_state) {
   /* First try to get a new placeholder value that works */
   place->cf();
-  DBM lhs_succ(*zone);
+  DBM lhs_succ(zone);
   lhs_succ.suc();
 
   // The invariant goes into the placeholder, not the left hand side
   DBMList placeholder(*INFTYDBM);
   restrict_to_invariant(input_pes.invariants(), &placeholder, discrete_state);
 
-  do_proof_place(&lhs_succ, &placeholder, *formula.getQuant(), discrete_state);
+  do_proof_place(lhs_succ, &placeholder, *formula.getQuant(), discrete_state);
   placeholder.cf();
 
   if (placeholder.emptiness()) {
@@ -2552,7 +2552,7 @@ inline DBMList* prover::do_proof_place_exists(const DBM* const zone,
 
     if (cpplogEnabled(cpplogging::debug)) {
       bool result = !place->emptiness();
-      print_sequent_placeCheck(std::cerr, step - 1, result, *zone, *place, *place,
+      print_sequent_placeCheck(std::cerr, step - 1, result, zone, *place, *place,
                                discrete_state, formula.getOpType());
       if (result) {
         cpplog(cpplogging::debug)
@@ -2572,28 +2572,28 @@ inline DBMList* prover::do_proof_place_exists(const DBM* const zone,
 }
 
 // post: *retPlaceDBM == *place
-inline DBMList* prover::do_proof_place_exists_rel(const DBM* const zone,
+inline DBMList* prover::do_proof_place_exists_rel(const DBM& zone,
                                                   DBMList* place,
                                                   const ExprNode& formula,
                                                   const SubstList& discrete_state) {
   bool retVal = false;
   /* First Try to get a placeholder value that works */
   place->cf();
-  DBM ph(*zone);
+  DBM ph(zone);
   ph.suc();
   DBM phb(ph);
 
   DBMList* tPlace = new DBMList(*INFTYDBM);
   restrict_to_invariant(input_pes.invariants(), tPlace, discrete_state);
 
-  retPlaceDBM = do_proof_place(&ph, tPlace, *formula.getRight(), discrete_state);
+  retPlaceDBM = do_proof_place(ph, tPlace, *formula.getRight(), discrete_state);
   // Reset place parent to nullptr
   parentPlaceRef = nullptr;
   retPlaceDBM->cf();
   if (retPlaceDBM->emptiness()) {
     retVal = false;
     if (cpplogEnabled(cpplogging::debug)) {
-      print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, *zone,
+      print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, zone,
                          *retPlaceDBM, discrete_state, formula.getOpType());
       cpplog(cpplogging::debug) << "----(Invalid) Empty First Placeholder: No "
                                    "Need for additional Placeholder Checks-----"
@@ -2624,7 +2624,7 @@ inline DBMList* prover::do_proof_place_exists_rel(const DBM* const zone,
    * with the time predecessor of the phi_2 placeholders. */
   DBMList* phi2Place = new DBMList(*retPlaceDBM);
   DBMList place1Temp(*INFTYDBM);
-  retPlaceDBM = do_proof_place(&phb, &place1Temp, *formula.getLeft(), discrete_state);
+  retPlaceDBM = do_proof_place(phb, &place1Temp, *formula.getLeft(), discrete_state);
   /* Second step: tighten and check the predecessor */
   // Must check for emptiness to handle the corner case when it is empty
   DBMList phi1Place(*retPlaceDBM);
@@ -2655,7 +2655,7 @@ inline DBMList* prover::do_proof_place_exists_rel(const DBM* const zone,
      * If so, make a non-empty placeholder. In this case, the third
      * Check will be true by default and can be skipped.
      * Else, return empty and break */
-    phi2Place->intersect(*zone); // zone here is before the time elapse
+    phi2Place->intersect(zone); // zone here is before the time elapse
     phi2Place->cf();
     if (phi2Place->emptiness()) {
       retVal = false;
@@ -2667,7 +2667,7 @@ inline DBMList* prover::do_proof_place_exists_rel(const DBM* const zone,
     } else {
       /* While a time elapse is not required, the placeholder
        * must span all of zone */
-      retVal = (*phi2Place) >= (*zone);
+      retVal = (*phi2Place) >= (zone);
 
       if (retVal) {
         cpplog(cpplogging::debug)
@@ -2746,7 +2746,7 @@ inline DBMList* prover::do_proof_place_exists_rel(const DBM* const zone,
   }
 
   if (cpplogEnabled(cpplogging::debug)) {
-    print_sequent_placeCheck(std::cerr, step - 1, retVal, *zone, *place,
+    print_sequent_placeCheck(std::cerr, step - 1, retVal, zone, *place,
                              *place, discrete_state, formula.getOpType());
     if (retVal) {
       cpplog(cpplogging::debug)
@@ -2767,7 +2767,7 @@ inline DBMList* prover::do_proof_place_exists_rel(const DBM* const zone,
 }
 
 // post: *retPlaceDBM == *place
-inline DBMList* prover::do_proof_place_allact(const DBM* const zone,
+inline DBMList* prover::do_proof_place_allact(const DBM& zone,
                                               DBMList* place,
                                               const ExprNode& formula,
                                               const SubstList& discrete_state) {
@@ -2788,7 +2788,7 @@ inline DBMList* prover::do_proof_place_allact(const DBM* const zone,
     Transition* tempT = *it;
 
     /* Obtain the entire ExprNode and prove it */
-    DBM tempLHS(*zone);
+    DBM tempLHS(zone);
 
     DBMList guardPlace(*place);
     bool tempBool =
@@ -2870,7 +2870,7 @@ inline DBMList* prover::do_proof_place_allact(const DBM* const zone,
     // the invariant
     numLocations++;
     retPlaceDBM =
-        do_proof_place(&phLHS, &transPlace, *tempT->getRightExpr(), tempSub);
+        do_proof_place(phLHS, &transPlace, *tempT->getRightExpr(), tempSub);
     retPlaceDBM->cf();
     /* Given ALLAct, this segment may require zone unions. */
     if (retPlaceDBM->emptiness()) {
@@ -2990,7 +2990,7 @@ inline DBMList* prover::do_proof_place_allact(const DBM* const zone,
 }
 
 // post: *retPlaceDBM == *place
-inline DBMList* prover::do_proof_place_existact(const DBM* const zone,
+inline DBMList* prover::do_proof_place_existact(const DBM& zone,
                                                 DBMList* place,
                                                 const ExprNode& formula,
                                                 const SubstList& discrete_state) {
@@ -3007,7 +3007,7 @@ inline DBMList* prover::do_proof_place_existact(const DBM* const zone,
     /* Obtain the entire ExprNode and prove it */
 
     DBMList tempPlace(*place);
-    DBM tempLHS(*zone);
+    DBM tempLHS(zone);
     // Method tightens zone and place to those subsets satisfying the guard
     // (leftExpr).
     bool tempBool = comp_ph_exist_place(&tempLHS, &tempPlace,
@@ -3085,7 +3085,7 @@ inline DBMList* prover::do_proof_place_existact(const DBM* const zone,
 
     numLocations++;
     retPlaceDBM =
-        do_proof_place(&tempLHS, &tPlace1, *tempT->getRightExpr(), tempSub);
+        do_proof_place(tempLHS, &tPlace1, *tempT->getRightExpr(), tempSub);
     retPlaceDBM->cf();
     /* placeholder logic partially incomplete
      * due to not addressing when new placeholder
@@ -3116,11 +3116,11 @@ inline DBMList* prover::do_proof_place_existact(const DBM* const zone,
 }
 
 // post: *retPlaceDBM == *place
-inline DBMList* prover::do_proof_place_imply(const DBM* const zone,
+inline DBMList* prover::do_proof_place_imply(const DBM& zone,
                                              DBMList* place,
                                              const ExprNode& formula,
                                              const SubstList& discrete_state) {
-  DBM lhs_copy(*zone);
+  DBM lhs_copy(zone);
   /* call comp_ph() for efficient proving of IMPLY's left. */
   if (comp_ph(&lhs_copy, *(formula.getLeft()), discrete_state)) {
     /* Constraints are bounded by input_pes.max_constant() */
@@ -3132,7 +3132,7 @@ inline DBMList* prover::do_proof_place_imply(const DBM* const zone,
     lhs_copy.cf();
     lhs_copy.bound(input_pes.max_constant());
     lhs_copy.cf();
-    do_proof_place(&lhs_copy, place, *formula.getRight(), discrete_state);
+    do_proof_place(lhs_copy, place, *formula.getRight(), discrete_state);
   } else {
     /* The set of states does not satisfy the premises of the IF
      * so thus the proof is true */
@@ -3146,11 +3146,11 @@ inline DBMList* prover::do_proof_place_imply(const DBM* const zone,
 }
 
 // post: *retPlaceDBM == *place
-inline DBMList* prover::do_proof_place_constraint(const DBM* const zone,
+inline DBMList* prover::do_proof_place_constraint(const DBM& zone,
                                                   DBMList* place,
                                                   const ExprNode& formula) {
   // The line: (formula->dbm())->cf(); is not needed.
-  if (*zone <= *(formula.dbm())) {
+  if (zone <= *(formula.dbm())) {
     cpplog(cpplogging::debug) << "---(Valid) Leaf DBM (CONSTRAINT) Reached "
                                  "with no need for Placeholder----"
                               << std::endl
@@ -3165,7 +3165,7 @@ inline DBMList* prover::do_proof_place_constraint(const DBM* const zone,
 
     // Now test constraint
     DBMList tPlace(*place);
-    tPlace.intersect(*zone);
+    tPlace.intersect(zone);
     tPlace.cf();
 
     if (tPlace.emptiness()) {
@@ -3266,7 +3266,7 @@ inline DBMList* prover::do_proof_place_atomic_ge(DBMList* place,
 }
 
 // post: *place == *retPlaceDBM
-inline DBMList* prover::do_proof_place_sublist(const DBM* const zone,
+inline DBMList* prover::do_proof_place_sublist(const DBM& zone,
                                                DBMList* place,
                                                const ExprNode& formula,
                                                const SubstList& discrete_state) {
@@ -3277,19 +3277,19 @@ inline DBMList* prover::do_proof_place_sublist(const DBM* const zone,
 }
 
 // post: *place == *retPlaceDBM
-inline DBMList* prover::do_proof_place_reset(const DBM* const zone,
+inline DBMList* prover::do_proof_place_reset(const DBM& zone,
                                              DBMList* place,
                                              const ExprNode& formula,
                                              const SubstList& discrete_state) {
   // Bound the LHS to prevent infinite proofs
-  DBM lhs_reset(*zone);
+  DBM lhs_reset(zone);
   lhs_reset.bound(input_pes.max_constant());
   lhs_reset.cf();
   lhs_reset.reset(formula.getClockSet());
   lhs_reset.cf();
 
   DBMList tPlace(*INFTYDBM);
-  do_proof_place(&lhs_reset, &tPlace, *formula.getExpr(), discrete_state);
+  do_proof_place(lhs_reset, &tPlace, *formula.getExpr(), discrete_state);
   tPlace.cf();
   if (tPlace.emptiness()) {
     *place = tPlace;
@@ -3306,7 +3306,7 @@ inline DBMList* prover::do_proof_place_reset(const DBM* const zone,
     bool retVal = !place->emptiness();
 
     if (cpplogEnabled(cpplogging::debug)) {
-      print_sequent_placeCheck(std::cerr, step - 1, retVal, *zone, *place, p2Copy,
+      print_sequent_placeCheck(std::cerr, step - 1, retVal, zone, *place, p2Copy,
                                discrete_state, formula.getOpType());
       if (retVal) {
         cpplog(cpplogging::debug)
@@ -3325,12 +3325,12 @@ inline DBMList* prover::do_proof_place_reset(const DBM* const zone,
 }
 
 // post: *place == *retPlaceDBM
-inline DBMList* prover::do_proof_place_assign(const DBM* const zone,
+inline DBMList* prover::do_proof_place_assign(const DBM& zone,
                                               DBMList* place,
                                               const ExprNode& formula,
                                               const SubstList& discrete_state) {
   // use zone->cf() for more efficiency
-  DBM lhs_assign(*zone);
+  DBM lhs_assign(zone);
   /* Here the DBM zone is where the value of
    * clock x is reset to clock y, which is possibly
    * a constant or a value*/
@@ -3339,7 +3339,7 @@ inline DBMList* prover::do_proof_place_assign(const DBM* const zone,
   lhs_assign.reset(cX, cY);
   lhs_assign.cf();
   DBMList placeB(*INFTYDBM);
-  do_proof_place(&lhs_assign, &placeB, *formula.getExpr(), discrete_state);
+  do_proof_place(lhs_assign, &placeB, *formula.getExpr(), discrete_state);
   placeB.cf();
   if (placeB.emptiness()) {
     *place = placeB;
@@ -3353,7 +3353,7 @@ inline DBMList* prover::do_proof_place_assign(const DBM* const zone,
 
     if (cpplogEnabled(cpplogging::debug)) {
       bool retVal = !place->emptiness();
-      print_sequent_placeCheck(std::cerr, step - 1, retVal, *zone, *place, placeB,
+      print_sequent_placeCheck(std::cerr, step - 1, retVal, zone, *place, placeB,
                                discrete_state, formula.getOpType());
       if (retVal) {
         cpplog(cpplogging::debug)
@@ -3372,7 +3372,7 @@ inline DBMList* prover::do_proof_place_assign(const DBM* const zone,
 }
 
 // post: *place == *retPlaceDBM
-inline DBMList* prover::do_proof_place_replace(const DBM* const zone,
+inline DBMList* prover::do_proof_place_replace(const DBM& zone,
                                                DBMList* place,
                                                const ExprNode& formula,
                                                const SubstList& discrete_state) {
@@ -3384,10 +3384,10 @@ inline DBMList* prover::do_proof_place_replace(const DBM* const zone,
 }
 
 // post: *place == *retPlaceDBM
-inline DBMList* prover::do_proof_place_ablewaitinf(const DBM* const zone,
+inline DBMList* prover::do_proof_place_ablewaitinf(const DBM& zone,
                                                    DBMList* place,
                                                    const SubstList& discrete_state) {
-  DBMList ph(*zone);
+  DBMList ph(zone);
   ph.intersect(*place);
   ph.cf();
   ph.suc();
@@ -3418,10 +3418,10 @@ inline DBMList* prover::do_proof_place_ablewaitinf(const DBM* const zone,
 }
 
 // post: *place == *retPlaceDBM
-inline DBMList* prover::do_proof_place_unablewaitinf(const DBM* const zone,
+inline DBMList* prover::do_proof_place_unablewaitinf(const DBM& zone,
                                                      DBMList* place,
                                                      const SubstList& discrete_state) {
-  DBMList ph(*zone);
+  DBMList ph(zone);
   ph.intersect(*place);
   ph.cf();
   ph.suc();
