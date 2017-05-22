@@ -28,12 +28,9 @@
  * @date November 2, 2013 */
 class SequentPlace; // forward declaration for parent scope
 
-/** Elements of a DBM set */
-typedef DBM *DBMsetElt;
-
 /** This defines a DBMset as a vector of DBM
  * arrays (DBM Arrays). */
-typedef std::vector<DBMsetElt> DBMset;
+typedef std::vector<DBM*> DBMset;
 
 /** The internal representation of a proof sequent with
  * a clock zone for the clock state. A sequent is a
@@ -142,7 +139,7 @@ public:
    * @return true: lhs <= some sequent in s
    * (consequently, the sequent is true), false: otherwise.*/
   inline bool tabled_sequent(const DBM *const lhs) const {
-    return std::find_if(ds.begin(), ds.end(), [&](const DBMsetElt x) {
+    return std::find_if(ds.begin(), ds.end(), [&](const DBM* x) {
              return *x >= *lhs;
            }) != ds.end();
   }
@@ -162,7 +159,7 @@ public:
    * @return true: lhs >= some sequent in s
    * (consequently, the sequent is false), false: otherwise.*/
   inline bool tabled_false_sequent(const DBM *const lhs) const {
-    return std::find_if(ds.begin(), ds.end(), [&](const DBMsetElt x) {
+    return std::find_if(ds.begin(), ds.end(), [&](const DBM* x) {
              return *x <= *lhs;
            }) != ds.end();
   }
@@ -179,7 +176,7 @@ public:
    * @param lhs (*) The DBM to compare the sequent's DBMs to.
    * @return true: lhs == some sequent in s, false: otherwise.*/
   inline bool tabled_sequent_lfp(const DBM *const lhs) {
-    return std::find_if(ds.begin(), ds.end(), [&](const DBMsetElt x) {
+    return std::find_if(ds.begin(), ds.end(), [&](const DBM* x) {
              return *x == *lhs;
            }) != ds.end();
   }
@@ -259,13 +256,10 @@ protected:
   std::vector<Sequent *> _parent_sequents;
 };
 
-/** Type of elements of a DBM set with placeholders */
-typedef std::pair<DBM *, DBMList *> DBMPlaceSetElt;
-
 /** Defines a vector of (DBM, DBMList) pairs. Used for lists
  * of placeholder proofs, since (for faster performance) the union
  * of clock zones is restricted to placeholders. */
-typedef std::vector<DBMPlaceSetElt> DBMPlaceSet;
+typedef std::vector<std::pair<DBM *, DBMList *> > DBMPlaceSet;
 
 /** The internal representation of a proof sequent with
  * a (potential) union of clock zones for the clock state.
@@ -347,12 +341,12 @@ public:
 
   /** Adds a sequent (better: the left hand side of the sequent), to the set of
    * sequents represented by this Sequent object */
-  void push_sequent(DBMPlaceSetElt s) { _dbms.push_back(s); }
+  void push_sequent(std::pair<DBM *, DBMList *> s) { _dbms.push_back(s); }
 
   /** Removes the last added sequent from the set of sequents represented by
    * this object */
   void pop_sequent() {
-    DBMPlaceSetElt b = _dbms.back();
+    std::pair<DBM *, DBMList *> b = _dbms.back();
     delete b.first;
     delete b.second;
     _dbms.pop_back();
@@ -401,7 +395,7 @@ public:
    * @return true: (lhs, lhsPlace) <= some sequent in s
    * (consequently, the sequent is true), false: otherwise.*/
   bool tabled_sequent(const DBM *const lhs, DBMList *const lhsPlace) const {
-    auto p = [&](const DBMPlaceSetElt x) {
+    auto p = [&](const std::pair<const DBM *, DBMList *> x) {
       if (*(x.first) == *lhs) {
         lhsPlace->intersect(*(x.second));
         lhsPlace->cf();
@@ -433,7 +427,7 @@ public:
    * (consequently, the sequent is false), false: otherwise.*/
   inline bool tabled_false_sequent(const DBM *const lhs) {
     return std::find_if(_dbms.begin(), _dbms.end(),
-                        [&](const DBMPlaceSetElt x) {
+                        [&](const std::pair<const DBM *, const DBMList *> x) {
                           return *(x.first) <= *lhs;
                         }) != _dbms.end();
   }
@@ -455,7 +449,7 @@ public:
   inline bool tabled_sequent_lfp(const DBM *const lhs,
                                  const DBMList *const lhsPlace) {
     return std::find_if(_dbms.begin(), _dbms.end(),
-                        [&](const DBMPlaceSetElt x) {
+                        [&](const std::pair<const DBM *, const DBMList *> x) {
                           return *(x.first) == *lhs && *(x.second) == *lhsPlace;
                         }) != _dbms.end();
   }
@@ -481,7 +475,7 @@ public:
   inline bool tabled_sequent_gfp(const DBM *const lhs,
                                  const DBMList *const lhsPlace) {
     return std::find_if(_dbms.begin(), _dbms.end(),
-                        [&](const DBMPlaceSetElt x) {
+                        [&](const std::pair<const DBM *, const DBMList *> x) {
                           return *(x.first) == *lhs && *(x.second) >= *lhsPlace;
                         }) != _dbms.end();
   }

@@ -17,7 +17,7 @@
 typedef std::vector<SequentPlace*> stackPlace;
 
 /** Stack of sequents used to detect, among others, cycles of fixed points */
-template <typename SequentType, typename DBMsetElementType>
+template <typename SequentType, typename DBMsetElementType, typename DBMsetConstElementType>
 class sequentStackT {
 protected:
   /** This defines a stack as a vector of Sequent
@@ -62,13 +62,13 @@ protected:
   }
 
   // Comparison for look_for_and_purge_rhs_sequent
-  bool match_for_purging_tabled(DBM* fst, const DBM& snd) {
+  bool match_for_purging_tabled(const DBM* fst, const DBM& snd) const {
     return *fst <= snd;
   }
 
   // Comparison for look_for_and_purge_rhs_sequent
-  bool match_for_purging_tabled(const std::pair<DBM*, DBMList*>& fst,
-                                const DBM& snd) {
+  bool match_for_purging_tabled(const std::pair<const DBM*, const DBMList*>& fst,
+                                const DBM& snd) const {
     return *(fst.first) == snd;
   }
 
@@ -87,6 +87,8 @@ protected:
 
   DBM* getDBM(const std::pair<DBM*, DBMList*>& p) const { return p.first; }
 
+  const DBM* getDBM(const std::pair<const DBM*, const DBMList*>& p) const { return p.first; }
+
   /** print the element pointed to by p */
   void print_DBMset_elt(std::ostream& os, const DBM* const p) const { os << p; }
 
@@ -94,6 +96,8 @@ protected:
   void delete_DBMset_elt(DBM* p) { delete p; }
 
   DBM* getDBM(DBM* p) const { return p; }
+
+  const DBM* getDBM(const DBM* p) const { return p; }
 
 public:
   sequentStackT(const std::size_t aSize, const int nbits, const int size,
@@ -203,7 +207,7 @@ public:
    * can change it to true if the found sequent was deleted from the list.
    * @return The pointer to the purged sequent, or
    * NULL if no sequent was purged.*/
-  SequentType* look_for_and_purge_rhs_sequent(const DBMsetElementType elt,
+  SequentType* look_for_and_purge_rhs_sequent(const DBMsetConstElementType elt,
                                               const SequentType* const sequent,
                                               const int predicate_index,
                                               const bool tableCheck,
@@ -347,7 +351,7 @@ public:
   }
 };
 
-typedef sequentStackT<Sequent, DBMsetElt> sequentStack;
-typedef sequentStackT<SequentPlace, DBMPlaceSetElt> sequentStackPlace;
+typedef sequentStackT<Sequent, DBM*, const DBM*> sequentStack;
+typedef sequentStackT<SequentPlace, std::pair<DBM *, DBMList *>, std::pair<const DBM *, const DBMList *>> sequentStackPlace;
 
 #endif
