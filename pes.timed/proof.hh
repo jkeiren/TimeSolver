@@ -1494,14 +1494,13 @@ inline bool prover::do_proof_allact(const SubstList& discrete_state,
     tempLHS.cf();
     tempLHS.bound(input_pes.max_constant());
     tempLHS.cf();
-    SubstList tempSub(discrete_state);
 
     cpplog(cpplogging::debug)
         << "Executing transition (with destination) " << transition << std::endl
         << "\tExtra invariant condition: " << invariant_region << std::endl;
 
     numLocations++;
-    retVal = do_proof(tempSub, tempLHS, *transition->getRightExpr());
+    retVal = do_proof(discrete_state, tempLHS, *transition->getRightExpr());
     if (!retVal) {
       cpplog(cpplogging::debug)
           << "Trainsition: " << transition << std::endl
@@ -2752,7 +2751,7 @@ inline DBMList* prover::do_proof_place_allact(const SubstList& discrete_state,
    * placeholders for each clause individually. For all transitions
    * that can be executed, store the resulting placeholders with transitions
    * so that we only need to give a non-convex placeholder when finished */
-  std::vector<DBMList*> transPlaceHolders;
+  std::vector<DBMList*> transition_placeholders;
   bool emptyRetPlace = false;
   for (std::vector<Transition*>::const_iterator it =
            input_pes.transitions().begin();
@@ -2775,31 +2774,32 @@ inline DBMList* prover::do_proof_place_allact(const SubstList& discrete_state,
      * is used later to restrict the placeholder if needed. */
 
     /* Now check the invariant */
-    DBMList transPlace(*place);
-    DBM phLHS(tempLHS);
-    DBM invPlace(*INFTYDBM);
-    SubstList tSub(discrete_state);
-    const SubstList* sl = transition->getEnteringLocation(&tSub);
-    bool isInv = restrict_to_invariant(input_pes.invariants(), &invPlace, *sl);
-    delete sl;
-    if (isInv) {
-      invPlace.cf();
-      const ClockSet* st = transition->getCSet();
-      if (st != nullptr) {
-        invPlace.preset(st);
+    DBMList transition_placeholder(*place);
+    DBM invariant_region(*INFTYDBM);
+    const SubstList* source_location = transition->getEnteringLocation(&discrete_state);
+    bool invariant_satisfiable = restrict_to_invariant(input_pes.invariants(),
+                                                       &invariant_region,
+                                                       *source_location);
+    delete source_location;
+
+    if (invariant_satisfiable) {
+      invariant_region.cf();
+      const ClockSet* reset_clocks = transition->getCSet();
+      if (reset_clocks != nullptr) {
+        invariant_region.preset(reset_clocks);
       }
-      invPlace.cf();
+      invariant_region.cf();
       /* Now perform clock assignments sequentially: perform the
        * front assignments first */
-      const std::vector<std::pair<short int, short int>>* av =
+      const std::vector<std::pair<short int, short int>>* clock_assignments =
           transition->getAssignmentVector();
-      if (av != nullptr) {
+      if (clock_assignments != nullptr) {
         // Iterate over the vector and print it
         for (std::vector<std::pair<short int, short int>>::const_iterator it =
-                 av->begin();
-             it != av->end(); it++) {
-          invPlace.preset((*it).first, (*it).second);
-          invPlace.cf();
+                 clock_assignments->begin();
+             it != clock_assignments->end(); it++) {
+          invariant_region.preset((*it).first, (*it).second);
+          invariant_region.cf();
         }
       }
       // Now invPlace has the largest placeholder satisfying
@@ -2808,19 +2808,19 @@ inline DBMList* prover::do_proof_place_allact(const SubstList& discrete_state,
       /* Check if invariant preset is satisfied by the zone.
        * If not, tighten the placeholder */
 
-      if (!(phLHS <= invPlace)) {
-        phLHS.intersect(invPlace);
-        phLHS.cf();
-        if (phLHS.emptiness()) {
+      if (!(tempLHS <= invariant_region)) {
+        tempLHS.intersect(invariant_region);
+        tempLHS.cf();
+        if (tempLHS.emptiness()) {
           cpplog(cpplogging::debug)
               << "Transition: " << transition
               << " cannot be taken; entering invariant is false." << std::endl
-              << "\tExtra invariant condition: " << invPlace << std::endl;
+              << "\tExtra invariant condition: " << invariant_region << std::endl;
 
           continue;
         }
-        transPlace.intersect(invPlace);
-        transPlace.cf();
+        transition_placeholder.intersect(invariant_region);
+        transition_placeholder.cf();
       }
     }
 
@@ -2831,24 +2831,22 @@ inline DBMList* prover::do_proof_place_allact(const SubstList& discrete_state,
      * the LHS by expanding the zone so it contains
      * all the proper regions where the clocks
      * exceed a certain constant value. */
-    phLHS.cf();
-    phLHS.bound(input_pes.max_constant());
-    phLHS.cf();
-    SubstList tempSub(discrete_state);
+    tempLHS.cf();
+    tempLHS.bound(input_pes.max_constant());
+    tempLHS.cf();
     // The transition RHS handles resets and substitutions
     cpplog(cpplogging::debug)
         << "Executing transition (with destination) " << transition << std::endl;
     // use phLHS since the zone is tightened to satisfy
     // the invariant
     numLocations++;
-    retPlaceDBM =
-        do_proof_place(tempSub, phLHS, &transPlace, *transition->getRightExpr());
-    retPlaceDBM->cf();
+    do_proof_place(discrete_state, tempLHS, &transition_placeholder, *transition->getRightExpr());
+    transition_placeholder.cf();
     /* Given ALLAct, this segment may require zone unions. */
-    if (retPlaceDBM->emptiness()) {
+    if (transition_placeholder.emptiness()) {
       // Code here
       DBMList* newPlace;
-      DBMList invList(invPlace);
+      DBMList invList(invariant_region);
       !invList;
       invList.cf();
       !guardPlace;
@@ -2858,7 +2856,7 @@ inline DBMList* prover::do_proof_place_allact(const SubstList& discrete_state,
       bool guardEmpty = guardPlace.emptiness();
       if (invEmpty && guardEmpty) {
         // This means that no such placeholder is possible
-        retPlaceDBM->makeEmpty();
+        transition_placeholder.makeEmpty();
         emptyRetPlace = true;
         break;
       } else if (invEmpty) {
@@ -2874,11 +2872,11 @@ inline DBMList* prover::do_proof_place_allact(const SubstList& discrete_state,
         newPlace = new DBMList(guardPlace);
         newPlace->addDBMList(invList);
       }
-      transPlaceHolders.push_back(newPlace);
+      transition_placeholders.push_back(newPlace);
       continue;
     }
-    DBMList tempPlace(transPlace);
-    tempPlace.intersect(phLHS);
+    DBMList tempPlace(transition_placeholder);
+    tempPlace.intersect(tempLHS);
     tempPlace.cf();
     if (*retPlaceDBM >= tempPlace) {
       /* This is the good case, since our placeholder need not
@@ -2888,7 +2886,7 @@ inline DBMList* prover::do_proof_place_allact(const SubstList& discrete_state,
       // Here tempRetDBM (retPlaceDBM) < tempLHSCp, meaning a restricted
       // placeholder Same code as when empty, but we have another placeholder
       DBMList* newPlace;
-      DBMList invList(invPlace);
+      DBMList invList(invariant_region);
       !invList;
       invList.cf();
       !guardPlace;
@@ -2899,7 +2897,7 @@ inline DBMList* prover::do_proof_place_allact(const SubstList& discrete_state,
       // we know that tempPlace is not empty
       if (invEmpty && guardEmpty) {
         // This means that no such placeholder is possible
-        newPlace = new DBMList(transPlace);
+        newPlace = new DBMList(transition_placeholder);
       } else {
         if (invEmpty) {
           newPlace = new DBMList(guardPlace);
@@ -2923,41 +2921,36 @@ inline DBMList* prover::do_proof_place_allact(const SubstList& discrete_state,
           newPlace = new DBMList(tempPlace);
         } else {
           /* This is the bad case, because zone unions are required */
-          newPlace->addDBMList(transPlace);
+          newPlace->addDBMList(transition_placeholder);
         }
       }
-      transPlaceHolders.push_back(newPlace);
+      transition_placeholders.push_back(newPlace);
     }
   }
   /* Handle the vector */
-  if (!(transPlaceHolders.empty()) && !(emptyRetPlace)) {
+  if (!(transition_placeholders.empty()) && !(emptyRetPlace)) {
     /* If the vector is empty, then there is nothing to do
      * since retPlaceDBM = place already; hence, we only
      * handle the case with a non-empty placeholder. */
     // For now, just intersect the placeholders
-    *retPlaceDBM = *place;
-    for (std::vector<DBMList*>::iterator it = transPlaceHolders.begin();
-         it != transPlaceHolders.end(); it++) {
+    for (std::vector<DBMList*>::iterator it = transition_placeholders.begin();
+         it != transition_placeholders.end(); it++) {
       /* Intersecting alone is not good enough, so need to do both */
-      retPlaceDBM->intersect(*(*it));
-      retPlaceDBM->cf();
+      place->intersect(*(*it));
+      place->cf();
     }
   }
 
   // Now go through the vector and delete everything in the vector
   // (Don't delete the transitions since we passed references,
   // but do delete the DBMLists since we passed copies)
-  for (std::vector<DBMList*>::iterator it = transPlaceHolders.begin();
-       it != transPlaceHolders.end(); it++) {
-    delete (*it);
-  }
-  transPlaceHolders.clear();
+  delete_vector_elements(transition_placeholders);
+  transition_placeholders.clear();
 
   cpplog(cpplogging::debug)
-      << "\t --- end of ALLACT. Returned plhold: " << *retPlaceDBM << std::endl;
+      << "\t --- end of ALLACT. Returned plhold: " << *place << std::endl;
 
-  *place = *retPlaceDBM;
-
+  *retPlaceDBM = *place;
   return retPlaceDBM;
 }
 
