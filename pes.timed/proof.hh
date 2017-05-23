@@ -513,7 +513,8 @@ protected:
    * predecessor may by <= or <, depending on the proof rule that calls this
    * method.
    * @return the output placeholder, which is also retPlaceDBM. */
-  inline void predCheckRule(DBMList* result, const DBM& zone,
+  inline void predCheckRule(DBMList* result,
+                            const DBM& zone,
                             const DBM* const lhs_succ,
                             const DBMList* placeholder1,
                             const DBMList* placeholder2,
@@ -1244,15 +1245,13 @@ inline bool prover::do_proof_exists_rel(const SubstList& discrete_state,
   bool retVal = false;
 
   /* First Try to get a placeholder value that works */
-  DBM lhs_succ(zone);
-  // Note: zone is unchanged
-  lhs_succ.suc();
-  DBM lhs_succ2(lhs_succ);
+  DBM zone_succ(zone);
+  zone_succ.suc();
 
   DBMList placeholder2(*INFTYDBM);
   restrict_to_invariant(input_pes.invariants(), &placeholder2, discrete_state);
 
-  do_proof_place(discrete_state, lhs_succ, &placeholder2, *formula.getRight());
+  do_proof_place(discrete_state, zone_succ, &placeholder2, *formula.getRight());
   // Reset place parent to NULL
   parentPlaceRef = nullptr;
   placeholder2.cf();
@@ -1266,7 +1265,6 @@ inline bool prover::do_proof_exists_rel(const SubstList& discrete_state,
                                 << std::endl
                                 << std::endl;
     }
-    return retVal;
   } else {
     retVal = true;
 
@@ -1291,7 +1289,7 @@ inline bool prover::do_proof_exists_rel(const SubstList& discrete_state,
     DBMList placeholder1(*INFTYDBM);
     // Since invariants are past closed, we do not need to intersect
     // this placeholder with the invariant.
-    do_proof_place(discrete_state, lhs_succ2, &placeholder1, *formula.getLeft());
+    do_proof_place(discrete_state, zone_succ, &placeholder1, *formula.getLeft());
     /* Second step: tighten and check the predecessor */
     // Must check for emptiness to handle the corner case when it is empty
 
@@ -1309,7 +1307,7 @@ inline bool prover::do_proof_exists_rel(const SubstList& discrete_state,
     if (placeholder1_intersect_placeholder2_pred.emptiness()) {
       if (cpplogEnabled(cpplogging::debug)) {
         print_sequentCheck(
-            cpplogGet(cpplogging::debug), step - 1, false, lhs_succ2,
+            cpplogGet(cpplogging::debug), step - 1, false, zone_succ,
             placeholder1_intersect_placeholder2_pred, discrete_state, formula.getOpType());
         cpplog(cpplogging::debug)
             << "----() Empty Second Placeholder: Relativization Formula "
@@ -1351,8 +1349,6 @@ inline bool prover::do_proof_exists_rel(const SubstList& discrete_state,
                                   << placeholder2 << "} ----" << std::endl
                                   << std::endl;
       }
-
-      return retVal;
     } else {
       // There are locations where both left-hand side and right-hand side hold.
       // we therefore need to check the side-conditions
@@ -1361,7 +1357,7 @@ inline bool prover::do_proof_exists_rel(const SubstList& discrete_state,
                                          // used in the predCheckRule
                                          // computation
       /*--- PredCheck code----*/
-      predCheckRule(&placeholder, zone, &lhs_succ, &placeholder1, &placeholder2,
+      predCheckRule(&placeholder, zone, &zone_succ, &placeholder1, &placeholder2,
                     &placeholder2_predecessor);
       if (placeholder.emptiness()) {
         retVal = false;
@@ -1372,49 +1368,49 @@ inline bool prover::do_proof_exists_rel(const SubstList& discrete_state,
             << "----With resulting Placeholder := {" << placeholder << "} ----"
             << std::endl
             << std::endl;
-        return retVal;
-      }
-      // if it is nonempty, it passes the second check and we continue
+      } else {
+        // if it is nonempty, it passes the second check and we continue
 
-      if (cpplogEnabled(cpplogging::debug)) {
-        print_sequent_place(std::cerr, step - 1, retVal, lhs_succ2,
-                            placeholder2_predecessor, *formula.getLeft(),
-                            discrete_state, formula.getOpType());
-        cpplog(cpplogging::debug) << "----(Valid) Relativization Placeholder "
-                                     "Check Passed (Check Only)-----"
-                                  << std::endl
-                                  << "----With resulting Placeholder := {"
-                                  << placeholder << "} ----" << std::endl
-                                  << std::endl;
-      }
+        if (cpplogEnabled(cpplogging::debug)) {
+          print_sequent_place(std::cerr, step - 1, retVal, zone_succ,
+                              placeholder2_predecessor, *formula.getLeft(),
+                              discrete_state, formula.getOpType());
+          cpplog(cpplogging::debug) << "----(Valid) Relativization Placeholder "
+                                       "Check Passed (Check Only)-----"
+                                    << std::endl
+                                    << "----With resulting Placeholder := {"
+                                    << placeholder << "} ----" << std::endl
+                                    << std::endl;
+        }
 
-      // Allow for the possibility of the time instant after the elapse
-      placeholder.closure();
-      /* Extract the new refined placeholder. */
-      placeholder.intersect(placeholder2);
-      placeholder.cf();
+        // Allow for the possibility of the time instant after the elapse
+        placeholder.closure();
+        /* Extract the new refined placeholder. */
+        placeholder.intersect(placeholder2);
+        placeholder.cf();
 
-      /* Now check that it works. */
-      placeholder.pre();
-      /* This cf() is needed. */
-      placeholder.cf();
-      retVal = placeholder >= zone;
+        /* Now check that it works. */
+        placeholder.pre();
+        /* This cf() is needed. */
+        placeholder.cf();
+        retVal = placeholder >= zone;
 
-      if (cpplogEnabled(cpplogging::debug)) {
-        print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, zone,
-                           placeholder, discrete_state, formula.getOpType());
-        if (retVal) {
-          cpplog(cpplogging::debug)
-              << "----(Valid) Last Placeholder Check Passed (Check Only)-----"
-              << std::endl
-              << "----With Placeholder := {" << placeholder << "} ----"
-              << std::endl
-              << std::endl;
+        if (cpplogEnabled(cpplogging::debug)) {
+          print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, zone,
+                             placeholder, discrete_state, formula.getOpType());
+          if (retVal) {
+            cpplog(cpplogging::debug)
+                << "----(Valid) Last Placeholder Check Passed (Check Only)-----"
+                << std::endl
+                << "----With Placeholder := {" << placeholder << "} ----"
+                << std::endl
+                << std::endl;
 
-        } else {
-          cpplog(cpplogging::debug)
-              << "----(Invalid) Last Placeholder Check Failed-----" << std::endl
-              << std::endl;
+          } else {
+            cpplog(cpplogging::debug)
+                << "----(Invalid) Last Placeholder Check Failed-----" << std::endl
+                << std::endl;
+          }
         }
       }
     }
@@ -2577,193 +2573,168 @@ inline DBMList* prover::do_proof_place_exists_rel(const SubstList& discrete_stat
                                                   const DBM& zone,
                                                   DBMList* place,
                                                   const ExprNode& formula) {
-  bool retVal = false;
   /* First Try to get a placeholder value that works */
   place->cf();
-  DBM ph(zone);
-  ph.suc();
-  DBM phb(ph);
+  DBM zone_succ(zone);
+  zone_succ.suc();
 
-  DBMList* tPlace = new DBMList(*INFTYDBM);
-  restrict_to_invariant(input_pes.invariants(), tPlace, discrete_state);
+  DBMList placeholder2(*INFTYDBM);
+  restrict_to_invariant(input_pes.invariants(), &placeholder2, discrete_state);
 
-  retPlaceDBM = do_proof_place(discrete_state, ph, tPlace, *formula.getRight());
+  do_proof_place(discrete_state, zone_succ, &placeholder2, *formula.getRight());
   // Reset place parent to nullptr
   parentPlaceRef = nullptr;
-  retPlaceDBM->cf();
-  if (retPlaceDBM->emptiness()) {
-    retVal = false;
+  placeholder2.cf();
+  if (placeholder2.emptiness()) {
     if (cpplogEnabled(cpplogging::debug)) {
-      print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, zone,
-                         *retPlaceDBM, discrete_state, formula.getOpType());
+      print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, false, zone,
+                         placeholder2, discrete_state, formula.getOpType());
       cpplog(cpplogging::debug) << "----(Invalid) Empty First Placeholder: No "
                                    "Need for additional Placeholder Checks-----"
                                 << std::endl
                                 << std::endl;
     }
-    delete tPlace;
-    *place = *retPlaceDBM;
-    return retPlaceDBM;
-  }
-  retVal = true;
-  /* Now check for the relativization.
-   * First, find the subset of the predecessor_< of the placeholder
-   * that satisfies the left clause.
-   * Second: utilize a pred_check() method to further tighten the
-   * placeholder in order that all  */
-  /* First step */
-  DBMList* phi2PredPlace = new DBMList(*retPlaceDBM);
-  phi2PredPlace->pre();
-  // pred Closure makes sure that the exact valuation for the placeholder
-  // is excluded.
-  phi2PredPlace->predClosureRev();
-  phi2PredPlace->cf();
-  /* At this point, phi2PredPlace is the time predecessor_{<} of the
-   * placeholders that satisfy phi_2, the right hand formula */
+    assert(*retPlaceDBM == placeholder2);
+    *place = placeholder2;
+  } else {
+    /* Now check for the relativization.
+     * First, find the subset of the predecessor_< of the placeholder
+     * that satisfies the left clause.
+     * Second: utilize a pred_check() method to further tighten the
+     * placeholder in order that all  */
+    /* First step */
+    DBMList placeholder2_predecessor(placeholder2);
+    placeholder2_predecessor.pre();
+    // pred Closure makes sure that the exact valuation for the placeholder
+    // is excluded.
+    placeholder2_predecessor.predClosureRev();
+    placeholder2_predecessor.cf();
+    /* At this point, phi2PredPlace is the time predecessor_{<} of the
+     * placeholders that satisfy phi_2, the right hand formula */
 
-  /* We find all the times that satisfy phi_1, and then intersect it
-   * with the time predecessor of the phi_2 placeholders. */
-  DBMList* phi2Place = new DBMList(*retPlaceDBM);
-  DBMList place1Temp(*INFTYDBM);
-  retPlaceDBM = do_proof_place(discrete_state, phb, &place1Temp, *formula.getLeft());
-  /* Second step: tighten and check the predecessor */
-  // Must check for emptiness to handle the corner case when it is empty
-  DBMList phi1Place(*retPlaceDBM);
-
-  cpplog(cpplogging::debug)
-      << "----() Placeholder of times where \\phi_1 is true----- {" << phi1Place
-      << "} ----" << std::endl
-      << std::endl;
-
-  retPlaceDBM->intersect(*phi2PredPlace);
-  retPlaceDBM->cf();
-  if (retPlaceDBM->emptiness()) {
-    *place = *retPlaceDBM;
-    retVal = false;
-
-    if (cpplogEnabled(cpplogging::debug)) {
-      print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, phb,
-                         *place, discrete_state, formula.getOpType());
-
-      cpplog(cpplogging::debug)
-          << "----() Empty Second Placeholder: Relativization Formula \\phi_1 "
-             "is never true-----"
-          << std::endl
-          << std::endl;
-    }
-
-    /* Now determine if $\phi_2$ is true without a time elapse.
-     * If so, make a non-empty placeholder. In this case, the third
-     * Check will be true by default and can be skipped.
-     * Else, return empty and break */
-    phi2Place->intersect(zone); // zone here is before the time elapse
-    phi2Place->cf();
-    if (phi2Place->emptiness()) {
-      retVal = false;
-      cpplog(cpplogging::debug)
-          << "----(Invalid) Time Elapsed required for formula to be true; "
-             "hence, relativized formula cannot always be false."
-          << std::endl
-          << std::endl;
-    } else {
-      /* While a time elapse is not required, the placeholder
-       * must span all of zone */
-      retVal = (*phi2Place) >= (zone);
-
-      if (retVal) {
-        cpplog(cpplogging::debug)
-            << "----(Valid) Time Elapse not required and placeholder spans "
-               "zone; hence, formula is true-----"
-            << std::endl;
-      } else {
-        cpplog(cpplogging::debug)
-            << "----(Invalid) While Time Elapse not required, placeholder is "
-               "not large enough-----"
-            << std::endl;
-      }
-      cpplog(cpplogging::debug) << "----With resulting Placeholder := {"
-                                << *phi2Place << "} ----" << std::endl
-                                << std::endl;
-    }
-
-    delete phi2Place;
-    delete phi2PredPlace;
-    delete tPlace;
-    return retPlaceDBM;
-  }
-
-  DBMList currRetPlaceDBM(*retPlaceDBM);
-  /*--- PredCheck code----*/
-  predCheckRule(retPlaceDBM, zone, &ph, &phi1Place, phi2Place, phi2PredPlace);
-  if (retPlaceDBM->emptiness()) {
-    retVal = false;
+    /* We find all the times that satisfy phi_1, and then intersect it
+     * with the time predecessor of the phi_2 placeholders. */
+    DBMList placeholder1(*INFTYDBM);
+    do_proof_place(discrete_state, zone_succ, &placeholder1, *formula.getLeft());
+    /* Second step: tighten and check the predecessor */
+    // Must check for emptiness to handle the corner case when it is empty
 
     cpplog(cpplogging::debug)
-        << "----(Invalid) Relativization placeholder failed-----" << std::endl
-        << "----With resulting Placeholder := {" << *retPlaceDBM << "} ----"
-        << std::endl
+        << "----() Placeholder of times where \\phi_1 is true----- {" << placeholder1
+        << "} ----" << std::endl
         << std::endl;
 
-    delete phi2Place;
-    delete phi2PredPlace;
-    delete tPlace;
-    *place = *retPlaceDBM;
-    return retPlaceDBM;
-  }
+    DBMList placeholder1_intersect_placeholder2_pred(placeholder1);
+    placeholder1_intersect_placeholder2_pred.intersect(placeholder2_predecessor);
+    placeholder1_intersect_placeholder2_pred.cf();
+    if (placeholder1_intersect_placeholder2_pred.emptiness()) {
+      *place = placeholder1_intersect_placeholder2_pred;
 
-  // if it is still nonempty, it passes the second check and we continue
+      if (cpplogEnabled(cpplogging::debug)) {
+        print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, false, zone_succ,
+                           *place, discrete_state, formula.getOpType());
 
-  //}
+        cpplog(cpplogging::debug)
+            << "----() Empty Second Placeholder: Relativization Formula \\phi_1 "
+               "is never true-----"
+            << std::endl
+            << std::endl;
+      }
 
-  if (cpplogEnabled(cpplogging::debug)) {
-    print_sequent_place(std::cerr, step - 1, retVal, phb, *phi2PredPlace,
-                        *formula.getLeft(), discrete_state, formula.getOpType());
-    cpplog(cpplogging::debug) << "----(Valid) Relativization Placeholder Check "
-                                 "Passed (Check Only)-----"
-                              << std::endl
-                              << "----With resulting Placeholder := {"
-                              << *retPlaceDBM << "} ----" << std::endl
-                              << std::endl;
-  }
-
-  // Allow for the possibility of the time instant after the elapse
-  retPlaceDBM->closure();
-  /* Extract the new refined placeholder */
-  phi2Place->intersect(*retPlaceDBM);
-  phi2Place->cf();
-
-  /* Now check that it works (the new placeholder can be
-   * obtained from the old
-   * For the placeholder rule, we use this check
-   * to give us the value of the old placeholder */
-  phi2Place->pre();
-  place->intersect(*phi2Place);
-  place->cf();
-  *retPlaceDBM = (*place);
-  if (retPlaceDBM->emptiness()) {
-    retVal = false;
-  } else {
-    retVal = true;
-  }
-
-  if (cpplogEnabled(cpplogging::debug)) {
-    print_sequent_placeCheck(std::cerr, step - 1, retVal, zone, *place,
-                             *place, discrete_state, formula.getOpType());
-    if (retVal) {
-      cpplog(cpplogging::debug)
-          << "----(Valid) Final Placeholder Check Passed-----" << std::endl
-          << "--With Placeholder := {" << *retPlaceDBM << "} ----" << std::endl
-          << std::endl;
+      /* Now determine if $\phi_2$ is true without a time elapse.
+       * If so, make a non-empty placeholder. In this case, the third
+       * Check will be true by default and can be skipped.
+       * Else, return empty and break */
+      placeholder2.intersect(zone); // zone here is before the time elapse
+      placeholder2.cf();
+      if (placeholder2.emptiness()) {
+        cpplog(cpplogging::debug)
+            << "----(Invalid) Time Elapsed required for formula to be true; "
+               "hence, relativized formula cannot always be false."
+            << std::endl
+            << std::endl;
+      } else {
+        /* While a time elapse is not required, the placeholder
+         * must span all of zone */
+        if (placeholder2 >= zone) {
+          cpplog(cpplogging::debug)
+              << "----(Valid) Time Elapse not required and placeholder spans "
+                 "zone; hence, formula is true-----"
+              << std::endl;
+        } else {
+          cpplog(cpplogging::debug)
+              << "----(Invalid) While Time Elapse not required, placeholder is "
+                 "not large enough-----"
+              << std::endl;
+        }
+        cpplog(cpplogging::debug) << "----With resulting Placeholder := {"
+                                  << placeholder2 << "} ----" << std::endl
+                                  << std::endl;
+      }
     } else {
-      cpplog(cpplogging::debug)
-          << "----(Invalid) Final Placeholder Check Failed-----" << std::endl
-          << std::endl;
+
+      /*--- PredCheck code----*/
+      DBMList placeholder(placeholder1);
+      predCheckRule(&placeholder, zone, &zone_succ, &placeholder1, &placeholder2,
+                    &placeholder2_predecessor);
+      if (placeholder.emptiness()) {
+        cpplog(cpplogging::debug)
+            << "----(Invalid) Relativization placeholder failed-----" << std::endl
+            << "----With resulting Placeholder := {" << placeholder << "} ----"
+            << std::endl
+            << std::endl;
+
+        *place = placeholder;
+      }
+      else
+      {
+        // if it is still nonempty, it passes the second check and we continue
+
+        if (cpplogEnabled(cpplogging::debug)) {
+          print_sequent_place(std::cerr, step - 1, true, zone_succ, placeholder2_predecessor,
+                              *formula.getLeft(), discrete_state, formula.getOpType());
+          cpplog(cpplogging::debug) << "----(Valid) Relativization Placeholder Check "
+                                       "Passed (Check Only)-----"
+                                    << std::endl
+                                    << "----With resulting Placeholder := {"
+                                    << placeholder << "} ----" << std::endl
+                                    << std::endl;
+        }
+
+
+        // Allow for the possibility of the time instant after the elapse
+        placeholder.closure();
+        /* Extract the new refined placeholder */
+        placeholder.intersect(placeholder2);
+        placeholder.cf();
+
+        /* Now check that it works (the new placeholder can be
+         * obtained from the old
+         * For the placeholder rule, we use this check
+         * to give us the value of the old placeholder */
+        placeholder.pre();
+        place->intersect(placeholder);
+        place->cf();
+
+        if (cpplogEnabled(cpplogging::debug)) {
+          print_sequent_placeCheck(std::cerr, step - 1, !place->emptiness(), zone, *place,
+                                   *place, discrete_state, formula.getOpType());
+          if (!place->emptiness()) {
+            cpplog(cpplogging::debug)
+                << "----(Valid) Final Placeholder Check Passed-----" << std::endl
+                << "--With Placeholder := {" << *place << "} ----" << std::endl
+                << std::endl;
+          } else {
+            cpplog(cpplogging::debug)
+                << "----(Invalid) Final Placeholder Check Failed-----" << std::endl
+                << std::endl;
+          }
+        }
+      }
     }
   }
 
-  delete phi2PredPlace;
-  delete phi2Place;
-  delete tPlace;
+  *retPlaceDBM = *place;
   return retPlaceDBM;
 }
 
@@ -2786,17 +2757,17 @@ inline DBMList* prover::do_proof_place_allact(const SubstList& discrete_state,
   for (std::vector<Transition*>::const_iterator it =
            input_pes.transitions().begin();
        it != input_pes.transitions().end(); it++) {
-    Transition* tempT = *it;
+    Transition* transition = *it;
 
     /* Obtain the entire ExprNode and prove it */
     DBM tempLHS(zone);
 
     DBMList guardPlace(*place);
-    bool tempBool =
-        comp_ph_all_place(&tempLHS, &guardPlace, *(tempT->getLeftExpr()), discrete_state);
-    if (tempBool == false) {
+    bool guard_satisfied =
+        comp_ph_all_place(&tempLHS, &guardPlace, *(transition->getLeftExpr()), discrete_state);
+    if (!guard_satisfied) {
       cpplog(cpplogging::debug)
-          << "Transition: " << tempT << " cannot be taken." << std::endl;
+          << "Transition: " << transition << " cannot be taken." << std::endl;
       continue;
     }
     /* Now guardPlace has the largest placeholder satisfying the
@@ -2808,12 +2779,12 @@ inline DBMList* prover::do_proof_place_allact(const SubstList& discrete_state,
     DBM phLHS(tempLHS);
     DBM invPlace(*INFTYDBM);
     SubstList tSub(discrete_state);
-    const SubstList* sl = tempT->getEnteringLocation(&tSub);
+    const SubstList* sl = transition->getEnteringLocation(&tSub);
     bool isInv = restrict_to_invariant(input_pes.invariants(), &invPlace, *sl);
     delete sl;
     if (isInv) {
       invPlace.cf();
-      const ClockSet* st = tempT->getCSet();
+      const ClockSet* st = transition->getCSet();
       if (st != nullptr) {
         invPlace.preset(st);
       }
@@ -2821,7 +2792,7 @@ inline DBMList* prover::do_proof_place_allact(const SubstList& discrete_state,
       /* Now perform clock assignments sequentially: perform the
        * front assignments first */
       const std::vector<std::pair<short int, short int>>* av =
-          tempT->getAssignmentVector();
+          transition->getAssignmentVector();
       if (av != nullptr) {
         // Iterate over the vector and print it
         for (std::vector<std::pair<short int, short int>>::const_iterator it =
@@ -2842,7 +2813,7 @@ inline DBMList* prover::do_proof_place_allact(const SubstList& discrete_state,
         phLHS.cf();
         if (phLHS.emptiness()) {
           cpplog(cpplogging::debug)
-              << "Transition: " << tempT
+              << "Transition: " << transition
               << " cannot be taken; entering invariant is false." << std::endl
               << "\tExtra invariant condition: " << invPlace << std::endl;
 
@@ -2853,7 +2824,7 @@ inline DBMList* prover::do_proof_place_allact(const SubstList& discrete_state,
       }
     }
 
-    tempT->getNewTrans(formula.getQuant());
+    transition->getNewTrans(formula.getQuant());
     /* Constraints are bounded by input_pes.max_constant() */
     /* This is to extend the LHS to make sure that
      * the RHS is satisfied by any zone that satisfies
@@ -2866,12 +2837,12 @@ inline DBMList* prover::do_proof_place_allact(const SubstList& discrete_state,
     SubstList tempSub(discrete_state);
     // The transition RHS handles resets and substitutions
     cpplog(cpplogging::debug)
-        << "Executing transition (with destination) " << tempT << std::endl;
+        << "Executing transition (with destination) " << transition << std::endl;
     // use phLHS since the zone is tightened to satisfy
     // the invariant
     numLocations++;
     retPlaceDBM =
-        do_proof_place(tempSub, phLHS, &transPlace, *tempT->getRightExpr());
+        do_proof_place(tempSub, phLHS, &transPlace, *transition->getRightExpr());
     retPlaceDBM->cf();
     /* Given ALLAct, this segment may require zone unions. */
     if (retPlaceDBM->emptiness()) {
