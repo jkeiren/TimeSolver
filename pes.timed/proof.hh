@@ -2243,13 +2243,13 @@ inline DBMList* prover::do_proof_place_forall_rel(const SubstList& discrete_stat
 
   DBMList placeholder1(*INFTYDBM);
   restrict_to_invariant(input_pes.invariants(), &placeholder1, discrete_state);
-  retPlaceDBM = do_proof_place(discrete_state, lhs_succ, &placeholder1, *formula.getLeft());
-  retPlaceDBM->cf();
+  do_proof_place(discrete_state, lhs_succ, &placeholder1, *formula.getLeft());
+  placeholder1.cf();
 
-  if (retPlaceDBM->emptiness()) {
+  if (placeholder1.emptiness()) {
     if (cpplogEnabled(cpplogging::debug)) {
       print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal,
-                         lhs_succ, *retPlaceDBM, discrete_state, formula.getOpType());
+                         lhs_succ, placeholder1, discrete_state, formula.getOpType());
       cpplog(cpplogging::debug) << "--------() Empty Relativization "
                                    "Placeholder: phi1 is never true ----------"
                                 << std::endl
@@ -2262,23 +2262,23 @@ inline DBMList* prover::do_proof_place_forall_rel(const SubstList& discrete_stat
      * zone satifies the constraints */
 
     DBMList newPlace(*INFTYDBM);
-    retPlaceDBM = do_proof_place(discrete_state, lhs_succ, &newPlace, *formula.getRight());
-    retPlaceDBM->cf();
-    if (!(retPlaceDBM->emptiness())) { // Only do if a nonempty placeholder
+    do_proof_place(discrete_state, lhs_succ, &newPlace, *formula.getRight());
+    newPlace.cf();
+    if (!(newPlace.emptiness())) { // Only do if a nonempty placeholder
       /* Now do the second proof rule to compute the first placeholder
        */
 
-      DBMList currPlace(*retPlaceDBM);
-      succCheckRule(&discrete_state, zone, &lhs_succ, &currPlace, retPlaceDBM);
+      DBMList currPlace(newPlace);
+      succCheckRule(&discrete_state, zone, &lhs_succ, &currPlace, &newPlace);
 
-      retVal = !retPlaceDBM->emptiness();
-      *place = *retPlaceDBM;
+      retVal = !newPlace.emptiness();
+      *place = newPlace;
 
       if (cpplogEnabled(cpplogging::debug)) {
         // This work is done in the succCheck method.
         // Perhaps I should move the debug rule there?
         DBMList succRuleConseq(zone);
-        succRuleConseq.intersect(*retPlaceDBM);
+        succRuleConseq.intersect(newPlace);
         succRuleConseq.cf();
         succRuleConseq.suc();
         succRuleConseq.cf();
@@ -2299,29 +2299,28 @@ inline DBMList* prover::do_proof_place_forall_rel(const SubstList& discrete_stat
         }
       }
     }
-  } else if (*retPlaceDBM == *INFTYDBM) {
+  } else if (placeholder1 == *INFTYDBM) {
   // First check for the simplest case: no time elapse is needed
   /* Perhaps we can reduce *INFTYDBM to be *place
    * given the proof rules. */
 
     if (cpplogEnabled(cpplogging::debug)) {
       print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, zone,
-                         *retPlaceDBM, discrete_state, formula.getOpType());
+                         placeholder1, discrete_state, formula.getOpType());
       cpplog(cpplogging::debug)
           << "----(Valid) EXISTS (in FORALL_REL) Placeholder indicates no "
              "time elapse is needed (Check Only)-----"
           << std::endl
-          << "----With Placeholder := {" << *retPlaceDBM << "} ----"
+          << "----With Placeholder := {" << placeholder1 << "} ----"
           << std::endl
           << std::endl;
     }
 
     // If here, we neither need a placeholder nor to elapse time
     DBMList infPlace(*INFTYDBM);
-    retPlaceDBM = do_proof_place(discrete_state, zone, &infPlace, *formula.getRight());
-    retPlaceDBM->cf();
-    assert(infPlace == *retPlaceDBM);
-    if (!(retPlaceDBM->emptiness())) { // Only do if a nonempty placeholder
+    do_proof_place(discrete_state, zone, &infPlace, *formula.getRight());
+    infPlace.cf();
+    if (!(infPlace.emptiness())) { // Only do if a nonempty placeholder
       /* Now do the second proof rule to compute the first placeholder */
       retVal = true;
 
@@ -2335,14 +2334,14 @@ inline DBMList* prover::do_proof_place_forall_rel(const SubstList& discrete_stat
             << std::endl;
       }
     }
-    *place = *retPlaceDBM;
+    *place = infPlace;
 
   } else {
     // This is the more complicated case that requires a placeholder
     // for the FORALL
     /* Now check that we can elapse to the placeholder. */
     // Store the set of times that satisfy phi1
-    DBMList phi1Place(*retPlaceDBM);
+    DBMList phi1Place(placeholder1);
 
     cpplog(cpplogging::debug)
         << "----() Relativization \\phi_1 placeholder obtained as {"
@@ -2351,10 +2350,9 @@ inline DBMList* prover::do_proof_place_forall_rel(const SubstList& discrete_stat
 
     /* We omit the check that we can elapse to the placeholder;
      * We will check that once at the end */
-    DBMList fPlace(*INFTYDBM);
-    retPlaceDBM = do_proof_place(discrete_state, lhs_succ, &fPlace, *formula.getRight());
-    retPlaceDBM->cf();
-    DBMList phi2Place(*retPlaceDBM);
+    DBMList phi2Place(*INFTYDBM);
+    do_proof_place(discrete_state, lhs_succ, &phi2Place, *formula.getRight());
+    phi2Place.cf();
 
     cpplog(cpplogging::debug)
         << "----() Formula \\phi_2 placeholder obtained as {" << phi2Place
@@ -2384,7 +2382,7 @@ inline DBMList* prover::do_proof_place_forall_rel(const SubstList& discrete_stat
 
       if (cpplogEnabled(cpplogging::debug)) {
         print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal,
-                           lhs_succ, fPlace, discrete_state, formula.getOpType());
+                           lhs_succ, phi2Place, discrete_state, formula.getOpType());
         cpplog(cpplogging::debug)
             << "----() FORALL (of FORALL_REL) Placeholder Check obtained  FA "
                "Placeholder := {"
