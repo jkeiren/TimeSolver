@@ -77,18 +77,18 @@ inline bool comp_ph_invs(const ExprNode& e, const SubstList& sublist) {
  * @return true: the model has a non-vacuous invariant; false: otherwise. */
 inline bool restrict_to_invariant(const std::vector<const ExprNode*>& invs,
                                   DBM* const lhs, const SubstList& sub) {
-  bool outRes = false;
+  bool has_nonvacuous_invariant = false;
   if (invs.empty()) return false;
   for (int i = 0; i < sub.nElements(); i++) {
     for (std::vector<const ExprNode*>::const_iterator it = invs.begin();
          it != invs.end(); ++it) {
       if (comp_ph_invs(*(*it), sub)) {
         lhs->intersect(*(*it)->dbm());
-        outRes = true;
+        has_nonvacuous_invariant = true;
       }
     }
   }
-  return outRes;
+  return has_nonvacuous_invariant;
 }
 
 /** Takes in the specified DBMList and tightens it
@@ -106,14 +106,14 @@ inline bool restrict_to_invariant(const std::vector<const ExprNode*>& invs,
  * @return true: the DBMList is changed; false: otherwise. */
 inline bool restrict_to_invariant(const std::vector<const ExprNode*>& invs,
                                   DBMList* const lhs, const SubstList& sub) {
-  bool outRes = false;
+  bool changed = false;
   if (invs.empty()) return false;
   std::vector<DBM*>* lList = lhs->getDBMList();
   for (std::vector<DBM*>::iterator it = lList->begin(); it != lList->end();
        ++it) {
-    outRes = restrict_to_invariant(invs, *it, sub) || outRes; // order is important
+    changed = restrict_to_invariant(invs, *it, sub) || changed; // order is important
   }
-  return outRes;
+  return changed;
 }
 
 /** Simplified and performance-optimized proof engine for (AllAct) transitions
@@ -131,25 +131,25 @@ inline bool restrict_to_invariant(const std::vector<const ExprNode*>& invs,
  * tightens the DBM to satisfy the constraints (assumed to be in the left
  * hand-side of an implication). It returns false if the set of constraints
  * is empty.
- * @param ph (*) The DBM representing the clock constraints.
+ * @param zone (*) The DBM representing the clock constraints.
  * @param e (*) The expression to evaluate; assumed to be the left hand side
  * of an implication or the conditions of a transition.
- * @param sublist (*) The discrete location of the left hand side.
+ * @param discrete_state (*) The discrete location of the left hand side.
  * @return true: the expression evaluates to true (and ph is
  * tightened to make the expression true), false: otherwise (if
  * the set of discrete and clock states satisfying the premise is empty).
  * @post ph is in canonical form if it was already in canonical form before. */
-inline bool comp_ph(DBM* const ph, const ExprNode& e,
-                    const SubstList& sublist) {
+inline bool comp_ph(DBM* const zone, const ExprNode& e,
+                    const SubstList& discrete_state) {
   switch (e.getOpType()) {
     case CONSTRAINT: {
-      ph->intersect(*(e.dbm()));
-      ph->cf(); // Calls Canonical Form Here.
-      return (!(ph->emptiness()));
+      zone->intersect(*(e.dbm()));
+      zone->cf(); // Calls Canonical Form Here.
+      return (!(zone->emptiness()));
     }
     case AND: {
-      return (comp_ph(ph, *(e.getLeft()), sublist) &&
-              comp_ph(ph, *(e.getRight()), sublist));
+      return (comp_ph(zone, *(e.getLeft()), discrete_state) &&
+              comp_ph(zone, *(e.getRight()), discrete_state));
     }
     case OR:
     case OR_SIMPLE: {
@@ -158,11 +158,11 @@ inline bool comp_ph(DBM* const ph, const ExprNode& e,
        * && and || notes) conjuncted with an intersection of constraints.
        * By construction of the fed input to this function, the above
        * bad case will never occur. */
-      return (comp_ph(ph, *(e.getLeft()), sublist) ||
-              comp_ph(ph, *(e.getRight()), sublist));
+      return (comp_ph(zone, *(e.getLeft()), discrete_state) ||
+              comp_ph(zone, *(e.getRight()), discrete_state));
     }
     default: {
-      return comp_ph_default(e, sublist);
+      return comp_ph_default(e, discrete_state);
     }
   }
 }
@@ -185,16 +185,16 @@ inline bool comp_ph(DBM* const ph, const ExprNode& e,
  * @return true: the expression evaluates to true (and ph is
  * tightened to make the expression true), false: otherwise (if
  * the set of discrete and clock states satisfying the premise is empty).*/
-inline bool comp_ph_exist(DBM* const ph, const ExprNode& e,
-                          const SubstList& sublist) {
+inline bool comp_ph_exist(const DBM* const zone, const ExprNode& e,
+                          const SubstList& discrete_state) {
+  assert(zone->isInCf());
   switch (e.getOpType()) {
     case CONSTRAINT: {
-      ph->cf();
-      return (*ph) <= (*(e.dbm()));
+      return (*zone) <= (*(e.dbm()));
     }
     case AND: {
-      return (comp_ph_exist(ph, *(e.getLeft()), sublist) &&
-              comp_ph_exist(ph, *(e.getRight()), sublist));
+      return (comp_ph_exist(zone, *(e.getLeft()), discrete_state) &&
+              comp_ph_exist(zone, *(e.getRight()), discrete_state));
     }
     case OR:
     case OR_SIMPLE: {
@@ -203,11 +203,11 @@ inline bool comp_ph_exist(DBM* const ph, const ExprNode& e,
        * && and || notes) conjuncted with an intersection of constraints.
        * By construction of the fed input to this function, the above
        * bad case will never occur. */
-      return (comp_ph_exist(ph, *(e.getLeft()), sublist) ||
-              comp_ph_exist(ph, *(e.getRight()), sublist));
+      return (comp_ph_exist(zone, *(e.getLeft()), discrete_state) ||
+              comp_ph_exist(zone, *(e.getRight()), discrete_state));
     }
     default: {
-      return comp_ph_default(e, sublist);
+      return comp_ph_default(e, discrete_state);
     }
   }
 }
@@ -223,25 +223,25 @@ inline bool comp_ph_exist(DBM* const ph, const ExprNode& e,
  * since it can be specialized for this specific subset of PES. This prover
  * evaluates the fed in expression to true or false.
  * For this method, the placeholder is tightened to satisfy the constraints.
- * @param ph (*) The DBM representing the clock constraints.
+ * @param zone (*) The DBM representing the clock constraints.
  * @param place (*) The DBMList placeholder.
  * @param e (*) The expression to evaluate; assumed to be the left hand side
  * of an implication or the conditions of a transition.
- * @param sublist (*) The discrete location of the left hand side.
+ * @param discrete_state (*) The discrete location of the left hand side.
  * @return true: the expression evaluates to true (and ph is
  * tightened to make the expression true), false: otherwise (if
  * the set of discrete and clock states satisfying the premise is empty).*/
-inline bool comp_ph_exist_place(DBM* const ph, DBMList* const place,
-                                const ExprNode& e, const SubstList& sublist) {
+inline bool comp_ph_exist_place(DBM* const zone, DBMList* const place,
+                                const ExprNode& e, const SubstList& discrete_state) {
   switch (e.getOpType()) {
     case CONSTRAINT: {
-      ph->cf();
-      bool res = (*ph) <= (*e.dbm());
-      ph->intersect(*e.dbm());
-      ph->cf(); // Calls Canonical Form Here.
+      zone->cf();
+      bool res = (*zone) <= (*e.dbm());
+      zone->intersect(*e.dbm());
+      zone->cf(); // Calls Canonical Form Here.
       if (res) {
         return true;
-      } else if (ph->emptiness()) {
+      } else if (zone->emptiness()) {
         // We can only tighten if the constraint is not empty
         return false;
       } else {
@@ -255,8 +255,8 @@ inline bool comp_ph_exist_place(DBM* const ph, DBMList* const place,
       }
     }
     case AND: {
-      return (comp_ph_exist_place(ph, place, *(e.getLeft()), sublist) &&
-              comp_ph_exist_place(ph, place, *(e.getRight()), sublist));
+      return (comp_ph_exist_place(zone, place, *(e.getLeft()), discrete_state) &&
+              comp_ph_exist_place(zone, place, *(e.getRight()), discrete_state));
     }
     case OR:
     case OR_SIMPLE: {
@@ -265,11 +265,11 @@ inline bool comp_ph_exist_place(DBM* const ph, DBMList* const place,
        * && and || notes) conjuncted with an intersection of constraints.
        * By construction of the fed input to this function, the above
        * bad case will never occur. */
-      return (comp_ph_exist_place(ph, place, *(e.getLeft()), sublist) ||
-              comp_ph_exist_place(ph, place, *(e.getRight()), sublist));
+      return (comp_ph_exist_place(zone, place, *(e.getLeft()), discrete_state) ||
+              comp_ph_exist_place(zone, place, *(e.getRight()), discrete_state));
     }
     default: {
-      return comp_ph_default(e, sublist);
+      return comp_ph_default(e, discrete_state);
     }
   }
 }
@@ -279,7 +279,7 @@ inline bool comp_ph_exist_place(DBM* const ph, DBMList* const place,
  * in the proof (when getting a final placeholder), this method takes the guard
  * and tightens the LHS and the placeholder, so the placeholder can be altered
  * if needed.
- * @param ph (*) The DBM representing the clock constraints.
+ * @param zone (*) The DBM representing the clock constraints.
  * @param place (*) The DBMList placeholder to tighten with the guard.
  * @param e (*) The expression to evaluate; assumed to be the left hand side
  * of an implication or the conditions of a transition.
@@ -287,13 +287,13 @@ inline bool comp_ph_exist_place(DBM* const ph, DBMList* const place,
  * @return true: the expression evaluates to true (and ph is
  * tightened to make the expression true), false: otherwise (if
  * the set of discrete and clock states satisfying the premise is empty).*/
-inline bool comp_ph_all_place(DBM* const ph, DBMList* const place,
-                              const ExprNode& e, const SubstList& sublist) {
+inline bool comp_ph_all_place(DBM* const zone, DBMList* const place,
+                              const ExprNode& e, const SubstList& discrete_state) {
   switch (e.getOpType()) {
     case CONSTRAINT: {
-      ph->intersect(*e.dbm());
-      ph->cf(); // Calls Canonical Form Here.
-      if (ph->emptiness()) {
+      zone->intersect(*e.dbm());
+      zone->cf(); // Calls Canonical Form Here.
+      if (zone->emptiness()) {
         return false;
       }
       place->intersect(*e.dbm());
@@ -301,8 +301,8 @@ inline bool comp_ph_all_place(DBM* const ph, DBMList* const place,
       return !place->emptiness();;
     }
     case AND: {
-      return (comp_ph_all_place(ph, place, *(e.getLeft()), sublist) &&
-              comp_ph_all_place(ph, place, *(e.getRight()), sublist));
+      return (comp_ph_all_place(zone, place, *(e.getLeft()), discrete_state) &&
+              comp_ph_all_place(zone, place, *(e.getRight()), discrete_state));
     }
     case OR:
     case OR_SIMPLE: {
@@ -311,11 +311,11 @@ inline bool comp_ph_all_place(DBM* const ph, DBMList* const place,
        * && and || notes) conjuncted with an intersection of constraints.
        * By construction of the fed input to this function, the above
        * bad case will never occur. */
-      return (comp_ph_all_place(ph, place, *(e.getLeft()), sublist) ||
-              comp_ph_all_place(ph, place, *(e.getRight()), sublist));
+      return (comp_ph_all_place(zone, place, *(e.getLeft()), discrete_state) ||
+              comp_ph_all_place(zone, place, *(e.getRight()), discrete_state));
     }
     default: {
-      return comp_ph_default(e, sublist);
+      return comp_ph_default(e, discrete_state);
     }
   }
 }
