@@ -634,63 +634,55 @@ protected:
     // placeholder
     /* Per our algorithm, initialize place as retPlaceDBM. */
     // Do we need to intersect succLHS with retPlaceDBM somewhere?
-    if (lhs_succ_and_placeholder >= premise_and_placeholder_succ) {
-      *retPlaceDBM = *placeholder_forall;
-      return;
-    }
-
-    /* If we are here, then we have one of two cases:
-     * 1. The succCheck fails (since it is not possible)
-     * 2. THe placeholder needs to be tightened so it can pass.
-     * Invariants make this tricky */
-    // Find the bad zones;
-    DBMList badVals(*placeholder_forall);
-    // !(badVals || !succPrem || !succLHS) == !badVals && succPrem && succLHS
-    !badVals; // All states outside currPlace
-    badVals.cf();
-    badVals.intersect(premise_and_placeholder_succ); // that can be reached from zone &
-                                           // currPlace
-    badVals.intersect(*lhs_succ);          // *and* that can be reached from zone -- this should be
-                                           // superfluous
-    badVals.cf();
-    badVals.pre();
-    // all states with a delay into those states outside currPlace that can be
-    // reached from zone & currPlace
-    badVals.cf();
-    // At this point, we have the bad valuations. Now intersect their
-    // complement
-    !badVals;
-    // all states for which all delays remain inside currPlace, or can be
-    // reached from zone & currPlace
-    badVals.cf();
-    // Good values must be after succLHS
-    badVals.intersect(*lhs_succ);
-    // all states for which all delays remain inside currPlace, or can be
-    // reached from zone & currPlace, that can be reached from zone. really, at
-    // this point badVals contains the *good* values
-    badVals.cf();
-    placeholder_forall->intersect(badVals);
-    placeholder_forall->cf();
-    if (placeholder_forall->emptiness()) {
-      *retPlaceDBM = *placeholder_forall;
-      return;
-    }
-
-    // The placheolder has shrunk; we now check whether the side condition is
-    // satisfied.
-    // leave conseq unchanged, since that placeholder did not shrink
-    premise_and_placeholder_succ = zone;
-    premise_and_placeholder_succ.intersect(*placeholder_forall);
-    premise_and_placeholder_succ.cf();
-    premise_and_placeholder_succ.suc();
-    premise_and_placeholder_succ.cf();
-
-    // use previously solved place, not new one for right hand side
     if (!(lhs_succ_and_placeholder >= premise_and_placeholder_succ)) {
-      placeholder_forall->makeEmpty();
+      /* If we are here, then we have one of two cases:
+       * 1. The succCheck fails (since it is not possible)
+       * 2. THe placeholder needs to be tightened so it can pass.
+       * Invariants make this tricky */
+      // Find the bad zones;
+      DBMList badVals(*placeholder_forall);
+      // !(badVals || !succPrem || !succLHS) == !badVals && succPrem && succLHS
+      !badVals; // All states outside currPlace
+      badVals.cf();
+      badVals.intersect(premise_and_placeholder_succ); // that can be reached from zone &
+                                             // currPlace
+      badVals.intersect(*lhs_succ);          // *and* that can be reached from zone -- this should be
+                                             // superfluous
+      badVals.cf();
+      badVals.pre();
+      // all states with a delay into those states outside currPlace that can be
+      // reached from zone & currPlace
+      badVals.cf();
+      // At this point, we have the bad valuations. Now intersect their
+      // complement
+      !badVals;
+      // all states for which all delays remain inside currPlace, or can be
+      // reached from zone & currPlace
+      badVals.cf();
+      // Good values must be after succLHS
+      badVals.intersect(*lhs_succ);
+      // all states for which all delays remain inside currPlace, or can be
+      // reached from zone & currPlace, that can be reached from zone. really, at
+      // this point badVals contains the *good* values
+      badVals.cf();
+      placeholder_forall->intersect(badVals);
+      placeholder_forall->cf();
+      if(!placeholder_forall->emptiness()) {
+        // The placheolder has shrunk; we now check whether the side condition is
+        // satisfied.
+        // leave conseq unchanged, since that placeholder did not shrink
+        premise_and_placeholder_succ = zone;
+        premise_and_placeholder_succ.intersect(*placeholder_forall);
+        premise_and_placeholder_succ.cf();
+        premise_and_placeholder_succ.suc();
+        premise_and_placeholder_succ.cf();
+
+        // use previously solved place, not new one for right hand side
+        if (!(lhs_succ_and_placeholder >= premise_and_placeholder_succ)) {
+          placeholder_forall->makeEmpty();
+        }
+      }
     }
-    *retPlaceDBM = *placeholder_forall;
-    return;
   }
 };
 
