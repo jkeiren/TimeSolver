@@ -122,7 +122,8 @@ protected:
     assert(zone.isInCf());
     bool result = false;
     if (cpplogEnabled(cpplogging::debug)) {
-      print_sequent(std::cerr, step, result, zone, formula, discrete_state, formula.getOpType());
+      print_sequent(std::cerr, step, result, zone, formula, discrete_state,
+                    formula.getOpType());
     }
     ++step;
 
@@ -176,31 +177,31 @@ protected:
         break;
       }
       case BOOL: {
-        result = do_proof_bool(formula);
+        result = do_proof_place_bool(nullptr, formula);
         break;
       }
       case ATOMIC: {
-        result = do_proof_atomic(discrete_state, formula);
+        result = do_proof_place_atomic(discrete_state, nullptr, formula);
         break;
       }
       case ATOMIC_NOT: {
-        result = do_proof_atomic_not(discrete_state, formula);
+        result = do_proof_place_atomic_not(discrete_state, nullptr, formula);
         break;
       }
       case ATOMIC_LT: {
-        result = do_proof_atomic_lt(discrete_state, formula);
+        result = do_proof_place_atomic_lt(discrete_state, nullptr, formula);
         break;
       }
       case ATOMIC_GT: {
-        result = do_proof_atomic_gt(discrete_state, formula);
+        result = do_proof_place_atomic_gt(discrete_state, nullptr, formula);
         break;
       }
       case ATOMIC_LE: {
-        result = do_proof_atomic_le(discrete_state, formula);
+        result = do_proof_place_atomic_le(discrete_state, nullptr, formula);
         break;
       }
       case ATOMIC_GE: {
-        result = do_proof_atomic_ge(discrete_state, formula);
+        result = do_proof_place_atomic_ge(discrete_state, nullptr, formula);
         break;
       }
       case SUBLIST: {
@@ -220,11 +221,11 @@ protected:
         break;
       }
       case ABLEWAITINF: {
-        result = do_proof_ablewaitinf(discrete_state, zone);
+        result = do_proof_place_ablewaitinf(discrete_state, zone, nullptr);
         break;
       }
       case UNABLEWAITINF: {
-        result = do_proof_unablewaitinf(discrete_state, zone);
+        result = do_proof_place_unablewaitinf(discrete_state, zone, nullptr);
         break;
       }
     }
@@ -391,19 +392,6 @@ protected:
   bool do_proof_imply(const SubstList& discrete_state, const DBM& zone,
                       const ExprNode& formula);
   bool do_proof_constraint(const DBM& zone, const ExprNode& formula);
-  bool do_proof_bool(const ExprNode& formula);
-  bool do_proof_atomic(const SubstList& discrete_state,
-                       const ExprNode& formula);
-  bool do_proof_atomic_not(const SubstList& discrete_state,
-                           const ExprNode& formula);
-  bool do_proof_atomic_lt(const SubstList& discrete_state,
-                          const ExprNode& formula);
-  bool do_proof_atomic_gt(const SubstList& discrete_state,
-                          const ExprNode& formula);
-  bool do_proof_atomic_le(const SubstList& discrete_state,
-                          const ExprNode& formula);
-  bool do_proof_atomic_ge(const SubstList& discrete_state,
-                          const ExprNode& formula);
   bool do_proof_sublist(const SubstList& discrete_state, const DBM& zone,
                         const ExprNode& formula);
   bool do_proof_reset(const SubstList& discrete_state, const DBM& zone,
@@ -412,8 +400,6 @@ protected:
                        const ExprNode& formula);
   bool do_proof_replace(const SubstList& discrete_state, const DBM& zone,
                         const ExprNode& formula);
-  bool do_proof_ablewaitinf(const SubstList& discrete_state, const DBM& zone);
-  bool do_proof_unablewaitinf(const SubstList& discrete_state, const DBM& zone);
 
   void do_proof_place_predicate(const SubstList& discrete_state,
                                     const DBM& zone, DBMList* place,
@@ -450,25 +436,19 @@ protected:
                                 const ExprNode& formula);
   void do_proof_place_constraint(const DBM& zone, DBMList* place,
                                      const ExprNode& formula);
-  void do_proof_place_bool(DBMList* place, const ExprNode& formula);
-  void do_proof_place_atomic(const SubstList& discrete_state,
-                                 DBMList* place,
-                                 const ExprNode& formula);
-  void do_proof_place_atomic_not(const SubstList& discrete_state,
-                                     DBMList* place,
-                                     const ExprNode& formula);
-  void do_proof_place_atomic_lt(const SubstList& discrete_state,
-                                    DBMList* place,
-                                    const ExprNode& formula);
-  void do_proof_place_atomic_gt(const SubstList& discrete_state,
-                                    DBMList* place,
-                                    const ExprNode& formula);
-  void do_proof_place_atomic_le(const SubstList& discrete_state,
-                                    DBMList* place,
-                                    const ExprNode& formula);
-  void do_proof_place_atomic_ge(const SubstList& discrete_state,
-                                    DBMList* place,
-                                    const ExprNode& formula);
+  bool do_proof_place_bool(DBMList* place, const ExprNode& formula);
+  bool do_proof_place_atomic(const SubstList& discrete_state,
+                             DBMList* place, const ExprNode& formula);
+  bool do_proof_place_atomic_not(const SubstList& discrete_state,
+                                 DBMList* place, const ExprNode& formula);
+  bool do_proof_place_atomic_lt(const SubstList& discrete_state,
+                                DBMList* place, const ExprNode& formula);
+  bool do_proof_place_atomic_gt(const SubstList& discrete_state,
+                                DBMList* place, const ExprNode& formula);
+  bool do_proof_place_atomic_le(const SubstList& discrete_state,
+                                DBMList* place, const ExprNode& formula);
+  bool do_proof_place_atomic_ge(const SubstList& discrete_state,
+                                DBMList* place, const ExprNode& formula);
   void do_proof_place_sublist(const SubstList& discrete_state,
                                   const DBM& zone, DBMList* place,
                                   const ExprNode& formula);
@@ -481,10 +461,10 @@ protected:
   void do_proof_place_replace(const SubstList& discrete_state,
                                   const DBM& zone, DBMList* place,
                                   const ExprNode& formula);
-  void do_proof_place_ablewaitinf(const SubstList& discrete_state,
-                                      const DBM& zone, DBMList* place);
-  void do_proof_place_unablewaitinf(const SubstList& discrete_state,
-                                        const DBM& zone, DBMList* place);
+  bool do_proof_place_ablewaitinf(const SubstList& discrete_state,
+                                  const DBM& zone, DBMList* place);
+  bool do_proof_place_unablewaitinf(const SubstList& discrete_state,
+                                    const DBM& zone, DBMList* place);
 
   /** Method to compute the predecessor check of relativized exists operators.
    * This method is inlined for performance reasons.
@@ -1652,68 +1632,6 @@ inline bool prover::do_proof_constraint(const DBM& zone,
   return retVal;
 }
 
-inline bool prover::do_proof_bool(const ExprNode& formula) {
-  bool retVal = (formula.getBool());
-  cpplog(cpplogging::debug) << "---(" << (retVal ? "V" : "Inv")
-                            << "alid) Leaf BOOL Reached----" << std::endl
-                            << std::endl;
-  return retVal;
-}
-
-inline bool prover::do_proof_atomic(const SubstList& discrete_state,
-                                    const ExprNode& formula) {
-  bool retVal = (discrete_state.at(formula.getAtomic()) == formula.getIntVal());
-  cpplog(cpplogging::debug) << "---(" << (retVal ? "V" : "Inv")
-                            << "alid) Leaf ATOMIC == Reached----" << std::endl
-                            << std::endl;
-  return retVal;
-}
-
-inline bool prover::do_proof_atomic_not(const SubstList& discrete_state,
-                                        const ExprNode& formula) {
-  bool retVal = (discrete_state.at(formula.getAtomic()) != formula.getIntVal());
-  cpplog(cpplogging::debug) << "---(" << (retVal ? "V" : "Inv")
-                            << "alid) Leaf ATOMIC != Reached----" << std::endl
-                            << std::endl;
-  return retVal;
-}
-
-inline bool prover::do_proof_atomic_lt(const SubstList& discrete_state,
-                                       const ExprNode& formula) {
-  bool retVal = (discrete_state.at(formula.getAtomic()) < formula.getIntVal());
-  cpplog(cpplogging::debug) << "---(" << (retVal ? "V" : "Inv")
-                            << "alid) Leaf ATOMIC < Reached----" << std::endl
-                            << std::endl;
-  return retVal;
-}
-
-inline bool prover::do_proof_atomic_gt(const SubstList& discrete_state,
-                                       const ExprNode& formula) {
-  bool retVal = (discrete_state.at(formula.getAtomic()) > formula.getIntVal());
-  cpplog(cpplogging::debug) << "---(" << (retVal ? "V" : "Inv")
-                            << "alid) Leaf ATOMIC > Reached----" << std::endl
-                            << std::endl;
-  return retVal;
-}
-
-inline bool prover::do_proof_atomic_le(const SubstList& discrete_state,
-                                       const ExprNode& formula) {
-  bool retVal = (discrete_state.at(formula.getAtomic()) <= formula.getIntVal());
-  cpplog(cpplogging::debug) << "---(" << (retVal ? "V" : "Inv")
-                            << "alid) Leaf ATOMIC < Reached----" << std::endl
-                            << std::endl;
-  return retVal;
-}
-
-inline bool prover::do_proof_atomic_ge(const SubstList& discrete_state,
-                                       const ExprNode& formula) {
-  bool retVal = (discrete_state.at(formula.getAtomic()) >= formula.getIntVal());
-  cpplog(cpplogging::debug) << "---(" << (retVal ? "V" : "Inv")
-                            << "alid) Leaf ATOMIC > Reached----" << std::endl
-                            << std::endl;
-  return retVal;
-}
-
 inline bool prover::do_proof_sublist(const SubstList& discrete_state,
                                      const DBM& zone, const ExprNode& formula) {
   SubstList st(formula.getSublist(), &discrete_state);
@@ -1746,47 +1664,10 @@ inline bool prover::do_proof_replace(const SubstList& discrete_state,
   return do_proof(sub_, zone, *formula.getExpr());
 }
 
-inline bool prover::do_proof_ablewaitinf(const SubstList& discrete_state,
-                                         const DBM& zone) {
-  DBM ph(zone);
-  ph.suc();
-  restrict_to_invariant(input_pes.invariants(), &ph, discrete_state);
-  ph.cf();
-  /* Time can diverge if and only if there are no upper bound
-   * constraints in the successor */
-  bool retVal = !ph.hasUpperConstraint();
-  cpplog(cpplogging::debug)
-      << "---(" << (retVal ? "V" : "Inv") << "alid) Time "
-      << (retVal ? "" : "un")
-      << "able to diverge to INFTY in current location----" << std::endl
-      << std::endl;
-
-  return retVal;
-}
-
-// FIXME: eliminate duplication with do_proof_ablewaitinf
-inline bool prover::do_proof_unablewaitinf(const SubstList& discrete_state,
-                                           const DBM& zone) {
-  DBM ph(zone);
-  ph.suc();
-  restrict_to_invariant(input_pes.invariants(), &ph, discrete_state);
-  ph.cf();
-  /* Time cannot diverge if and only if there is an upper bound
-   * constraint in the successor */
-  bool retVal = ph.hasUpperConstraint();
-  cpplog(cpplogging::debug)
-      << "---(" << (retVal ? "V" : "Inv") << "alid) Time "
-      << (retVal ? "un" : "")
-      << "able to diverge to INFTY in current location----" << std::endl
-      << std::endl;
-  return retVal;
-}
-
 /* IMPLEMENTATION PROVER WITH PLACEHOLDERS */
 inline void prover::do_proof_place_predicate(const SubstList& discrete_state,
-                                                 const DBM& zone,
-                                                 DBMList* place,
-                                                 const ExprNode& formula) {
+                                             const DBM& zone, DBMList* place,
+                                             const ExprNode& formula) {
   ExprNode* e = input_pes.lookup_equation(formula.getPredicate());
 
   // Get Predicate Index for Hashing
@@ -1973,7 +1854,6 @@ inline void prover::do_proof_place_predicate(const SubstList& discrete_state,
         cache.look_for_and_purge_rhs_backStack(
             cached_false_sequent->parents(),
             cached_false_sequent->parents_with_placeholders());
-        // Delete t2s later to prevent double deletion
       }
 
       // Now update in proper Cache
@@ -2018,8 +1898,8 @@ inline void prover::do_proof_place_predicate(const SubstList& discrete_state,
 }
 
 inline void prover::do_proof_place_and(const SubstList& discrete_state,
-                                           const DBM& zone, DBMList* place,
-                                           const ExprNode& formula) {
+                                       const DBM& zone, DBMList* place,
+                                       const ExprNode& formula) {
   DBMList placeholder_right(*place);
   do_proof_place(discrete_state, zone, place, *formula.getLeft());
   place->cf();
@@ -2032,8 +1912,8 @@ inline void prover::do_proof_place_and(const SubstList& discrete_state,
 
 // [FC14] Proof rule \lor_{s2}
 inline void prover::do_proof_place_or(const SubstList& discrete_state,
-                                          const DBM& zone, DBMList* place,
-                                          const ExprNode& formula) {
+                                      const DBM& zone, DBMList* place,
+                                      const ExprNode& formula) {
   place->cf();
   DBMList placeholder_left(*place); // FIXME: why initialise with *place here?
 
@@ -2043,43 +1923,43 @@ inline void prover::do_proof_place_or(const SubstList& discrete_state,
   // Now do the right proof, and take the right if its placeholder is
   // larger that from the left side.
   if (!placeholder_left.emptiness() &&
-      placeholder_left >=
-          *place) { // why compare to *place; it seems this should be zone
+      placeholder_left >= *place) {
+    // why compare to *place; it seems this should be zone
     /* Here, the current transition successful;
      * we are done */
     *place = placeholder_left;
-    return;
-  }
-
-  // We use place here, since the result of the second call is likely to be
-  // part of the result anyway. If not, we will roll back later.
-  // *place is thus placeholder_right.
-  do_proof_place(discrete_state, zone, place, *formula.getRight());
-  place->cf();
-
-  if (cpplogEnabled(cpplogging::debug)) {
-    // Check Debugging Here to make sure it is giving the right output
-    print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, false, zone,
-                       placeholder_left, discrete_state, formula.getOpType());
-    cpplog(cpplogging::debug)
-        << "Left Placeholder of OR (P): " << placeholder_left
-        << "\nRight Placeholder of OR (P): " << *place << std::endl;
-  }
-
-  /* Note: <= >= Not clearly working if empty DBMs; should be resolved in the
-   *  implementation of <=; */
-  if (placeholder_left.emptiness() || placeholder_left <= *place) {
-    // the result is the right placeholder. Already established.
-  } else if (place->emptiness() || *place <= placeholder_left) {
-    *place = placeholder_left; // roll back
   } else {
-    // corner case, union of DBMs
-    place->addDBMList(placeholder_left);
-  }
 
-  cpplog(cpplogging::debug)
-      << "Final Placeholder of OR (P): " << *place << std::endl
-      << std::endl;
+    // We use place here, since the result of the second call is likely to be
+    // part of the result anyway. If not, we will roll back later.
+    // *place is thus placeholder_right.
+    do_proof_place(discrete_state, zone, place, *formula.getRight());
+    place->cf();
+
+    if (cpplogEnabled(cpplogging::debug)) {
+      // Check Debugging Here to make sure it is giving the right output
+      print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, false, zone,
+                         placeholder_left, discrete_state, formula.getOpType());
+      cpplog(cpplogging::debug)
+          << "Left Placeholder of OR (P): " << placeholder_left
+          << "\nRight Placeholder of OR (P): " << *place << std::endl;
+    }
+
+    /* Note: <= >= Not clearly working if empty DBMs; should be resolved in the
+     *  implementation of <=; */
+    if (placeholder_left.emptiness() || placeholder_left <= *place) {
+      // the result is the right placeholder. Already established.
+    } else if (place->emptiness() || *place <= placeholder_left) {
+      *place = placeholder_left; // roll back
+    } else {
+      // corner case, union of DBMs
+      place->addDBMList(placeholder_left);
+    }
+
+    cpplog(cpplogging::debug)
+        << "Final Placeholder of OR (P): " << *place << std::endl
+        << std::endl;
+  }
 }
 
 inline void prover::do_proof_place_or_simple(const SubstList& discrete_state,
@@ -3048,60 +2928,104 @@ inline void prover::do_proof_place_constraint(const DBM& zone,
   }
 }
 
-inline void prover::do_proof_place_bool(DBMList* place,
-                                            const ExprNode& formula) {
-  if (!do_proof_bool(formula)) {
+inline bool prover::do_proof_place_bool(DBMList* place,
+                                        const ExprNode& formula) {
+  bool retVal = (formula.getBool());
+  cpplog(cpplogging::debug) << "---(" << (retVal ? "V" : "Inv")
+                            << "alid) Leaf BOOL Reached----" << std::endl
+                            << std::endl;
+
+  if (!retVal && place != nullptr) {
     place->makeEmpty();
   }
+
+  return retVal;
 }
 
-inline void prover::do_proof_place_atomic(const SubstList& discrete_state,
+inline bool prover::do_proof_place_atomic(const SubstList& discrete_state,
+                                          DBMList* place,
+                                          const ExprNode& formula) {
+  bool retVal = (discrete_state.at(formula.getAtomic()) == formula.getIntVal());
+  cpplog(cpplogging::debug) << "---(" << (retVal ? "V" : "Inv")
+                            << "alid) Leaf ATOMIC == Reached----" << std::endl
+                            << std::endl;
+  if (!retVal && place != nullptr) {
+    place->makeEmpty();
+  }
+
+  return retVal;
+}
+
+inline bool prover::do_proof_place_atomic_not(const SubstList& discrete_state,
                                               DBMList* place,
                                               const ExprNode& formula) {
-  if (!do_proof_atomic(discrete_state, formula)) {
+  bool retVal = (discrete_state.at(formula.getAtomic()) != formula.getIntVal());
+  cpplog(cpplogging::debug) << "---(" << (retVal ? "V" : "Inv")
+                            << "alid) Leaf ATOMIC != Reached----" << std::endl
+                            << std::endl;
+
+  if (!retVal && place != nullptr) {
     place->makeEmpty();
   }
+
+  return retVal;
 }
 
-inline void prover::do_proof_place_atomic_not(const SubstList& discrete_state,
-                                                  DBMList* place,
-                                                  const ExprNode& formula) {
-  if (!do_proof_atomic_not(discrete_state, formula)) {
+inline bool prover::do_proof_place_atomic_lt(const SubstList& discrete_state,
+                                             DBMList* place,
+                                             const ExprNode& formula) {
+  bool retVal = (discrete_state.at(formula.getAtomic()) < formula.getIntVal());
+  cpplog(cpplogging::debug) << "---(" << (retVal ? "V" : "Inv")
+                            << "alid) Leaf ATOMIC < Reached----" << std::endl
+                            << std::endl;
+
+  if (!retVal && place != nullptr) {
     place->makeEmpty();
   }
+
+  return retVal;
 }
 
-inline void prover::do_proof_place_atomic_lt(const SubstList& discrete_state,
-                                                 DBMList* place,
-                                                 const ExprNode& formula) {
-  if (!do_proof_atomic_lt(discrete_state, formula)) {
+inline bool prover::do_proof_place_atomic_gt(const SubstList& discrete_state,
+                                             DBMList* place,
+                                             const ExprNode& formula) {
+  bool retVal = (discrete_state.at(formula.getAtomic()) > formula.getIntVal());
+  cpplog(cpplogging::debug) << "---(" << (retVal ? "V" : "Inv")
+                            << "alid) Leaf ATOMIC > Reached----" << std::endl
+                            << std::endl;
+  if (!retVal && place != nullptr) {
     place->makeEmpty();
   }
+  return retVal;
 }
 
-inline void prover::do_proof_place_atomic_gt(const SubstList& discrete_state,
-                                                 DBMList* place,
-                                                 const ExprNode& formula) {
-  if (!do_proof_atomic_gt(discrete_state, formula)) {
+inline bool prover::do_proof_place_atomic_le(const SubstList& discrete_state,
+                                             DBMList* place,
+                                             const ExprNode& formula) {
+  bool retVal = (discrete_state.at(formula.getAtomic()) <= formula.getIntVal());
+  cpplog(cpplogging::debug) << "---(" << (retVal ? "V" : "Inv")
+                            << "alid) Leaf ATOMIC < Reached----" << std::endl
+                            << std::endl;
+
+  if (!retVal && place != nullptr) {
     place->makeEmpty();
   }
+  return retVal;
 }
 
-inline void prover::do_proof_place_atomic_le(const SubstList& discrete_state,
-                                                 DBMList* place,
-                                                 const ExprNode& formula) {
-  if (!do_proof_atomic_le(discrete_state, formula)) {
+
+inline bool prover::do_proof_place_atomic_ge(const SubstList& discrete_state,
+                                             DBMList* place,
+                                             const ExprNode& formula) {
+  bool retVal = (discrete_state.at(formula.getAtomic()) >= formula.getIntVal());
+  cpplog(cpplogging::debug) << "---(" << (retVal ? "V" : "Inv")
+                            << "alid) Leaf ATOMIC > Reached----" << std::endl
+                            << std::endl;
+
+  if (!retVal && place != nullptr) {
     place->makeEmpty();
   }
-}
-
-
-inline void prover::do_proof_place_atomic_ge(const SubstList& discrete_state,
-                                                 DBMList* place,
-                                                 const ExprNode& formula) {
-  if (!do_proof_atomic_ge(discrete_state, formula)) {
-    place->makeEmpty();
-  }
+  return retVal;
 }
 
 inline void prover::do_proof_place_sublist(const SubstList& discrete_state,
@@ -3209,11 +3133,13 @@ inline void prover::do_proof_place_replace(const SubstList& discrete_state,
   do_proof_place(sub_, zone, place, *formula.getExpr());
 }
 
-inline void prover::do_proof_place_ablewaitinf(const SubstList& discrete_state,
-                                                   const DBM& zone,
-                                                   DBMList* place) {
+inline bool prover::do_proof_place_ablewaitinf(const SubstList& discrete_state,
+                                               const DBM& zone,
+                                               DBMList* place) {
   DBMList ph(zone);
-  ph.intersect(*place);
+  if(place != nullptr) {
+    ph.intersect(*place);
+  }
   ph.cf();
   ph.suc();
   restrict_to_invariant(input_pes.invariants(), &ph, discrete_state);
@@ -3223,27 +3149,30 @@ inline void prover::do_proof_place_ablewaitinf(const SubstList& discrete_state,
    * either all DBMs have an upper bound constraint, or none
    * of them do. Hence, checking the first is always good enough. */
   assert(!ph.getDBMList()->empty());
-  DBM* currDBM = *(ph.getDBMList()->begin());
+  DBM* firstDBM = *(ph.getDBMList()->begin());
 
-  if (currDBM->hasUpperConstraint()) {
+  bool retVal = !firstDBM->hasUpperConstraint();
+  if(!retVal && place != nullptr)
+  {
     place->makeEmpty();
-    cpplog(cpplogging::debug)
-        << "---(Invalid) Time unable to diverge to INFTY in current location---"
-        << std::endl
-        << std::endl;
-  } else {
-    cpplog(cpplogging::debug)
-        << "---(Valid) Time able to diverge to INFTY in current location----"
-        << std::endl
-        << std::endl;
   }
+
+  cpplog(cpplogging::debug)
+      << "---(" << (retVal ? "V" : "Inv") << "alid) Time "
+      << (retVal ? "" : "un")
+      << "able to diverge to INFTY in current location---" << std::endl
+      << std::endl;
+
+  return retVal;
 }
 
-inline void prover::do_proof_place_unablewaitinf(const SubstList& discrete_state,
-                                                     const DBM& zone,
-                                                     DBMList* place) {
+inline bool prover::do_proof_place_unablewaitinf(const SubstList& discrete_state,
+                                                 const DBM& zone,
+                                                 DBMList* place) {
   DBMList ph(zone);
-  ph.intersect(*place);
+  if(place != nullptr) {
+    ph.intersect(*place);
+  }
   ph.cf();
   ph.suc();
   restrict_to_invariant(input_pes.invariants(), &ph, discrete_state);
@@ -3253,19 +3182,19 @@ inline void prover::do_proof_place_unablewaitinf(const SubstList& discrete_state
    * either all DBMs have an upper bound constraint, or none
    * of them do. Hence, checking the first is always good enough. */
   assert(!ph.getDBMList()->empty());
-  DBM* currDBM = *(ph.getDBMList()->begin());
-  if (!currDBM->hasUpperConstraint()) {
+
+  DBM* firstDBM = *(ph.getDBMList()->begin());
+  bool retVal = firstDBM->hasUpperConstraint();
+  if(!retVal && place != nullptr) {
     place->makeEmpty();
-    cpplog(cpplogging::debug)
-        << "---(Invalid) Time able to diverge to INFTY in current location---"
-        << std::endl
-        << std::endl;
-  } else {
-    cpplog(cpplogging::debug)
-        << "---(Valid) Time unable to diverge to INFTY in current location----"
-        << std::endl
-        << std::endl;
   }
+
+  cpplog(cpplogging::debug)
+      << "---(" << (retVal ? "V" : "Inv") << "alid) Time "
+      << (retVal ? "un" : "")
+      << "able to diverge to INFTY in current location---" << std::endl
+      << std::endl;
+  return retVal;
 }
 
 #endif /* PROOF_HH */
