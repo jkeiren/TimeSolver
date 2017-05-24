@@ -2288,7 +2288,7 @@ inline DBMList* prover::do_proof_place_forall_rel(const SubstList& discrete_stat
           cpplog(cpplogging::debug)
               << "----(Valid) FORALL (FORALL_REL) Placeholder Check Passed-----"
               << std::endl
-              << "--With Placeholder := {" << *retPlaceDBM << "} ----"
+              << "--With Placeholder := {" << *place << "} ----"
               << std::endl
               << std::endl;
         } else {
@@ -2329,7 +2329,7 @@ inline DBMList* prover::do_proof_place_forall_rel(const SubstList& discrete_stat
                            zone, infPlace, discrete_state, formula.getOpType());
         cpplog(cpplogging::debug)
             << "----(Valid) Placeholder Check Passed-----" << std::endl
-            << "--With Placeholder := {" << *retPlaceDBM << "} ----"
+            << "--With Placeholder := {" << infPlace << "} ----"
             << std::endl
             << std::endl;
       }
@@ -2407,7 +2407,7 @@ inline DBMList* prover::do_proof_place_forall_rel(const SubstList& discrete_stat
 
       cpplog(cpplogging::debug)
           << "----() FORALL Rel Exists placeholder obtained as := {"
-          << *retPlaceDBM << "} ----" << std::endl
+          << placeholder2 << "} ----" << std::endl
           << std::endl;
 
       if (!placeholder2.emptiness()) {
@@ -2428,10 +2428,10 @@ inline DBMList* prover::do_proof_place_forall_rel(const SubstList& discrete_stat
 
         if (cpplogEnabled(cpplogging::debug)) {
           print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal,
-                             zone, *retPlaceDBM, discrete_state, formula.getOpType());
+                             zone, placeholder2, discrete_state, formula.getOpType());
           cpplog(cpplogging::debug) << "----() FORALL Rel Exists placeholder "
                                        "after time elapse check is := {"
-                                    << *retPlaceDBM << "} ----" << std::endl
+                                    << placeholder2 << "} ----" << std::endl
                                     << std::endl;
         }
       }
@@ -2459,7 +2459,7 @@ inline DBMList* prover::do_proof_place_forall_rel(const SubstList& discrete_stat
     }
 
     cpplog(cpplogging::debug)
-        << "Final Placeholder of FORALL_REL (P): " << *retPlaceDBM
+        << "Final Placeholder of FORALL_REL (P): " << *place
         << std::endl
         << std::endl;
   }
@@ -2551,7 +2551,6 @@ inline DBMList* prover::do_proof_place_exists_rel(const SubstList& discrete_stat
                                 << std::endl
                                 << std::endl;
     }
-    assert(*retPlaceDBM == placeholder2);
     *place = placeholder2;
   } else {
     /* Now check for the relativization.
