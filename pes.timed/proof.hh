@@ -2320,10 +2320,10 @@ inline DBMList* prover::do_proof_place_forall_rel(const SubstList& discrete_stat
     }
 
     // If here, we neither need a placeholder nor to elapse time
-    DBM phb(zone);
     DBMList infPlace(*INFTYDBM);
-    retPlaceDBM = do_proof_place(discrete_state, phb, &infPlace, *formula.getRight());
+    retPlaceDBM = do_proof_place(discrete_state, zone, &infPlace, *formula.getRight());
     retPlaceDBM->cf();
+    assert(infPlace == *retPlaceDBM);
     if (!(retPlaceDBM->emptiness())) { // Only do if a nonempty placeholder
       /* Now do the second proof rule to compute the first placeholder */
 
@@ -2343,7 +2343,7 @@ inline DBMList* prover::do_proof_place_forall_rel(const SubstList& discrete_stat
 
       if (cpplogEnabled(cpplogging::debug)) {
         print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal,
-                           phb, infPlace, discrete_state, formula.getOpType());
+                           zone, infPlace, discrete_state, formula.getOpType());
         if (retVal) {
           cpplog(cpplogging::debug)
               << "----(Valid) Placeholder Check Passed-----" << std::endl
@@ -2372,11 +2372,8 @@ inline DBMList* prover::do_proof_place_forall_rel(const SubstList& discrete_stat
 
     /* We omit the check that we can elapse to the placeholder;
      * We will check that once at the end */
-    DBMList* fPlace = new DBMList(*INFTYDBM);
-    DBM lhs_succ(zone);
-    lhs_succ.suc();
-    DBM phb(lhs_succ);
-    retPlaceDBM = do_proof_place(discrete_state, phb, fPlace, *formula.getRight());
+    DBMList fPlace(*INFTYDBM);
+    retPlaceDBM = do_proof_place(discrete_state, lhs_succ, &fPlace, *formula.getRight());
     retPlaceDBM->cf();
     DBMList phi2Place(*retPlaceDBM);
 
@@ -2408,7 +2405,7 @@ inline DBMList* prover::do_proof_place_forall_rel(const SubstList& discrete_stat
 
       if (cpplogEnabled(cpplogging::debug)) {
         print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal,
-                           phb, *fPlace, discrete_state, formula.getOpType());
+                           lhs_succ, fPlace, discrete_state, formula.getOpType());
         cpplog(cpplogging::debug)
             << "----() FORALL (of FORALL_REL) Placeholder Check obtained  FA "
                "Placeholder := {"
@@ -2472,14 +2469,12 @@ inline DBMList* prover::do_proof_place_forall_rel(const SubstList& discrete_stat
       } else if (forallEmpty) {
       } else if (existsEmpty) {
         *retPlaceDBM = forallPlace;
+      } else if (forallPlace <= *retPlaceDBM) {
+      } else if (*retPlaceDBM <= forallPlace) {
+        *retPlaceDBM = forallPlace;
       } else {
-        if (forallPlace <= *retPlaceDBM) {
-        } else if (*retPlaceDBM <= forallPlace) {
-          *retPlaceDBM = forallPlace;
-        } else {
-          /* This case requires us to union the two placeholders. */
-          retPlaceDBM->addDBMList(forallPlace);
-        }
+        /* This case requires us to union the two placeholders. */
+        retPlaceDBM->addDBMList(forallPlace);
       }
       // retVal is computed above
     }
@@ -2488,8 +2483,6 @@ inline DBMList* prover::do_proof_place_forall_rel(const SubstList& discrete_stat
         << "Final Placeholder of FORALL_REL (P): " << *retPlaceDBM
         << std::endl
         << std::endl;
-
-    delete fPlace;
   }
 
   *place = *retPlaceDBM;
