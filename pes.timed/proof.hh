@@ -2238,7 +2238,6 @@ inline DBMList* prover::do_proof_place_forall_rel(const SubstList& discrete_stat
   /* First, see if \exists(phi_1) is true. The common case is that it
    * will not be. */
   /* First try to get a new placeholder value that works */
-  place->cf();
   DBM lhs_succ(zone);
   lhs_succ.suc();
 
@@ -2273,20 +2272,18 @@ inline DBMList* prover::do_proof_place_forall_rel(const SubstList& discrete_stat
       succCheckRule(&discrete_state, zone, &lhs_succ, &currPlace, retPlaceDBM);
 
       retVal = !retPlaceDBM->emptiness();
+      *place = *retPlaceDBM;
 
       if (cpplogEnabled(cpplogging::debug)) {
         // This work is done in the succCheck method.
         // Perhaps I should move the debug rule there?
-        DBM succLHS(zone);
-        succLHS.suc();
-        succLHS.cf();
         DBMList succRuleConseq(zone);
         succRuleConseq.intersect(*retPlaceDBM);
         succRuleConseq.cf();
         succRuleConseq.suc();
         succRuleConseq.cf();
         print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal,
-                           succLHS, succRuleConseq, discrete_state, formula.getOpType());
+                           lhs_succ, succRuleConseq, discrete_state, formula.getOpType());
         if (retVal) {
           cpplog(cpplogging::debug)
               << "----(Valid) FORALL (FORALL_REL) Placeholder Check Passed-----"
@@ -2326,37 +2323,19 @@ inline DBMList* prover::do_proof_place_forall_rel(const SubstList& discrete_stat
     assert(infPlace == *retPlaceDBM);
     if (!(retPlaceDBM->emptiness())) { // Only do if a nonempty placeholder
       /* Now do the second proof rule to compute the first placeholder */
-
-      // No Successor Check required since this is for no time elapse
-      infPlace.cf();
-      infPlace.intersect(*retPlaceDBM);
-      infPlace.cf();
-      /* Now do the containment check
-       * and use to compute the value of the place holder *place */
-      if (!(infPlace.emptiness())) {
-        retVal = true;
-        *retPlaceDBM = infPlace;
-      } else { /* proof is false */
-        retVal = false;
-        retPlaceDBM->makeEmpty();
-      }
+      retVal = true;
 
       if (cpplogEnabled(cpplogging::debug)) {
         print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal,
                            zone, infPlace, discrete_state, formula.getOpType());
-        if (retVal) {
-          cpplog(cpplogging::debug)
-              << "----(Valid) Placeholder Check Passed-----" << std::endl
-              << "--With Placeholder := {" << *retPlaceDBM << "} ----"
-              << std::endl
-              << std::endl;
-        } else {
-          cpplog(cpplogging::debug)
-              << "----(Invalid) Placeholder Check Failed-----" << std::endl
-              << std::endl;
-        }
+        cpplog(cpplogging::debug)
+            << "----(Valid) Placeholder Check Passed-----" << std::endl
+            << "--With Placeholder := {" << *retPlaceDBM << "} ----"
+            << std::endl
+            << std::endl;
       }
     }
+    *place = *retPlaceDBM;
 
   } else {
     // This is the more complicated case that requires a placeholder
@@ -2478,6 +2457,7 @@ inline DBMList* prover::do_proof_place_forall_rel(const SubstList& discrete_stat
       }
       // retVal is computed above
     }
+    *place = *retPlaceDBM;
 
     cpplog(cpplogging::debug)
         << "Final Placeholder of FORALL_REL (P): " << *retPlaceDBM
@@ -2485,7 +2465,7 @@ inline DBMList* prover::do_proof_place_forall_rel(const SubstList& discrete_stat
         << std::endl;
   }
 
-  *place = *retPlaceDBM;
+  *retPlaceDBM = *place;
   return retPlaceDBM;
 }
 
