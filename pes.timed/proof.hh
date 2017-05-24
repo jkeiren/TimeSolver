@@ -2640,9 +2640,9 @@ inline void prover::do_proof_place_exists_rel(const SubstList& discrete_state,
 }
 
 inline void prover::do_proof_place_allact(const SubstList& discrete_state,
-                                              const DBM& zone,
-                                              DBMList* place,
-                                              const ExprNode& formula) {
+                                          const DBM& zone,
+                                          DBMList* place,
+                                          const ExprNode& formula) {
   /* Enumerate through all transitions */
   cpplog(cpplogging::debug) << "\t Proving ALLACT Transitions:----\n"
                             << std::endl;
@@ -2840,8 +2840,8 @@ inline void prover::do_proof_place_allact(const SubstList& discrete_state,
          it != transition_placeholders.end(); it++) {
       /* Intersecting alone is not good enough, so need to do both */
       place->intersect(*(*it));
-      place->cf();
     }
+    place->cf();
   }
 
   // Now go through the vector and delete everything in the vector
@@ -2983,19 +2983,18 @@ inline void prover::do_proof_place_imply(const SubstList& discrete_state,
                                              const DBM& zone,
                                              DBMList* place,
                                              const ExprNode& formula) {
-  DBM lhs_copy(zone);
+  DBM zone_copy(zone);
   /* call comp_ph() for efficient proving of IMPLY's left. */
-  if (comp_ph(&lhs_copy, *(formula.getLeft()), discrete_state)) {
+  if (comp_ph(&zone_copy, *(formula.getLeft()), discrete_state)) {
     /* Constraints are bounded by input_pes.max_constant() */
     /* This is to extend the LHS to make sure that
      * the RHS is satisfied by any zone that satisfies
      * the LHS by expanding the zone so it contains
      * all the proper regions where the clocks
      * exceed a certain constant value. */
-    lhs_copy.cf();
-    lhs_copy.bound(input_pes.max_constant());
-    lhs_copy.cf();
-    do_proof_place(discrete_state, lhs_copy, place, *formula.getRight());
+    zone_copy.bound(input_pes.max_constant());
+    zone_copy.cf();
+    do_proof_place(discrete_state, zone_copy, place, *formula.getRight());
   } else {
     /* The set of states does not satisfy the premises of the IF
      * so thus the proof is true */
@@ -3007,9 +3006,8 @@ inline void prover::do_proof_place_imply(const SubstList& discrete_state,
 }
 
 inline void prover::do_proof_place_constraint(const DBM& zone,
-                                                  DBMList* place,
-                                                  const ExprNode& formula) {
-  // The line: (formula->dbm())->cf(); is not needed.
+                                              DBMList* place,
+                                              const ExprNode& formula) {
   if (zone <= *(formula.dbm())) {
     cpplog(cpplogging::debug) << "---(Valid) Leaf DBM (CONSTRAINT) Reached "
                                  "with no need for Placeholder----"
@@ -3023,7 +3021,10 @@ inline void prover::do_proof_place_constraint(const DBM& zone,
     place->intersect(*(formula.dbm()));
     place->cf();
 
-    // Now test constraint
+    // Test if the constraint is satisfiable within the zone; if not, clear the
+    // placeholder.
+    // FIXME: this should be fine if we just use place here (although, strictly
+    // speaking, the placeholder may become a bit smaller in that case).
     DBMList tPlace(*place);
     tPlace.intersect(zone);
     tPlace.cf();
@@ -3094,6 +3095,7 @@ inline void prover::do_proof_place_atomic_le(const SubstList& discrete_state,
   }
 }
 
+
 inline void prover::do_proof_place_atomic_ge(const SubstList& discrete_state,
                                                  DBMList* place,
                                                  const ExprNode& formula) {
@@ -3129,17 +3131,16 @@ inline void prover::do_proof_place_reset(const SubstList& discrete_state,
   } else {
     /* Now do the check that the new placeholder follows from
      * the previous placeholder. by setting it to such */
-    DBMList p2Copy(tPlace);
     // Apply the reset (weakest precondition operator)
-    p2Copy.preset(formula.getClockSet());
+    tPlace.preset(formula.getClockSet());
 
     // Use the rule to compute what the old place holder should be
-    place->intersect(p2Copy);
+    place->intersect(tPlace);
     place->cf();
     bool retVal = !place->emptiness();
 
     if (cpplogEnabled(cpplogging::debug)) {
-      print_sequent_placeCheck(std::cerr, step - 1, retVal, zone, *place, p2Copy,
+      print_sequent_placeCheck(std::cerr, step - 1, retVal, zone, *place, tPlace,
                                discrete_state, formula.getOpType());
       if (retVal) {
         cpplog(cpplogging::debug)
