@@ -2838,7 +2838,7 @@ inline void prover::do_proof_place_existact(const SubstList& discrete_state,
     } else if (tempPlace >= *place) { // FIXME: shouldn't this be LHS?
       /* Here, the current transition successful;
        * we are done */
-      result = *place;
+      result = tempPlace;
       break;
     } else if (result.emptiness()) {
       result = tempPlace;
@@ -2850,6 +2850,7 @@ inline void prover::do_proof_place_existact(const SubstList& discrete_state,
       /* here, we keep tempPlace as our current. */
     } else { /* Corner Case: make a union of DBMLists */
       result.addDBMList(tempPlace);
+      result.cf();
     }
   }
 
