@@ -1,0 +1,8 @@
+---
+Language:        Cpp
+BasedOnStyle:  Google
+AccessModifierOffset: -2
+PointerAlignment: Left
+SpacesBeforeTrailingComments: 1
+SortIncludes:    false
+Standard:        Cpp11

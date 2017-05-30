@@ -1,6 +1,6 @@
 /** \file ExprNode.hh
  * Header file for proof classes: Sequents, Expressions and Transitions.
- * @author Peter Fontana, Dezhuang Zhang, and Rance Cleaveland. 
+ * @author Peter Fontana, Dezhuang Zhang, and Rance Cleaveland.
  * @note Many functions are inlined for better performance.
  * @version 1.21
  * @date November 8, 2013 */
@@ -8,6 +8,7 @@
 #ifndef EXPR_NODE_H
 #define EXPR_NODE_H
 
+#include <cassert>
 #include "DBM.hh"
 #include "DBMList.hh"
 #include <fstream>
@@ -20,136 +21,204 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-using namespace std;
-
 /** The type that contains all of the logical constraints/connectives
  * needed. This covers all possible cases of an ExprNode expression.
- * Possible types: FORALL, EXISTS, FORALL_REL, EXISTS_REL, 
+ * Possible types: FORALL, EXISTS, FORALL_REL, EXISTS_REL,
  * OR, OR_SIMPLE, AND, IMPLY, CONSTRAINT,
- * BOOL, ATOMIC, PREDICATE, RESET, SUBLIST, ATOMIC_NOT, ATOMIC_LT, ATOMIC_GT, 
+ * BOOL, ATOMIC, PREDICATE, RESET, SUBLIST, ATOMIC_NOT, ATOMIC_LT, ATOMIC_GT,
  * ATOMIC_LE, ATOMIC_GE, ASSIGN, REPLACE, ALLACT, EXISTACT, ABLEWAITINF, and
- * UNABLEWAITINF. Note that 
+ * UNABLEWAITINF. Note that
  * FORALL_REL is a derived operator. While supported, the parser eliminates
- * this operator from all expressions using its derivation. Its support is 
+ * this operator from all expressions using its derivation. Its support is
  * included in case a faster way to check FORALL_REL is found. */
-enum opType {FORALL, EXISTS, FORALL_REL, EXISTS_REL, OR, OR_SIMPLE, AND, IMPLY, CONSTRAINT,
-  BOOL, ATOMIC, PREDICATE, RESET, SUBLIST, ATOMIC_NOT, ATOMIC_LT, ATOMIC_GT, 
-  ATOMIC_LE, ATOMIC_GE, ASSIGN, REPLACE, ALLACT, EXISTACT, ABLEWAITINF, UNABLEWAITINF};
+enum opType {
+  FORALL,
+  EXISTS,
+  FORALL_REL,
+  EXISTS_REL,
+  OR,
+  OR_SIMPLE,
+  AND,
+  IMPLY,
+  CONSTRAINT,
+  BOOL,
+  ATOMIC,
+  PREDICATE,
+  RESET,
+  SUBLIST,
+  ATOMIC_NOT,
+  ATOMIC_LT,
+  ATOMIC_GT,
+  ATOMIC_LE,
+  ATOMIC_GE,
+  ASSIGN,
+  REPLACE,
+  ALLACT,
+  EXISTACT,
+  ABLEWAITINF,
+  UNABLEWAITINF
+};
 
-/** The dimension of the clock space (number of clocks). 
- * This number includes the dummy "zero" clock. */
-extern int spaceDimension;
+/** Prints out the expression type (opType) to the desired output stream.
+ * The typical output stream is cout.
+ * @param op (*) The expression type.
+ * @param os (&) The type of output stream to print the output to.
+ * @return none */
+void print_ExprNodeType(const opType op, std::ostream& os, bool place = false);
 
+inline std::ostream& operator<<(std::ostream& os, const opType& op) {
+  print_ExprNodeType(op, os);
+  return os;
+}
 
 /** A Substitution list, functioning as both the location component
  * of a sequent and a mechanism to change location (via variable assignments).
- * The SubstList stores the location (discrete state) using variable form, 
+ * The SubstList stores the location (discrete state) using variable form,
  * representing a location as an integer assignment to each variable.
- * Each element of the SubstList is a variable. Any variable with 
- * a value of -1 indicates that the variable is not restricted 
+ * Each element of the SubstList is a variable. Any variable with
+ * a value of -1 indicates that the variable is not restricted
  * (could be any value).
- * @author Peter Fontana, Dezhuang Zhang, and Rance Cleaveland. 
+ * @author Peter Fontana, Dezhuang Zhang, and Rance Cleaveland.
  * @note Many functions are inlined for better performance.
  * @version 1.2
  * @date November 2, 2013 */
-class SubstList: public OneDIntArray{
+class SubstList : public OneDIntArray {
+protected:
+  const bidirectional_map<std::string, int>& declared_atomic;
+
 public:
-  /** Constructor. Initializes all variables to -1 except the specified 
+  /** Constructor. Initializes all variables to -1 except the specified
    * index, whose value is initialized to val.
    * @param index The location of the variable to initialize to a
    * user-specified value.
    * @param val The value to initialize the specified variable to.
-   * @param numElements The number of variables (the size of the list). 
+   * @param numElements The number of variables (the size of the list).
    * @return [Constructor]. */
-  SubstList(int index, int val, int numElements) : OneDIntArray(numElements) {
-    for(int i = 0; i < numElements; i++)
+  SubstList(const int index, const int val, const int numElements,
+            const bidirectional_map<std::string, int>& as)
+      : OneDIntArray(numElements), declared_atomic(as) {
+    for (int i = 0; i < numElements; i++) {
       this->operatorAccess(i) = -1;
+    }
     this->operatorAccess(index) = val;
   };
-  
+
   /** Constructor. Initializes all variables to 0, providing a specific initial
    * state.
-   * @param numElements The number of variables (the size of the list). 
+   * @param numElements The number of variables (the size of the list).
    * @return [Constructor]. */
-  SubstList(int numElements) : OneDIntArray(numElements) {
-    for(int i = 0; i < numElements; i++)
-      this->operatorAccess(i) = 0;
-  };
-  
+  SubstList(const int numElements,
+            const bidirectional_map<std::string, int>& as)
+      : OneDIntArray(numElements), declared_atomic(as) {
+    for (int i = 0; i < numElements; i++) this->operatorAccess(i) = 0;
+  }
+
   /** 2-list Copy Constructor. Creates a substitution list
-   * by assigning the values in the first substitution list into the second. 
+   * by assigning the values in the first substitution list into the second.
    * This is meant as a layered substitution. This constructor copies
    * the values from st1 (first list) if they are not -1.  If they are -1, it
    * then copies the values from st2 (the second list).
-   * @param st1 (*) The pointer to the first and primary 
+   * @param st1 (*) The pointer to the first and primary
    * SubstList to get values from.
    * @param st2 (*) The pointer to the second SubstList to get values from.
    * @return [Constructor]. */
-  SubstList(SubstList *st1, SubstList *st2) : OneDIntArray(st1->quantity){
-    for(int i = 0; i < quantity; i++){
-      if(st1->operatorAccess(i) != -1)
+  SubstList(const SubstList* const st1, const SubstList* const st2)
+      : OneDIntArray(st1->quantity), declared_atomic(st1->declared_atomic) {
+    for (int i = 0; i < quantity; i++) {
+      if (st1->operatorAccess(i) != -1)
         this->operatorAccess(i) = st1->operatorAccess(i);
-      else	  
+      else
         this->operatorAccess(i) = st2->operatorAccess(i);
-    }	  
-  };
-  
-  /** Copy Constructor. 
-   * @param Y (&) The object to copy. 
+    }
+  }
+
+  /** Copy Constructor.
+   * @param Y (&) The object to copy.
    * @return [Constructor]. */
-  SubstList(SubstList &Y) : OneDIntArray(Y){};
-  
+  SubstList(const SubstList& Y)
+      : OneDIntArray(Y), declared_atomic(Y.declared_atomic){}
+
   /** Destructor.  Does nothing.
    * @return [Destructor]. */
-  ~SubstList(){};
-  
+  ~SubstList() {}
+
   /** Deep-Copy equality of SubList structures: two SubstList objects are equal
    * if and only if they both are the same size and they have the same values
    * for each variable.
-   * @param Y (&) The reference to the RHS SubstList. 
+   * @param Y (&) The reference to the RHS SubstList.
    * @return true: the SubstList is equal to Y; false: otherwise. */
-  bool operator == (SubstList &Y){
-    return (memcmp(storage, Y.storage, quantity * sizeof(short int)) == 0);
+  bool operator==(const SubstList& Y) const {
+    return (std::memcmp(storage, Y.storage, quantity * sizeof(short int)) == 0);
   }
-  
+
+  /** Element-wise equality of SubList elements */
+  bool equal_contents(const SubstList& Y) const {
+    if (quantity != Y.quantity) {
+      return false;
+    }
+
+    for (int j = 0; j < quantity; j++) {
+      if (at(j) != Y.at(j)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   /** Changes the list by changing the specified variable to
    * value val.  The SubstList calling this is changed.
    * @param index The location to change the value of
    * @param val The value to change the desired element to.
    * @return a pointer to the SubstList that was just changed. */
-  SubstList * addst(int index, int val){
+  SubstList* addst(const int index, const int val) {
     this->operator[](index) = val;
     return this;
-  };
-  
+  }
+
   /** Returns the number of variables in this SubstList.
    * @return the number of variables in the SubstList. */
-  int nElements(void) {return quantity;};
-  
+  int nElements(void) const { return quantity; }
+
   /** Prints the contents of the SubstList.  A variable with
    * value -1 is considered empty (the SubstList does not restrict
    * this variable).
    * @param os (&) The output stream to print the output to
    * @return none. */
-  void print(std::ostream &os);
+  void print(std::ostream& os) const {
+    bool end = false;
+    os << "[";
+    for (int i = 0; i < quantity; i++) {
+      if (this->at(i) != -1) {
+        if (end) os << ",";
+        // os << "p" << i;
+        os << declared_atomic.reverse_at(i);
+        os << "=" << this->at(i);
+        end = true;
+      }
+    }
+    os << "]";
+  }
 };
 
-
-
+/** Overload for substitution lists */
+inline std::ostream& operator<<(std::ostream& os, const SubstList& s) {
+  s.print(os);
+  return os;
+}
 
 /** This class represents an expression tree, which is often rooted
  * as the right hand side of a PES Equation. These expressions are often
  * the right hand side of a Sequent.
  *
  * For performance reasons, this class is a "union-like" class: its variables
- * are overloaded for multiple purposes. To utilize different purposes, there 
- * are different constructors that are used for different operation types 
+ * are overloaded for multiple purposes. To utilize different purposes, there
+ * are different constructors that are used for different operation types
  * (see the comments for the constructors). Also, there are multiple
  * methods with different names that do the "same" thing; these methods
  * are named to suggest the kinds of expressions they are used with and
  * the purposes of the variables they interact with.
  *
- * Each node is a root of an expression tree that involves logical 
+ * Each node is a root of an expression tree that involves logical
  * operators and constraints.  Most trees are constructed by the
  * parser. In ExprNode, each constructor, classified
  * by operand type (specified by opType), corresponds to a different
@@ -157,7 +226,7 @@ public:
  *
  * For the constructors, giving an optype different from what is recommended
  * in each constructor may result in program errors.
- * @author Peter Fontana, Dezhuang Zhang, and Rance Cleaveland. 
+ * @author Peter Fontana, Dezhuang Zhang, and Rance Cleaveland.
  * @note Many functions are inlined for better performance.
  * @note The ExprNode class's variables have multiple uses for different
  * expression types (for performance reasons). See above comments.
@@ -172,94 +241,112 @@ public:
    * @note Using this constructor with an opType value other than one of
    * the values given above may result in program errors.
    * @return [Constructor]. */
-  ExprNode(opType o, ExprNode * q) : op(o), left(q){
-  	right = NULL;
-  	constraint = NULL;
-  	cset = NULL;
-  	predicate = NULL;
-  	subst = NULL;
-  };
-  
-  /** Constructor for two-children expressions with 
-   * opType = {FORALL_REL, EXISTS_REL, OR, AND, IMPLY}.    
-   * @param o The logical operator/constraint type. 
+  ExprNode(const opType o, ExprNode* q,
+           const bidirectional_map<std::string, int>& cs,
+           const bidirectional_map<std::string, int>& as)
+      : left(q), op(o), declared_clocks(cs), declared_atomic(as) {
+    right = nullptr;
+    constraint = nullptr;
+    cset = nullptr;
+    predicate = nullptr;
+    subst = nullptr;
+    assert(q != nullptr);
+  }
+
+  /** Constructor for two-children expressions with
+   * opType = {FORALL_REL, EXISTS_REL, OR, AND, IMPLY}.
+   * @param o The logical operator/constraint type.
    * @param l (*) The left child ExprNode
    * @param r (*) The right child ExprNode
    * @note Using this constructor with an opType value other than one of
    * the values given above may result in program errors.
    * @return [Constructor]. */
-  ExprNode(opType o, ExprNode * l, ExprNode *r) :op(o), left(l), right(r){
-  	constraint = NULL;
-  	predicate = NULL;
-  	cset = NULL;
-  	subst = NULL;
-  };
-  
-  /** Constructor for a clock constraint expression with optype = {CONSTRAINT}. 
+  ExprNode(const opType o, ExprNode* l, ExprNode* r,
+           const bidirectional_map<std::string, int>& cs,
+           const bidirectional_map<std::string, int>& as)
+      : left(l), right(r), op(o), declared_clocks(cs), declared_atomic(as) {
+    constraint = nullptr;
+    predicate = nullptr;
+    cset = nullptr;
+    subst = nullptr;
+    assert(l != nullptr);
+    assert(r != nullptr);
+  }
+
+  /** Constructor for a clock constraint expression with optype = {CONSTRAINT}.
    * Clock constraints are represented as DBMs.
-   * @param o The logical operator/constraint type.  
-   * @param c (*) The DBM representing the clock constraints. 
+   * @param o The logical operator/constraint type.
+   * @param c (*) The DBM representing the clock constraints.
    * @note Using this constructor with an opType value other than one of
    * the values given above may result in program errors.
    * @return [Constructor]. */
-  ExprNode(opType o, DBM *c) : op(o){
-  	left = NULL;
-  	right = NULL;
-  	predicate = NULL;
-  	constraint = c;
-  	cset = NULL;
-  	subst = NULL;
-  };
-  
-  /** Constructor for a boolean expression of true or false 
+  ExprNode(const opType o, DBM* c,
+           const bidirectional_map<std::string, int>& cs,
+           const bidirectional_map<std::string, int>& as)
+      : op(o), declared_clocks(cs), declared_atomic(as) {
+    assert(c != nullptr);
+    left = nullptr;
+    right = nullptr;
+    predicate = nullptr;
+    constraint = c;
+    cset = nullptr;
+    subst = nullptr;
+  }
+
+  /** Constructor for a boolean expression of true or false
    * with optype = {BOOL, ABLEWAITINF, UNABLEWAITINF}.
    * For optype = {ABLEWAITINF, UNABLEWAITINF}, the boolean
    * assigned does not matter. These tokens are used to give
    * faster implementations of a common formula.
-   * @param o The logical operator/constraint type.  
+   * @param o The logical operator/constraint type.
    * @param bv The boolean value of TRUE or FALSE.
    * @note Using this constructor with an opType value other than one of
    * the values given above may result in program errors.
    * @return [Constructor]. */
-  ExprNode(opType o, bool bv) : op(o), b(bv){
-  	left = NULL;
-  	right = NULL;
-  	predicate = NULL;
-  	constraint = NULL;
-  	cset = NULL;
-  	subst = NULL;
-  };
-  
-  
-  /** Constructor for atomic (state value) expressions with 
-   * optype = {ATOMIC, ATOMIC_NOT, ATOMIC_LT, ATOMIC_GT, ATOMIC_LE, ATOMIC_GE}. 
+  ExprNode(const opType o, const bool bv,
+           const bidirectional_map<std::string, int>& cs,
+           const bidirectional_map<std::string, int>& as)
+      : op(o), b(bv), declared_clocks(cs), declared_atomic(as) {
+    left = nullptr;
+    right = nullptr;
+    predicate = nullptr;
+    constraint = nullptr;
+    cset = nullptr;
+    subst = nullptr;
+  }
+
+  /** Constructor for atomic (state value) expressions with
+   * optype = {ATOMIC, ATOMIC_NOT, ATOMIC_LT, ATOMIC_GT, ATOMIC_LE, ATOMIC_GE}.
    * Each expression represents
    * a constraint on one discrete state variable. Multi-variable expressions
-   * are formed by combining these expressions with AND 
+   * are formed by combining these expressions with AND
    * and OR ExprNode expressions. The int is the integer constant for the
    * constraint specified by the opType. The opType ATOMIC represents the
    * constraint = (equals).
-   * @param o The logical operator/constraint type.  
+   * @param o The logical operator/constraint type.
    * @param a The id label of the atomic (predicate/logical) variable
    * @param i The int value representing what the atomic variable's value
-   * should be constrained to. The constraint is specified by the opType.   
+   * should be constrained to. The constraint is specified by the opType.
    * @note Using this constructor with an opType value other than one of
    * the values given above may result in program errors.
    * @return [Constructor]. */
-  ExprNode(opType o, int a, int i) : op(o), atomic(a), intVal(i){
-  	left = NULL;
-  	right = NULL;
-  	predicate = NULL;
-  	subst = NULL;
-  	cset = NULL;
-  	constraint = NULL;
-  };
-  
+  ExprNode(const opType o, const short a, const short i,
+           const bidirectional_map<std::string, int>& cs,
+           const bidirectional_map<std::string, int>& as)
+      : op(o), atomic(a), intVal(i), declared_clocks(cs), declared_atomic(as) {
+    left = nullptr;
+    right = nullptr;
+    predicate = nullptr;
+    subst = nullptr;
+    cset = nullptr;
+    constraint = nullptr;
+  }
+
   /** Constructor for invariant sub-expressions with opType = {ATOMIC}.
    * This expression represents a state (combined discrete and clock) such that
-   * the variable specified by a has integer value i and the clock state 
-   * satisfies the specified clock constraints. 
-   
+   * the variable specified by a has integer value i and the clock state
+   * satisfies the specified clock constraints.
+
    * For such expressions, any discrete
    * state satisfying the atomic constraint must specify
    * the clock constraint. (Note: these expressions be used in other
@@ -272,301 +359,319 @@ public:
    * @note Using this constructor with an opType value other than one of
    * the values given above may result in program errors.
    * @return [Constructor]. */
-  ExprNode(opType o, int a, int i, DBM *c) : op(o), atomic(a), intVal(i), constraint(c){
-  	left = NULL;
-  	right = NULL;
-  	predicate = NULL;
-  	cset = NULL;
-  	subst = NULL;
-  };
-  
-  
+  ExprNode(const opType o, const short a, const short i, DBM* c,
+           const bidirectional_map<std::string, int>& cs,
+           const bidirectional_map<std::string, int>& as)
+      : constraint(c),
+        op(o),
+        atomic(a),
+        intVal(i),
+        declared_clocks(cs),
+        declared_atomic(as) {
+    left = nullptr;
+    right = nullptr;
+    predicate = nullptr;
+    cset = nullptr;
+    subst = nullptr;
+  }
+
   /** Constructor for predicate variable expressions with opType = {PREDICATE}.
-   * @param o The logical operator/constraint type. 
+   * @param o The logical operator/constraint type.
    * @param a (*) The string label of the predicate (predicate variable name).
    * @param i The index of the predicate to use for hashing.
    * @note Using this constructor with an opType value other than one of
    * the values given above may result in program errors.
    * @return [Constructor]. */
-  ExprNode(opType o, char * a, int i) : op(o), predicate(a), intVal(i){
-  	left = NULL;
-  	right = NULL;
-  	cset = NULL;
-  	subst = NULL;
-  	constraint = NULL;
-  }; 
-  
+  ExprNode(const opType o, const char* a, const short i,
+           const bidirectional_map<std::string, int>& cs,
+           const bidirectional_map<std::string, int>& as)
+      : predicate(a),
+        op(o),
+        intVal(i),
+        declared_clocks(cs),
+        declared_atomic(as) {
+    left = nullptr;
+    right = nullptr;
+    cset = nullptr;
+    subst = nullptr;
+    constraint = nullptr;
+  }
+
   /** Constructor for clock set expressions with opType = {RESET}. These
    * expressions are used to reset a set of clocks (specified by the
    * ClockSet) to 0.
-   * @param o The logical operator/constraint type. 
+   * @param o The logical operator/constraint type.
    * @param l (*) The single (left) child expression.
    * @param s (*) The set of clocks (to reset to 0).
    * @note Using this constructor with an opType value other than one of
    * the values given above may result in program errors.
    * @return [Constructor]. */
-  ExprNode(opType o, ExprNode *l, ClockSet *s) : op(o), left(l), cset(s){
-  	right = NULL;
-  	predicate = NULL;
-  	constraint = NULL;
-  	subst = NULL;
-  };
-  
+  ExprNode(const opType o, ExprNode* l, ClockSet* s,
+           const bidirectional_map<std::string, int>& cs,
+           const bidirectional_map<std::string, int>& as)
+      : left(l), cset(s), op(o), declared_clocks(cs), declared_atomic(as) {
+    right = nullptr;
+    predicate = nullptr;
+    constraint = nullptr;
+    subst = nullptr;
+  }
+
   /** Constructor for sublist expressions, representing a change of
    * discrete state, with opType = {SUBLIST}. These expressions
    * are used to change the discrete state by applying the assignment
    * dictated by the SubstList. In the SubstList, any variable with value -1
    * leaves the current state variable unchanged.
-   * @param o The logical operator/constraint type.  
+   * @param o The logical operator/constraint type.
    * @param l (*) The reference to the (single) child expression.
    * @param s (*) The (discrete) variable assignment to apply within the
    * child expression (specified by parameter l).
    * @note Using this constructor with an opType value other than one of
    * the values given above may result in program errors.
    * @return [Constructor]. */
-  ExprNode(opType o, ExprNode *l, SubstList *s) : op(o), left(l), subst(s){
-  	right = NULL;
-  	predicate = NULL;
-  	cset = NULL;
-  	constraint = NULL;
-  };
-  
+  ExprNode(const opType o, ExprNode* l, SubstList* s,
+           const bidirectional_map<std::string, int>& cs,
+           const bidirectional_map<std::string, int>& as)
+      : left(l), subst(s), op(o), declared_clocks(cs), declared_atomic(as) {
+    right = nullptr;
+    predicate = nullptr;
+    cset = nullptr;
+    constraint = nullptr;
+  }
+
   /** Constructor for assignment and replacement expressions with
-   * opType = {ASSIGN, RELPLACE}. If
+   * opType = {ASSIGN, REPLACE}. If
    * opType = ASSIGN, assign a clock variable's value to the current
    * value of another clock. If opType = REPLACE,
    * change an atomic variable's (discrete state) value to the specified
    * value. Using expressions with these operators results in sequential,
    * not simultaneous, assignment.
-   * @param o The logical operator/constraint type.  
+   * @param o The logical operator/constraint type.
    * @param l (*) The (single, left) child expression.
-   * @param cx The int id of the variable (discrete or clock) to 
+   * @param cx The int id of the variable (discrete or clock) to
    * assign a new value to
    * @param cy The value to assign the variable to within the child expression.
    * @note Using this constructor with an opType value other than one of
    * the values given above may result in program errors.
    * @return [Constructor]. */
-  ExprNode(opType o, ExprNode *l, short int cx, short int cy) : op(o), left(l), atomic(cx), intVal(cy){
-  	right = NULL;
-  	predicate = NULL;
-  	cset = NULL;
-  	constraint = NULL;
-  	subst = NULL;
-  };
-  
+  ExprNode(const opType o, ExprNode* l, const short int cx, const short int cy,
+           const bidirectional_map<std::string, int>& cs,
+           const bidirectional_map<std::string, int>& as)
+      : left(l),
+        op(o),
+        atomic(cx),
+        intVal(cy),
+        declared_clocks(cs),
+        declared_atomic(as) {
+    right = nullptr;
+    predicate = nullptr;
+    cset = nullptr;
+    constraint = nullptr;
+    subst = nullptr;
+  }
+
   /** Copy Constructor. This is used when an expression needs to be duplicated
    * in the parser. Because this makes a deep copy of every item, use sparingly,
    * and aim to make shallow copies when possible. This makes a deep copy of all
    * descendants of the ExprNode E
    * @param E (&) The ExprNode object to make a deep copy of
    * @return [Constructor]. */
-  ExprNode(ExprNode & E)  {
-    op = E.op;
-    if(E.op != PREDICATE) {
-      if(E.constraint != NULL) {
-        constraint = new DBM(*(E.constraint));
-      }
-      atomic = E.atomic;
-      intVal = E.intVal;
-      
-      b = E.b;
-      predicate = NULL;
-      if(E.cset != NULL) {
-        cset = new ClockSet(*(E.cset));
-      }
-      if(E.subst != NULL) {
-        subst = new SubstList(*(E.subst));
-      }
-      if(E.left != NULL) {
-        left = new ExprNode(*(E.left));
-      }
-      if(E.right != NULL) {
-        right = new ExprNode(*(E.right));
-      }
+  ExprNode(const ExprNode& other)
+      : predicate(other.predicate), // shallow copy good enough
+        op(other.op),
+        atomic(other.atomic),
+        intVal(other.intVal),
+        b(other.b),
+        declared_clocks(other.declared_clocks),
+        declared_atomic(other.declared_atomic) {
+    if (other.constraint != nullptr) {
+      constraint = new DBM(*(other.constraint));
     }
-    else {
-      predicate = E.predicate; // shallow copy good enough
+    if (other.cset != nullptr) {
+      cset = new ClockSet(*(other.cset));
+    }
+    if (other.subst != nullptr) {
+      subst = new SubstList(*(other.subst));
+    }
+    if (other.left != nullptr) {
+      left = new ExprNode(*(other.left));
+    }
+    if (other.right != nullptr) {
+      right = new ExprNode(*(other.right));
     }
   }
-  
+
   /** Destructor. Since predicates are allocated differently,
    * the destructor works with them differently. Based on how the tool
    * works, the predicate variables are freed when the predicates are deleted.
    * This methodology allows a predicate variable expression to be referred to
    * by multiple ExprNode expressions.
    * @return [Destructor]. */
-  ~ExprNode(){
-    if(left != NULL && left->op != PREDICATE){
+  ~ExprNode() {
+    if (left != nullptr && left->op != PREDICATE) {
       delete left;
     }
-    if(right != NULL && right->op != PREDICATE){
+    if (right != nullptr && right->op != PREDICATE) {
       delete right;
     }
-    
-    
+
     delete constraint;
     delete subst;
     delete cset;
     /* Note: since predicates are shallow-copied, they are not deleted
      * here. */
-  };
-  
+  }
+
   /** Method that deletes the predicate string. Since predicate strings are
    * assigned as shallow copies (multiple ExprNode objects are given the same
    * predicate for performance reasons), the user should call this method
    * sparingly to delete predicate strings in order to prevent memory leaks.
    * @return [None]. */
-  void deletePredicate() {
-    delete predicate;
-  }
-  
+  void deletePredicate() { delete predicate; }
+
   /** Returns the opType of the expression, which labels/categorizes
-   * the expression. 
+   * the expression.
    * @return The opType which tells what kind of expression that node is.
    * @see The Constructor(s) comments for more information. */
-  opType getOpType() const {return op;};
-  
-  /** Returns the left child of the expression. Used for 
-   * quantified expressions, which have only one child. (In an ExprNode, 
+  opType getOpType() const { return op; }
+
+  /** Returns the left child of the expression. Used for
+   * quantified expressions, which have only one child. (In an ExprNode,
    * the single child is assigned as the left child with a NULL right child.)
-   * @return The reference to the left (or single) child of that expression. 
+   * @return The reference to the left (or single) child of that expression.
    * @see The Constructor(s) comments for more information. */
-  ExprNode * getQuant() const {return left;};
-  
-  /** Returns the left child of the ExprNode.  
+  ExprNode* getQuant() const { return left; }
+
+  /** Returns the left child of the ExprNode.
    * @note This does the same thing as getQuant(), but tends to be used
    * for expressions with two (left and right) children.
-   * @return The reference to the left (or single) child of that expression. 
+   * @return The reference to the left (or single) child of that expression.
    * @see The Constructor(s) comments for more information. */
-  ExprNode * getLeft() const {return left;};
-  
+  const ExprNode* getLeft() const { return left; }
+
   /** Returns the right (or second) child of the expression.
-   * @return The reference to the right (or second) child of that expression. 
+   * @return The reference to the right (or second) child of that expression.
    * @see The Constructor(s) comments for more information. */
-  ExprNode * getRight() const {return right;};
-  
+  const ExprNode* getRight() const { return right; }
+
   /** Returns the clock constraint (DBM representation) of the expression.
    * @return The reference to the DBM representing the clock constraints.
    * @see The Constructor(s) comments for more information. */
-  DBM* dbm() {return constraint;};
-  
+  const DBM* dbm() const { return constraint; }
+
   /** Sets the constraint of the ExprNode to the specified DBM reference.
    * This method assigns the DBM with a shallow copy (copies the address).
    * @param dbm (*) the DBM reference to assign to the ExprNode.
    * @return none. */
-  void setDBM(DBM * dbm) {
-    constraint = dbm;
-  }
-  
+  void setDBM(DBM* dbm) { constraint = dbm; }
+
   /** Returns the boolean value (TRUE or FALSE) of the expression if stored
    * used to get the true/false value of the expression.
-   * @return The boolean value (TRUE or FALSE) of the expression if stored. 
+   * @return The boolean value (TRUE or FALSE) of the expression if stored.
    * @see The Constructor(s) comments for more information. */
-  bool getBool() const {return b;};
-  
-  
+  bool getBool() const { return b; }
+
   /** Returns the variable (location, or clock) id stored
    * in the expression.
    * @return The id of the atomic (location, or clock)
-   * variable stored in the expression. 
+   * variable stored in the expression.
    * @see The Constructor(s) comments for more information. */
-  short int getAtomic() const {return atomic;};
-  
+  short int getAtomic() const { return atomic; }
+
   /** Returns the value (name) of the predicate variable in
-   * the expression. 
+   * the expression.
    * @return The expression's predicate variable's name.
    * @see The Constructor(s) comments for more information. */
-  char * getPredicate() const {return predicate;};
-  
+  const char* getPredicate() const { return predicate; }
+
   /** Returns the value representing constant with which to compare the variable
    * stored in atomic.
    * @return The value of the variable relevant to the atomic variable.
    * @see The Constructor(s) comments for more information. */
-  short int getIntVal() const {return intVal;};
-  
-  /** Returns the left (or single) child of the ExprNode. 
+  short int getIntVal() const { return intVal; }
+
+  /** Returns the left (or single) child of the ExprNode.
    * @note This does the same thing as getQuant() and getLeft(), and is
    * used for other single-child ExprNode expressions.
-   * @return The reference to the left (or single) child of that expression. 
+   * @return The reference to the left (or single) child of that expression.
    * @see The Constructor(s) comments for more information. */
-  ExprNode * getExpr() const {return left;};
-  
+  ExprNode* getExpr() const { return left; }
+
   /** Returns the set of clocks stored in the ExprNode.
    * @return The set of clocks stored in the Expression.
    * @see The Constructor(s) comments for more information. */
-  ClockSet * getClockSet() const {return cset;};
-  
+  const ClockSet* getClockSet() const { return cset; }
+
   /** Returns the assignment of control variables stored in the expression.
    * @return The assignment of (discrete) variables.
    * @see The Constructor(s) comments for more information. */
-  SubstList * getSublist() const {return subst;};
-  
-  /** Returns the clock id of the clock to reset or to give a 
+  const SubstList* getSublist() const { return subst; }
+
+  /** Returns the clock id of the clock to reset or to give a
    * different variable. While this can be used for other
    * expression types, it is intended to get a clock id.
-   * @return The id of the atomic (location or clock) variable stored in 
-   * the expression. 
+   * @return The id of the atomic (location or clock) variable stored in
+   * the expression.
    * @note This does the same thing as getAtomic().
    * @see The Constructor(s) comments for more information. */
-  short int   getcX() const {return atomic;};
-  
+  short int getcX() const { return atomic; }
+
   /** Returns the value to assign a clock to. For this method,
    * the value is intended to be the index of the clock to take its
    * value and assign to another clock.
    * @return the value of the variable relevant to the atomic variable.
    * @note This does the same thing as getIntVal().
    * @see The Constructor(s) comments for more information. */
-  short int   getcY() const {return intVal;};
-  
+  short int getcY() const { return intVal; }
+
   /** Sets the parity of the expression, using true = gfp and false = lfp.
-   * @param parity The desired parity: true = gfp and false = lfp. 
+   * @param parity The desired parity: true = gfp and false = lfp.
    * @return None. */
-  void set_Parity(bool parity) { b=parity;};
-  
-  /** Sets the block (equation block) the expression represents 
+  void set_Parity(const bool parity) { b = parity; }
+
+  /** Sets the block (equation block) the expression represents
    * by changing the value of intVal. Used for PREDICATE (equation) expressions.
-   * @param block The block number (integer) to set intVal to, which gives 
-   * the block of the expression. 
+   * @param block The block number (integer) to set intVal to, which gives
+   * the block of the expression.
    * @note The integer storing the block can be used for other purposes.
    * @return None.*/
-  void set_Block(int block) {intVal = block;};
-  
-  
+  void set_Block(const short block) { intVal = block; }
+
   /** Returns the parity of the expression: true = gfp, false = lfp.
-   * @return The parity (as a boolean) of the 
+   * @return The parity (as a boolean) of the
    * expression: true = gfp, false = lfp.
    * @note This does the same thing as getBool(). It is used differently.
    * @see The Constructor(s) comments for more information. */
-  bool get_Parity() const {return b;};
-  
+  bool get_Parity() const { return b; }
+
   /** Returns the integer representing the block number of the expression.
    * This function is used for PREDICATE expressions.
    * @return The integer value; in this case, it corresponds to the
    * expression's block.
    * @note This function does the same thing as getIntVal() and getcY().
    * @see The Constructor(s) comments for more information. */
-  short int  get_Block() const {return intVal;};
-  
-  /** Checks if atomic (usually location variable) a has value b; this 
-   * method is used when checking invariants.  This method 
+  short int get_Block() const { return intVal; }
+
+  /** Checks if atomic (usually location variable) a has value b; this
+   * method is used when checking invariants.  This method
    * checks if the assignment
    * stored in ExprNode mathces the specified label and assignment value.
    * @param a The candidate atomic value.
    * @param b The candidate intVal value.
    * @returns true: if a is the atomic id in the expression and b is the intVal
    * value in the expression; false: otherwise. */
-  bool inv_loc(int a, int b) {return ((a==atomic) && (b==intVal));};
-  
-  
+  bool inv_loc(const int a, const int b) {
+    return ((a == atomic) && (b == intVal));
+  }
+
   /** Negates all the atomic propositions in the expression. The negation
    * works by switching the atomic proposition types of all nodes (including
    * children nodes of the expression. This includes atomic propositions,
-   * booleans, and the AbleWaitInf and UnableWaitInf opTypes. 
-   * If the expression just involves 
+   * booleans, and the AbleWaitInf and UnableWaitInf opTypes.
+   * If the expression just involves
    * comparisons to atomic propositions, then this negates the expression.
    * @return [None] */
   void negateAtomicExpr() {
-    switch(op) {
+    switch (op) {
       case ATOMIC:
         op = ATOMIC_NOT;
         break;
@@ -598,62 +703,69 @@ public:
       default: // do nothing for other cases
         break;
     }
-    if(left != NULL) {
+    if (left != nullptr) {
       left->negateAtomicExpr();
     }
-    if(right != NULL) {
+    if (right != nullptr) {
       right->negateAtomicExpr();
     }
   }
-  
-  /** Set the left child destination to a shallow copy of the 
+
+  /** Set the left child destination to a shallow copy of the
    * specified expression.
    * @param destL (*) the (left) child expression
    * @return None. */
-   void setExprDestLeft(ExprNode * destL) {
-   
-     left = destL;
+  void setExprDestLeft(ExprNode* destL) { left = destL; }
 
-   };
-   
-  /** Set the right child destination to a shallow copy of the 
+  /** Set the right child destination to a shallow copy of the
    * specified expression.
    * @param destR (*) the (right) child expression
    * @return None. */
-   void setExprDestRight(ExprNode * destR) {
-   
-     right = destR;
-   };
-   
+  void setExprDestRight(ExprNode* destR) { right = destR; }
+
 protected:
-	/* Note: The data variables here are used as a "quasi-union",
-	 * where the same variable can have different uses for different
-	 * expressions.  Hence, different expressions call different methods
-	 * and use different constructors to take advantage of the
-	 * performance from this. 
-	 * The method names give some indication of what the different uses
-	 * are. */
-  
+  /* Note: The data variables here are used as a "quasi-union",
+   * where the same variable can have different uses for different
+   * expressions.  Hence, different expressions call different methods
+   * and use different constructors to take advantage of the
+   * performance from this.
+   * The method names give some indication of what the different uses
+   * are. */
+
+  /** The string label of a predicate variable in an expression. */
+  const char* predicate;
+
+  /** The left child of an ExprNode in an expression tree.
+   * Possibly empty. */
+  ExprNode* left;
+  /** The right child of an ExprNode in an expression tree.
+   * Possibly empty. */
+  ExprNode* right;
+
+  /** The clock constraint of an ExprNode.
+   * Possibly empty. */
+  DBM* constraint;
+
+  /** Represents the set of clocks (a subset of the set of
+   * specified clocks) in an ExprNode, currently used
+   * to specify the set of clocks to reset to 0.  */
+  ClockSet* cset;
+  /** Represents a list of (usually control or atomic) variables and
+   * what values should be substituted into them.
+   * Used in an expression to represent a substitution of variables in a
+   * child expression. The SubstList is often the "state",
+   * giving values to propositions (or control values).  Possibly empty. */
+  SubstList* subst;
+
   /** The "opcode" or Type ID of the Expression Node.
    * This type determines
    * which fields are empty or non-empty and the shape of
    * the expression node. */
   opType op;
-  
-  /** The string label of a predicate variable in an expression. */
-  char *predicate;
-  
-  /** The left child of an ExprNode in an expression tree.  
-   * Possibly empty. */
-  ExprNode *left;
-  /** The right child of an ExprNode in an expression tree.  
-   * Possibly empty. */
-  ExprNode *right;
-  
-  
-  /** The label for the atomic (location or clock variable) 
+
+  /** The label for the atomic (location or clock variable)
    * of the expression, depending on the opType.
-   * For opTypes ATOMIC, ATOMIC_NOT, ATOMIC_LT, ATOMIC_GT, and REPLACE: 
+   * For opTypes ATOMIC, ATOMIC_NOT, ATOMIC_LT, ATOMIC_GT, and REPLACE:
    * the atomic represents a location variable.
    * For opTypes RESET, and ASSIGN:
    * the atomic variable represents the clock variable (clock index)
@@ -661,461 +773,41 @@ protected:
   short int atomic;
   /** Used to store an integer value that corresponds to different
    * meanings, depending on the opType.
-   * For opTypes ATOMIC, ATOMIC_NOT, ATOMIC_LT, ATOMIC_GT, and REPLACE:   
+   * For opTypes ATOMIC, ATOMIC_NOT, ATOMIC_LT, ATOMIC_GT, and REPLACE:
    * intVal is an integer constant representing a location variable constant.
    * The expression represents a constraint comparison (specified by the opType,
-   * with ATOMIC and REPLACE corresponding to =) to the intVal. 
+   * with ATOMIC and REPLACE corresponding to =) to the intVal.
    * For opType ASSIGN: intVal is the integer of the clock index
    * to assign to the clock stored in int atomic.*/
   short int intVal;
-  
-  /** The clock constraint of an ExprNode.
-   * Possibly empty. */
-  DBM *constraint;
-  
+
   /** Used as the boolean value of an expression or its parity.
    * For opType BOOL: b is the truth of the expression. For
    * opType PREDICATE: b is the parity of the expression, with
    * true = gfp and false = lfp. */
   bool b;
-  
-  /** Represents the set of clocks (a subset of the set of 
-   * specified clocks) in an ExprNode, currently used
-   * to specify the set of clocks to reset to 0.  */
-  ClockSet *cset;
-  /** Represents a list of (usually control or atomic) variables and 
-   * what values should be substituted into them.
-   * Used in an expression to represent a substitution of variables in a
-   * child expression. The SubstList is often the "state",
-   * giving values to propositions (or control values).  Possibly empty. */
-  SubstList *subst;
-  
-  
-};
 
-/** Class used to represent transitions of a timed automaton. This
- * class allows for ease of parsing and storage of transitions during
- * the model checking process.
- * @author Peter Fontana, Dezhuang Zhang, and Rance Cleaveland. 
- * @note Many functions are inlined for better performance.
- * @version 1.2
- * @date November 2, 2013 */
-class Transition{
+  // FIXME
 public:
+  /** Pointer to the globally declared clocks */
+  const bidirectional_map<std::string, int>& declared_clocks;
 
-  /** Constructor for transitions. This is used in the parser
-   * to form transition objects
-   * @param destParent (*) a reference for the expression that is the
-   * parent of the desitnation expression that follows the transition
-   * in a proof.
-   * @param leftExprIn (*) The ExprNode representing the left
-   * (enabling conditions) of the transition.
-   * @param rightExprIn (*) The ExprNode representing the right
-   * (transition destination and state changes) of the transition. 
-   * @param isDestOnLeft true: destination expression should be a 
-   * left child of destParent; false: otherwise (the destination expression of a 
-   * proof should be the right child of destParent). 
-   * @param dest (*) The partial substitution list for the change in discrete
-   * state. If there is no assignment, dest will be NULL.
-   * @param reset (*) The set of clocks the transition resets. This will be NULL
-   * if no clocks are reset.
-   * @return [Constructor]. */
-  Transition(ExprNode *destParent, ExprNode * leftExprIn, ExprNode * rightExprIn, bool isDestOnLeft, SubstList * dest, ClockSet * reset,  vector<pair<short int, short int> > * clockAssignments) {
-    destPar = destParent;
-    leftExpr = leftExprIn;
-    rightExpr = rightExprIn;
-    isDestLeft = isDestOnLeft;
-    hasRightExpr = true;
-    if(rightExpr == NULL) {
-      hasRightExpr = false;
-    }
-    if(clockAssignments == NULL) {
-      clockAssignmentList = NULL;
-    }
-    else {
-      clockAssignmentList = new vector<pair<short int, short int> >(*clockAssignments);
-    }
-    destList = dest;
-    resetList = reset;
-  };
+  /** Pointer to the globally declared atomics*/
+  const bidirectional_map<std::string, int>& declared_atomic;
 
-  
-  /** Destructor. Given the referencing of different
-   * destination expressions from multiple sources,
-   * this destructor deletes all of the expressions
-   * save the destination expression pointed to by destPar's
-   * child. This expression is deleted when the proof deletes
-   * the proof expression tree.
-   * @return [Destructor]. */
-  ~Transition() {
-    /* First set destExpr to NULL to not double delete */
-    if(destPar == NULL && !hasRightExpr) {
-      rightExpr = NULL;
-    }
-    else if(isDestLeft && destPar != NULL) {
-      destPar->setExprDestLeft(NULL);
-    }
-    else if(destPar != NULL){
-      destPar->setExprDestRight(NULL);
-    }
-    if(clockAssignmentList != NULL) {
-      clockAssignmentList->clear();
-    }
-    delete clockAssignmentList;
-    delete leftExpr;
-    delete rightExpr;
-    /* Due to how the transitions sets destList and resetList,
-     * they are deleted when the expression is deleted. Hence,
-     * destList and resetList do not need to be deleted here. */
-  };
-  
-  /** Retrieve the expression that specifies
-   * the enabling condition of the transition.
-   * @return The ExprNode describing the enabling conditions of the
-   * transition. */
-  ExprNode * getLeftExpr() {
-    return leftExpr;
-  };
-  
-  /** Retrieve the expression that specifies
-   * the destination (state change) of the transition.
-   * @return The ExprNode describing the destination (state change) of the
-   * transition. */
-  ExprNode * getRightExpr() {
-    return rightExpr;
-  };
-  
-  /** Retrieve the list of clock assignments stored by this transition.
-  * @return the vector containing the ordered list of clock assignments
-  * that occur on the edge of this transition. */
-  vector<pair<short int, short int> > * getAssignmentVector() {
-    return clockAssignmentList;
-  }
-  
-  /** Takes a specified destination and tacks it on as an
-   * expression at the end of the transition. This method
-   * is used by the proof to provide an O(1) assignment of
-   * what expression needs to be true after the transition.
-   * These pointers allow us to store the transitions and 
-   * easily change what expression should be true after the 
-   * transition.
-   * @param destExpr (*) the expression that needs to be proven
-   * after the transition is executed.
-   * @return None. */
-  void getNewTrans(ExprNode *destExpr) {
-    if(destPar == NULL) {
-      rightExpr = destExpr;
-    }
-    else {  
-      if(isDestLeft) {
-        destPar->setExprDestLeft(destExpr);
-      }
-      else {
-        destPar->setExprDestRight(destExpr);
-        rightExpr = destExpr;
-      }
-    }
-    
-    return;
-  };
-  
-  /** Returns the clock set of the clocks reset by this transition.
-   * @return the clocks reset by this transition. */
-  ClockSet * getCSet() {
-    return resetList;
-  }
-  
-  /** Given the location of a state that satisfies the
-   * location constraints of the transition, this gives
-   * the destination location after the transition. This method
-   * helps augment a guard to ensure that the entering location's
-   * invariant is satisfied.
-   * @param source (*) The leaving location (the discrete state component).
-   * @return The entering location if the given location executed this
-   * transition. */
-  SubstList * getEnteringLocation(SubstList * source) {
-    // Since a new substList is created, delete it when finished.
-    SubstList *st = NULL;
-    if(destList == NULL) {
-      st = new SubstList(*source);
-    }
-    else {
-      st = new SubstList(destList, source);
-    }
- 
-    return st;
-  };
-  
-private:
-
-  /** parent pointer to destination to allow for easy modification
-   * of expression for destination sequent. */
-  ExprNode * destPar;
-  /** if false, we have an imply node with the destination at the right.
-   * otherwise, true means the destination expression is the left child
-   * of destPar. */
-  bool isDestLeft;
-  /** True if the transition has a right hand expression (excluding fed
-   * destination) */
-  bool hasRightExpr;
-  /** List of clock assignments in the edge. An empty list
-   * means that there are no clock assignments on the edge.
-   * Since assignments are executed
-   * sequentially, the list is assumed to have no clock swaps 
-   * (i.e. no conflicts in clock assignments). By construction,
-   * the innermost assignments are at the back. */
-  vector<pair<short int, short int> > * clockAssignmentList;
-
-  /** The enabling conditions of the transition. */
-  ExprNode *leftExpr;
-  /** The destination (state change) of the transition. */
-  ExprNode *rightExpr;
-  
-  /** A reference to the subList of the transition.
-   * If there is no change in location, destList will be NULL. */
-  SubstList * destList;
-  
-  /** The set of clocks to reset on the transition. This is NULL
-   * if there are no clocks to reset */
-  ClockSet * resetList;
-  
+  /** Prints out the expression to the desired output stream, labeling
+   * the expression with its opType. The typical output stream is cout.
+   * @param e (*) The expression to print out.
+   * @param os (&) The type of output stream to print the output to.
+   * @return None */
+  void print(std::ostream& os) const;
 };
 
-/** The internal representation of a proof sequent with
- * a (potential) union of clock zones for the clock state. 
- * A sequent with a placeholder is a
- * DBM, DBMList [SubstList] |- RHS. For storage efficiency, the Sequent class
- * is set of sequents a DBM', DBMList' [SubstList] |- RHS, with ds
- * the vector representing the list of DBM' DBMList' pairs. 
- * For performance purposes, the implementation confines
- * unions of clock zones to the placeholder DBMList. (This is sufficient
- * to guarantee that the model checker is sound and complete).
- * This storage is used
- * to store multiple sequents, not a sequent consisting of a union of DBMs.
- * The SubstList represents the discrete location state (as variables). This
- * method of storing sequents improves the efficiency of sequent caching.
- *
- * This SequentPlace Class representation is closely utilized in
- * locate_sequentPlace(), update_sequentPlace() and tabled_sequentPlace()
- * in the demo.cc implementation.
- *
- *
- * @author Peter Fontana, Dezhuang Zhang, and Rance Cleaveland. 
- * @note Many functions are inlined for better performance.
- * @version 1.2
- * @date November 2, 2013 */
-class SequentPlace; // forward declaration for parent scope
-
-/** The internal representation of a proof sequent with
- * a clock zone for the clock state. A sequent is a
- * DBM, [SubstList] |- RHS. For storage efficiency, the Sequent class
- * is set of sequents a DBM' [SubstList] |- RHS, with ds
- * the vector representing the list of DBMs DBM'. This storage is used
- * to store multiple sequents, not a sequent consisting of a union of DBMs.
- * The SubstList represents the discrete location state (as variables).This
- * method of storing sequents improves the efficiency of sequent caching.
- *
- * This Sequent Class representation is closely utilized in
- * locate_sequent(), update_sequent() and tabled_sequent()
- * in the demo.cc implementation.
- *
- * @author Peter Fontana, Dezhuang Zhang, and Rance Cleaveland. 
- * @note Many functions are inlined for better performance.
- * @version 1.2
- * @date November 2, 2013 */
-class Sequent {
-public:
-  
-  /** Constructor to make an Sequent = (ExprNode, SubstList) object,
-   * with an empty set of DBMs. Until a DBM is specified as a clock
-   * state, the sequent is empty.
-   * @param rhs (*) The right hand expression of the sequent.
-   * @param sub (*) The discrete state component of the left side
-   * of the sequent.
-   * @return [Constructor]. */
-  Sequent(ExprNode *rhs, SubstList *sub) 
-  : e(rhs) { 
-    st = new SubstList(*sub);
-  };
-  
-  
-  /* A default Copy Constructor is implemented by the
-   * compiler which performs a member-wise deep copy. */
-  
-  /** Destructor. It does not delete the right hand expression e
-   * because e may be used in multiple sequents. The expression tree
-   * storing e will delete it when the proof finishes. Likewise,
-   * since each parent sequent (with or without a placeholder) can
-   * delete itself, the destructor does not delete parent sequents.
-   * @return [Destructor] */
-  ~Sequent(){
-    delete st;
-    // Iterate Through and Delete every element of ds
-    for(vector<DBM *>::iterator it = ds.begin(); 
-    		it != ds.end(); it++) {
-      DBM *ls = (*it);
-      delete ls;
-    }
-    ds.clear();
-    // Do not delete e since it is a pointer to the overall ExprNode.
-    // Do not delete parent sequent upon deletion
-    // Do not delete parent placeholder sequent
-    // Clearing vectors is enough
-    parSequent.clear();
-    parSequentPlace.clear();
-  };
-  
-  
-  /** Returns the ExprNode element (rhs or consequent) of the Sequent.
-   * @return the rhs expression of the ExprNode element of the Sequent. */
-  ExprNode * rhs() const {return e ; };
-  
-  /** Returns the discrete state of the sequent's left (the SubstList).
-   * @return the discrete state of the sequent's left (the SubstList). */
-  SubstList * sub() const {return st ; }; 
-  
-  
-  
-  /** A list of DBMs stored in the sequent, used to store a set of sequents
-   * in a method for easy access during sequent caching. This vector
-   * stores the clock state part of the left hand side of each sequent.
-   * Each element in ds is combined with the location state (st)
-   * and the right hand expression (e) to form a proof sequent
-   * in the proof tree. */
-  vector<DBM*> ds;
-  
-  /** The placeholder sequent parent to this sequent in the proof tree; 
-   * this is used  to quickly access backpointers. A sequent either has a parent
-   * with a placeholder (parSequentPlace) or a parent without a
-   * placeholder (parSequent). */
-  vector<SequentPlace *> parSequentPlace;
-  /** The sequent parent to this sequent in the proof tree; this is used
-   * to quickly access backpointers. A sequent either has a parent
-   * with a placeholder (parSequentPlace) or a parent without a
-   * placeholder (parSequent). */
-  vector<Sequent *> parSequent;
-  
-  
-protected:
-  
-  /** The right hand side expression of the sequent. */
-  ExprNode *e;
-  /** The discrete state of the left of a sequent, represented
-   * as a SubstList. */
-  SubstList *st;
-};
-
-
-/** The internal representation of a proof sequent with
- * a (potential) union of clock zones for the clock state. 
- * A sequent with a placeholder is a
- * DBM, DBMList [SubstList] |- RHS. For storage efficiency, the Sequent class
- * is set of sequents a DBM', DBMList' [SubstList] |- RHS, with ds
- * the vector representing the list of DBM' DBMList' pairs. 
- * For performance purposes, the implementation confines
- * unions of clock zones to the placeholder DBMList. (This is sufficient
- * to guarantee that the model checker is sound and complete).
- * This storage is used
- * to store multiple sequents, not a sequent consisting of a union of DBMs.
- * The SubstList represents the discrete location state (as variables). This
- * method of storing sequents improves the efficiency of sequent caching.
- *
- * This SequentPlace Class representation is closely utilized in
- * locate_sequentPlace(), update_sequentPlace() and tabled_sequentPlace()
- * in the demo.cc implementation.
- *
- * @author Peter Fontana, Dezhuang Zhang, and Rance Cleaveland. 
- * @note Many functions are inlined for better performance.
- * @version 1.2
- * @date November 2, 2013 */
-class SequentPlace {
-public:
-  
-   /** Constructor to make an Sequent = (ExprNode, SubstList) object,
-   * with an empty set of (DBM, DBMList) pairs. Until a 
-   * (DBM, DBMList) pair is specified as a clock
-   * state, the sequent is empty.
-   * @param rhs (*) The right hand expression of the sequent.
-   * @param sub (*) The discrete state component of the left side
-   * of the sequent.
-   * @return [Constructor]. */
-  SequentPlace(ExprNode *rhs, SubstList *sub) 
-  : e(rhs) { 
-    st = new SubstList(*sub);
-  };
-  
-  
-  /* A default Copy Constructor is implemented by the
-   * compiler which performs a member-wise deep copy.
-   * Note: this copy copies pointers to the objects
-   * in the vectors. Thus, consider avoiding. */
-  
-  /** Destructor. It does not delete the right hand expression e
-   * because e may be used in multiple sequents. The expression tree
-   * storing e will delete it when the proof finishes. Likewise,
-   * since each parent sequent (with or without a placeholder) can
-   * delete itself, the destructor does not delete parent sequents.
-   * @return [Destructor] */
-  ~SequentPlace(){
-    delete st;
-    // Iterate Through and Delete every element of ds
-    for(vector<pair<DBM*, DBMList *> >::iterator it = dsp.begin(); 
-    		it != dsp.end(); it++) {
-      DBM *ls = (*it).first;
-      DBMList * lsList = (*it).second;
-      delete ls;
-      delete lsList;
-    }
-    dsp.clear();
-    // Do not delete e since it is a pointer to the overall ExprNode.
-    
-    // Do not delete parent sequent parSequentPlace
-    // Do not delete parent sequent parSequent
-    // Clearing vectors is enough
-    parSequent.clear();
-    parSequentPlace.clear();
-  };
-  
-  
-  /** Returns the ExprNode element (rhs or consequent) of the Sequent.
-   * @return the rhs expression of the ExprNode element of the Sequent. */
-  ExprNode * rhs() const {return e ; };
-  
-  /** Returns the discrete state of the sequent's left (the SubstList).
-   * @return the discrete state of the sequent's left (the SubstList). */
-  SubstList * sub() const {return st ; }; 
-  
-  
-  
-  /** A list of (DBM, DBMList) pairs stored in the sequent, 
-   * used to store a set of sequents
-   * in a method for easy access during sequent caching. This vector
-   * stores the clock state part of the left hand side of each sequent.
-   * Each element in ds is combined with the location state (st)
-   * and the right hand expression (e) to form a proof sequent
-   * in the proof tree. */
-  vector<pair<DBM*, DBMList* > > dsp;
-  
-  /** The placeholder sequent parent to this sequent in the proof tree; 
-   * this is used  to quickly access backpointers. A sequent either has a parent
-   * with a placeholder (parSequentPlace) or a parent without a
-   * placeholder (parSequent). */
-  vector<SequentPlace *> parSequentPlace;
-  /** The sequent parent to this sequent in the proof tree; this is used
-   * to quickly access backpointers. A sequent either has a parent
-   * with a placeholder (parSequentPlace) or a parent without a
-   * placeholder (parSequent). */
-  vector<Sequent *> parSequent; 
-  
-  
-protected:
-  
-  /** The right hand side expression of the sequent. */
-  ExprNode *e;
-  /** The discrete state of the left of a sequent, represented
-   * as a SubstList. */
-  SubstList *st;
-};
+/** Overload for streaming ExprNode to output stream */
+inline std::ostream& operator<<(std::ostream& os, const ExprNode& e) {
+  e.print(os);
+  return os;
+}
 
 /* These next set of functions are global and
  * used in demo.cc to keep track of the clocks, equations,
@@ -1128,116 +820,10 @@ protected:
  * of the vector.
  * @param e (*) the pointer to the expression of clock assignments.
  * @param av (*) the pointer to the vector of clock assignments.
- * @return None. When finished, av is changed to be the vector of 
+ * @return None. When finished, av is changed to be the vector of
  * clock assignments.  */
-void makeAssignmentList(ExprNode *e, vector<pair<short int, short int> > * av);
-
-/** Adds a clock with a desired string label
- * to the current list of all clocks.
- * @param s (*) The string that is the clock label.
- * @return 1:when finished. */
-int add_clock(char *s);
-
-/** Determines if a clock with label s is already in
- * the list of clocks and gets its index if it is.
- * @param s (*) The label to search for
- * @return the int value of the clock index: if it is in the list;
- * -1: otherwise (s is not a clock). */
-int lookup_clock(char *s);
-
-/** Prints out the list of clocks with their labels
- * and current values.
- * @return 1 when done. */
-int print_clocks();
-
-/** Insert an atomic variable with label s
- * into the list of atomic variables and give it an id.
- * This gives the atomic variable the default value of 0.
- * @param s (*) The label for the atomic value.
- * @return 1 when done. */
-int add_atomic(char *s);
-
-/** Insert an atomic variable with label s and initial value
- * v into the list of atomic variables and give it an id.
- * This method gives the atomic variable the use-specified value i.
- * @param s (*) The label for the atomic value.
- * @param v The value of the atomic variable labeled by s.
- * @return 1 when done. */
-int add_atomicv(char *s, int i);
-
-/** Try to find the value of the atomic variable with label s
- * in the atomic list.
- * @param s (*) The label for the atomic value to look up.
- * @return the value of the atomic label if found or -1 if it is
- * not in the list. */
-int lookup_atomic(char *s);
-
-/** Prints out the list of atomic variables with their
- * labels (ids) and values.
- * @return 1 when done. */
-int print_atomic();
-
-/** Adds an empty PREDICATE expression to the list of
- * predicates. This list is later used to conjunct
- * equation expressions to these PREDICATE variables, providing a clean
- * way to terminate a predicate expression terminated due to circularity.
- * @note This method is only used in the parser (pes.y)
- * when forming ExprNode trees.
- * @param s The label of the predicate to add.
- * @param i The integer index of the predicate.
- * @return 1 when done. */
-int add_predicate(char *s, int i);
-
-/** Sets or changes the parity and the block number of a given
- * predicate ExprNode in the list of predicates.
- * @param name The key to look up the ExprNode in the ExprNode list
- * @param block The desired block number of the equation (predicate expression)
- * @param parity The desired parity: true = gfp, false = lfp.
- * @return true:if successful (found the predicate expression), 
- * false:otherwise. */
-bool set_parity_block(string name, int block, bool parity);
-
-/** Adds an an equation, with its variable name and right hand side, to
- * the list of equations. This list links predicate variable expressions
- * with their right hand side equations. This separation of
- * predicates from equations provides a clean
- * way to terminate a predicate expression terminated due to circularity
- * and a clean way to delete expressions. 
- * @param block The block number for the equation.
- * @param parity The equation's parity: true = gfp, false = lfp.
- * @param s (*) The equation label.
- * @param e (*) The expression of the RHS of the equation.
- * @return 1 if successful in doing so and 0 otherwise. */
-int add_equation(int block, bool parity, char *s, ExprNode *e);
-
-
-
-/** Looks up a predicate with label s and returns the expression in
- * the list if it is there and NULL otherwise.
- * @param s (*) The label of the predicate to look up.
- * @return The reference to the Expression that the predicate is if in the
- * list and NULL otherwise. */
-ExprNode * lookup_predicate(char *s);
-
-/** Tries to find the RHS expression of an equation with a given predicate
- * variable label,
- * and returns the equation, or NULL if there is no such equation.
- * @param s (*) The label of the equation.
- * @return The Expression (a reference) if found in the list, or NULL if not
- * found in the list of equations. */
-ExprNode * lookup_equation(char *s);
-
-/** Prints out an error if it occurs during the parsing process. 
- * This method is only used in the parser.
- * @param s (*) The error string to print out.
- * @return None */
-void yyerror(char *s);
-
-
-/** Prints out the list of predicate variables (without their right hand
- * side equations).  
- * @return 1 when done. */
-int print_predicates();
+void makeAssignmentList(const ExprNode& e,
+                        std::vector<std::pair<short int, short int>>* av);
 
 /** Prints out a sequent in a proof tree.
  * @param step The tree level (sequent step) of the sequent (0 is root).
@@ -1248,8 +834,12 @@ int print_predicates();
  * @param op The Expression type of the proof rule; this is the rule that the
  * model checker applies to continue the proof.
  * @return None */
-void print_sequent(int, bool, DBM *, ExprNode *, SubstList *, opType op);
-
+inline void print_sequent(std::ostream& os, const int step, const bool retVal,
+                          const DBM& lhs, const ExprNode& rhs,
+                          const SubstList& sub, const opType op) {
+  os << "seq#" << step << "  " << retVal << "  " << lhs << ", " << sub
+     << "\t|-  " << rhs << "\t" << op << std::endl;
+}
 
 /** Prints out a placeholder check sequent in the proof tree; used for
  * the exists sub-branch that checks (and restricts) the obtained placeholder
@@ -1262,7 +852,13 @@ void print_sequent(int, bool, DBM *, ExprNode *, SubstList *, opType op);
  * @param op The Expression type of the proof rule; this is the rule that the
  * model checker applies to continue the proof.
  * @return None */
-void print_sequentCheck(int, bool, DBM *, DBMList *, SubstList *, opType op);
+inline void print_sequentCheck(std::ostream& os, const int step,
+                               const bool retVal, const DBM& lhs,
+                               const DBMList& rhsList,
+                               const SubstList& sub, const opType op) {
+  os << "seq#" << step << "  " << retVal << "  " << lhs << ", " << sub
+     << "\t|-  " << rhsList << "\t" << op << std::endl;
+}
 
 /** Prints out a sequent with a placeholder clock state in a proof tree.
  * @param step The tree level (sequent step) of the sequent (0 is root).
@@ -1274,7 +870,15 @@ void print_sequentCheck(int, bool, DBM *, DBMList *, SubstList *, opType op);
  * @param op The Expression type of the proof rule; this is the rule that the
  * model checker applies to continue the proof.
  * @return None */
-void print_sequent_place(int step, bool retVal, DBM *lhs, DBMList * place, ExprNode *rhs, SubstList *sub, opType op);
+inline void print_sequent_place(std::ostream& os, const int step,
+                                const bool retVal, const DBM& lhs,
+                                const DBMList& place, const ExprNode& rhs,
+                                const SubstList& sub, const opType op) {
+  os << "seq#" << step << "  " << retVal << "  " << lhs << " plhold: {"
+     << place << "}" << ", " << sub << "\t|-  " << rhs << "\t";
+  print_ExprNodeType(op, os, true);
+  os << std::endl;
+}
 
 /** Prints out a placeholder check sequent in the proof tree; used for
  * exists, forall and reset sequents within placeholder proofs. This check
@@ -1289,38 +893,18 @@ void print_sequent_place(int step, bool retVal, DBM *lhs, DBMList * place, ExprN
  * @param op The Expression type of the proof rule; this is the rule that the
  * model checker applies to continue the proof.
  * @return None */
-void print_sequent_placeCheck(int step, bool retVal, DBM *lhs, DBMList * place, 
-  DBMList *rhsList, SubstList *sub, opType op);
+inline void print_sequent_placeCheck(std::ostream& os, const int step,
+                                     const bool retVal, const DBM& lhs,
+                                     const DBMList& place,
+                                     const DBMList& rhsList,
+                                     const SubstList& sub,
+                                     const opType op) {
+  os << "seq#" << step << "  " << retVal << "  " << lhs << " plhold: {"
+     << place << "}" << ", " << sub << "\t|-  " << rhsList << "\t";
+  print_ExprNodeType(op, os, true);
+  os << std::endl;
+}
 
-/** Prints out the expression to the desired output stream, labeling
- * the expression with its opType. The typical output stream is cout.
- * @param e (*) The expression to print out.
- * @param os (&) The type of output stream to print the output to.
- * @return None */
-void print_ExprNode(ExprNode * e, std::ostream& os);
-
-/** Prints out the expression type (opType) to the desired output stream.
- * The typical output stream is cout.
- * @param op (*) The expression type.
- * @param os (&) The type of output stream to print the output to.
- * @return none */
-void print_ExprNodeType(opType op, std::ostream& os);
-
-
-/** Prints out the expression type (opType), for expressions
- * with placeholders, to the desired output stream.
- * The typical output stream is cout. This method is used for
- * expression types within proof subtrees with placehloders.
- * @param op (*) The expression type.
- * @param os (&) The type of output stream to print the output to.
- * @return none */
-void print_ExprNodeTypePlace(opType op, std::ostream& os);
-
-/** Prints out the transition to the desired output stream.
- * The typical output stream is cout.
- * @param t (*) The transition to print.
- * @param os (&) The type of output stream to print the output to.
- * @return none */
-void print_Transition(Transition * t, std::ostream& os);
+void print_ExprNodeTrans(const ExprNode* const e, std::ostream& os);
 
 #endif

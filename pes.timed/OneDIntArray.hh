@@ -11,69 +11,98 @@
 #include "Generic1DArray.hh"
 
 /** An implementation of an array of short integers.
- * @author Dezhuang Zhang and Pater Fontana
+ * @author Dezhuang Zhang and Peter Fontana
  * @note Many functions are inlined for better performance.
  * @version 1.2
  * @date November 2, 2013 */
 class OneDIntArray : public Generic1DArray {
-  
 public:
-  /** Default Contructor.  
+  /** Default Contructor.
    * @param numElements The number of elements to allocate
    * for the array.
    * @return [Constructor]. */
-  OneDIntArray(short int numElements) : Generic1DArray(numElements, sizeof(short int)) {}
-  
-  /** Copy Constructor.
-   * @param Y (&) The reference to the object to copy.
-   * @return [Constructor]. */
-  OneDIntArray(OneDIntArray &Y) : Generic1DArray(Y){};
-  
+  OneDIntArray(const short int numElements)
+      : Generic1DArray(numElements, sizeof(short int)) {}
+
   /** Copy Constructor for constant objects.
    * @param Y (&) The reference to the object to copy.
    * @return [Constructor]. */
-  OneDIntArray(const OneDIntArray &Y) : Generic1DArray(Y){};
-  
+  OneDIntArray(const OneDIntArray& Y) : Generic1DArray(Y){};
+
+public:
   /** Retrieves a reference for the element specified at the given index.
-   * The reference returned is a reference to the actual copy, not a deep copy. 
-   * Consequently, this reference can be used to change the 
+   * The reference returned is a reference to the actual copy, not a deep copy.
+   * Consequently, this reference can be used to change the
    * referred object's value.
    * @param index The index of the element to acces; 0 is
    * the first index.
    * @return A reference to the element in the array. */
-  short int& operator[](short int index) {
+  short int& operator[](const short int index) {
+    // re-use the const version of this function.
+    return const_cast<short int&>(at(index));
+  }
+
+  /** Retrieves a const reference for the element specified at the given index.
+   * The reference returned is a reference to the actual copy, not a deep copy.
+   * Consequently, since this is a constant reference it cannot be used to
+   * change the referred object's value.
+   * @param index The index of the element to acces; 0 is
+   * the first index.
+   * @return A const reference to the element in the array. */
+  const short int& at(const short int index) const {
     // Indexes are zero based
     /* We might want a private method that does not use bounds checks
      * In order to improve performance. */
-    if (index < 0 || index >= quantity) {   
-      cerr << "OneDIntArray operator[] - out of bounds." <<endl;
+    if (index < 0 || index >= quantity) {
+      std::cerr << "OneDIntArray operator[] - out of bounds." << std::endl;
       exit(-1);
     }
-    short int offset = index * sizeof(short int);
-    short int *p = (short int*) &(storage[offset]);
-    // Dereference p
-    return (*p);                                       
+    return operatorAccess(index);
   }
 
 protected:
+  /** Retrieves a reference for the element specified at the given index.
+   * This is a protected method because it eliminates bounds checking to improve
+   * performance.
+   * The reference returned is a reference to the actual copy, not a deep copy.
+   * Consequently, this reference can be used to change the
+   * referred object's value.
+   * @param index The index of the element to acces; 0 is
+   * the first index.
+   * @return A reference to the element in the array. */
+  short int& operatorAccess(const short int index) {
+    return const_cast<short int&>(operatorAccess_impl(index));
+  }
 
   /** Retrieves a reference for the element specified at the given index.
    * This is a protected method because it eliminates bounds checking to improve
    * performance.
-   * The reference returned is a reference to the actual copy, not a deep copy. 
-   * Consequently, this reference can be used to change the 
+   * The reference returned is a reference to the actual copy, not a deep copy.
+   * Consequently, this reference can be used to change the
    * referred object's value.
    * @param index The index of the element to acces; 0 is
    * the first index.
    * @return A reference to the element in the array. */
-  short int& operatorAccess(short int index) {
+  const short int& operatorAccess(const short int index) const {
+    return operatorAccess_impl(index);
+  }
+
+  /** Retrieves a reference for the element specified at the given index.
+   * This is a protected method because it eliminates bounds checking to improve
+   * performance.
+   * The reference returned is a reference to the actual copy, not a deep copy.
+   * Consequently, this reference can be used to change the
+   * referred object's value.
+   * @param index The index of the element to acces; 0 is
+   * the first index.
+   * @return A reference to the element in the array. */
+  const short int& operatorAccess_impl(const short int index) const {
     // Indexes are zero based
     short int offset = index * sizeof(short int);
-    short int *p = (short int*) &(storage[offset]);
+    short int* p = (short int*)&(storage[offset]);
     // Dereference p
-    return (*p);                                       
+    return (*p);
   }
-  
 };
 
-#endif  //ONEDINTARRAY_H
+#endif // ONEDINTARRAY_H

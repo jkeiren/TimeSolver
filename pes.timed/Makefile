@@ -13,14 +13,14 @@ CFLAGS_PROFILE = -pg
 CFLAGS_DEBUG = -g
 CFLAGS_VALGRIND = -g3
 
-CXXFLAGS_ALL = -O -Wall -Wextra
+CXXFLAGS_ALL = -O -Wall -Wextra -std=c++11
 CXXFLAGS_PROFILE = -pg
 CXXFLAGS_DEBUG = -g
 CXXFLAGS_VALGRIND = -g3
 
 LDFLAGS_ALL =
 LDFLAGS_PROFILE = -pg -O
-LDFLAGS_DEBUG =
+LDFLAGS_DEBUG = -g
 LDFLAGS_VALGRIND =
 
 # Assume sane defaults from the environment, and we add to this.
@@ -64,8 +64,12 @@ export LDFLAGS
 
 FLEX = flex
 BISON = bison
-INCL_PATH = -I.
-TEST_DIR = test
+INCL_PATH = -I. -Iexternal/cpplogging/include
+
+SRC_FILES := $(wildcard *.cc)
+GENERATED_SRC_FILES := pes.lex.cc pes.tab.cc
+HEADER_FILES := $(wildcard *.hh)
+CHECK_FILES := $(filter-out $(GENERATED_SRC_FILES), $(SRC_FILES) $(HEADER_FILES))
 
 .PHONY: default
 default: all
@@ -75,31 +79,38 @@ all: timesolver-ta check
 doc: timesolver-ta *.hh *.cc
 	doxygen pes-timed_Doxyfile
 
-timesolver-ta:	pes.tab.o pes.lex.o ExprNode.o timesolver-ta.o
-	$(CXX) $(CXXFLAGS) pes.lex.o pes.tab.o ExprNode.o timesolver-ta.o $(LDFLAGS) -o timesolver-ta
+timesolver-ta:	pes.tab.o pes.lex.o ExprNode.o timesolver-ta.o logger.o
+	$(CXX) $(CXXFLAGS) pes.lex.o pes.tab.o ExprNode.o timesolver-ta.o external/cpplogging/logger.o $(LDFLAGS) -o timesolver-ta
 
-timesolver-ta.o: timesolver-ta.cc DBM.hh ExprNode.hh DBMList.hh
+timesolver-ta.o: timesolver-ta.cc DBM.hh ExprNode.hh DBMList.hh proof_data.hh proof.hh pes.hh transition.hh comp_ph.hh sequent.hh sequent_cache.hh
 	$(CXX) $(CXXFLAGS) -c timesolver-ta.cc $(INCL_PATH)
 
-ExprNode.o: ExprNode.cc ExprNode.hh DBM.hh
+ExprNode.o: ExprNode.cc ExprNode.hh DBM.hh DBMList.hh bidirectional_map.hh
 	$(CXX) $(CXXFLAGS) -c ExprNode.cc $(INCL_PATH)
 
 pes.lex.o: pes.lex.cc
 	$(CXX) $(CXXFLAGS) -c pes.lex.cc $(INCL_PATH) 
 
-pes.lex.cc: pes.l
+pes.lex.cc: pes.l ExprNode.hh transition.hh pes.tab.hh
 	$(FLEX) -p -8 -Ce -opes.lex.cc pes.l
 
-pes.tab.o: pes.tab.cc pes.tab.hh DBM.hh ExprNode.hh
+pes.tab.o: pes.tab.cc pes.tab.hh DBM.hh
 	$(CXX) $(CXXFLAGS) -c pes.tab.cc $(INCL_PATH)
 
-pes.tab.cc pes.tab.hh: pes.y
+pes.tab.cc pes.tab.hh: pes.y pes.hh ExprNode.hh transition.hh OneDIntArray.hh bidirectional_map.hh
 	$(BISON) -t -d -v -o pes.tab.cc pes.y
+	
+logger.o:
+	$(MAKE) -C external/cpplogging
 
 check:
-	$(MAKE) -C $(TEST_DIR) check
+	$(MAKE) -C test check
+	
+tests:
+	$(MAKE) -C test dbmtest
+	$(MAKE) -C test dbmlisttest
 
-checktool:
+checktool: timesolver-ta
 	../TATest.py
 	
 checkall: check checktool
@@ -119,4 +130,11 @@ clean:
 	-echo "Removing other tool-generated files!"
 	-rm -rf timesolver-ta.dSYM
 	-rm -f gmon.out
-	$(MAKE) -C $(TEST_DIR) clean
+	$(MAKE) -C test clean
+	$(MAKE) -C external/cpplogging clean
+
+# Formatting using clang-format
+# This uses .clang-format as specification for the rules.
+clang-format:
+	clang-format -style=file -i $(CHECK_FILES)
+	
