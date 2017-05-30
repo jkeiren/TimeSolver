@@ -2,8 +2,12 @@ TimeSolver-TA
 Copyright (c) 2016 	Rance Cleaveland, Peter Fontana, Jeroen Keiren,
 					Dezhuang Zhang.
 
-All files except for those found under the external directory are distributed
-under the Licence included in the accompanying file LICENCE.txt.
+All files except for those found under the external directory, and those found
+under test/googletest, are distributed under the license included in the
+accompanying file LICENSE.txt.
 
 The files under the external directory have their own licenses, which are
-included in the external directory.
+included in their directories.
+
+The files under test/googletest have their own license, which is included in
+test/googletest/LICENSE.
