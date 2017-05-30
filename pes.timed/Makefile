@@ -82,7 +82,7 @@ doc: timesolver-ta *.hh *.cc
 timesolver-ta:	pes.tab.o pes.lex.o ExprNode.o timesolver-ta.o logger.o
 	$(CXX) $(CXXFLAGS) pes.lex.o pes.tab.o ExprNode.o timesolver-ta.o external/cpplogging/logger.o $(LDFLAGS) -o timesolver-ta
 
-timesolver-ta.o: timesolver-ta.cc DBM.hh ExprNode.hh DBMList.hh proof_data.hh proof.hh pes.hh transition.hh comp_ph.hh sequent.hh sequent_cache.hh
+timesolver-ta.o: timesolver-ta.cc DBM.hh ExprNode.hh DBMList.hh sequent_stack.hh proof.hh pes.hh transition.hh comp_ph.hh sequent.hh sequent_cache.hh
 	$(CXX) $(CXXFLAGS) -c timesolver-ta.cc $(INCL_PATH)
 
 ExprNode.o: ExprNode.cc ExprNode.hh DBM.hh DBMList.hh bidirectional_map.hh

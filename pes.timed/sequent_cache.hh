@@ -14,7 +14,7 @@
 #define SEQUENT_CACHE_HH
 
 #include "pes.hh"
-#include "proof_data.hh"
+#include "sequent_stack.hh"
 
 class sequent_cache {
 protected:

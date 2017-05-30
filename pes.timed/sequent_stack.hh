@@ -1,5 +1,5 @@
-/** \file proof.hh
- * Auxiliary data structures used in the proofs.
+/** \file sequent_stack.hh
+ * Sequent stack, used as basis for caching.
  * @author Peter Fontana
  * @author Dezhuang Zhang
  * @author Rance Cleaveland
@@ -7,18 +7,13 @@
  * @copyright MIT Licence, see the accompanying LICENCE.txt
  */
 
-#ifndef PROOF_DATA_HH
-#define PROOF_DATA_HH
+#ifndef SEQUENT_STACK_HH
+#define SEQUENT_STACK_HH
 
 #include "DBM.hh"
 #include "DBMList.hh"
 #include "ExprNode.hh"
 #include "sequent.hh"
-
-/** Now define a stack of placeholder sequents.
- * Idea: Instead of intersecting the sequent with the placeholder,
- * store the sequents with placeholders separately. */
-typedef std::vector<SequentPlace*> stackPlace;
 
 /** Stack of sequents used to detect, among others, cycles of fixed points */
 template <typename SequentType, typename DBMsetElementType, typename DBMsetConstElementType>
@@ -358,4 +353,4 @@ public:
 typedef sequentStackT<Sequent, DBM*, const DBM*> sequentStack;
 typedef sequentStackT<SequentPlace, std::pair<DBM *, DBMList *>, std::pair<const DBM *, const DBMList *>> sequentStackPlace;
 
-#endif
+#endif // SEQUENT_STACK_HH

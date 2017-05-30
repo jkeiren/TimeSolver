@@ -32,7 +32,7 @@
 #include <unistd.h>
 #include "cpplogging/logger.h"
 #include "ExprNode.hh"
-#include "proof_data.hh"
+#include "sequent_stack.hh"
 #include "proof.hh"
 #include "errno.h"
 #include "pes.hh"
