@@ -1,9 +1,11 @@
 /** \file OneDIntArray.hh
  * An implementation of an array of short integers.
- * @author Dezhuang Zhang and Peter Fontana
+ * @author Peter Fontana
+ * @author Dezhuang Zhang
+ * @author Jeroen Keiren
+ * @copyright MIT Licence, see the accompanying LICENCE.txt
  * @note Many functions are inlined for better performance.
- * @version 1.21
- * @date November 8, 2013 */
+ */
 
 #ifndef ONEDINTARRAY_H
 #define ONEDINTARRAY_H

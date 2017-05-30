@@ -1,9 +1,11 @@
 /** \file ExprNode.hh
  * Header file for proof classes: Sequents, Expressions and Transitions.
- * @author Peter Fontana, Dezhuang Zhang, and Rance Cleaveland.
- * @note Many functions are inlined for better performance.
- * @version 1.21
- * @date November 8, 2013 */
+ * @author Peter Fontana
+ * @author Dezhuang Zhang
+ * @author Rance Cleaveland
+ * @author Jeroen Keiren
+ * @copyright MIT Licence, see the accompanying LICENCE.txt
+ */
 
 #ifndef EXPR_NODE_H
 #define EXPR_NODE_H

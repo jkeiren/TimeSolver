@@ -1,8 +1,11 @@
 /** \file proof.hh
- * Header file for proof
+ * Proof-search implementation for timed-automata model checking, based on PESs.
+ * @author Peter Fontana
+ * @author Dezhuang Zhang
+ * @author Rance Cleaveland
  * @author Jeroen Keiren
- * @version 1.21
- * @date June 21, 2016 */
+ * @copyright MIT Licence, see the accompanying LICENCE.txt
+ */
 
 #ifndef PROOF_HH
 #define PROOF_HH

@@ -1,3 +1,10 @@
+/** \file bidirectional_map.hh
+ * Simple bidirectional map implementation that keeps track of key <-> value
+ * mappings in both directions.
+ * @author Jeroen Keiren
+ * @copyright MIT Licence, see the accompanying LICENCE.txt
+ */
+
 #ifndef BIDIRECTIONAL_MAP_HH
 #define BIDIRECTIONAL_MAP_HH
 

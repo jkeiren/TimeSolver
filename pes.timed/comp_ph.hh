@@ -1,3 +1,12 @@
+/** \file comp_ph.hh
+ * Internal provers specialized to implications and transition guards.
+ * @author Peter Fontana
+ * @author Dezhuang Zhang
+ * @author Rance Cleaveland
+ * @author Jeroen Keiren
+ * @copyright MIT Licence, see the accompanying LICENCE.txt
+ */
+
 #ifndef COMP_PH_HH
 #define COMP_PH_HH
 
@@ -5,6 +14,11 @@
 #include "DBM.hh"
 #include "DBMList.hh"
 
+/** Internal prover to evaluate Boolean- and atomic expressions.
+ * @param e The formula to evaluate
+ * @param sublist The discrete state in which to evaluate e.
+ * @return true if e is satisfied in the discreate state, false otherwise.
+ */
 inline bool comp_ph_default(const ExprNode& e, const SubstList& sublist)
 {
   switch (e.getOpType()) {
@@ -39,9 +53,9 @@ inline bool comp_ph_default(const ExprNode& e, const SubstList& sublist)
 /** Internal prover for evaluating if the sublist satisfies
  * the atomic proposition expression as the invariant precondition
  * for each invariant conjunct.
- * @param e (*) The expression to evaluate; assumed to be the left hand side
+ * @param e The expression to evaluate; assumed to be the left hand side
  * of the invariant implication.
- * @param sublist (*) The discrete location of the left hand side.
+ * @param sublist The discrete location of the left hand side.
  * @return true: the expression evaluates to true, false: otherwise (if
  * the set of discrete and clock states satisfying the premise is empty).*/
 inline bool comp_ph_invs(const ExprNode& e, const SubstList& sublist) {
@@ -71,8 +85,9 @@ inline bool comp_ph_invs(const ExprNode& e, const SubstList& sublist) {
  * time successor zone of z in location sub.
  * Remember:  The INVARIANT is assumed to be a list of clauses of:
  *		Prop = Val -> DBM Constraints.
+ * @param invs A list of invariants.
  * @param lhs (*) The DBM to alter.
- * @param sub (*) The discrete state (location variable assignment)
+ * @param sub The discrete state (location variable assignment)
  * of the sequent.
  * @return true: the model has a non-vacuous invariant; false: otherwise. */
 inline bool restrict_to_invariant(const std::vector<const ExprNode*>& invs,
@@ -100,8 +115,9 @@ inline bool restrict_to_invariant(const std::vector<const ExprNode*>& invs,
  * time successor the set of valuations z in location sub.
  * Remember:  The INVARIANT is assumed to be a list of clauses of:
  *		Prop = Val -> DBM Constraints. (all constraints are clock zones)
+ * @param invs A list of invariants.
  * @param lhs (*) The DBMList to alter.
- * @param sub (*) The discrete state (location variable assignment)
+ * @param sub The discrete state (location variable assignment)
  * of the sequent.
  * @return true: the DBMList is changed; false: otherwise. */
 inline bool restrict_to_invariant(const std::vector<const ExprNode*>& invs,
@@ -178,10 +194,10 @@ inline bool comp_ph(DBM* const zone, const ExprNode& e,
  * evaluates the fed in expression to true or false.
  * For this method, the DBM must completely satisfy all clock constraints;
  * it is not tightened by the prover.
- * @param ph (*) The DBM representing the clock constraints.
- * @param e (*) The expression to evaluate; assumed to be the left hand side
+ * @param zone (*) The DBM representing the clock constraints.
+ * @param e The expression to evaluate; assumed to be the left hand side
  * of an implication or the conditions of a transition.
- * @param sublist (*) The discrete location of the left hand side.
+ * @param discrete_state The discrete location of the left hand side.
  * @return true: the expression evaluates to true (and ph is
  * tightened to make the expression true), false: otherwise (if
  * the set of discrete and clock states satisfying the premise is empty).*/
@@ -225,9 +241,9 @@ inline bool comp_ph_exist(const DBM* const zone, const ExprNode& e,
  * For this method, the placeholder is tightened to satisfy the constraints.
  * @param zone (*) The DBM representing the clock constraints.
  * @param place (*) The DBMList placeholder.
- * @param e (*) The expression to evaluate; assumed to be the left hand side
+ * @param e The expression to evaluate; assumed to be the left hand side
  * of an implication or the conditions of a transition.
- * @param discrete_state (*) The discrete location of the left hand side.
+ * @param discrete_state The discrete location of the left hand side.
  * @return true: the expression evaluates to true (and ph is
  * tightened to make the expression true), false: otherwise (if
  * the set of discrete and clock states satisfying the premise is empty).*/
@@ -281,9 +297,9 @@ inline bool comp_ph_exist_place(DBM* const zone, DBMList* const place,
  * if needed.
  * @param zone (*) The DBM representing the clock constraints.
  * @param place (*) The DBMList placeholder to tighten with the guard.
- * @param e (*) The expression to evaluate; assumed to be the left hand side
+ * @param e The expression to evaluate; assumed to be the left hand side
  * of an implication or the conditions of a transition.
- * @param sublist (*) The discrete location of the left hand side.
+ * @param discrete_state The discrete location of the left hand side.
  * @return true: the expression evaluates to true (and ph is
  * tightened to make the expression true), false: otherwise (if
  * the set of discrete and clock states satisfying the premise is empty).*/

@@ -2,10 +2,13 @@
  * A List of Difference Bound Matrices (DBMList); a
  * list (union) of matrices implementation for a union of clock
  * zones.
- * @author Peter Fontana, Dezhuang Zhang, and Rance Cleaveland.
+ * @author Peter Fontana
+ * @author Dezhuang Zhang
+ * @author Rance Cleaveland
+ * @author Jeroen Keiren
+ * @copyright MIT Licence, see the accompanying LICENCE.txt
  * @note Many functions are inlined for better performance.
- * @version 1.21
- * @date November 8, 2013 */
+ */
 
 #ifndef DBMLIST_H
 #define DBMLIST_H

@@ -1,10 +1,13 @@
 /** \file DBM.hh
  * The Difference Bound Matrix (DBM) class; a matrix implementation for a clock
  * zone.
- * @author Peter Fontana, Dezhuang Zhang, and Rance Cleaveland.
+ * @author Peter Fontana
+ * @author Dezhuang Zhang
+ * @author Rance Cleaveland
+ * @author Jeroen Keiren
+ * @copyright MIT Licence, see the accompanying LICENCE.txt
  * @note Many functions are inlined for better performance.
- * @version 1.21
- * @date November 8, 2013 */
+ */
 
 #ifndef DBM_H
 #define DBM_H

@@ -1,3 +1,8 @@
+/** \file pes.hh
+ * An implementation of Parameterised Equation Systems (PESs)
+ * @author Jeroen Keiren
+ * @copyright MIT Licence, see the accompanying LICENCE.txt
+ */
 #ifndef PES_HH
 #define PES_HH
 
@@ -21,6 +26,7 @@
  *    TRANSITIONS: (trans_Decl)
  * */
 
+/** Predicate equation system, including timed automata specifics */
 class pes {
 protected:
   /** A Hash table of Clock variables, mapping string names to id values.

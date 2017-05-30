@@ -1,17 +1,22 @@
-/** \mainpage CWB-RT PES Tool pes.timed 1.0
+/** \mainpage TimeSolver-TA 1.1
  *
  * A proof-based timed automata model checker.
- * @author Peter Fontana, Dezhuang Zhang, and Rance Cleaveland.
- * @version 1.21
- * @date November 8, 2013 */
+ * @author Peter Fontana
+ * @author Dezhuang Zhang
+ * @author Rance Cleaveland
+ * @author Jeroen Keiren
+ * @copyright MIT Licence, see the accompanying LICENCE.txt
+ */
 
-/** \file demo.cc
- * The main file of the timed automata model checker. This file
- * contains the bulk of the proof engine and the model checking
- * algorithms, including the implementation of the PES proof rules.
- * @author Peter Fontana, Dezhuang Zhang, and Rance Cleaveland.
- * @version 1.21
- * @date November 8, 2013 */
+/** \file timesolver-ta.cc
+ * The main file of the timed automata model checker. This file handles options,
+ * parses the inputs, and subsequently calls the solver.
+ * @author Peter Fontana
+ * @author Dezhuang Zhang
+ * @author Rance Cleaveland
+ * @author Jeroen Keiren
+ * @copyright MIT Licence, see the accompanying LICENCE.txt
+ */
 
 #include <iostream>
 #include <string.h>

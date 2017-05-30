@@ -1,3 +1,11 @@
+/**
+  * Some DBMs that are used in both DBM and DBMList tests.  *
+  *
+  * @author Peter Fontana
+  * @author Jeroen Keiren
+  * @copyright MIT Licence, see the accompanying LICENCE.txt.
+  */
+
 #ifndef TESTDBMS_HH
 #define TESTDBMS_HH
 

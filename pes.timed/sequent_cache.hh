@@ -1,3 +1,15 @@
+/**
+  * Caches for sequents. Used in the prover to detect cycles in fixed-points,
+  * and to cache known-true and known-false sequents.
+  *
+  * @author Peter Fontana
+  * @author Dezhuang Zhang
+  * @author Rance Cleaveland
+  * @author Jeroen Keiren
+  * @copyright MIT Licence, see the accompanying LICENCE.txt
+  */
+
+
 #ifndef SEQUENT_CACHE_HH
 #define SEQUENT_CACHE_HH
 

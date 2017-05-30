@@ -1,3 +1,12 @@
+/**
+  * Unit tests for DBM.
+  *
+  *
+  * @author Peter Fontana
+  * @author Jeroen Keiren
+  * @copyright MIT Licence, see the accompanying LICENCE.txt.
+  */
+
 #include <limits.h>
 #include "DBM.hh"
 #include "testdbms.hh"

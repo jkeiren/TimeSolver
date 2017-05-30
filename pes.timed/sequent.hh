@@ -1,8 +1,3 @@
-#ifndef SEQUENT_HH
-#define SEQUENT_HH
-
-#include "ExprNode.hh"
-
 /** The internal representation of a proof sequent with
  * a (potential) union of clock zones for the clock state.
  * A sequent with a placeholder is a
@@ -22,10 +17,19 @@
  * in the demo.cc implementation.
  *
  *
- * @author Peter Fontana, Dezhuang Zhang, and Rance Cleaveland.
+ * @author Peter Fontana
+ * @author Dezhuang Zhang
+ * @author Rance Cleaveland
+ * @author Jeroen Keiren
+ * @copyright MIT Licence, see the accompanying LICENCE.txt
  * @note Many functions are inlined for better performance.
- * @version 1.2
- * @date November 2, 2013 */
+ */
+
+#ifndef SEQUENT_HH
+#define SEQUENT_HH
+
+#include "ExprNode.hh"
+
 class SequentPlace; // forward declaration for parent scope
 
 /** This defines a DBMset as a vector of DBM

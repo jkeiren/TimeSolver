@@ -1,10 +1,13 @@
 /** \file ExprNode.cc
  * Source file for proof classes: Sequents, Expressions and Transitions.
  * This file contains some additional methods not in the header file.
- * @author Peter Fontana, Dezhuang Zhang, and Rance Cleaveland.
+ * @author Peter Fontana
+ * @author Dezhuang Zhang
+ * @author Rance Cleaveland
+ * @author Jeroen Keiren
+ * @copyright MIT Licence, see the accompanying LICENCE.txt
  * @note Many functions are inlined for better performance.
- * @version 1.21
- * @date November 8, 2013 */
+ */
 
 #include <cassert>
 #include <iostream>

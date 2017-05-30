@@ -3,9 +3,11 @@
  * various data primitives.
  * Project: Proof Based Real-time Model Checker
  * Purpose: Header for Generic One Dimentional Array Class
- * @author Dezhuang Zhang and Peter Fontana.
- * @version 1.21
- * @date November 8, 2013 */
+ * @author Peter Fontana
+ * @author Dezhuang Zhang
+ * @author Jeroen Keiren
+ * @copyright MIT Licence, see the accompanying LICENCE.txt
+  */
 
 #ifndef GENERIC1DARRAY_H
 #define GENERIC1DARRAY_H

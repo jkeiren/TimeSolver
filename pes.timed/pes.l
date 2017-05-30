@@ -1,11 +1,12 @@
 /** \file pes.lex.c
  * Source file generated from flex lexer file pes.l.
- * @author Peter Fontana and Dezhuang Zhang. 
+ * @author Peter Fontana
+ * @author Dezhuang Zhang
+ * @copyright MIT Licence, see the accompanying LICENCE.txt
  * @note Although Doxygen does not read pes.l, all Doxygen
  * comments in pes.lex.c are obtained from the pes.y file.
  * @see pes.l
- * @version 1.21
- * @date November 8, 2013 */
+ */
 
 %{
 #include "ExprNode.hh"

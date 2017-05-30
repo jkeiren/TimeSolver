@@ -1,3 +1,10 @@
+/**
+  * Utility functions.
+  *
+  * @author Jeroen Keiren
+  * @copyright MIT Licence, see the accompanying LICENCE.txt.
+  */
+
 #ifndef UTILITIES_HH
 #define UTILITIES_HH
 

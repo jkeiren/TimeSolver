@@ -1,7 +1,11 @@
 /** \file proof.hh
- * Header file for auxiliary data structures used in the proofs.
+ * Auxiliary data structures used in the proofs.
+ * @author Peter Fontana
+ * @author Dezhuang Zhang
+ * @author Rance Cleaveland
  * @author Jeroen Keiren
- * @date June 22, 2016 */
+ * @copyright MIT Licence, see the accompanying LICENCE.txt
+ */
 
 #ifndef PROOF_DATA_HH
 #define PROOF_DATA_HH

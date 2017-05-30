@@ -1,3 +1,12 @@
+/**
+  * Unit tests for DBMList.
+  *
+  *
+  * @author Peter Fontana
+  * @author Jeroen Keiren
+  * @copyright MIT Licence, see the accompanying LICENCE.txt.
+  */
+
 #include <limits.h>
 #include "DBMList.hh"
 #include "testdbms.hh"
