@@ -19,29 +19,29 @@
  * @param sublist The discrete state in which to evaluate e.
  * @return true if e is satisfied in the discreate state, false otherwise.
  */
-inline bool comp_ph_default(const ExprNode& e, const SubstList& sublist)
+inline bool comp_ph_default(const ExprNode& e, const SubstList& discrete_state)
 {
   switch (e.getOpType()) {
     case BOOL: {
       return (e.getBool());
     }
     case ATOMIC: {
-      return (sublist.at(e.getAtomic()) == e.getIntVal());
+      return (discrete_state.at(e.getAtomic()) == e.getIntVal());
     }
     case ATOMIC_NOT: {
-      return (sublist.at(e.getAtomic()) != e.getIntVal());
+      return (discrete_state.at(e.getAtomic()) != e.getIntVal());
     }
     case ATOMIC_LT: {
-      return (sublist.at(e.getAtomic()) < e.getIntVal());
+      return (discrete_state.at(e.getAtomic()) < e.getIntVal());
     }
     case ATOMIC_GT: {
-      return (sublist.at(e.getAtomic()) > e.getIntVal());
+      return (discrete_state.at(e.getAtomic()) > e.getIntVal());
     }
     case ATOMIC_LE: {
-      return (sublist.at(e.getAtomic()) <= e.getIntVal());
+      return (discrete_state.at(e.getAtomic()) <= e.getIntVal());
     }
     case ATOMIC_GE: {
-      return (sublist.at(e.getAtomic()) >= e.getIntVal());
+      return (discrete_state.at(e.getAtomic()) >= e.getIntVal());
     }
     default: {
       std::cerr << "Not a valid condition" << std::endl;
@@ -58,20 +58,20 @@ inline bool comp_ph_default(const ExprNode& e, const SubstList& sublist)
  * @param sublist The discrete location of the left hand side.
  * @return true: the expression evaluates to true, false: otherwise (if
  * the set of discrete and clock states satisfying the premise is empty).*/
-inline bool comp_ph_invs(const ExprNode& e, const SubstList& sublist) {
+inline bool comp_ph_invs(const ExprNode& e, const SubstList& discrete_state) {
   switch (e.getOpType()) {
     case AND: {
-      return (comp_ph_invs(*(e.getLeft()), sublist) &&
-              comp_ph_invs(*(e.getRight()), sublist));
+      return (comp_ph_invs(*(e.getLeft()), discrete_state) &&
+              comp_ph_invs(*(e.getRight()), discrete_state));
     }
     case OR:
     case OR_SIMPLE: {
       /* We only have atomic booleans so this simplified rule works. */
-      return (comp_ph_invs(*(e.getLeft()), sublist) ||
-              comp_ph_invs(*(e.getRight()), sublist));
+      return (comp_ph_invs(*(e.getLeft()), discrete_state) ||
+              comp_ph_invs(*(e.getRight()), discrete_state));
     }
     default: {
-      return comp_ph_default(e, sublist);
+      return comp_ph_default(e, discrete_state);
     }
   }
 }
@@ -91,13 +91,13 @@ inline bool comp_ph_invs(const ExprNode& e, const SubstList& sublist) {
  * of the sequent.
  * @return true: the model has a non-vacuous invariant; false: otherwise. */
 inline bool restrict_to_invariant(const std::vector<const ExprNode*>& invs,
-                                  DBM* const lhs, const SubstList& sub) {
+                                  DBM* const lhs, const SubstList& discrete_state) {
   bool has_nonvacuous_invariant = false;
   if (invs.empty()) return false;
-  for (int i = 0; i < sub.nElements(); i++) {
+  for (int i = 0; i < discrete_state.nElements(); i++) {
     for (std::vector<const ExprNode*>::const_iterator it = invs.begin();
          it != invs.end(); ++it) {
-      if (comp_ph_invs(*(*it), sub)) {
+      if (comp_ph_invs(*(*it), discrete_state)) {
         lhs->intersect(*(*it)->dbm());
         has_nonvacuous_invariant = true;
       }
@@ -117,17 +117,17 @@ inline bool restrict_to_invariant(const std::vector<const ExprNode*>& invs,
  *		Prop = Val -> DBM Constraints. (all constraints are clock zones)
  * @param invs A list of invariants.
  * @param lhs (*) The DBMList to alter.
- * @param sub The discrete state (location variable assignment)
+ * @param discrete_state The discrete state (location variable assignment)
  * of the sequent.
  * @return true: the DBMList is changed; false: otherwise. */
 inline bool restrict_to_invariant(const std::vector<const ExprNode*>& invs,
-                                  DBMList* const lhs, const SubstList& sub) {
+                                  DBMList* const lhs, const SubstList& discrete_state) {
   bool changed = false;
   if (invs.empty()) return false;
   std::vector<DBM*>* lList = lhs->getDBMList();
   for (std::vector<DBM*>::iterator it = lList->begin(); it != lList->end();
        ++it) {
-    changed = restrict_to_invariant(invs, *it, sub) || changed; // order is important
+    changed = restrict_to_invariant(invs, *it, discrete_state) || changed; // order is important
   }
   return changed;
 }
