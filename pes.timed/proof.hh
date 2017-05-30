@@ -494,11 +494,9 @@ protected:
     placeholder1_complement.cf();
     bool previouslyUpdated = false;
     /* Iterate through each DBM of phi2Place and union the results. */
-    const std::vector<DBM*>* placeholder2_dbms = placeholder2->getDBMList();
 
-    for (std::vector<DBM*>::const_iterator i = placeholder2_dbms->begin();
-         i != placeholder2_dbms->end(); ++i) {
-      DBM placeholder2_dbm_pred(**i);
+    for (DBM* const placeholder2_dbm: *placeholder2->getDBMList()) {
+      DBM placeholder2_dbm_pred(*placeholder2_dbm);
       placeholder2_dbm_pred.pre();
       placeholder2_dbm_pred.cf();
 
@@ -509,7 +507,7 @@ protected:
       // from which placeholder2 can be reached, and which can be reached from
       // zone.
 
-      DBMList placeholder2_dbm_complement(**i);
+      DBMList placeholder2_dbm_complement(*placeholder2_dbm);
       !placeholder2_dbm_complement;
       placeholder2_dbm_complement.cf();
 
@@ -871,7 +869,7 @@ inline bool prover::do_proof_or(const SubstList& discrete_state,
   // If the placeholder already covers the entire DBM, we are done,
   // otherwise we need to prove the right hand side for a fresh placeholder.
 
-  // Reset place parent to NULL
+  // Reset place parent to nullptr
   parentPlaceRef = nullptr;
   if (placeholder1.emptiness()) {
     retVal = do_proof(discrete_state, zone, *formula.getRight());
@@ -885,7 +883,7 @@ inline bool prover::do_proof_or(const SubstList& discrete_state,
     do_proof_place(discrete_state, zone, &placeholder2, *formula.getRight());
     placeholder2.cf();
 
-    // Reset place parent to NULL
+    // Reset place parent to nullptr
     parentPlaceRef = nullptr;
     if (placeholder2.emptiness()) {
       retVal = false;
@@ -955,7 +953,7 @@ inline bool prover::do_proof_forall_rel(const SubstList& discrete_state,
   do_proof_place(discrete_state, lhs_succ, &placeholder1, *formula.getLeft());
   placeholder1.cf();
 
-  // Reset place parent to NULL
+  // Reset place parent to nullptr
   parentPlaceRef = nullptr;
 
   if (placeholder1.emptiness()) { // Here, \forall phi_2 needs to hold.
@@ -1023,7 +1021,7 @@ inline bool prover::do_proof_forall_rel(const SubstList& discrete_state,
         << "} ----" << std::endl
         << std::endl;
 
-    // Reset place parent to NULL
+    // Reset place parent to nullptr
     parentPlaceRef = nullptr;
     if (placeholder2.emptiness()) { // \phi_2 is satisfied nowhere.
       retVal = false;
@@ -1152,7 +1150,7 @@ inline bool prover::do_proof_exists(const SubstList& discrete_state,
   restrict_to_invariant(input_pes.invariants(), &placeholder, discrete_state);
 
   do_proof_place(discrete_state, lhs_succ, &placeholder, *formula.getQuant());
-  // Reset place parent to NULL
+  // Reset place parent to nullptr
   parentPlaceRef = nullptr;
   placeholder.cf();
   if (placeholder.emptiness()) {
@@ -1208,7 +1206,7 @@ inline bool prover::do_proof_exists_rel(const SubstList& discrete_state,
   restrict_to_invariant(input_pes.invariants(), &placeholder2, discrete_state);
 
   do_proof_place(discrete_state, zone_succ, &placeholder2, *formula.getRight());
-  // Reset place parent to NULL
+  // Reset place parent to nullptr
   parentPlaceRef = nullptr;
   placeholder2.cf();
   if (placeholder2.emptiness()) {
@@ -1382,10 +1380,7 @@ inline bool prover::do_proof_allact(const SubstList& discrete_state,
   cpplog(cpplogging::debug) << "\t Proving ALLACT Transitions:----\n"
                             << std::endl;
 
-  for (std::vector<Transition*>::const_iterator it =
-           input_pes.transitions().begin();
-       it != input_pes.transitions().end(); ++it) {
-    Transition* transition = *it;
+  for (Transition* const transition: input_pes.transitions()) {
     /* Obtain the entire ExprNode and prove it */
     DBM tempLHS(zone);
 
@@ -1420,10 +1415,8 @@ inline bool prover::do_proof_allact(const SubstList& discrete_state,
           transition->getAssignmentVector();
       if (clock_assignments != nullptr) {
         // Iterate over the vector and print it
-        for (std::vector<std::pair<short int, short int>>::const_iterator it =
-                 clock_assignments->begin();
-             it != clock_assignments->end(); it++) {
-          invariant_region.preset((*it).first, (*it).second);
+        for (const std::pair<short int, short int>& clock_assignment: *clock_assignments) {
+          invariant_region.preset(clock_assignment.first, clock_assignment.second);
           invariant_region.cf();
         }
       }
@@ -1481,11 +1474,7 @@ inline bool prover::do_proof_existact(const SubstList& discrete_state,
 
   /* Use placeholders to split rules */
   DBMList* partialPlace = nullptr;
-  for (std::vector<Transition*>::const_iterator it =
-           input_pes.transitions().begin();
-       it != input_pes.transitions().end(); it++) {
-    Transition* transition = *it;
-
+  for (Transition* const transition: input_pes.transitions()) {
     /* Obtain the entire ExprNode and prove it */
 
     // Make a similar comp function for exists so
@@ -1519,10 +1508,8 @@ inline bool prover::do_proof_existact(const SubstList& discrete_state,
       const std::vector<std::pair<short int, short int>>* clock_assignments =
           transition->getAssignmentVector();
       if (clock_assignments != nullptr) {
-        for (std::vector<std::pair<short int, short int>>::const_iterator it =
-                 clock_assignments->begin();
-             it != clock_assignments->end(); it++) {
-          invariant_region.preset((*it).first, (*it).second);
+        for (const std::pair<short int, short int>& clock_assignment: *clock_assignments) {
+          invariant_region.preset(clock_assignment.first, clock_assignment.second);
           invariant_region.cf();
         }
       }
@@ -1565,7 +1552,7 @@ inline bool prover::do_proof_existact(const SubstList& discrete_state,
     do_proof_place(discrete_state, tempLHS, &tempPlace,
                                  *transition->getRightExpr());
 
-    // Reset place parent to NULL
+    // Reset place parent to nullptr
     parentPlaceRef = nullptr;
     if (!tempPlace.emptiness()) {
       // At least a partial solution for the existence of a transition was found
@@ -2536,11 +2523,7 @@ inline void prover::do_proof_place_allact(const SubstList& discrete_state,
    * so that we only need to give a non-convex placeholder when finished */
   std::vector<DBMList*> transition_placeholders;
   bool emptyRetPlace = false;
-  for (std::vector<Transition*>::const_iterator it =
-           input_pes.transitions().begin();
-       it != input_pes.transitions().end(); it++) {
-    Transition* transition = *it;
-
+  for (Transition* const transition: input_pes.transitions()) {
     /* Obtain the entire ExprNode and prove it */
     DBM tempLHS(zone);
 
@@ -2579,10 +2562,8 @@ inline void prover::do_proof_place_allact(const SubstList& discrete_state,
           transition->getAssignmentVector();
       if (clock_assignments != nullptr) {
         // Iterate over the vector and print it
-        for (std::vector<std::pair<short int, short int>>::const_iterator it =
-                 clock_assignments->begin();
-             it != clock_assignments->end(); it++) {
-          invariant_region.preset((*it).first, (*it).second);
+        for (const std::pair<short int, short int>& clock_assignment: *clock_assignments) {
+          invariant_region.preset(clock_assignment.first, clock_assignment.second);
           invariant_region.cf();
         }
       }
@@ -2714,15 +2695,14 @@ inline void prover::do_proof_place_allact(const SubstList& discrete_state,
 
 
   /* Handle the vector */
-  if (!(transition_placeholders.empty()) && !(emptyRetPlace)) {
+  if (!emptyRetPlace) {
     /* If the vector is empty, then there is nothing to do
      * hence, we only
      * handle the case with a non-empty placeholder. */
     // For now, just intersect the placeholders
-    for (std::vector<DBMList*>::iterator it = transition_placeholders.begin();
-         it != transition_placeholders.end(); it++) {
+    for (DBMList* const transition_placeholder: transition_placeholders) {
       /* Intersecting alone is not good enough, so need to do both */
-      place->intersect(*(*it));
+      place->intersect(*transition_placeholder);
     }
     place->cf();
   }
@@ -2748,11 +2728,7 @@ inline void prover::do_proof_place_existact(const SubstList& discrete_state,
   cpplog(cpplogging::debug) << "\t Proving EXISTACT Transitions:----\n"
                             << std::endl;
 
-  for (std::vector<Transition*>::const_iterator it =
-           input_pes.transitions().begin();
-       it != input_pes.transitions().end(); it++) {
-    Transition* transition = *it;
-
+  for (Transition* const transition: input_pes.transitions()) {
     /* Obtain the entire ExprNode and prove it */
 
     DBMList tempPlace(*place);
@@ -2787,10 +2763,8 @@ inline void prover::do_proof_place_existact(const SubstList& discrete_state,
           transition->getAssignmentVector();
       if (clock_assignments != nullptr) {
         // Iterate over the vector and print it
-        for (std::vector<std::pair<short int, short int>>::const_iterator it =
-                 clock_assignments->begin();
-             it != clock_assignments->end(); it++) {
-          invariant_region.preset((*it).first, (*it).second);
+        for (const std::pair<short int, short int>& clock_assignment: *clock_assignments) {
+          invariant_region.preset(clock_assignment.first, clock_assignment.second);
           invariant_region.cf();
         }
       }

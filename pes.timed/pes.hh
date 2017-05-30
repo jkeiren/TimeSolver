@@ -200,7 +200,7 @@ public:
    * the list if it is there. Throws a runtime error otherwise.
    * @param s (*) The label of the predicate to look up.
    * @return The reference to the Expression that the predicate is if in the
-   * list and NULL otherwise.
+   * list and nullptr otherwise.
    * @throws runtime error when predicate variable not found. */
   ExprNode* lookup_predicate(const std::string& name) const {
     std::map<std::string, ExprNode*>::const_iterator it =
@@ -276,7 +276,7 @@ public:
    * variable label,
    * and returns the equation, or throws runtime error if there is no such equation.
    * @param s (*) The label of the equation.
-   * @return The Expression (a reference) if found in the list, or NULL if not
+   * @return The Expression (a reference) if found in the list, or nullptr if not
    * found in the list of equations.
    * @throws runtime_error when no equation found. */
   ExprNode* lookup_equation(const std::string& name) const {

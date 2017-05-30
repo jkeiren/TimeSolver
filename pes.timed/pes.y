@@ -150,14 +150,14 @@ trans_list: /* Do not allow an empty list of transitions */
 trans_left_list TOK_IMPLY trans_dest_list_top trans_reset_list_top trans_replace_list_top TOK_SEMICOLON
 {
   ExprNode *leftExpr = $1;
-  ExprNode *parExpr = NULL;
-  ExprNode *rightExpr = NULL;
+  ExprNode *parExpr = nullptr;
+  ExprNode *rightExpr = nullptr;
   bool leftBool = true;
-  if($3==NULL && $4==NULL && $5==NULL) {
-    rightExpr = NULL;
+  if($3==nullptr && $4==nullptr && $5==nullptr) {
+    rightExpr = nullptr;
     leftBool = false;
   }
-  else if($3==NULL && $4==NULL) {
+  else if($3==nullptr && $4==nullptr) {
 
     /* Iterate through the assignment expression
      * until we reach the boolean expression. */
@@ -166,19 +166,19 @@ trans_left_list TOK_IMPLY trans_dest_list_top trans_reset_list_top trans_replace
       currExpr = currExpr->getExpr();
     }
     ExprNode *tempExprC = currExpr->getExpr();
-    currExpr->setExprDestLeft(NULL);
+    currExpr->setExprDestLeft(nullptr);
     parExpr = currExpr;
     delete tempExprC;
   }
-  else if($3==NULL && $5==NULL) {
-    rightExpr = new ExprNode(RESET, NULL, $4, input_pes.clocks(), input_pes.atomic());
+  else if($3==nullptr && $5==nullptr) {
+    rightExpr = new ExprNode(RESET, nullptr, $4, input_pes.clocks(), input_pes.atomic());
     parExpr = rightExpr;
   }
-  else if($4==NULL && $5==NULL) {
-    rightExpr = new ExprNode(SUBLIST, NULL, $3, input_pes.clocks(), input_pes.atomic());
+  else if($4==nullptr && $5==nullptr) {
+    rightExpr = new ExprNode(SUBLIST, nullptr, $3, input_pes.clocks(), input_pes.atomic());
     parExpr = rightExpr;
   }
-  else if($3 == NULL) {
+  else if($3 == nullptr) {
     /* Iterate through the assignment expression
      * until we reach the boolean expression. */
     ExprNode *currExpr = $5;
@@ -186,14 +186,14 @@ trans_left_list TOK_IMPLY trans_dest_list_top trans_reset_list_top trans_replace
       currExpr = currExpr->getExpr();
     }
     ExprNode *tempExprC = currExpr->getExpr();
-    ExprNode *tempExpr = new ExprNode(RESET, NULL, $4, input_pes.clocks(), input_pes.atomic());
+    ExprNode *tempExpr = new ExprNode(RESET, nullptr, $4, input_pes.clocks(), input_pes.atomic());
     currExpr->setExprDestLeft(tempExpr);
     parExpr = tempExpr;
     delete tempExprC;
     rightExpr = $5;
 
   }
-  else if($4 == NULL) {
+  else if($4 == nullptr) {
     /* Iterate through the assignment expression
      * until we reach the boolean expression. */
     ExprNode *currExpr = $5;
@@ -201,15 +201,15 @@ trans_left_list TOK_IMPLY trans_dest_list_top trans_reset_list_top trans_replace
       currExpr = currExpr->getExpr();
     }
     ExprNode *tempExprC = currExpr->getExpr();
-    ExprNode *tempExpr = new ExprNode(SUBLIST, NULL, $3, input_pes.clocks(), input_pes.atomic());
+    ExprNode *tempExpr = new ExprNode(SUBLIST, nullptr, $3, input_pes.clocks(), input_pes.atomic());
     currExpr->setExprDestLeft(tempExpr);
     parExpr = tempExpr;
     delete tempExprC;
     rightExpr = $5;
 
   }
-  else if($5 == NULL) {
-    ExprNode *tempExpr = new ExprNode(SUBLIST, NULL, $3, input_pes.clocks(), input_pes.atomic());
+  else if($5 == nullptr) {
+    ExprNode *tempExpr = new ExprNode(SUBLIST, nullptr, $3, input_pes.clocks(), input_pes.atomic());
     parExpr = tempExpr;
     rightExpr = new ExprNode(RESET, tempExpr, $4, input_pes.clocks(), input_pes.atomic());
   }
@@ -221,15 +221,15 @@ trans_left_list TOK_IMPLY trans_dest_list_top trans_reset_list_top trans_replace
       currExpr = currExpr->getExpr();
     }
     ExprNode *tempExprC = currExpr->getExpr();
-    ExprNode *tempExpr = new ExprNode(SUBLIST, NULL, $3, input_pes.clocks(), input_pes.atomic());
+    ExprNode *tempExpr = new ExprNode(SUBLIST, nullptr, $3, input_pes.clocks(), input_pes.atomic());
     ExprNode *aboveTempExpr = new ExprNode(RESET, tempExpr, $4, input_pes.clocks(), input_pes.atomic());
     currExpr->setExprDestLeft(aboveTempExpr);
     parExpr = tempExpr;
     delete tempExprC;
     rightExpr = $5;
   }
-  vector<pair<short int, short int> > * assignVector = NULL;
-  if($5 != NULL) {
+  vector<pair<short int, short int> > * assignVector = nullptr;
+  if($5 != nullptr) {
     assignVector = new vector<pair<short int, short int> >(0);
     makeAssignmentList(*$5, assignVector);
   }
@@ -242,14 +242,14 @@ trans_left_list TOK_IMPLY trans_dest_list_top trans_reset_list_top trans_replace
 {
   ExprNode *leftExpr = $2;
 
-  ExprNode *parExpr = NULL;
+  ExprNode *parExpr = nullptr;
   ExprNode *rightExpr;
   bool leftBool = true;
-  if($4==NULL && $5==NULL && $6==NULL) {
-    rightExpr = NULL;
+  if($4==nullptr && $5==nullptr && $6==nullptr) {
+    rightExpr = nullptr;
     leftBool = false;
   }
-  else if($4==NULL && $5==NULL) {
+  else if($4==nullptr && $5==nullptr) {
 
     /* Iterate through the assignment expression
      * until we reach the boolean expression. */
@@ -258,19 +258,19 @@ trans_left_list TOK_IMPLY trans_dest_list_top trans_reset_list_top trans_replace
       currExpr = currExpr->getExpr();
     }
     ExprNode *tempExprC = currExpr->getExpr();
-    currExpr->setExprDestLeft(NULL);
+    currExpr->setExprDestLeft(nullptr);
     parExpr = currExpr;
     delete tempExprC;
   }
-  else if($4==NULL && $6==NULL) {
-    rightExpr = new ExprNode(RESET, NULL, $5, input_pes.clocks(), input_pes.atomic());
+  else if($4==nullptr && $6==nullptr) {
+    rightExpr = new ExprNode(RESET, nullptr, $5, input_pes.clocks(), input_pes.atomic());
     parExpr = rightExpr;
   }
-  else if($5==NULL && $6==NULL) {
-    rightExpr = new ExprNode(SUBLIST, NULL, $4, input_pes.clocks(), input_pes.atomic());
+  else if($5==nullptr && $6==nullptr) {
+    rightExpr = new ExprNode(SUBLIST, nullptr, $4, input_pes.clocks(), input_pes.atomic());
     parExpr = rightExpr;
   }
-  else if($4 == NULL) {
+  else if($4 == nullptr) {
     /* Iterate through the assignment expression
      * until we reach the boolean expression. */
     ExprNode *currExpr = $6;
@@ -278,14 +278,14 @@ trans_left_list TOK_IMPLY trans_dest_list_top trans_reset_list_top trans_replace
       currExpr = currExpr->getExpr();
     }
     ExprNode *tempExprC = currExpr->getExpr();
-    ExprNode *tempExpr = new ExprNode(RESET, NULL, $5, input_pes.clocks(), input_pes.atomic());
+    ExprNode *tempExpr = new ExprNode(RESET, nullptr, $5, input_pes.clocks(), input_pes.atomic());
     currExpr->setExprDestLeft(tempExpr);
     parExpr = tempExpr;
     delete tempExprC;
     rightExpr = $6;
 
   }
-  else if($5 == NULL) {
+  else if($5 == nullptr) {
     /* Iterate through the assignment expression
      * until we reach the boolean expression. */
     ExprNode *currExpr = $6;
@@ -293,15 +293,15 @@ trans_left_list TOK_IMPLY trans_dest_list_top trans_reset_list_top trans_replace
       currExpr = currExpr->getExpr();
     }
     ExprNode *tempExprC = currExpr->getExpr();
-    ExprNode *tempExpr = new ExprNode(SUBLIST, NULL, $4, input_pes.clocks(), input_pes.atomic());
+    ExprNode *tempExpr = new ExprNode(SUBLIST, nullptr, $4, input_pes.clocks(), input_pes.atomic());
     currExpr->setExprDestLeft(tempExpr);
     parExpr = tempExpr;
     delete tempExprC;
     rightExpr = $6;
 
   }
-  else if($6 == NULL) {
-    ExprNode *tempExpr = new ExprNode(SUBLIST, NULL, $4, input_pes.clocks(), input_pes.atomic());
+  else if($6 == nullptr) {
+    ExprNode *tempExpr = new ExprNode(SUBLIST, nullptr, $4, input_pes.clocks(), input_pes.atomic());
     parExpr = tempExpr;
     rightExpr = new ExprNode(RESET, tempExpr, $5, input_pes.clocks(), input_pes.atomic());
   }
@@ -313,15 +313,15 @@ trans_left_list TOK_IMPLY trans_dest_list_top trans_reset_list_top trans_replace
       currExpr = currExpr->getExpr();
     }
     ExprNode *tempExprC = currExpr->getExpr();
-    ExprNode *tempExpr = new ExprNode(SUBLIST, NULL, $4, input_pes.clocks(), input_pes.atomic());
+    ExprNode *tempExpr = new ExprNode(SUBLIST, nullptr, $4, input_pes.clocks(), input_pes.atomic());
     ExprNode *aboveTempExpr = new ExprNode(RESET, tempExpr, $5, input_pes.clocks(), input_pes.atomic());
     currExpr->setExprDestLeft(aboveTempExpr);
     parExpr = tempExpr;
     delete tempExprC;
     rightExpr = $6;
   }
-  vector<pair<short int, short int> > * assignVector = NULL;
-  if($6 != NULL) {
+  vector<pair<short int, short int> > * assignVector = nullptr;
+  if($6 != nullptr) {
     assignVector = new vector<pair<short int, short int> >(0);
     makeAssignmentList(*$6, assignVector);
   }
@@ -457,7 +457,7 @@ constraints
   delete $3;
 };
 
-trans_dest_list_top: /* empty */ { $$ = NULL;}
+trans_dest_list_top: /* empty */ { $$ = nullptr;}
 | TOK_LPAREN trans_dest_list TOK_RPAREN {$$ = $2;}
 
 trans_dest_list: /* cannot be empty */
@@ -485,7 +485,7 @@ TOK_ID_ATOMIC TOK_ASSIGN TOK_INT
 
 };
 
-trans_reset_list_top : /*empty */ {$$ = NULL;}
+trans_reset_list_top : /*empty */ {$$ = nullptr;}
 | TOK_LBRACE trans_reset_list TOK_RBRACE { $$ = $2;};
 
 trans_reset_list: /* cannot be empty */
@@ -512,7 +512,7 @@ TOK_ID_CLOCK
   delete $3;
 };
 
-trans_replace_list_top: /* empty */ {$$ = NULL;}
+trans_replace_list_top: /* empty */ {$$ = nullptr;}
 | TOK_LBRACK trans_replace_list TOK_RBRACK { $$ = $2;};
 
 trans_replace_list: /* cannot be empty */
@@ -807,7 +807,7 @@ TOK_FORALL TOK_TIME TOK_LPAREN expr TOK_RPAREN
 |TOK_ID_PREDICATE
 {
   $$ = input_pes.lookup_predicate($1);
-  if ( $$ == NULL ) {
+  if ( $$ == nullptr ) {
     errPrtExit("predicate variable not declared");
   }
   delete $1;

@@ -504,7 +504,7 @@ protected:
 public:
 
   function_pointer_output()
-    : m_handler(NULL)
+    : m_handler(nullptr)
   {}
 
   function_pointer_output(custom_message_handler_t handler)

@@ -283,7 +283,7 @@ void print_ExprNodeType(const opType op, std::ostream& os, bool place) {
  * @param os (&) The type of output stream to print the output to.
  * @return none */
 void print_ExprNodeTrans(const ExprNode* const e, std::ostream& os) {
-  if (e != NULL) {
+  if (e != nullptr) {
     switch (e->getOpType()) {
       case PREDICATE:
         os << e->getPredicate();

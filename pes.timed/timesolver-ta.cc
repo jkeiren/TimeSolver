@@ -67,7 +67,7 @@ extern int yyparse(bool debug, pes& input_pes);
  * @return None */
 void yyerror(bool /*debug*/, pes&, char* s) {
   std::cerr << " line " << yyline << ": ";
-  if (s == NULL)
+  if (s == nullptr)
     cerr << "syntax error";
   else
     std::cerr << s;

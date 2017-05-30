@@ -26,8 +26,8 @@ public:
    * left child of destParent; false: otherwise (the destination expression of a
    * proof should be the right child of destParent).
    * @param dest (*) The partial substitution list for the change in discrete
-   * state. If there is no assignment, dest will be NULL.
-   * @param reset (*) The set of clocks the transition resets. This will be NULL
+   * state. If there is no assignment, dest will be nullptr.
+   * @param reset (*) The set of clocks the transition resets. This will be nullptr
    * if no clocks are reset.
    * @return [Constructor]. */
   Transition(ExprNode* const destParent, const ExprNode* const leftExprIn,
@@ -39,7 +39,7 @@ public:
         isDestLeft(isDestOnLeft),
         clockAssignmentList(
             clockAssignments == 0
-                ? NULL
+                ? nullptr
                 : new std::vector<std::pair<short int, short int>>(
                       *clockAssignments)),
         leftExpr(leftExprIn),
@@ -55,16 +55,16 @@ public:
    * the proof expression tree.
    * @return [Destructor]. */
   ~Transition() {
-    /* First set destExpr to NULL to not double delete */
-    if (destPar == NULL && rightExpr != NULL) {
-      rightExpr = NULL;
-    } else if (isDestLeft && destPar != NULL) {
-      destPar->setExprDestLeft(NULL);
-    } else if (destPar != NULL) {
-      destPar->setExprDestRight(NULL);
+    /* First set destExpr to nullptr to not double delete */
+    if (destPar == nullptr && rightExpr != nullptr) {
+      rightExpr = nullptr;
+    } else if (isDestLeft && destPar != nullptr) {
+      destPar->setExprDestLeft(nullptr);
+    } else if (destPar != nullptr) {
+      destPar->setExprDestRight(nullptr);
     }
     /* should be superfluous
-    if(clockAssignmentList != NULL) {
+    if(clockAssignmentList != nullptr) {
       clockAssignmentList->clear();
     }
      */
@@ -107,7 +107,7 @@ public:
    * after the transition is executed.
    * @return None. */
   void getNewTrans(ExprNode* const destExpr) {
-    if (destPar == NULL) {
+    if (destPar == nullptr) {
       rightExpr = destExpr;
     } else {
       if (isDestLeft) {
@@ -182,10 +182,10 @@ private:
   ExprNode* rightExpr;
 
   /** A reference to the subList of the transition.
-   * If there is no change in location, destList will be NULL. */
+   * If there is no change in location, destList will be nullptr. */
   const SubstList* destList;
 
-  /** The set of clocks to reset on the transition. This is NULL
+  /** The set of clocks to reset on the transition. This is nullptr
    * if there are no clocks to reset */
   const ClockSet* resetList;
 };

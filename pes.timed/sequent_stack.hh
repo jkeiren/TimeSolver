@@ -157,7 +157,7 @@ public:
   /** Looks in a cache of sequents (the stack Xlist)
    * for the right hand side
    * and discrete state of the input partial sequent; returns a found sequent,
-   * and returns NULL if no such sequent is found. This method is only used for
+   * and returns nullptr if no such sequent is found. This method is only used for
    * sequents of predicate variable right hand sided. The returned partial
    * sequent is then examined for the desired clock state (with
    * tabled_sequent()).
@@ -178,7 +178,7 @@ public:
         return ls;
       }
     }
-    // sequent not in structure, so return NULL.
+    // sequent not in structure, so return nullptr.
     return nullptr;
   }
 
@@ -187,7 +187,7 @@ public:
    * from the cache if it finds it. By assumption, the right
    * hand side of Sequent s is the predicate variable specified
    * by pInd. This method returns the purged sequent if found,
-   * and NULL otherwise. By design of the caches, there should be at most one
+   * and nullptr otherwise. By design of the caches, there should be at most one
    * such sequent in the cache to purge. This is used to look for and purge
    * previously cached
    * (known true) or (known false) sequents to detect a caching mistake
@@ -205,7 +205,7 @@ public:
    * @param (*) madeEmpty A reference to a boolean in order that the function
    * can change it to true if the found sequent was deleted from the list.
    * @return The pointer to the purged sequent, or
-   * NULL if no sequent was purged.*/
+   * nullptr if no sequent was purged.*/
   SequentType* look_for_and_purge_rhs_sequent(const DBMsetConstElementType elt,
                                               const SequentType* const sequent,
                                               const int predicate_index,

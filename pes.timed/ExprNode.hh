@@ -11,17 +11,17 @@
 #define EXPR_NODE_H
 
 #include <cassert>
-#include "DBM.hh"
-#include "DBMList.hh"
+#include <cstdio>
+#include <cstdlib>
 #include <fstream>
 #include <map>
 #include <vector>
 #include <deque>
 #include <list>
 #include <utility>
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <string>
+#include "DBM.hh"
+#include "DBMList.hh"
 
 /** The type that contains all of the logical constraints/connectives
  * needed. This covers all possible cases of an ExprNode expression.
@@ -538,7 +538,7 @@ public:
 
   /** Returns the left child of the expression. Used for
    * quantified expressions, which have only one child. (In an ExprNode,
-   * the single child is assigned as the left child with a NULL right child.)
+   * the single child is assigned as the left child with a nullptr right child.)
    * @return The reference to the left (or single) child of that expression.
    * @see The Constructor(s) comments for more information. */
   ExprNode* getQuant() const { return left; }

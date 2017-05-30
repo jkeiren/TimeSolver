@@ -532,7 +532,7 @@ public:
       }
     }
     DBM *m = new DBM(lhs);
-    /* I would like this to be NULL, but it is checked in the program */
+    /* I would like this to be nullptr, but it is checked in the program */
 
     /** This DBM is used as a DBM with
      * the proper number of clocks and initialized
