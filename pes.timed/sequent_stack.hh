@@ -30,7 +30,6 @@ protected:
   int size;
   int seqStSize;
   const int predicates_size; // number of predicates in PES.
-  bool& newSequent;
 
   /** Provide the hash function to hash atomic (discrete location) variables
    * into bins; it gives a hash bin per SubstList (
@@ -100,14 +99,13 @@ protected:
 
 public:
   sequentStackT(const std::size_t aSize, const int nbits, const int size,
-                const int seqStSize, const int predicateInd, bool& newSequent)
+                const int seqStSize, const int predicateInd)
       : Xlist(new stack_t[size]),
         atomic_size(aSize),
         nbits(nbits),
         size(size),
         seqStSize(seqStSize),
-        predicates_size(predicateInd),
-        newSequent(newSequent) {}
+        predicates_size(predicateInd) {}
 
   ~sequentStackT() {
     for (int i = 0; i < size; i++) {
@@ -136,22 +134,24 @@ public:
    * @return The reference to the sequent with the three components
    * specified as parameters. */
   SequentType* locate_sequent(SequentType* const sequent,
-                              int predicate_index) const {
+                              int predicate_index,
+                              bool& newSequent) const {
     SequentType* ls =
         look_for_sequent(sequent->discrete_state(), predicate_index);
+    SequentType* result;
     if (ls == nullptr) {
       /* Sequent not found; add it to the cache.
        * (This is why we must take in the entire Sequent s as a parameter
        * and not just its sublist component.) */
       const int index = get_index(sequent->discrete_state(), predicate_index);
-      newSequent = true;
       Xlist[index].push_back(sequent);
-      return (Xlist[index].back());
+      result = Xlist[index].back();
     } else {
       delete sequent;
-      newSequent = ls->dbm_set().empty();
-      return ls;
+      result = ls;
     }
+    newSequent = (ls == nullptr || ls->dbm_set().empty());
+    return result;
   }
 
   /** Looks in a cache of sequents (the stack Xlist)

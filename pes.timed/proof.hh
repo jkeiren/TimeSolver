@@ -48,12 +48,6 @@ protected:
    * in the proof tree. */
   SequentPlace* parentPlaceRef;
 
-  /** A boolean used to tell if the located sequent was
-   * newly-added to the cache. If it is true, then that sequent
-   * has no left-hand clock states, and is empty; hence, it need
-   * not be examined by table-sequent.*/
-  bool newSequent;
-
   /** Cache for storing sequents. This incorporates true and false sequents, as
    * well as sequents for predicate variables in order to detect cycles.
    */
@@ -69,9 +63,7 @@ public:
         numLocations(1),
         parentRef(nullptr),
         parentPlaceRef(nullptr),
-        newSequent(true),
-        cache(input_pes, nbits, input_pes.predicates().size() * nHash, nHash,
-              newSequent) {
+        cache(input_pes, nbits, input_pes.predicates().size() * nHash, nHash) {
     /* This is initialized to be the largest (loosest)
      * possible DBM
      * @see DBM Constructor (Default Constructor). */
@@ -119,7 +111,8 @@ protected:
    * atomic "state" of the Sequent.
    * @return True if the expression evaluates to True given the other parameters
    * and False otherwise (if the expression evaluates to False).*/
-  __attribute__((flatten)) bool do_proof(const SubstList& discrete_state,
+  __attribute__((flatten))
+  bool do_proof(const SubstList& discrete_state,
                                          const DBM& zone,
                                          const ExprNode& formula) {
     assert(zone.isInCf());
@@ -659,7 +652,7 @@ inline bool prover::do_proof_predicate(const SubstList& discrete_state,
   ExprNode* e = input_pes.lookup_equation(formula.getPredicate());
 
   // Get Predicate Index for Hashing
-  int predicate_index =
+  const int predicate_index =
       input_pes.lookup_predicate(formula.getPredicate())->getIntVal() - 1;
   prevParityGfp = currParityGfp;
   currParityGfp = formula.get_Parity();
@@ -704,7 +697,8 @@ inline bool prover::do_proof_predicate(const SubstList& discrete_state,
   { // Restricted scope for detecting circularities
     Sequent* t = new Sequent(&formula, &discrete_state);
     if (currParityGfp) { // Thus a Greatest Fixpoint
-      h = cache.Xlist_pGFP.locate_sequent(t, predicate_index);
+      bool newSequent;
+      h = cache.Xlist_pGFP.locate_sequent(t, predicate_index, newSequent);
       if ((!newSequent) && h->tabled_sequent(zone)) {
         // Found gfp Circularity - thus valid
         cpplog(cpplogging::debug)
@@ -719,7 +713,7 @@ inline bool prover::do_proof_predicate(const SubstList& discrete_state,
         if (useCaching) {
           Sequent* true_sequent = new Sequent(&formula, &discrete_state);
           Sequent* cached_true_sequent =
-              cache.Xlist_true.locate_sequent(true_sequent, predicate_index);
+              cache.Xlist_true.locate_sequent(true_sequent, predicate_index, newSequent);
           cached_true_sequent->update_sequent(zone);
         }
         return true; // greatest fixed point circularity found
@@ -728,7 +722,8 @@ inline bool prover::do_proof_predicate(const SubstList& discrete_state,
       h->push_sequent(new DBM(zone));
     } else { // Thus, a least fixpoint
       // Now look for a Circularity
-      h = cache.Xlist_pLFP.locate_sequent(t, predicate_index);
+      bool newSequent;
+      h = cache.Xlist_pLFP.locate_sequent(t, predicate_index, newSequent);
       if ((!newSequent) && h->tabled_sequent_lfp(zone)) {
         cpplog(cpplogging::debug)
             << "---(Invalid) Located a lfp Circularity ----" << std::endl
@@ -741,7 +736,7 @@ inline bool prover::do_proof_predicate(const SubstList& discrete_state,
         if (useCaching) {
           Sequent* false_sequent = new Sequent(&formula, &discrete_state);
           Sequent* cached_false_sequent =
-              cache.Xlist_false.locate_sequent(false_sequent, predicate_index);
+              cache.Xlist_false.locate_sequent(false_sequent, predicate_index, newSequent);
           cached_false_sequent->update_false_sequent(zone);
         }
         return false; // least fixed point circularity found
@@ -794,8 +789,9 @@ inline bool prover::do_proof_predicate(const SubstList& discrete_state,
       }
 
       // Now update in proper Cache
+      bool newSequent;
       Sequent* cached_true_sequent =
-          cache.Xlist_true.locate_sequent(true_sequent, predicate_index);
+          cache.Xlist_true.locate_sequent(true_sequent, predicate_index, newSequent);
       cached_true_sequent->update_sequent(zone);
       // Since we update the cached_true_sequent with true_sequent, we shall
       // not free true_sequent.
@@ -821,8 +817,9 @@ inline bool prover::do_proof_predicate(const SubstList& discrete_state,
       }
 
       // Now update in proper Cache
+      bool newSequent;
       Sequent* cached_false_sequent =
-          cache.Xlist_false.locate_sequent(false_sequent, predicate_index);
+          cache.Xlist_false.locate_sequent(false_sequent, predicate_index, newSequent);
       cached_false_sequent->update_false_sequent(zone);
 
       if (madeEmpty) {
@@ -1738,7 +1735,8 @@ inline void prover::do_proof_place_predicate(const SubstList& discrete_state,
     SequentPlace* t = new SequentPlace(&formula, &discrete_state);
     if (currParityGfp) { // Thus a Greatest Fixpoint
       /* Already looked in known false so no need to do so */
-      h = cache.Xlist_pGFP_ph.locate_sequent(t, predicate_index);
+      bool newSequent;
+      h = cache.Xlist_pGFP_ph.locate_sequent(t, predicate_index, newSequent);
       if (!newSequent && h->tabled_sequent_gfp(zone, place)) {
         // Found gfp Circularity - thus valid
         cpplog(cpplogging::debug)
@@ -1757,7 +1755,7 @@ inline void prover::do_proof_place_predicate(const SubstList& discrete_state,
         if (useCaching) {
           SequentPlace* true_sequent = new SequentPlace(&formula, &discrete_state);
           SequentPlace* cached_true_sequent =
-              cache.Xlist_true_ph.locate_sequent(true_sequent, predicate_index);
+              cache.Xlist_true_ph.locate_sequent(true_sequent, predicate_index, newSequent);
           cached_true_sequent->update_sequent(zone, place);
         }
         return;
@@ -1766,7 +1764,8 @@ inline void prover::do_proof_place_predicate(const SubstList& discrete_state,
       h->push_sequent(std::make_pair(new DBM(zone), new DBMList(*place)));
     } else { // Thus, a least fixpoint
       // Now look in lfp circularity cache
-      h = cache.Xlist_pLFP_ph.locate_sequent(t, predicate_index);
+      bool newSequent;
+      h = cache.Xlist_pLFP_ph.locate_sequent(t, predicate_index, newSequent);
       if (!newSequent && h->tabled_sequent_lfp(zone, place)) {
         // Found lfp circularity - thus invalid
         place->makeEmpty();
@@ -1787,7 +1786,7 @@ inline void prover::do_proof_place_predicate(const SubstList& discrete_state,
           SequentPlace* false_sequent = new SequentPlace(&formula, &discrete_state);
           SequentPlace* cached_false_sequent =
               cache.Xlist_false_ph.locate_sequent(false_sequent,
-                                                  predicate_index);
+                                                  predicate_index, newSequent);
           cached_false_sequent->update_false_sequent(zone);
         }
         return;
@@ -1847,8 +1846,9 @@ inline void prover::do_proof_place_predicate(const SubstList& discrete_state,
       }
 
       // Now update in proper Cache
+      bool newSequent;
       SequentPlace* cached_true_sequent =
-          cache.Xlist_true_ph.locate_sequent(true_sequent, predicate_index);
+          cache.Xlist_true_ph.locate_sequent(true_sequent, predicate_index, newSequent);
       cached_true_sequent->update_sequent(zone, place);
 
       // this delete is necessary for memory management but problematic
@@ -1875,8 +1875,9 @@ inline void prover::do_proof_place_predicate(const SubstList& discrete_state,
       }
 
       // Now update in proper Cache
+      bool newSequent;
       SequentPlace* cached_false_sequent =
-          cache.Xlist_false_ph.locate_sequent(false_sequent, predicate_index);
+          cache.Xlist_false_ph.locate_sequent(false_sequent, predicate_index, newSequent);
       cached_false_sequent->update_false_sequent(zone);
 
       // This delete is necessary for memory management but problematic

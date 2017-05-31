@@ -66,26 +66,26 @@ public:
   sequentStackPlace Xlist_false_ph;
 
   sequent_cache(const pes& input_pes, const int nbits, const int size,
-                const int seqStSize, bool& newSequent)
+                const int seqStSize)
       : input_pes(input_pes),
         nbits(nbits),
         nHash(seqStSize),
         Xlist_pGFP(input_pes.atomic().size(), nbits, size, seqStSize,
-                   input_pes.predicates().size(), newSequent),
+                   input_pes.predicates().size()),
         Xlist_pLFP(input_pes.atomic().size(), nbits, size, seqStSize,
-                   input_pes.predicates().size(), newSequent),
+                   input_pes.predicates().size()),
         Xlist_true(input_pes.atomic().size(), nbits, size, seqStSize,
-                   input_pes.predicates().size(), newSequent),
+                   input_pes.predicates().size()),
         Xlist_false(input_pes.atomic().size(), nbits, size, seqStSize,
-                    input_pes.predicates().size(), newSequent),
+                    input_pes.predicates().size()),
         Xlist_pGFP_ph(input_pes.atomic().size(), nbits, size, seqStSize,
-                      input_pes.predicates().size(), newSequent),
+                      input_pes.predicates().size()),
         Xlist_pLFP_ph(input_pes.atomic().size(), nbits, size, seqStSize,
-                      input_pes.predicates().size(), newSequent),
+                      input_pes.predicates().size()),
         Xlist_true_ph(input_pes.atomic().size(), nbits, size, seqStSize,
-                      input_pes.predicates().size(), newSequent),
+                      input_pes.predicates().size()),
         Xlist_false_ph(input_pes.atomic().size(), nbits, size, seqStSize,
-                       input_pes.predicates().size(), newSequent) {}
+                       input_pes.predicates().size()) {}
 
   /** Purge backpointers from all caches. Purging occurrs
    * until no sequent was purged (not purging a sequent indicates that
