@@ -385,7 +385,7 @@ public:
           dbm->intersect(*tempList->front());
         }
       } else {
-        // Build a conjunctive normal form;
+        // Build a disjunctive normal form;
         // For example (a || b) && (c || d)
         // is transformed to a && c || a && d || b && c || b && d
         for (const DBM* const dbm1: *tempList) {

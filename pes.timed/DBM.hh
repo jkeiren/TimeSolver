@@ -153,9 +153,9 @@ private:
     /* Indexes are zero based */
 
     // Offsets to one dimentional array
-    short int index = (row * nClocks) + col;
-    short int offset = index * sizeof(short int);
-    short int *p = (short int *)&(storage[offset]);
+    const short int index = (row * nClocks) + col;
+    const short int offset = index * sizeof(short int);
+    const short int *p = (short int *)&(storage[offset]);
     // Dereference p
     return (*p);
   }
@@ -193,18 +193,8 @@ private:
   template<class BinaryPredicate>
   bool compare(const DBM& other, BinaryPredicate cmp) const
   {
-    for (short int j = 1; j < nClocks; j++) {
-      if (cmp(this->operatorRead(0, j), other.operatorRead(0, j))) {
-        return false;
-      }
-    }
-    for (short int i = 1; i < nClocks; i++) {
-      if (cmp(this->operatorRead(i, 0), other.operatorRead(i, 0))) {
-        return false;
-      }
-    }
-    for (short int i = 1; i < nClocks; i++) {
-      for (short int j = 1; j < nClocks; j++) {
+    for (short int i = 0; i < nClocks; ++i) {
+      for (short int j = 0; j < nClocks; ++j) {
         if (cmp(this->operatorRead(i, j), other.operatorRead(i, j))) {
           return false;
         }
@@ -1034,39 +1024,6 @@ public:
               ((this->operatorRead(i, j) >> 1) << 1) + 0;
         }
       }
-  }
-
-  /** Prints out the DBM in (#, op) matrix format.
-   * The # is the integer bound for the constraint,
-   * and op is based on the fourth bit. 0: <, 1: <=
-   * @return None */
-  void print(std::ostream &os) const {
-    for (short int i = 0; i < nClocks; i++) {
-      for (short int j = 0; j < nClocks; j++) {
-        short int val = this->operatorRead(i, j) >> 1;
-        short int type = this->operatorRead(i, j) & 0x1;
-        if (type == 1) {
-          if (val == 0xFFF)
-            os << "("
-               << "+inf"
-               << ","
-               << "<=)\t";
-          else
-            os << "( " << val << ","
-               << "<= )\t";
-        } else {
-          if (val == 0xFFF)
-            os << "("
-               << "+inf"
-               << ","
-               << "<)\t";
-          else
-            os << "( " << val << ","
-               << "<  )\t";
-        }
-      }
-      os << std::endl;
-    }
   }
 
   /** Print the DBM, more compactly, as a list of constraints. The constraints
