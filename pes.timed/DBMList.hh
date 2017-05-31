@@ -254,13 +254,13 @@ public:
   DBMList &operator=(const DBMList &Y) {
     nClocks = Y.nClocks;
     if (dbmListVec->size() == 1 && Y.numDBMs() == 1) {
-      *((*dbmListVec)[0]) = *((*(Y.getDBMList()))[0]);
+      *dbmListVec->front() = *Y.getDBMList()->front();
     } else if (Y.numDBMs() == 1) {
       while (dbmListVec->size() > 1) {
         delete dbmListVec->back();
         dbmListVec->pop_back();
       }
-      *((*dbmListVec)[0]) = *((*(Y.getDBMList()))[0]);
+      *dbmListVec->front() = *Y.getDBMList()->front();
     } else {
       std::vector<DBM *> *tempList = dbmListVec;
       // Vector constructor makes a deep copy of the pointers (not of the
@@ -291,7 +291,7 @@ public:
       delete tempDBM;
       dbmListVec->pop_back();
     }
-    *((*dbmListVec)[0]) = Y;
+    *dbmListVec->front() = Y;
 
     isCf = Y.isInCf();
     return *this;
@@ -307,29 +307,31 @@ public:
     std::vector<DBM *> *tempList = dbmListVec;
 
     if (dbmListVec->size() == 1) {
-      DBMList *myTempList = (this->complementDBM(*((*dbmListVec)[0])));
+      DBMList *myTempList = complementDBM(*dbmListVec->front());
       dbmListVec = myTempList->getDBMList();
       // The vector was a shallow copy, so delete the rest of the list
       myTempList->dbmListVec = nullptr;
       delete myTempList;
     } else {
       std::vector<DBMList *> dbmVec;
-      for (unsigned int i = 0; i < dbmListVec->size(); i++) {
-        DBMList *outputList = complementDBM(*((*dbmListVec)[i]));
-        dbmVec.push_back(outputList);
+      for (const DBM* const dbm: *dbmListVec) {
+        dbmVec.push_back(complementDBM(*dbm));
       }
+
       // Vector constructor makes a deep copy of the pointers (not of the
       // objects that the pointers point to). Make a deep copy of the DBM
       // objects here
-      std::vector<DBM *> *currList = (dbmVec[0])->getDBMList();
+      std::vector<DBM *> *currList = dbmVec.front()->getDBMList();
 
       dbmListVec = new std::vector<DBM *>;
       deep_copy(*dbmListVec, *currList);
 
-      for (unsigned int j = 1; j < dbmVec.size(); j++) {
-        this->cf();
-        intersect(*(dbmVec[j]));
+      cf();
+      for (const DBMList* const dbms: dbmVec) {
+        intersect(*dbms);
+        cf();
       }
+
       /* Delete dbmVec */
       delete_vector_elements(dbmVec);
       dbmVec.clear();
@@ -370,32 +372,26 @@ public:
    * @param Y (&) The DBMList to intersect */
   DBMList& intersect(const DBMList &Y) {
     if (dbmListVec->size() == 1 && Y.numDBMs() == 1) {
-      (*dbmListVec)[0]->intersect(*(*(Y.getDBMList()))[0]);
+      dbmListVec->front()->intersect(*Y.getDBMList()->front());
     } else {
       std::vector<DBM *> *tempList = dbmListVec;
-      if (dbmListVec->size() == 1) {
-        // Vector constructor makes a deep copy of the pointers (not of the
-        // objects that the pointers point to). Make a deep copy of the DBM
-        // objects here
-        std::vector<DBM *> *currList = Y.getDBMList();
-        dbmListVec = new std::vector<DBM *>;
-        deep_copy(*dbmListVec, *currList);
-
-        for (unsigned int i = 0; i < Y.dbmListVec->size(); i++) {
-          /* Since the std::vector of DBMs stores the pointers
-           * hopefully this updates the vector for the correct DBMs */
-          DBM *tD = (*dbmListVec)[i];
-          tD->intersect(*((*tempList)[0]));
+      dbmListVec = new std::vector<DBM *>;
+      if (tempList->size() == 1) {
+        // Deep copy of DBM to dbmListVec; since the size of the current DBMList
+        // is 1, first copy, then intersect each DBM with the (single) DBM in the
+        // current list.
+        deep_copy(*dbmListVec, *Y.getDBMList());
+        for (DBM* dbm: *dbmListVec) {
+          dbm->intersect(*tempList->front());
         }
       } else {
-        /* Iterate through Y dbmListVec times */
-        dbmListVec = new std::vector<DBM *>;
-        for (unsigned int i = 0; i < tempList->size(); i++) {
-          for (unsigned int j = 0; j < Y.dbmListVec->size(); j++) {
-            /* Since the vector of DBMs stores the pointers
-             * hopefully this updates the vector for the correct DBMs */
-            DBM *copyDBM = new DBM(*((*tempList)[i]));
-            copyDBM->intersect(*((*(Y.dbmListVec))[j]));
+        // Build a conjunctive normal form;
+        // For example (a || b) && (c || d)
+        // is transformed to a && c || a && d || b && c || b && d
+        for (const DBM* const dbm1: *tempList) {
+          for (const DBM* const dbm2: *Y.dbmListVec) {
+            DBM* copyDBM = new DBM(*dbm1);
+            copyDBM->intersect(*dbm2);
             dbmListVec->push_back(copyDBM);
           }
         }
@@ -424,10 +420,8 @@ public:
    * @param Y (&) The right DBM.
    * @return true: *this <= Y; false: otherwise. */
   bool operator<=(const DBM &Y) const {
-    bool tempB = true;
-    for (unsigned int i = 0; i < dbmListVec->size(); i++) {
-      tempB = *((*dbmListVec)[i]) <= Y;
-      if (!tempB) {
+    for (const DBM* const dbm: *dbmListVec) {
+      if (!(*dbm <= Y)) {
         return false;
       }
     }
@@ -445,21 +439,23 @@ public:
    * @return true: *this <= Y; false: otherwise. */
   bool operator<=(const DBMList &Y) const {
     if (dbmListVec->size() == 1) {
-      return Y >= *((*dbmListVec)[0]);
+      return Y >= *dbmListVec->front();
     }
 
-    DBMList *tempDBMList = new DBMList(Y);
-    !(*tempDBMList);
-    tempDBMList->cf();
-    if (tempDBMList->emptiness()) {
-      delete tempDBMList;
+    // !Y
+    DBMList temp(Y);
+    !temp;
+    temp.cf();
+
+    // !Y empty, hence X && !Y empty
+    if (temp.emptiness()) {
       return true;
     }
-    tempDBMList->intersect(*this);
-    tempDBMList->cf();
-    bool isEmpty = tempDBMList->emptiness();
-    delete tempDBMList;
-    return isEmpty;
+
+    // X && !Y
+    temp.intersect(*this);
+    temp.cf();
+    return temp.emptiness();
   }
 
   /** Performs superset checks;
@@ -475,7 +471,7 @@ public:
    * @return true: *this >= Y; false: otherwise. */
   bool operator>=(const DBM &Y) const {
     if (dbmListVec->size() == 1) {
-      return *((*dbmListVec)[0]) >= Y;
+      return *dbmListVec->front() >= Y;
     } else {
       DBMList tempDBMList(*this);
       !tempDBMList;
@@ -495,29 +491,12 @@ public:
   /** Performs superset checks;
    * X >= Y if and only if Y <= X, which is true if
    * and only if !X && Y is empty.
-   * This is a simpler (but computationally intensive)
-   * implementation.
-   * (This also assumes that X and Y have the same
-   * number of clocks).  For this method,
+   * For this method,
    * (*this), the calling DBMList, is required to be in canonical form.
    * @param Y (&) The right DBMList.
    * @return true: *this >= Y; false: otherwise. */
   bool operator>=(const DBMList &Y) const {
-    if (dbmListVec->size() == 1) {
-      return Y <= *((*dbmListVec)[0]);
-    }
-    DBMList tempDBMList(*this);
-    !tempDBMList;
-    tempDBMList.cf();
-    if (tempDBMList.emptiness()) {
-      return true;
-    }
-    else
-    {
-      tempDBMList.intersect(Y);
-      tempDBMList.cf();
-      return tempDBMList.emptiness();
-   }
+    return Y <= *this;
   }
 
   /** Determines equality of a DBMList and DBM;
@@ -530,7 +509,7 @@ public:
    * @return true: the calling DBMList equals Y, false: otherwise. */
   bool operator==(const DBM &Y) const {
     if (dbmListVec->size() == 1) {
-      return *((*dbmListVec)[0]) == Y;
+      return *dbmListVec->front() == Y;
     }
     return ((*this) <= Y) && ((*this) >= Y);
   }
@@ -545,7 +524,7 @@ public:
    * @return true: the calling DBMList equals Y, false: otherwise. */
   bool operator==(const DBMList &Y) const {
     if (dbmListVec->size() == 1) {
-      return Y == *((*dbmListVec)[0]);
+      return Y == *dbmListVec->front();
     }
     return (*this <= Y) && (*this >= Y);
   }
@@ -601,7 +580,7 @@ public:
 
   /** Performs the time predecessor operator; this is equivalent
    * to computing the time predecessor of each DBM in the DBMList.
-   * This method does not preserves canonical form.
+   * This method does not preserve canonical form.
    * @return The reference to the changed calling DBMList. */
   DBMList &pre() {
     std::for_each(dbmListVec->begin(), dbmListVec->end(),
@@ -753,7 +732,7 @@ public:
       dbmListVec->pop_back();
       delete tempDBM;
     }
-    ((*dbmListVec)[0])->makeEmpty();
+    dbmListVec->front()->makeEmpty();
     isCf = true;
     return;
   }
@@ -819,10 +798,9 @@ public:
    * @return None */
   void print(std::ostream &os) const {
     int dInd = 0;
-    for (std::vector<DBM *>::iterator it = dbmListVec->begin();
-         it != dbmListVec->end(); it++) {
-      os << "DBMList DBM " << dInd << std::endl;
-      (*it)->print(os);
+    for (const DBM* const dbm: *dbmListVec) {
+      os << "DBMList DBM " << dInd << std::endl
+         << *dbm;
       dInd++;
     }
     os << std::endl;

@@ -495,7 +495,7 @@ protected:
     bool previouslyUpdated = false;
     /* Iterate through each DBM of phi2Place and union the results. */
 
-    for (DBM* const placeholder2_dbm: *placeholder2->getDBMList()) {
+    for (const DBM* const placeholder2_dbm: *placeholder2->getDBMList()) {
       DBM placeholder2_dbm_pred(*placeholder2_dbm);
       placeholder2_dbm_pred.pre();
       placeholder2_dbm_pred.cf();
