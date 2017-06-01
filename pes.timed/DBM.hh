@@ -12,6 +12,7 @@
 #ifndef DBM_H
 #define DBM_H
 
+#include <cassert>
 #include <functional>
 #include <iostream>
 #include <vector>
@@ -140,6 +141,13 @@ private:
    * work to convert something already in cf() to cf(). */
   bool isCf;
 
+  /** The Number of clocks in the space for the DBM. This
+   * number includes the "zero clock." */
+  const short int nClocks;
+
+  /** Pointer to the globally declared clocks */
+  const bidirectional_map<std::string, int> &declared_clocks_;
+
   /** The private method is used to read a value of a
    * specific constraint in the DBM. This method
    * is private to provide a method without bounds checks. The class is
@@ -204,15 +212,7 @@ private:
     return true;
   }
 
-protected:
 public:
-  /** The Number of clocks in the space for the DBM. This
-   * number includes the "zero clock." */
-  short int nClocks;
-
-  /** Pointer to the globally declared clocks */
-  const bidirectional_map<std::string, int> &declared_clocks;
-
   /** Default Constructor for a DBM; creates an initial DBM
    * representing no constraint: the diagonal and the left column are
    * (0, <=), and the rest of the entries are (infinity, <).
@@ -224,7 +224,7 @@ public:
   DBM(const short int numClocks, const bidirectional_map<std::string, int> &cs)
       : OneDIntArray(numClocks * numClocks),
         nClocks(numClocks),
-        declared_clocks(cs) {
+        declared_clocks_(cs) {
     for (short int i = 0; i < nClocks; i++) {
       for (short int j = 0; j < nClocks; j++) {
         /* Here 0xFFF << 1 = 0xFFF0 is the
@@ -259,7 +259,7 @@ public:
       const short int val, const bidirectional_map<std::string, int> &cs)
       : OneDIntArray(numClocks * numClocks),
         nClocks(numClocks),
-        declared_clocks(cs) {
+        declared_clocks_(cs) {
     for (short int i = 0; i < nClocks; i++) {
       for (short int j = 0; j < nClocks; j++) {
         /* 0x1 means (0, <=) , since the left 3-bits
@@ -290,7 +290,13 @@ public:
       : OneDIntArray(Y),
         isCf(Y.isCf),
         nClocks(Y.nClocks),
-        declared_clocks(Y.declared_clocks) {}
+        declared_clocks_(Y.declared_clocks_) {}
+
+  short int clocks_size() const { return nClocks; }
+
+  const bidirectional_map<std::string, int>& declared_clocks() const {
+    return declared_clocks_;
+  }
 
   /** Tell the object that it is not in canonical form.
    * Call this method whenever changing the DBM's value from the outside.
@@ -382,8 +388,9 @@ public:
    * @param Y (&) The object to copy.
    * @return A reference to the copied object, which is the LHS object. */
   DBM& operator=(const DBM &Y) {
+    assert(nClocks == Y.nClocks);
+    assert(declared_clocks() == Y.declared_clocks());
     quantity = Y.quantity;
-    nClocks = Y.nClocks;
     memcpy(storage, Y.storage, quantity * sizeof(short int));
 
     isCf = Y.isCf;
@@ -1055,12 +1062,12 @@ public:
         }
         if (i != 0 && j != 0) {
           // os << "x" << (i);
-          os << declared_clocks.reverse_at(i);
+          os << declared_clocks_.reverse_at(i);
           os << "-";
           // os << "x" << (j);
-          os << declared_clocks.reverse_at(j);
+          os << declared_clocks_.reverse_at(j);
         } else if (i == 0) {
-          os << declared_clocks.reverse_at(j);
+          os << declared_clocks_.reverse_at(j);
           if (type == 1)
             os << ">=" << -val;
           else
@@ -1068,7 +1075,7 @@ public:
           end = true;
           continue;
         } else if (j == 0) {
-          os << declared_clocks.reverse_at(i);
+          os << declared_clocks_.reverse_at(i);
         }
 
         if (type == 1) {

@@ -21,6 +21,10 @@ protected:
 public:
   bidirectional_map() {}
 
+  bool operator==(const bidirectional_map<KeyType, ValueType>& other) const {
+    return _left == other._left && _right == other._right;
+  }
+
   void insert(const KeyType& k, const ValueType& v) {
     if (_left.find(k) != _left.end()) {
       throw std::runtime_error(
