@@ -148,6 +148,19 @@ private:
   /** Pointer to the globally declared clocks */
   const bidirectional_map<std::string, int> &declared_clocks_;
 
+  short int offset(const short int row, const short int col) const {
+    const short int index = (row * nClocks) + col;
+    return index * sizeof(short int);
+  }
+
+  const short int* cell(const short int row, const short int col) const {
+    return (short int *)&(storage[offset(row,col)]);
+  }
+
+  short int* cell(const short int row, const short int col) {
+    return (short int *)&(storage[offset(row,col)]);
+  }
+
   /** The private method is used to read a value of a
    * specific constraint in the DBM. This method
    * is private to provide a method without bounds checks. The class is
@@ -158,14 +171,7 @@ private:
    * with 0 being the first column.
    * @return The value of the upper bound constraint on row - col. */
   short int operatorRead(const short int row, const short int col) const {
-    /* Indexes are zero based */
-
-    // Offsets to one dimentional array
-    const short int index = (row * nClocks) + col;
-    const short int offset = index * sizeof(short int);
-    const short int *p = (short int *)&(storage[offset]);
-    // Dereference p
-    return (*p);
+    return *cell(row,col);
   }
 
   /** The private method is used to write a value to a
@@ -182,13 +188,7 @@ private:
    * "col". A reference is returned to allow the constraint to be changed. */
   short int &operatorWrite(const short int row, const short int col) {
     /* Indexes are zero based */
-
-    // Offsets to one dimentional array
-    short int index = (row * nClocks) + col;
-    short int offset = index * sizeof(short int);
-    short int *p = (short int *)&(storage[offset]);
-    // Dereference p
-    return (*p);
+    return *cell(row, col);
   }
 
   /** Performs comparison checks;
@@ -326,12 +326,7 @@ public:
       exit(-1);
     }
 
-    // Offsets to one dimentional array
-    short int index = (row * nClocks) + col;
-    short int offset = index * sizeof(short int);
-    short int *p = (short int *)&(storage[offset]);
-    // Dereference p
-    return (*p);
+    return operatorRead(row,col);
   }
 
   /** The public method is used to write a value to a
@@ -355,10 +350,7 @@ public:
       exit(-1);
     }
 
-    // Offsets to one dimentional array
-    short int index = (row * nClocks) + col;
-    short int offset = index * sizeof(short int);
-    short int *p = (short int *)&(storage[offset]);
+    short int *p = cell(row, col);
     // Dereference p and make assignment
     *p = val;
 
