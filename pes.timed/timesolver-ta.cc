@@ -36,10 +36,7 @@
 #include "proof.hh"
 #include "errno.h"
 #include "pes.hh"
-#include "pes.tab.hh"
-#include "pes.lex.hh"
-
-using namespace std;
+#include "parse.hh"
 
 /** Defines DEBUG mode to True (1)
  * if not already defined. */
@@ -47,45 +44,21 @@ using namespace std;
 #define DEBUG 1
 #endif
 
-/** The number of errors (syntax or otherwise) in the expressions.
- * I believe the initial value is 0. */
-int numErrs;
-/** The method that parses the lexed file
- * and creates the ExprNode objects.
- * @return 0 if successful, 1 if syntax error,
- * and 2 if out of memory error (usually).
- * @see pes.y pes.tab.h and pes.tab.c (parser files). */
-extern int yyparse(void* scanner, bool debug, pes& input_pes);
-
-/** Prints out an error if it occurs during the parsing process.
- * This method is only used in the parser.
- * @param s (*) The error string to print out.
- * @return None */
-void yyerror(yyscan_t scanner, bool /*debug*/, pes&, char* s) {
-  std::cerr << " line " << yyget_lineno(scanner) << ": ";
-  if (s == nullptr)
-    cerr << "syntax error";
-  else
-    std::cerr << s;
-  std::cerr << endl;
-  numErrs++;
-}
-
 /** Prints out the "help" info for the user or
  * the information that is displayed when the
  * user does not give or format the argument properly.
  * @return none.*/
 void printUsage() {
-  std::cerr << "usage: demo options input_file_name" << endl;
+  std::cerr << "usage: demo options input_file_name" << std::endl;
   std::cerr
       << "\t option: -d  print debug information which includes the proof tree"
-      << endl;
-  std::cerr << "\t option: -t print out the end caches of sequents" << endl;
-  std::cerr << "\t option: -h  this help info" << endl;
+      << std::endl;
+  std::cerr << "\t option: -t print out the end caches of sequents" << std::endl;
+  std::cerr << "\t option: -h  this help info" << std::endl;
   std::cerr << "\t option: -n (no caching) disables performance-optimizing "
                "known true and known false caches. Circularity stack caching "
                "still used."
-            << endl;
+            << std::endl;
 }
 
 /** Structure to collect the options passed to the tool, and passed into the
@@ -138,7 +111,7 @@ void parse_command_line(int argc, char** argv, tool_options& opt) {
         opt.nHash = atoi(optarg);
         opt.nbits = opt.nHash - 1;
         if (opt.nHash < 1) {
-          cerr << "Hashed number must be greater than 0." << endl;
+          std::cerr << "Hashed number must be greater than 0." << std::endl;
           exit(-1);
         }
         break;
@@ -159,7 +132,7 @@ void parse_command_line(int argc, char** argv, tool_options& opt) {
   for (int i = 0; i < argc; i++) {
     std::cerr << argv[i] << " ";
   }
-  std::cerr << endl;
+  std::cerr << std::endl;
 
   opt.input_filename = std::string(argv[argc - 1]);
 }
@@ -184,7 +157,7 @@ int main(int argc, char** argv) {
   }
 
   cpplog(cpplogging::info)
-      << "\n\n====Begin Program Input==============================" << endl;
+      << "\n\n====Begin Program Input==============================" << std::endl;
   /* Get times for lexing and parsing files: */
   time_t rawtime_lp;
   time(&rawtime_lp);
@@ -194,44 +167,16 @@ int main(int argc, char** argv) {
   clock_t begin_lp = clock();
 
   pes input_pes;
-
-  /* Read and lex the input file to tokens for the parser to use. */
-  FILE* input_file = fopen(opt.input_filename.c_str(), "r");
-  if (!input_file) {
-    cpplog(cpplogging::error)
-        << "Cannot open input file " << opt.input_filename << std::endl;
-    exit(-1);
-  }
-
-  /* Parses the Example File (and produces the ExprNode structure.)
-   * Returns 0 if successful, 1 for Syntax Error, and 2 for out of Memory
-   * (usually). */
-  yyscan_t scanner;
-  yylex_init(&scanner);
-  yyset_in(input_file, scanner);
-
-  int parseError = yyparse(scanner, opt.debug, input_pes);
-  yylex_destroy(scanner);
-  // Close File for good file handling
-  fclose(input_file);
-
-  if (parseError) {
-    cpplog(cpplogging::error) << endl
-                              << "**Syntax Error: Error Parsing file.**" << endl
-                              << endl;
-    cpplog(cpplogging::error)
-        << "==--End of Program Execution-----------------------==" << endl;
-    return 1;
-  }
+  parse_pes(opt.input_filename, opt.debug, input_pes);
 
   /* Inputs have now be approved and values set.  Here
    * the Real-Time Model Checking begins */
   /* Start the Model Checking */
   cpplog(cpplogging::info) << "Program input file (timed automaton + MES): "
-                           << opt.input_filename << endl;
+                           << opt.input_filename << std::endl;
   cpplog(cpplogging::info) << "max constant in clock constraints: " << input_pes.max_constant()
-                           << endl
-                           << endl;
+                           << std::endl
+                           << std::endl;
 
   // This number converts system time to seconds.
   // If the runtime is not correct, you may need to change
@@ -257,7 +202,7 @@ int main(int argc, char** argv) {
   time(&rawtime);
   /* print Starting time */
   cpplog(cpplogging::debug)
-      << "##--Beginning of Proof==-------------------" << endl
+      << "##--Beginning of Proof==-------------------" << std::endl
       << "Prover start time: " << ctime(&rawtime);
 
   clock_t begin = clock();
@@ -265,13 +210,13 @@ int main(int argc, char** argv) {
 
   if (cpplogEnabled(cpplogging::debug)) {
     // Print Transitions
-    cpplog(cpplogging::debug) << endl << "TRANSITIONS:" << endl;
-    for (vector<const Transition*>::const_iterator it =
+    cpplog(cpplogging::debug) << std::endl << "TRANSITIONS:" << std::endl;
+    for (std::vector<const Transition*>::const_iterator it =
              input_pes.transitions().begin();
          it != input_pes.transitions().end(); it++) {
       cpplog(cpplogging::debug) << **it << std::endl;
     }
-    cpplog(cpplogging::debug) << endl;
+    cpplog(cpplogging::debug) << std::endl;
   }
 
   /* Call the Model Checker with the given ExprNode
@@ -286,21 +231,21 @@ int main(int argc, char** argv) {
   time(&rawtime);
 
   cpplog(cpplogging::debug) << "Prover end time: " << ctime(&rawtime);
-  cpplog(cpplogging::debug) << "##--End of Proof==------------------" << endl
-                            << endl;
+  cpplog(cpplogging::debug) << "##--End of Proof==------------------" << std::endl
+                            << std::endl;
   if (suc) {
     cpplog(cpplogging::info)
-        << "--==Program Result:  **Valid**  ==-------------------" << endl;
+        << "--==Program Result:  **Valid**  ==-------------------" << std::endl;
     cpplog(cpplogging::info)
-        << "Valid proof found. The timed automaton satisfies the MES." << endl
-        << endl;
+        << "Valid proof found. The timed automaton satisfies the MES." << std::endl
+        << std::endl;
   } else {
     cpplog(cpplogging::info)
-        << "--==Program Result:  **Invalid**  ==-----------------" << endl;
+        << "--==Program Result:  **Invalid**  ==-----------------" << std::endl;
     cpplog(cpplogging::info)
         << "Invalid proof found. The timed automaton does not satisfy the MES."
-        << endl
-        << endl;
+        << std::endl
+        << std::endl;
   }
 
   double totalTime =
@@ -309,24 +254,24 @@ int main(int argc, char** argv) {
   cpplog(cpplogging::info) << "--==Program Time:  **"
                            << clockToSecs * (end_lp + begin_lp) +
                                   clockToSecs * (end - begin)
-                           << " seconds**  ==----------" << endl;
+                           << " seconds**  ==----------" << std::endl;
   cpplog(cpplogging::info) << "Lexer and parser running time: "
                            << clockToSecs * (end_lp - begin_lp) << " seconds"
-                           << endl;
+                           << std::endl;
   cpplog(cpplogging::info) << "Prover running time: "
-                           << clockToSecs * (end - begin) << " seconds" << endl;
+                           << clockToSecs * (end - begin) << " seconds" << std::endl;
   cpplog(cpplogging::info) << "Combined running time: " << totalTime
-                           << " seconds" << endl;
+                           << " seconds" << std::endl;
 
   cpplog(cpplogging::info) << "Number of locations: " << p.getNumLocations()
-                           << endl;
+                           << std::endl;
 
   if (cpplogEnabled(cpplogging::debug) && opt.tabled) {
     p.printTabledSequents(std::cerr);
   }
 
   cpplog(cpplogging::info)
-      << "==--End of Program Execution-----------------------==" << endl;
+      << "==--End of Program Execution-----------------------==" << std::endl;
 
   return 0;
 }

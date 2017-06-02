@@ -19,22 +19,6 @@
 
 using namespace std;
 
-/** Assuming that e is a chain of ASSIGN expressions (possibly ending
- * with a BOOL expression, this converts that expression to an ordered
- * list of clock assignments. The innermost assignments are at the back
- * of the vector.
- * @param e (*) the pointer to the expression of clock assignments.
- * @param av (*) the pointer to the vector of clock assignments.
- * @return None. When finished, av is changed to be the vector of
- * clock assignments.  */
-void makeAssignmentList(const ExprNode& e,
-                        std::vector<std::pair<short int, short int>>* av) {
-  if (e.getOpType() == ASSIGN) {
-    av->push_back(std::make_pair(e.getAtomic(), e.getIntVal()));
-    makeAssignmentList(*e.getExpr(), av);
-  }
-}
-
 /** Lookup the name of the clock with id n */
 static inline const string& lookup_clock_name(
     const unsigned int n,

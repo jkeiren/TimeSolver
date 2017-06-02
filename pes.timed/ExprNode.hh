@@ -824,8 +824,14 @@ inline std::ostream& operator<<(std::ostream& os, const ExprNode& e) {
  * @param av (*) the pointer to the vector of clock assignments.
  * @return None. When finished, av is changed to be the vector of
  * clock assignments.  */
+inline
 void makeAssignmentList(const ExprNode& e,
-                        std::vector<std::pair<short int, short int>>* av);
+                        std::vector<std::pair<short int, short int>>* av) {
+  if (e.getOpType() == ASSIGN) {
+    av->push_back(std::make_pair(e.getAtomic(), e.getIntVal()));
+    makeAssignmentList(*e.getExpr(), av);
+  }
+}
 
 /** Prints out a sequent in a proof tree.
  * @param step The tree level (sequent step) of the sequent (0 is root).

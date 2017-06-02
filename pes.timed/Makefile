@@ -71,6 +71,7 @@ GENERATED_SRC_FILES := pes.lex.cc pes.tab.cc
 HEADER_FILES := $(wildcard *.hh)
 CHECK_FILES := $(filter-out $(GENERATED_SRC_FILES), $(SRC_FILES) $(HEADER_FILES))
 
+
 .PHONY: default
 default: all
 
@@ -79,14 +80,17 @@ all: timesolver-ta check
 doc: timesolver-ta *.hh *.cc
 	doxygen pes-timed_Doxyfile
 
-timesolver-ta:	pes.tab.o pes.lex.o ExprNode.o timesolver-ta.o logger.o
-	$(CXX) $(CXXFLAGS) pes.lex.o pes.tab.o ExprNode.o timesolver-ta.o external/cpplogging/logger.o $(LDFLAGS) -o timesolver-ta
+timesolver-ta:	pes.tab.o pes.lex.o ExprNode.o timesolver-ta.o logger.o parse.o
+	$(CXX) $(CXXFLAGS) pes.lex.o pes.tab.o ExprNode.o timesolver-ta.o external/cpplogging/logger.o parse.o $(LDFLAGS) -o timesolver-ta
 
 timesolver-ta.o: timesolver-ta.cc DBM.hh ExprNode.hh DBMList.hh sequent_stack.hh proof.hh pes.hh transition.hh comp_ph.hh sequent.hh sequent_cache.hh
 	$(CXX) $(CXXFLAGS) -c timesolver-ta.cc $(INCL_PATH)
 
 ExprNode.o: ExprNode.cc ExprNode.hh DBM.hh DBMList.hh bidirectional_map.hh
 	$(CXX) $(CXXFLAGS) -c ExprNode.cc $(INCL_PATH)
+
+parse.o: parse.cc parse.hh pes.hh pes.tab.hh pes.lex.hh
+	$(CXX) $(CXXFLAGS) -c parse.cc $(INCL_PATH)
 
 pes.lex.o: pes.lex.cc
 	$(CXX) $(CXXFLAGS) -c pes.lex.cc $(INCL_PATH) 
@@ -109,6 +113,7 @@ check:
 tests:
 	$(MAKE) -C test dbmtest
 	$(MAKE) -C test dbmlisttest
+	$(MAKE) -C test parsetest
 
 checktool: timesolver-ta
 	../TATest.py

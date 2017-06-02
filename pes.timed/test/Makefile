@@ -21,17 +21,21 @@ USER_DIR = .
 
 INCL = -I ../
 
+LIB_DIR = ..
+
 # Project headers
 HEADERS = ../*.hh
+
+EXAMPLES_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))/../../examples
 
 # Flags passed to the preprocessor.
 # Set Google Test's header directory as a system directory, such that
 # the compiler doesn't generate warnings in Google Test headers.
-CPPFLAGS += -isystem $(GTEST_DIR)/include
+CPPFLAGS += -isystem $(GTEST_DIR)/include -DEXAMPLES_DIR="$(EXAMPLES_DIR)"
 
 # All tests produced by this Makefile.  Remember to add new tests you
 # created to the list.
-TESTS = dbmtest
+TESTS = dbmtest dbmlisttest parsetest
 
 # All Google Test headers.  Usually you shouldn't change this
 # definition.
@@ -84,8 +88,17 @@ dbmlisttest.o : $(USER_DIR)/dbmlisttest.cc $(HEADERS) $(GTEST_HEADERS)
 
 dbmlisttest : dbmlisttest.o gtest_main.a
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@
+
+parsetest.o : $(USER_DIR)/parsetest.cc $(HEADERS) $(GTEST_HEADERS)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/parsetest.cc $(INCL)
+
+# Note for the parsetest we add the 
+parsetest : parsetest.o gtest_main.a $(LIB_DIR)/parse.o $(LIB_DIR)/pes.tab.o $(LIB_DIR)/pes.lex.o
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@
+	
 	
 .PHONY: check
-check : dbmtest dbmlisttest
+check : dbmtest dbmlisttest parsetest
 	$(USER_DIR)/dbmtest
 	$(USER_DIR)/dbmlisttest
+	$(USER_DIR)/parsetest
