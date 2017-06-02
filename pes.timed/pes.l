@@ -7,6 +7,9 @@
  * comments in pes.lex.c are obtained from the pes.y file.
  * @see pes.l
  */
+/* Make sure lexer is reentrant; we connect to bison */
+%option reentrant
+%option bison-bridge
 
 %{
 #include "ExprNode.hh"
@@ -23,9 +26,9 @@ char currentToken[1024];
 
 #define SAVELAST strcpy(lastToken,currentToken); strcpy(currentToken,yytext)
 
-char * install_ID();
-int install_INT();
-void do_comment();
+char * install_ID(yyscan_t yyscanner);
+int install_INT(yyscan_t yyscanner);
+void do_comment(yyscan_t yyscanner);
 
 %}
 
@@ -108,37 +111,37 @@ yyCOMM2  \/\/{yyCHAR}*
 "->" {        return TOK_IMPLY      ;     }
 
 {yyINT}   {
-  yylval.intVal = install_INT();
+  yylval->intVal = install_INT(yyscanner);
   return TOK_INT;
 }
 
 {yyID_C} { SAVELAST;
   //yylval.strVal = strdup(yytext);
-  yylval.strVal = strdup(yytext);
+  yylval->strVal = strdup(yytext);
   return TOK_ID_PREDICATE ;
 }
 
 {yyID_S} { SAVELAST;
-  yylval.strVal = strdup(yytext);
+  yylval->strVal = strdup(yytext);
   return TOK_ID_CLOCK ;
 }
 
 {yyID_U} { SAVELAST;
-  yylval.strVal = strdup(yytext);
+  yylval->strVal = strdup(yytext);
   return TOK_ID_ATOMIC ;
 }
 
 {yyCONST} { SAVELAST;
-  yylval.strVal = strdup(yytext);
+  yylval->strVal = strdup(yytext);
   return TOK_ID_CONST ;
 }
 
 {yyCOMM1} {
-  do_comment();
+  do_comment(yyscanner);
 }
 
 {yyCHAR}  {
-  yylval.strVal = yytext;
+  yylval->strVal = yytext;
   return TOK_SYNTAX_ERROR;
 }
 
@@ -149,7 +152,7 @@ yyCOMM2  \/\/{yyCHAR}*
 
 /** Token yywrap here as dummy function.
  * @return 1. */
-inline int yywrap(void) {
+inline int yywrap(yyscan_t yyscanner) {
   return 1;
 }
 
@@ -158,10 +161,10 @@ inline int yywrap(void) {
  * This method is used to give values to tokens lexed as integers. This
  * method assumes that the next input is an integer.
  * @return The integer value of the int being read in. */
-int install_INT()
+int install_INT(yyscan_t yyscanner)
 {
   int i;
-  sscanf(yytext, "%d", &i);
+  sscanf(yyget_text(yyscanner), "%d", &i);
   return i;
 }
 
@@ -169,16 +172,17 @@ int install_INT()
  * The text characters inside the comments are ignored, yet line numbers
  * are preserved.
  * @return None. */
-void do_comment()
+void do_comment(yyscan_t yyscanner)
 {
+  struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
   register int c;
   for( ; ; )
   {
-    while ((c = yyinput())!='*' && c != EOF)
+    while ((c = yyinput(yyscanner))!='*' && c != EOF)
     if ( c == '\n' ) yyline++;
     if ( c == '*' )
     {
-      while ( (c = yyinput()) == '*')
+      while ( (c = yyinput(yyscanner)) == '*')
       ;
       if ( c == '/' )
       break;
@@ -194,8 +198,8 @@ void do_comment()
  * This method is used to give values to tokens lexed as strings. This
  * method assumes that the next input is an string.
  * @return The string value of the input being read in. */
-char * install_ID()
+char * install_ID(yyscan_t yyscanner)
 {
-  return yytext;
+  return yyget_text(yyscanner);
 }
 

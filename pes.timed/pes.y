@@ -28,6 +28,8 @@
   #include "transition.hh"
   #include "OneDIntArray.hh"
   #include "DBM.hh"
+  #include "pes.tab.hh"
+  #include "pes.lex.hh"
 
 
   using namespace std;
@@ -40,15 +42,22 @@
   }
   char lastToken[1024];
 
-  extern void yyerror(bool debug, pes& input_pes, char *s);
-  extern int yylex();
+  extern void yyerror(void* scanner, bool debug, pes& input_pes, char *s);
+  extern int yylex(YYSTYPE * lvalp, void* scanner);
   extern int yyline;
 
   map <string, int> defcons;
 
  %}
 
+  // reentrant parser
+%pure-parser
 
+// tell the parser to send the lexer an extra argument
+%lex-param {void * scanner}
+
+// Create  the thing to pass into the lexer as an argument to the parser.
+%parse-param {void * scanner}
 
   // Parameters for the parser.
   // TODO: clean up by providing a simple structure/class interface.

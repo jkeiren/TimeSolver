@@ -36,6 +36,8 @@
 #include "proof.hh"
 #include "errno.h"
 #include "pes.hh"
+#include "pes.tab.hh"
+#include "pes.lex.hh"
 
 using namespace std;
 
@@ -45,12 +47,6 @@ using namespace std;
 #define DEBUG 1
 #endif
 
-/** The location of the File pointer
- * for the lexer.
- * @see pes.l and pes.lex.c (lexer files). */
-extern FILE* yyin;
-/** A variable representing the line number. */
-extern int yyline;
 /** The number of errors (syntax or otherwise) in the expressions.
  * I believe the initial value is 0. */
 int numErrs;
@@ -59,14 +55,14 @@ int numErrs;
  * @return 0 if successful, 1 if syntax error,
  * and 2 if out of memory error (usually).
  * @see pes.y pes.tab.h and pes.tab.c (parser files). */
-extern int yyparse(bool debug, pes& input_pes);
+extern int yyparse(void* scanner, bool debug, pes& input_pes);
 
 /** Prints out an error if it occurs during the parsing process.
  * This method is only used in the parser.
  * @param s (*) The error string to print out.
  * @return None */
-void yyerror(bool /*debug*/, pes&, char* s) {
-  std::cerr << " line " << yyline << ": ";
+void yyerror(yyscan_t scanner, bool /*debug*/, pes&, char* s) {
+  std::cerr << " line " << yyget_lineno(scanner) << ": ";
   if (s == nullptr)
     cerr << "syntax error";
   else
@@ -200,8 +196,8 @@ int main(int argc, char** argv) {
   pes input_pes;
 
   /* Read and lex the input file to tokens for the parser to use. */
-  yyin = fopen(opt.input_filename.c_str(), "r");
-  if (!yyin) {
+  FILE* input_file = fopen(opt.input_filename.c_str(), "r");
+  if (!input_file) {
     cpplog(cpplogging::error)
         << "Cannot open input file " << opt.input_filename << std::endl;
     exit(-1);
@@ -210,10 +206,14 @@ int main(int argc, char** argv) {
   /* Parses the Example File (and produces the ExprNode structure.)
    * Returns 0 if successful, 1 for Syntax Error, and 2 for out of Memory
    * (usually). */
-  int parseError = yyparse(opt.debug, input_pes);
+  yyscan_t scanner;
+  yylex_init(&scanner);
+  yyset_in(input_file, scanner);
 
+  int parseError = yyparse(scanner, opt.debug, input_pes);
+  yylex_destroy(scanner);
   // Close File for good file handling
-  fclose(yyin);
+  fclose(input_file);
 
   if (parseError) {
     cpplog(cpplogging::error) << endl

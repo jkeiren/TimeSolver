@@ -91,8 +91,8 @@ ExprNode.o: ExprNode.cc ExprNode.hh DBM.hh DBMList.hh bidirectional_map.hh
 pes.lex.o: pes.lex.cc
 	$(CXX) $(CXXFLAGS) -c pes.lex.cc $(INCL_PATH) 
 
-pes.lex.cc: pes.l ExprNode.hh transition.hh pes.tab.hh
-	$(FLEX) -p -8 -Ce -opes.lex.cc pes.l
+pes.lex.cc pes.lex.hh: pes.l ExprNode.hh transition.hh pes.tab.hh
+	$(FLEX) --header-file=pes.lex.hh -p -8 -Ce -opes.lex.cc pes.l
 
 pes.tab.o: pes.tab.cc pes.tab.hh DBM.hh
 	$(CXX) $(CXXFLAGS) -c pes.tab.cc $(INCL_PATH)
