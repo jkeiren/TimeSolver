@@ -27,6 +27,32 @@
  * @date November 2, 2013 */
 class ClockSet {
 public:
+  /** Type for the size of the clock set. */
+  typedef std::size_t size_type;
+
+protected:
+  /** The number of clocks in the set. */
+  size_type num_clocks_;
+
+  /** The size of cc_ */
+  size_type size_;
+
+  /** The array of unsigned ints used to store the clock set.  Each integer
+   * is treated as a bitvector. Each integer represents a different clock, and
+   * different indices represent different clocks. */
+  unsigned int *cc_;
+
+  /** Return the index in the internal array corresponding to bit */
+  size_type index(const size_type bit) const {
+    return bit >> 5;
+  }
+
+  /** Compute amount needed to shift */
+  size_type shift_amount(const size_type bit) const {
+    return bit & 0x1F;
+  }
+
+public:
   /** Constructor. Initializes the set of clocks with a specified
    * number of clocks and one dummy "zero clock". The dummy "zero clock"
    * is considered to be the first index, index 0.
@@ -35,40 +61,40 @@ public:
    * @param numClocks The number of clocks in the set of clocks. This
    * number does not include the dummy "zero clock".
    * @return [Constructor]. */
-  ClockSet(const int bit, const int numClocks) : num(numClocks) {
-    int b = bit & 0x1F;
-    int idx = bit >> 5;
-    cc = new unsigned int[(numClocks >> 5) + 1];
+  ClockSet(const size_type bit, const size_type numClocks)
+    : num_clocks_(numClocks),
+      size_(index(num_clocks_) + 1),
+      cc_(new unsigned int[size_])
+  {
     /* Correction: Initialize elements in ClockSet to 0
      * (empty Clock Set). */
-    for (int i = 0; i < (numClocks >> 5) + 1; i++) {
-      cc[i] = 0;
+    for (size_type i = 0; i < size_; i++) {
+      cc_[i] = 0;
     }
-    cc[idx] = (0x1 << b);
+    cc_[index(bit)] = (0x1 << shift_amount(bit));
   }
 
   /** Copy Constructor.
    * @param Y (&) The object to copy.
    * @return [Constructor]. */
-  ClockSet(const ClockSet &Y) {
-    num = Y.num;
-    cc = new unsigned int[(num >> 5) + 1];
-    for (int i = 0; i < (num >> 5) + 1; i++) {
-      cc[i] = (Y.cc)[i];
-    }
+  ClockSet(const ClockSet &Y)
+    : num_clocks_(Y.num_clocks_),
+      size_(index(num_clocks_)+1),
+      cc_(new unsigned int[size_])
+  {
+    memcpy(cc_, Y.cc_, size_ * sizeof(unsigned int));
   }
 
   /** Destructor.  Does nothing.
    * @return [Destructor]. */
-  ~ClockSet() { delete[] cc; }
+  ~ClockSet() { delete[] cc_; }
 
   /** This adds a clock to the clock set.
    * @param bit The index of the clock to add.
    * @return The changed ClockSet object. */
-  ClockSet *addclock(const int bit) {
-    int b = bit & 0x1F;
-    int idx = bit >> 5;
-    cc[idx] = cc[idx] | (0x1 << b);
+  ClockSet *addclock(const size_type bit) {
+    size_type idx = index(bit);
+    cc_[idx] = cc_[idx] | (0x1 << shift_amount(bit));
     return this;
   }
 
@@ -82,10 +108,9 @@ public:
   void print(std::ostream &os) const {
     bool end = false;
     os << "[";
-    for (int i = 1; i <= num; i++) {
-      int b = i & 0x1F;
-      int idx = i >> 5;
-      if ((cc[idx] >> b) & 0x1) {
+    for (size_type i = 1; i <= num_clocks_; i++) {
+      size_type b = shift_amount(i);
+      if ((cc_[index(i)] >> b) & 0x1) {
         if (end) {
           os << ",";
         }
@@ -103,19 +128,9 @@ public:
    * @param bit The index of the clock to see if it is in the
    * ClockSet.
    * @return 1: the clock bit is in the ClockSet; 0: otherwise. */
-  unsigned int getc(const int bit) const {
-    int b = bit & 0x1F;
-    int idx = bit >> 5;
-    return ((cc[idx] >> b) & 0x1);
+  unsigned int getc(const size_type bit) const {
+    return ((cc_[index(bit)] >> shift_amount(bit)) & 0x1);
   }
-
-protected:
-  /** The array of unsigned ints used to store the clock set.  Each integer
-   * is treated as a bitvector. Each integerrepresents a different clock, and
-   * different indices represent different clocks. */
-  unsigned int *cc;
-  /** The number of clocks in the set. */
-  int num;
 };
 
 /**
