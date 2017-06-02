@@ -24,20 +24,24 @@
  * @version 1.2
  * @date November 2, 2013 */
 class Generic1DArray {
+public:
+  /** Type for the size of the array */
+  typedef std::size_t size_type;
+
 protected:
   /** The internal representation of the array as a sequence of bytes. */
   unsigned char *storage;
   /** Number of storage spaces. */
-  short int quantity;
+  size_type quantity;
   /** The size of each element. This is usually sizeof(short int). */
-  short int eltSize;
+  std::size_t eltSize;
 
 public:
   /** Default Constructor.
    * @param nEls The number of elements to allocate in the array
    * @param sz The size of each element.
    * @return [Constructor]. */
-  Generic1DArray(const short int nEls, const short int sz) {
+  Generic1DArray(const size_type nEls, const std::size_t sz) {
     quantity = nEls;
     eltSize = sz;
     /* Edit: Changed from sizeof(short int) to have the specified size.
@@ -79,8 +83,8 @@ public:
    * @param inx The index in the array to add;  0 is
    * the first index.
    * @return None. When completed, the array will be changed.*/
-  void add(const void *element, const short int inx) {
-    if (inx < 0 || inx >= quantity) {
+  void add(const void *element, const size_type inx) {
+    if (inx >= quantity) {
       std::cerr << "Generic1DArray add - index out of bounds " << std::endl;
       exit(-1);
     }
@@ -97,8 +101,8 @@ public:
    * @param index The index of the element in the array; 0 is
    * the first index.
    * @return A pointer to the specified element in the array. */
-  void *fetch(const short int index) const {
-    if (index >= quantity || index < 0) {
+  void *fetch(const size_type index) const {
+    if (index >= quantity) {
       return 0;
     }
     // Return address of desired element:
@@ -110,7 +114,7 @@ public:
    * @param Y (&) The second Generic1DArray to compare to.
    * @return true: the two arrays are equal; false: otherwise. */
   bool operator==(const Generic1DArray &Y) {
-    for (int i = 0; i < (quantity >> 1); i++) {
+    for (size_type i = 0; i < (quantity >> 1); i++) {
       if ((int *)&(storage[i << 2]) != (int *)&(Y.storage[i << 2])) {
         return false;
       }

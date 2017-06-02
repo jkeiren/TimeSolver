@@ -143,21 +143,21 @@ private:
 
   /** The Number of clocks in the space for the DBM. This
    * number includes the "zero clock." */
-  const short int nClocks;
+  const size_type nClocks;
 
   /** Pointer to the globally declared clocks */
   const bidirectional_map<std::string, int> &declared_clocks_;
 
-  short int offset(const short int row, const short int col) const {
-    const short int index = (row * nClocks) + col;
+  size_type offset(const size_type row, const size_type col) const {
+    const size_type index = (row * nClocks) + col;
     return index * sizeof(short int);
   }
 
-  const short int* cell(const short int row, const short int col) const {
+  const short int* cell(const size_type row, const size_type col) const {
     return (short int *)&(storage[offset(row,col)]);
   }
 
-  short int* cell(const short int row, const short int col) {
+  short int* cell(const size_type row, const size_type col) {
     return (short int *)&(storage[offset(row,col)]);
   }
 
@@ -170,7 +170,7 @@ private:
    * @param col The second clock, or the column clock,
    * with 0 being the first column.
    * @return The value of the upper bound constraint on row - col. */
-  short int operatorRead(const short int row, const short int col) const {
+  short int operatorRead(const size_type row, const size_type col) const {
     return *cell(row,col);
   }
 
@@ -186,7 +186,7 @@ private:
    * with 0 being the first column.
    * @return A reference to the element indexed at the row "row" and column
    * "col". A reference is returned to allow the constraint to be changed. */
-  short int &operatorWrite(const short int row, const short int col) {
+  short int &operatorWrite(const size_type row, const size_type col) {
     /* Indexes are zero based */
     return *cell(row, col);
   }
@@ -201,8 +201,8 @@ private:
   template<class BinaryPredicate>
   bool compare(const DBM& other, BinaryPredicate cmp) const
   {
-    for (short int i = 0; i < nClocks; ++i) {
-      for (short int j = 0; j < nClocks; ++j) {
+    for (size_type i = 0; i < nClocks; ++i) {
+      for (size_type j = 0; j < nClocks; ++j) {
         if (cmp(this->operatorRead(i, j), other.operatorRead(i, j))) {
           return false;
         }
@@ -221,12 +221,12 @@ public:
    * "zero clock". Hence, there are numClocks - 1 actual clocks
    * with 1 "zero" clock.
    * @return [Constructor] */
-  DBM(const short int numClocks, const bidirectional_map<std::string, int> &cs)
+  DBM(const size_type numClocks, const bidirectional_map<std::string, int> &cs)
       : OneDIntArray(numClocks * numClocks),
         nClocks(numClocks),
         declared_clocks_(cs) {
-    for (short int i = 0; i < nClocks; i++) {
-      for (short int j = 0; j < nClocks; j++) {
+    for (size_type i = 0; i < nClocks; i++) {
+      for (size_type j = 0; j < nClocks; j++) {
         /* Here 0xFFF << 1 = 0xFFF0 is the
          bit-representation
          Used for (infinity, <). */
@@ -255,13 +255,13 @@ public:
    * @param col The second clock in constraint.
    * @param val The value constraining the upper bound of row - col.
    * @return [Constructor] */
-  DBM(const int numClocks, const short int row, const short int col,
+  DBM(const size_type numClocks, const size_type row, const size_type col,
       const short int val, const bidirectional_map<std::string, int> &cs)
       : OneDIntArray(numClocks * numClocks),
         nClocks(numClocks),
         declared_clocks_(cs) {
-    for (short int i = 0; i < nClocks; i++) {
-      for (short int j = 0; j < nClocks; j++) {
+    for (size_type i = 0; i < nClocks; i++) {
+      for (size_type j = 0; j < nClocks; j++) {
         /* 0x1 means (0, <=) , since the left 3-bits
          * represent the integer bound */
         if (i == 0) {
@@ -292,7 +292,7 @@ public:
         nClocks(Y.nClocks),
         declared_clocks_(Y.declared_clocks_) {}
 
-  short int clocks_size() const { return nClocks; }
+  size_type clocks_size() const { return nClocks; }
 
   const bidirectional_map<std::string, int>& declared_clocks() const {
     return declared_clocks_;
@@ -315,10 +315,10 @@ public:
    * @param col The second clock, or the column clock,
    * with 0 being the first column.
    * @return The value of the upper bound constraint on row - col. */
-  short int operator()(const short int row, const short int col) const {
+  short int operator()(const size_type row, const size_type col) const {
     // Indexes are zero based
     /* Give out of bounds check for public method */
-    if (row < 0 || row >= nClocks || col >= nClocks || col < 0) {
+    if (row >= nClocks || col >= nClocks) {
       // I added that col < 0 to check for the third bound.
       std::cerr << "nClocks : " << nClocks << " row : " << row
                 << " col : " << col << std::endl;
@@ -337,16 +337,13 @@ public:
    * with 0 being the first column.
    * @param val The new 13-bit value for the upper bound of row - col.
    * @return None*/
-  void addConstraint(const short int row, const short int col,
+  void addConstraint(const size_type row, const size_type col,
                      const short int val) {
-    // Use Version of operator() that allows for a reference
-    // But avoid additional method invocation.
     /* Give out of bounds check for public method */
-    if (row < 0 || row >= nClocks || col >= nClocks || col < 0) {
-      // I added that col < 0 to check for the third bound.
+    if (row >= nClocks || col >= nClocks) {
       std::cerr << "nClocks : " << nClocks << " row : " << row
                 << " col : " << col << std::endl;
-      std::cerr << "operator() index out of bounds" << std::endl;
+      std::cerr << "addConstraint index out of bounds" << std::endl;
       exit(-1);
     }
 
@@ -367,7 +364,7 @@ public:
    * with 0 being the first column.
    * @return true: the constraint is implicit (no constraint),
    * false: otherwise */
-  bool isConstraintImplicit(const short int row, const short int col) const {
+  bool isConstraintImplicit(const size_type row, const size_type col) const {
     if (row == 0 || row == col) {
       return (this->operatorRead(row, col)) == 0x1;
     } else {
@@ -397,8 +394,8 @@ public:
   DBM& intersect(const DBM& Y) {
     /* Should we check for same number of clocks (?)
      * Currently, the code does not. */
-    for (short int i = 0; i < nClocks; i++) {
-      for (short int j = 0; j < nClocks; j++) {
+    for (size_type i = 0; i < nClocks; i++) {
+      for (size_type j = 0; j < nClocks; j++) {
         this->operatorWrite(i, j) =
             (this->operatorRead(i, j) < Y.operatorRead(i, j))
                 ? this->operatorRead(i, j)
@@ -458,8 +455,8 @@ public:
      * Currently, the code does not. */
     bool gt = true;
     bool lt = true;
-    for (short int i = 0; i < nClocks; i++) {
-      for (short int j = 0; j < nClocks; j++) {
+    for (size_type i = 0; i < nClocks; i++) {
+      for (size_type j = 0; j < nClocks; j++) {
         gt = gt && (this->operatorRead(i, j) >= Y.operatorRead(i, j));
         lt = lt && (this->operatorRead(i, j) <= Y.operatorRead(i, j));
       }
@@ -477,7 +474,7 @@ public:
    * @return The reference to the changed calling DBM. */
   DBM &suc() {
     // We start i at 1 because (0,0) isn't a clock
-    for (short int i = 1; i < nClocks; i++) {
+    for (size_type i = 1; i < nClocks; i++) {
       this->operatorWrite(i, 0) = (0xFFF << 1);
     }
     return *this;
@@ -494,7 +491,7 @@ public:
     /* This version, the version that does not preserve canonical form
      * is used due to a typo in a paper describing a version that does
      * preserve canonical form. */
-    for (short int i = 0; i < nClocks; i++) {
+    for (size_type i = 0; i < nClocks; i++) {
       this->operatorWrite(0, i) = 0x1;
     }
     isCf = false;
@@ -505,14 +502,14 @@ public:
    * The final DBM is in canonical form.
    * @param x The clock to reset to 0.
    * @return The reference to the changed, calling resulting DBM. */
-  DBM &reset(const short int x) {
+  DBM &reset(const size_type x) {
     /* Do out of bounds checking now instead of in methods */
-    if (x < 0 || x >= nClocks) {
+    if (x >= nClocks) {
       std::cerr << "nClocks : " << nClocks << " x : " << x << std::endl;
       std::cerr << "reset(x) clock index out of bounds" << std::endl;
       exit(-1);
     }
-    for (short int i = 0; i < nClocks; i++) {
+    for (size_type i = 0; i < nClocks; i++) {
       /* Code Fix: do not change (x,x), since
        * that seemed to be a typo in the algorithm of the paper */
       if (i != x) {
@@ -533,7 +530,7 @@ public:
     /* This for loop takes the DBM and resets
      * all the specified clocks to reset to
      * 0. */
-    for (int i = 1; i < nClocks; i++) {
+    for (size_type i = 1; i < nClocks; i++) {
       if (rs->getc(i)) {
         this->reset(i);
       }
@@ -546,15 +543,15 @@ public:
    * @param x The clock to change the value of
    * @param y The clock to reset the first clock to.
    * @return The reference to the changed, calling resulting DBM. */
-  DBM &reset(const short int x, const short int y) {
+  DBM &reset(const size_type x, const size_type y) {
     /* Do out of bounds checking now instead of in methods */
-    if (x < 0 || x >= nClocks || y >= nClocks || y < 0) {
+    if (x >= nClocks || y >= nClocks) {
       std::cerr << "nClocks : " << nClocks << " x : " << x << " y : " << y
                 << std::endl;
       std::cerr << "reset(x,y) clock indices out of bounds" << std::endl;
       exit(-1);
     }
-    for (short int i = 0; i < nClocks; i++)
+    for (size_type i = 0; i < nClocks; i++)
       if (i != x) {
         this->operatorWrite(x, i) = this->operatorRead(y, i);
         this->operatorWrite(i, x) = this->operatorRead(i, y);
@@ -576,9 +573,9 @@ public:
    * after this operation.
    * @param x The clock that was just reset (after the predecessor zone).
    * @return The reference to the modified DBM. */
-  DBM &preset(const short int x) {
+  DBM &preset(const size_type x) {
     /* Do out of bounds checking now instead of in methods */
-    if (x < 0 || x >= nClocks) {
+    if (x >= nClocks) {
       std::cerr << "nClocks : " << nClocks << " x : " << x << std::endl;
       std::cerr << "reset(x) clock index out of bounds" << std::endl;
       exit(-1);
@@ -613,7 +610,7 @@ public:
 
     // Now flush out difference constraints since they
     // are reset by x
-    for (short int i = 1; i < nClocks; i++) {
+    for (size_type i = 1; i < nClocks; i++) {
       if (i == x) {
         continue;
       }
@@ -639,8 +636,8 @@ public:
     /* Handle clock difference constraints first. This
      * allows us to use the single-clock constraints
      * already in the DBM */
-    for (int i = 1; i < nClocks; i++) {
-      for (int j = 1; j < nClocks; j++) {
+    for (size_type i = 1; i < nClocks; i++) {
+      for (size_type j = 1; j < nClocks; j++) {
         if (i == j) {
           continue;
         }
@@ -650,7 +647,7 @@ public:
           /* Note that if we are here for constraint (i,j),
            * we will get here in constraint (j,i) */
 
-          int tempInt = this->operatorRead(i, j);
+          short int tempInt = this->operatorRead(i, j);
           if ((tempInt >> 1) < 0 ||
               ((tempInt >> 1) == 0 && (tempInt & 0x1) == 0)) {
             // Make an empty DBM
@@ -677,9 +674,9 @@ public:
       }
     }
     /* Handle Single clock constraints last. */
-    for (int i = 1; i < nClocks; i++) {
+    for (size_type i = 1; i < nClocks; i++) {
       if (prs->getc(i)) {
-        int tempIntG = this->operatorRead(0, i);
+        short int tempIntG = this->operatorRead(0, i);
         // For upper bound constraints, only invalidate if strictly
         // less than 0
         if ((tempIntG >> 1) < 0) {
@@ -690,7 +687,7 @@ public:
           isCf = false;
           return *this;
         }
-        int tempIntL = this->operatorRead(i, 0);
+        short int tempIntL = this->operatorRead(i, 0);
         if ((tempIntL >> 1) < 0) {
           // Make an empty DBM
           this->operatorWrite(i, 0) = 0;
@@ -719,9 +716,9 @@ public:
    * @param x The clock that was just reset (after the predecessor zone).
    * @param y The second clock; the clock whose value x was just assigned to.
    * @return The reference to the modified DBM. */
-  DBM &preset(const short int x, const short int y) {
+  DBM &preset(const size_type x, const size_type y) {
     /* Do out of bounds checking now instead of in methods */
-    if (x < 0 || x >= nClocks || y >= nClocks || y < 0) {
+    if (x >= nClocks || y >= nClocks) {
       std::cerr << "nClocks : " << nClocks << " x : " << x << " y : " << y
                 << std::endl;
       std::cerr << "reset(x,y) clock indices out of bounds" << std::endl;
@@ -731,7 +728,7 @@ public:
     // Now flush out difference constraints since they
     // are reset by x
     /* First check that it is a valid assignment, and make empty otherwise */
-    for (short int i = 0; i < nClocks; i++) {
+    for (size_type i = 0; i < nClocks; i++) {
       if (i == y || i == x) {
         continue;
       }
@@ -752,7 +749,7 @@ public:
         return *this;
       }
     }
-    for (short int i = 1; i < nClocks; i++) {
+    for (size_type i = 1; i < nClocks; i++) {
       if (i == x) {
         continue;
       }
@@ -779,10 +776,10 @@ public:
    * @return none
    * @note This only works when the timed automaton is "diagonal-free,"
    * or does not have any clock difference constraints in the automaton. */
-  void bound(const int maxc) {
+  void bound(const short int maxc) {
     // Is this method correct (?) Should it also be loosening
     // clock differences based on single clock constraints?
-    for (short int i = 1; i < nClocks; i++) {
+    for (size_type i = 1; i < nClocks; i++) {
       short int iRow = (this->operatorRead(i, 0) >> 1);
       /* Sets any individual upper bound clock constraint
        * that exceeds the const maxc
@@ -790,7 +787,7 @@ public:
        * that clock as the higher clock to infinity */
       if (iRow != 0xFFF && iRow > maxc) {
         this->operatorWrite(i, 0) = (0xFFF << 1);
-        for (short int j = 1; j < nClocks; j++) {
+        for (size_type j = 1; j < nClocks; j++) {
           if (i != j) {
             this->operatorWrite(i, j) = (0xFFF << 1);
           }
@@ -802,7 +799,7 @@ public:
        * already loosened by an upper-bound constraint) and
        * loosens the relevant clock-difference constraints */
       if (-(this->operatorRead(0, i) >> 1) > maxc) {
-        for (short int j = 0; j < nClocks; j++) {
+        for (size_type j = 0; j < nClocks; j++) {
           if (j != i) {
             if (this->operatorRead(j, 0) >> 1 == 0xFFF) {
               this->operatorWrite(j, i) = (0xFFF << 1);
@@ -822,8 +819,8 @@ public:
      * looser than the largest clock constant and bounds them
      * with the maximum constraint maxc in both directions,
      * relaxing the bounds. */
-    for (short int i = 1; i < nClocks; i++) {
-      for (short int j = 1; j < nClocks; j++) {
+    for (size_type i = 1; i < nClocks; i++) {
+      for (size_type j = 1; j < nClocks; j++) {
         if ((i != j) && ((this->operatorRead(i, j) >> 1) != 0xFFF)) {
           if ((this->operatorRead(i, j) >> 1) > maxc)
             this->operatorWrite(i, j) = (maxc << 1);
@@ -868,20 +865,20 @@ public:
     short int wholeVal_ik;
     short int wholeVal_kj;
     short int wholeVal_ij;
-    for (short int k = 0; k < nClocks; k++) {
+    for (size_type k = 0; k < nClocks; k++) {
       /* Deal with overflow in cf() rather than emptiness() */
       if (k == 2 && this->emptiness()) {
         isCf = true;
         // Make empty DBM
-        for (short int i = 0; i < nClocks; i++) {
-          for (short int j = 0; j < nClocks; j++) {
+        for (size_type i = 0; i < nClocks; i++) {
+          for (size_type j = 0; j < nClocks; j++) {
             this->operatorWrite(i, j) = 0;
           }
         }
         return;
       }
-      for (short int i = 0; i < nClocks; i++) {
-        for (short int j = 0; j < nClocks; j++) {
+      for (size_type i = 0; i < nClocks; i++) {
+        for (size_type j = 0; j < nClocks; j++) {
           wholeVal_ik = this->operatorRead(i, k);
           wholeVal_kj = this->operatorRead(k, j);
           wholeVal_ij = this->operatorRead(i, j);
@@ -929,8 +926,8 @@ public:
    * is in canonical form.
    * @return [None] */
   void makeEmpty() {
-    for (short int i = 0; i < nClocks; i++) {
-      for (short int j = 0; j < nClocks; j++) {
+    for (size_type i = 0; i < nClocks; i++) {
+      for (size_type j = 0; j < nClocks; j++) {
         this->operatorWrite(i, j) = 0x0;
       }
     }
@@ -946,7 +943,7 @@ public:
     /* O(n) version. This assumes that the DBM is in canonical form.
      * an O(n^2) version was previously used to handle overflow possibilities
      * from a model with different semantics. */
-    for (int i = 0; i < nClocks; i++) {
+    for (size_type i = 0; i < nClocks; i++) {
       short int rv = this->operatorRead(i, i);
       if (((rv >> 1) < 0) || (((rv >> 1) == 0) && ((rv & 0x1) == 0))) {
         return true;
@@ -962,8 +959,8 @@ public:
    * @return true: the DBM has a single-clock upper bound constraint, false:
    * otherwise. */
   bool hasUpperConstraint() const {
-    for (int i = 1; i < nClocks; i++) {
-      int cons = this->operatorRead(i, 0);
+    for (size_type i = 1; i < nClocks; i++) {
+      short int cons = this->operatorRead(i, 0);
       if ((cons >> 1) != 0xFFF) {
         return true;
       }
@@ -977,8 +974,8 @@ public:
    * The DBM calling this method is changed.
    * @return None*/
   void closure() {
-    for (short int i = 0; i < nClocks; i++)
-      for (short int j = 0; j < nClocks; j++) {
+    for (size_type i = 0; i < nClocks; i++)
+      for (size_type j = 0; j < nClocks; j++) {
         if (i == j) {
           continue;
         }
@@ -995,8 +992,8 @@ public:
    * The DBM calling this method is changed.
    * @return None*/
   void closureRev() {
-    for (short int i = 0; i < nClocks; i++)
-      for (short int j = 0; j < nClocks; j++) {
+    for (size_type i = 0; i < nClocks; i++)
+      for (size_type j = 0; j < nClocks; j++) {
         if (i == j) {
           continue;
         }
@@ -1013,8 +1010,8 @@ public:
    * The DBM calling this method is changed.
    * @return None*/
   void predClosureRev() {
-    for (short int i = 1; i < nClocks; i++)
-      for (short int j = 0; j < nClocks; j++) {
+    for (size_type i = 1; i < nClocks; i++)
+      for (size_type j = 0; j < nClocks; j++) {
         if (i == j) {
           continue;
         }
@@ -1035,8 +1032,8 @@ public:
       os << "EMPTY";
       return;
     }
-    for (short int i = 0; i < nClocks; i++) {
-      for (short int j = 0; j < nClocks; j++) {
+    for (size_type i = 0; i < nClocks; i++) {
+      for (size_type j = 0; j < nClocks; j++) {
         if (i == j) {
           continue;
         }

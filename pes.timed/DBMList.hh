@@ -66,8 +66,8 @@ private:
     /* Check for infinity DBM */
     bool hasAConstraint = false;
     DBMList *myList = nullptr;
-    for (int i = 0; i < Y.clocks_size(); i++) {
-      for (int j = 0; j < Y.clocks_size(); j++) {
+    for (DBM::size_type i = 0; i < Y.clocks_size(); i++) {
+      for (DBM::size_type j = 0; j < Y.clocks_size(); j++) {
         if (!(Y.isConstraintImplicit(i, j))) {
           hasAConstraint = true;
           int tempVal = Y(i, j);
@@ -92,7 +92,7 @@ private:
       // Set to Empty DBM
       DBM emptyDBM(Y.clocks_size(), Y.declared_clocks());
 
-      for (int i = 1; i < Y.clocks_size(); i++) {
+      for (DBM::size_type i = 1; i < Y.clocks_size(); i++) {
         emptyDBM.addConstraint(i, 0, 0);
         emptyDBM.addConstraint(0, i, 0);
         emptyDBM.addConstraint(0, 0, 0);

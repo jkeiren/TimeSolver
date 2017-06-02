@@ -94,7 +94,7 @@ inline bool restrict_to_invariant(const std::vector<const ExprNode*>& invs,
                                   DBM* const lhs, const SubstList& discrete_state) {
   bool has_nonvacuous_invariant = false;
   if (invs.empty()) return false;
-  for (int i = 0; i < discrete_state.nElements(); i++) {
+  for (SubstList::size_type i = 0; i < discrete_state.nElements(); i++) {
     for (std::vector<const ExprNode*>::const_iterator it = invs.begin();
          it != invs.end(); ++it) {
       if (comp_ph_invs(*(*it), discrete_state)) {

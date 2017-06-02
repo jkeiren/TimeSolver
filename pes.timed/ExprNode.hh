@@ -96,23 +96,23 @@ public:
    * @param val The value to initialize the specified variable to.
    * @param numElements The number of variables (the size of the list).
    * @return [Constructor]. */
-  SubstList(const int index, const int val, const int numElements,
+  SubstList(const size_type index, const element_type val, const size_type numElements,
             const bidirectional_map<std::string, int>& as)
       : OneDIntArray(numElements), declared_atomic(as) {
-    for (int i = 0; i < numElements; i++) {
+    for (size_type i = 0; i < numElements; i++) {
       this->operatorAccess(i) = -1;
     }
     this->operatorAccess(index) = val;
-  };
+  }
 
   /** Constructor. Initializes all variables to 0, providing a specific initial
    * state.
    * @param numElements The number of variables (the size of the list).
    * @return [Constructor]. */
-  SubstList(const int numElements,
+  SubstList(const size_type numElements,
             const bidirectional_map<std::string, int>& as)
       : OneDIntArray(numElements), declared_atomic(as) {
-    for (int i = 0; i < numElements; i++) this->operatorAccess(i) = 0;
+    for (size_type i = 0; i < numElements; i++) this->operatorAccess(i) = 0;
   }
 
   /** 2-list Copy Constructor. Creates a substitution list
@@ -126,7 +126,7 @@ public:
    * @return [Constructor]. */
   SubstList(const SubstList* const st1, const SubstList* const st2)
       : OneDIntArray(st1->quantity), declared_atomic(st1->declared_atomic) {
-    for (int i = 0; i < quantity; i++) {
+    for (size_type i = 0; i < quantity; i++) {
       if (st1->operatorAccess(i) != -1)
         this->operatorAccess(i) = st1->operatorAccess(i);
       else
@@ -150,7 +150,7 @@ public:
    * @param Y (&) The reference to the RHS SubstList.
    * @return true: the SubstList is equal to Y; false: otherwise. */
   bool operator==(const SubstList& Y) const {
-    return (std::memcmp(storage, Y.storage, quantity * sizeof(short int)) == 0);
+    return (std::memcmp(storage, Y.storage, quantity * sizeof(element_type)) == 0);
   }
 
   /** Element-wise equality of SubList elements */
@@ -159,7 +159,7 @@ public:
       return false;
     }
 
-    for (int j = 0; j < quantity; j++) {
+    for (size_type j = 0; j < quantity; j++) {
       if (at(j) != Y.at(j)) {
         return false;
       }
@@ -172,14 +172,14 @@ public:
    * @param index The location to change the value of
    * @param val The value to change the desired element to.
    * @return a pointer to the SubstList that was just changed. */
-  SubstList* addst(const int index, const int val) {
+  SubstList* addst(const size_type index, const element_type val) {
     this->operator[](index) = val;
     return this;
   }
 
   /** Returns the number of variables in this SubstList.
    * @return the number of variables in the SubstList. */
-  int nElements(void) const { return quantity; }
+  size_type nElements() const { return quantity; }
 
   /** Prints the contents of the SubstList.  A variable with
    * value -1 is considered empty (the SubstList does not restrict
@@ -189,7 +189,7 @@ public:
   void print(std::ostream& os) const {
     bool end = false;
     os << "[";
-    for (int i = 0; i < quantity; i++) {
+    for (size_type i = 0; i < quantity; i++) {
       if (this->at(i) != -1) {
         if (end) os << ",";
         // os << "p" << i;

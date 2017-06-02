@@ -19,17 +19,20 @@
  * @date November 2, 2013 */
 class OneDIntArray : public Generic1DArray {
 public:
+  /** OneDIntArray stores elements of type short it */
+  typedef short int element_type;
+
   /** Default Contructor.
    * @param numElements The number of elements to allocate
    * for the array.
    * @return [Constructor]. */
-  OneDIntArray(const short int numElements)
-      : Generic1DArray(numElements, sizeof(short int)) {}
+  OneDIntArray(const size_type numElements)
+      : Generic1DArray(numElements, sizeof(element_type)) {}
 
   /** Copy Constructor for constant objects.
    * @param Y (&) The reference to the object to copy.
    * @return [Constructor]. */
-  OneDIntArray(const OneDIntArray& Y) : Generic1DArray(Y){};
+  OneDIntArray(const OneDIntArray& Y) : Generic1DArray(Y){}
 
 public:
   /** Retrieves a reference for the element specified at the given index.
@@ -39,9 +42,9 @@ public:
    * @param index The index of the element to acces; 0 is
    * the first index.
    * @return A reference to the element in the array. */
-  short int& operator[](const short int index) {
+  element_type& operator[](const size_type index) {
     // re-use the const version of this function.
-    return const_cast<short int&>(at(index));
+    return const_cast<element_type&>(at(index));
   }
 
   /** Retrieves a const reference for the element specified at the given index.
@@ -51,11 +54,11 @@ public:
    * @param index The index of the element to acces; 0 is
    * the first index.
    * @return A const reference to the element in the array. */
-  const short int& at(const short int index) const {
+  const element_type& at(const size_type index) const {
     // Indexes are zero based
     /* We might want a private method that does not use bounds checks
      * In order to improve performance. */
-    if (index < 0 || index >= quantity) {
+    if (index >= quantity) {
       std::cerr << "OneDIntArray operator[] - out of bounds." << std::endl;
       exit(-1);
     }
@@ -72,8 +75,8 @@ protected:
    * @param index The index of the element to acces; 0 is
    * the first index.
    * @return A reference to the element in the array. */
-  short int& operatorAccess(const short int index) {
-    return const_cast<short int&>(operatorAccess_impl(index));
+  element_type& operatorAccess(const size_type index) {
+    return const_cast<element_type&>(operatorAccess_impl(index));
   }
 
   /** Retrieves a reference for the element specified at the given index.
@@ -85,7 +88,7 @@ protected:
    * @param index The index of the element to acces; 0 is
    * the first index.
    * @return A reference to the element in the array. */
-  const short int& operatorAccess(const short int index) const {
+  const element_type& operatorAccess(const size_type index) const {
     return operatorAccess_impl(index);
   }
 
@@ -98,10 +101,10 @@ protected:
    * @param index The index of the element to acces; 0 is
    * the first index.
    * @return A reference to the element in the array. */
-  const short int& operatorAccess_impl(const short int index) const {
+  const element_type& operatorAccess_impl(const size_type index) const {
     // Indexes are zero based
-    short int offset = index * sizeof(short int);
-    short int* p = (short int*)&(storage[offset]);
+    size_type offset = index * sizeof(element_type);
+    element_type* p = (element_type*)&(storage[offset]);
     // Dereference p
     return (*p);
   }
