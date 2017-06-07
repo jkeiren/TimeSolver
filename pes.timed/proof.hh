@@ -99,7 +99,7 @@ public:
 
     if (placeholder == nullptr)
     {
-   return  do_proof(p.initial_state(), *p.initial_clock_zone(), *start_pred);
+      return do_proof(p.initial_state(), *p.initial_clock_zone(), *start_pred);
     } else {
       do_proof_place(p.initial_state(), *p.initial_clock_zone(), placeholder, *start_pred);
       return *placeholder >= *p.initial_clock_zone();
@@ -2709,7 +2709,9 @@ inline void prover::do_proof_place_allact(const SubstList& discrete_state,
 
 
   /* Handle the vector */
-  if (!emptyRetPlace) {
+  if (emptyRetPlace) {
+    place->makeEmpty();
+  } else {
     /* If the vector is empty, then there is nothing to do
      * hence, we only
      * handle the case with a non-empty placeholder. */
