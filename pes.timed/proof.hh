@@ -11,6 +11,7 @@
 #define PROOF_HH
 
 #include "cpplogging/logger.h"
+#include "prover_options.hh"
 #include "pes.hh"
 #include "DBM.hh"
 #include "ExprNode.hh"
@@ -22,9 +23,10 @@ class prover {
 protected:
   const pes& input_pes;
 
+  const prover_options& options;
+
   bool currParityGfp;
   bool prevParityGfp;
-  bool useCaching;
 
   /** The current step in the proof; initially 0 */
   size_t step;
@@ -54,16 +56,16 @@ protected:
   sequent_cache cache;
 
 public:
-  prover(const pes& input_pes, bool useCaching, int nHash, int nbits)
+  prover(const pes& input_pes, const prover_options& options)
       : input_pes(input_pes),
+        options(options),
         currParityGfp(false),
         prevParityGfp(false),
-        useCaching(useCaching),
         step(0),
         numLocations(1),
         parentRef(nullptr),
         parentPlaceRef(nullptr),
-        cache(input_pes, nbits, input_pes.predicates().size() * nHash, nHash) {
+        cache(input_pes, options.nbits, input_pes.predicates().size() * options.nHash, options.nHash) {
     /* This is initialized to be the largest (loosest)
      * possible DBM
      * @see DBM Constructor (Default Constructor). */
@@ -658,7 +660,7 @@ inline bool prover::do_proof_predicate(const SubstList& discrete_state,
   currParityGfp = formula.get_Parity();
 
   /* Look in Known True and Known False Sequent Caches */
-  if (useCaching) {
+  if (options.useCaching) {
     /* First look in known False Sequent table */
     { // Restricted scope for looking up false sequents
       Sequent* cached_sequent =
@@ -710,7 +712,7 @@ inline bool prover::do_proof_predicate(const SubstList& discrete_state,
         h->addParent(parentRef);
 
         // Add sequent to known true cache
-        if (useCaching) {
+        if (options.useCaching) {
           Sequent* true_sequent = new Sequent(&formula, &discrete_state);
           Sequent* cached_true_sequent =
               cache.Xlist_true.locate_sequent(true_sequent, predicate_index, newSequent);
@@ -733,7 +735,7 @@ inline bool prover::do_proof_predicate(const SubstList& discrete_state,
         h->addParent(parentRef);
 
         // Now Put Sequent in False Cache
-        if (useCaching) {
+        if (options.useCaching) {
           Sequent* false_sequent = new Sequent(&formula, &discrete_state);
           Sequent* cached_false_sequent =
               cache.Xlist_false.locate_sequent(false_sequent, predicate_index, newSequent);
@@ -771,7 +773,7 @@ inline bool prover::do_proof_predicate(const SubstList& discrete_state,
    * This Must be done regardless of how the tabling
    * is done for that specific cache */
   // Purge updated sequent
-  if (useCaching) {
+  if (options.useCaching) {
     if (retVal) {
       /* First look in opposite parity Caches */
       bool madeEmpty = false;
@@ -1664,7 +1666,7 @@ inline void prover::do_proof_place_predicate(const SubstList& discrete_state,
   place->cf();
 
   /* First look in known true and false sequent tables */
-  if (useCaching) {
+  if (options.useCaching) {
     { // restricted block for known false sequents
       /* First look in known False Sequent tables.
        * Note: The False sequents with placeholders do not
@@ -1751,7 +1753,7 @@ inline void prover::do_proof_place_predicate(const SubstList& discrete_state,
         }
 
         // Add sequent to known true cache
-        if (useCaching) {
+        if (options.useCaching) {
           SequentPlace* true_sequent = new SequentPlace(&formula, &discrete_state);
           SequentPlace* cached_true_sequent =
               cache.Xlist_true_ph.locate_sequent(true_sequent, predicate_index, newSequent);
@@ -1781,7 +1783,7 @@ inline void prover::do_proof_place_predicate(const SubstList& discrete_state,
         }
 
         // Now Put Sequent in False Cache
-        if (useCaching) {
+        if (options.useCaching) {
           SequentPlace* false_sequent = new SequentPlace(&formula, &discrete_state);
           SequentPlace* cached_false_sequent =
               cache.Xlist_false_ph.locate_sequent(false_sequent,
@@ -1827,7 +1829,7 @@ inline void prover::do_proof_place_predicate(const SubstList& discrete_state,
    *		Z_now_true >= Z_cached_false | or | Z_cached_false <= Z_now_true
    * This Must be done regardless of how the tabling
    * is done for that specific cache */
-  if (useCaching) {
+  if (options.useCaching) {
     if (!place->emptiness()) {
       /* First look in opposite parity Caches */
       bool madeEmpty = false;

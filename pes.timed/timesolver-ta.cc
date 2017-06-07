@@ -33,6 +33,7 @@
 #include "cpplogging/logger.h"
 #include "ExprNode.hh"
 #include "sequent_stack.hh"
+#include "prover_options.hh"
 #include "proof.hh"
 #include "errno.h"
 #include "pes.hh"
@@ -61,39 +62,8 @@ void printUsage() {
             << std::endl;
 }
 
-/** Structure to collect the options passed to the tool, and passed into the
- * algorithm */
-struct tool_options {
-  /** True if debug mode is on, and
-   * False if debug mode is off. Running the
-   * program with -d sets it to true. */
-  bool debug;
-
-  /** If True, use tables in the output.  Else (False),
-   * print regular output. */
-  bool tabled;
-
-  /** The size of the Hash table of Sequents: nBits + 1 */
-  int nHash;
-
-  /** The maximum number of bits used in the hashing function
-   * when storing discrete states. */
-  int nbits;
-
-  /** Debug boolean to enable or disable known true and known false caches.
-   * This parameter does not influence caching of circularities. As a result,
-   * correctness is guaranteed but performance is slowed if set to FALSE */
-  bool useCaching;
-
-  /** Filename for the input */
-  std::string input_filename;
-
-  tool_options()
-      : debug(false), tabled(false), nHash(16), nbits(0xF), useCaching(true) {}
-};
-
 /** Parsers the command line */
-void parse_command_line(int argc, char** argv, tool_options& opt) {
+void parse_command_line(int argc, char** argv, prover_options& opt) {
   /* Sets parameters and looks for inputs from the command line. */
   char c;
 
@@ -133,8 +103,6 @@ void parse_command_line(int argc, char** argv, tool_options& opt) {
     std::cerr << argv[i] << " ";
   }
   std::cerr << std::endl;
-
-  opt.input_filename = std::string(argv[argc - 1]);
 }
 
 /** The main method that takes in an example file
@@ -150,11 +118,14 @@ int main(int argc, char** argv) {
   cpplogging::logger::unregister_output_policy(
       cpplogging::default_output_policy());
 
-  tool_options opt;
+  prover_options opt;
   parse_command_line(argc, argv, opt);
   if (opt.debug) {
     cpplogging::logger::set_reporting_level(cpplogging::debug);
   }
+
+  /** Filename for the input */
+  std::string input_filename(argv[argc - 1]);
 
   cpplog(cpplogging::info)
       << "\n\n====Begin Program Input==============================" << std::endl;
@@ -167,13 +138,13 @@ int main(int argc, char** argv) {
   clock_t begin_lp = clock();
 
   pes input_pes;
-  parse_pes(opt.input_filename, opt.debug, input_pes);
+  parse_pes(input_filename, opt.debug, input_pes);
 
   /* Inputs have now be approved and values set.  Here
    * the Real-Time Model Checking begins */
   /* Start the Model Checking */
   cpplog(cpplogging::info) << "Program input file (timed automaton + MES): "
-                           << opt.input_filename << std::endl;
+                           << input_filename << std::endl;
   cpplog(cpplogging::info) << "max constant in clock constraints: " << input_pes.max_constant()
                            << std::endl
                            << std::endl;
@@ -221,7 +192,7 @@ int main(int argc, char** argv) {
 
   /* Call the Model Checker with the given ExprNode
    * to prove or disprove the specification. */
-  prover p(input_pes, opt.useCaching, opt.nHash, opt.nbits);
+  prover p(input_pes, opt);
 
   suc = p.do_proof_init(input_pes);
 
