@@ -133,7 +133,22 @@ DBM testDBM11()
     return testDBM11;
 }
 
-
+TEST(DBMTest, DefaultIsInfty)
+{
+  DBM INFTYDBM(3, make_c3());
+  for(size_t i = 0; i < make_c3().size();i++) {
+    for(size_t j = 0; j < make_c3().size(); j++){
+      if(i == j || i == 0){
+        INFTYDBM.addConstraint(i,j, 0x1);
+      }
+      else {
+        INFTYDBM.addConstraint(i,j, (0xFFF << 1));
+      }
+    }
+  }
+  DBM defaultDBM(3, make_c3());
+  EXPECT_EQ(INFTYDBM, defaultDBM);
+}
 
 TEST(DBMTest, Copy)
 {
@@ -151,7 +166,7 @@ TEST(DBMTest, Emptiness)
     EXPECT_FALSE(testDBM5().emptiness());
     EXPECT_FALSE(testDBM6().emptiness());
     EXPECT_FALSE(testDBM7().emptiness());
-    EXPECT_FALSE(inftyDBM().emptiness());
+    EXPECT_FALSE(DBM(3, make_c3()).emptiness());
 }
 
 TEST(DBMTest, CanonicalEmpty)
