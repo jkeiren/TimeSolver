@@ -43,22 +43,6 @@ DBM emptyDBM3()
     return empty;
 }
 
-DBM inftyDBM()
-{
-  DBM INFTYDBM(3, make_c3());
-  for(int i = 0; i < 3;i++) {
-    for(int j = 0; j < 3; j++){
-      if(i == j || i == 0){
-        INFTYDBM.addConstraint(i,j, 0x1);
-      }
-      else {
-        INFTYDBM.addConstraint(i,j, (0xFFF << 1));
-      }
-    }
-  }
-  return INFTYDBM;
-}
-
 DBM testDBM1()
 {
     DBM testDBM1(3, make_c3());

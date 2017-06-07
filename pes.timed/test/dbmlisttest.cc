@@ -254,7 +254,7 @@ TEST(DBMListTest, Subset)
 {
     DBMList list3 = testDBMList3();
     DBMList list4 = testDBMList4();
-    DBM infty = inftyDBM();
+    DBM infty(3,make_c3());
 
     EXPECT_TRUE(list3 <= infty);
     EXPECT_TRUE(list4 <= infty);
@@ -267,7 +267,7 @@ TEST(DBMListTest, Superset)
 {
     DBMList list3 = testDBMList3();
     DBMList list4 = testDBMList4();
-    DBM infty = inftyDBM();
+    DBM infty(3, make_c3());
 
     EXPECT_TRUE(list3 >= infty);
     EXPECT_FALSE(list4 >= infty);
@@ -279,7 +279,7 @@ TEST(DBMListTest, Equal)
 {
     DBMList list3 = testDBMList3();
     DBMList list4 = testDBMList4();
-    DBM infty = inftyDBM();
+    DBM infty(3, make_c3());
 
     EXPECT_TRUE(list3 == infty);
     EXPECT_FALSE(list4 == infty);
@@ -303,7 +303,7 @@ TEST(DBMListTest, DBMList7Test)
     EXPECT_EQ(list7orig, list7);
     EXPECT_EQ(list7orig, *list7copy);
 
-    DBM infty = inftyDBM();
+    DBM infty(3, make_c3());
     EXPECT_TRUE(list7 == infty);
     EXPECT_EQ(list7, list7orig);
     EXPECT_TRUE(list7 >= infty);
