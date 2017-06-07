@@ -19,7 +19,7 @@ GTEST_DIR = googletest
 # Where to find user code.
 USER_DIR = .
 
-INCL = -I ../
+INCL = -I ../ -I../external/cpplogging/include
 
 LIB_DIR = ..
 
@@ -95,10 +95,18 @@ parsetest.o : $(USER_DIR)/parsetest.cc $(HEADERS) $(GTEST_HEADERS)
 # Note for the parsetest we add the 
 parsetest : parsetest.o gtest_main.a $(LIB_DIR)/parse.o $(LIB_DIR)/pes.tab.o $(LIB_DIR)/pes.lex.o
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@
+
+prooftest.o : $(USER_DIR)/prooftest.cc $(HEADERS) $(GTEST_HEADERS)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/prooftest.cc $(INCL)
+
+# Note for the parsetest we add the 
+prooftest : prooftest.o gtest_main.a $(LIB_DIR)/parse.o $(LIB_DIR)/pes.tab.o $(LIB_DIR)/pes.lex.o $(LIB_DIR)/ExprNode.o $(LIB_DIR)/external/cpplogging/logger.o
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@
 	
 	
 .PHONY: check
-check : dbmtest dbmlisttest parsetest
+check : dbmtest dbmlisttest parsetest prooftest
 	$(USER_DIR)/dbmtest
 	$(USER_DIR)/dbmlisttest
 	$(USER_DIR)/parsetest
+	$(USER_DIR)/prooftest
