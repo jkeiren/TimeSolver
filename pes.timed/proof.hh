@@ -1009,8 +1009,7 @@ inline bool prover::do_proof_forall_rel(const SubstList& discrete_state,
     /* We omit the check that we can elapse to the placeholder;
      * We will check that once at the end */
     DBMList placeholder2(*INFTYDBM);
-    DBM lhs_succ2(lhs_succ); // copy to avoid modifying lhs_succ
-    do_proof_place(discrete_state, lhs_succ2, &placeholder2, *formula.getRight());
+    do_proof_place(discrete_state, lhs_succ, &placeholder2, *formula.getRight());
     placeholder2.cf();
 
     cpplog(cpplogging::debug)
@@ -1039,7 +1038,7 @@ inline bool prover::do_proof_forall_rel(const SubstList& discrete_state,
 
       if (cpplogEnabled(cpplogging::debug)) {
         print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal,
-                           lhs_succ2, placeholder2, discrete_state, formula.getOpType());
+                           lhs_succ, placeholder2, discrete_state, formula.getOpType());
         cpplog(cpplogging::debug)
             << "----() FORALL (of FORALL_REL) Placeholder Check obtained  FA "
                "Placeholder := {"
@@ -1914,7 +1913,7 @@ inline void prover::do_proof_place_or(const SubstList& discrete_state,
   // Now do the right proof, and take the right if its placeholder is
   // larger that from the left side.
   if (!placeholder_left.emptiness() &&
-      placeholder_left >= *place) {
+      placeholder_left >= *place) { // placeholder_left == *place
     // why compare to *place; it seems this should be zone
     /* Here, the current transition successful;
      * we are done */
@@ -2083,30 +2082,30 @@ inline void prover::do_proof_place_forall_rel(const SubstList& discrete_state,
                                 << std::endl
                                 << std::endl;
     }
+
     /* Since here, \forall phi_2 computes the entire placeholder */
     /* Here the model checker looks at the zone of
      * all time sucessors and then substitutes in
      * the substitued constraints and sees if the
      * zone satifies the constraints */
 
-    DBMList newPlace(*INFTYDBM);
-    do_proof_place(discrete_state, lhs_succ, &newPlace, *formula.getRight());
-    newPlace.cf();
-    if (!(newPlace.emptiness())) { // Only do if a nonempty placeholder
+    do_proof_place(discrete_state, lhs_succ, place, *formula.getRight());
+    place->cf();
+    if (!place->emptiness()) {// Only do if a nonempty placeholder
       /* Now do the second proof rule to compute the first placeholder
        */
 
-      DBMList currPlace(newPlace);
-      succCheckRule(&discrete_state, zone, &lhs_succ, &currPlace, &newPlace);
-
-      retVal = !newPlace.emptiness();
-      *place = newPlace;
+      DBMList placeholder_forall(*place);
+      succCheckRule(&discrete_state, zone, &lhs_succ, place, &placeholder_forall);
+      *place = placeholder_forall;
 
       if (cpplogEnabled(cpplogging::debug)) {
         // This work is done in the succCheck method.
         // Perhaps I should move the debug rule there?
+        retVal = !place->emptiness();
+
         DBMList succRuleConseq(zone);
-        succRuleConseq.intersect(newPlace);
+        succRuleConseq.intersect(*place);
         succRuleConseq.cf();
         succRuleConseq.suc();
         succRuleConseq.cf();
