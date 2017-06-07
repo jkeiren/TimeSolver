@@ -79,8 +79,14 @@ public:
 
   size_t getNumLocations() const { return numLocations; }
 
-  /** Prove a given property for the provided PES. */
-  bool do_proof_init(pes& p)
+  /** Prove a given property for the provided PES.
+   * @param p the PES to prove.
+   * @param placeholder the placeholder to use (default nullptr).
+   * if the nullptr is provided as placholder, internally do_proof (without placeholders)
+   * is used. If a non-empty placeholder is provided, that placeholder is used in the
+   * proof using do_proof_place. In this case, the method returns true iff the initial clock zone
+   * is included in the resulting placeholder. */
+  bool do_proof_init(pes& p, DBMList* placeholder = nullptr)
   {
     const ExprNode* start_pred = p.lookup_predicate(p.start_predicate());
 
@@ -91,7 +97,13 @@ public:
      * false = lfp parity, true = gfp parity. */
     prevParityGfp = currParityGfp;
 
+    if (placeholder == nullptr)
+    {
    return  do_proof(p.initial_state(), *p.initial_clock_zone(), *start_pred);
+    } else {
+      do_proof_place(p.initial_state(), *p.initial_clock_zone(), placeholder, *start_pred);
+      return *placeholder >= *p.initial_clock_zone();
+    }
   }
 
   void printTabledSequents(std::ostream& os) const {

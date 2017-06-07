@@ -45,6 +45,8 @@
 #define DEBUG 1
 #endif
 
+#define DEBUG_PLACEHOLDER_PROVER false
+
 /** Prints out the "help" info for the user or
  * the information that is displayed when the
  * user does not give or format the argument properly.
@@ -195,6 +197,27 @@ int main(int argc, char** argv) {
   prover p(input_pes, opt);
 
   suc = p.do_proof_init(input_pes);
+
+#if DEBUG_PLACEHOLDER_PROVER
+  if (opt.debug) {
+    cpplogging::logger::set_reporting_level(cpplogging::warning);
+  }
+  prover pplace(input_pes, opt);
+  DBMList placeholder(DBM(input_pes.initial_clock_zone()->clocks_size(), input_pes.clocks()));
+  bool tmp = pplace.do_proof_init(input_pes, &placeholder);
+  if (suc != tmp)
+  {
+    cpplog(cpplogging::error) << "Different results from proof with and without placeholder for input " << input_filename << "." << std::endl
+                              << "  without placeholder: " << suc << std::endl
+                              << "  with placeholder: " << tmp << std::endl
+                              << "  the initial clock zone was: " << *input_pes.initial_clock_zone() << std::endl
+                              << "  the resulting placeholder is: " << placeholder << std::endl;
+  }
+  if (opt.debug) {
+    cpplogging::logger::set_reporting_level(cpplogging::debug);
+  }
+  assert(suc == tmp);
+#endif
 
   /* Now finished with the proof/disproof, so output the result of the Model
    * Checker */
