@@ -44,7 +44,6 @@
 
   extern void yyerror(void* scanner, bool debug, pes& input_pes, char *s);
   extern int yylex(YYSTYPE * lvalp, void* scanner);
-  extern int yyline;
 
   map <string, int> defcons;
 
@@ -60,7 +59,6 @@
 %parse-param {void * scanner}
 
   // Parameters for the parser.
-  // TODO: clean up by providing a simple structure/class interface.
 %parse-param {bool debug}
 %parse-param {pes& input_pes}
 

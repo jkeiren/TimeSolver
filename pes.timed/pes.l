@@ -10,6 +10,7 @@
 /* Make sure lexer is reentrant; we connect to bison */
 %option reentrant
 %option bison-bridge
+%option yylineno
 
 %{
 #include "ExprNode.hh"
@@ -18,8 +19,6 @@
 #include <iostream>
 #include "pes.tab.hh"
 
-
-int yyline=1;
 
 extern char lastToken[1024];
 char currentToken[1024];
@@ -62,7 +61,7 @@ yyCOMM2  \/\/{yyCHAR}*
 %%
 
 {yyCOMM2} {           }
-{yyLINE}  { yyline++; }
+{yyLINE}  {           }
 {yyWS}    {           }
 "CLOCKS"     { return TOK_CLOCKS;  }
 "CONTROL"     { return TOK_ATOMIC;  }
@@ -174,12 +173,11 @@ int install_INT(yyscan_t yyscanner)
  * @return None. */
 void do_comment(yyscan_t yyscanner)
 {
-  struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
   register int c;
   for( ; ; )
   {
     while ((c = yyinput(yyscanner))!='*' && c != EOF)
-    if ( c == '\n' ) yyline++;
+    if ( c == '\n' ) {}
     if ( c == '*' )
     {
       while ( (c = yyinput(yyscanner)) == '*')

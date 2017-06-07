@@ -14,7 +14,8 @@ extern int yyparse(void* scanner, bool debug, pes& input_pes);
  * @param s (*) The error string to print out.
  * @return None */
 void yyerror(yyscan_t scanner, bool /*debug*/, pes&, char* s) {
-  std::cerr << " line " << yyget_lineno(scanner) << ": ";
+  std::cerr << "Error at symbol \"" << yyget_text(scanner)
+            << "\" on line " << yyget_lineno(scanner) << ": ";
   if (s == nullptr)
     std::cerr << "syntax error";
   else
@@ -36,7 +37,12 @@ void parse_pes(const std::string& input_filename, bool debug, pes& result) {
   yylex_init(&scanner);
   yyset_in(input_file, scanner);
 
+  YY_BUFFER_STATE buf = yy_create_buffer(yyget_in(scanner), YY_BUF_SIZE, scanner);
+  yy_switch_to_buffer(buf, scanner);
+  yyset_lineno(1, scanner);
+
   int parseError = yyparse(scanner, debug, result);
+
   yylex_destroy(scanner);
   // Close File for good file handling
   fclose(input_file);
@@ -48,18 +54,16 @@ void parse_pes(const std::string& input_filename, bool debug, pes& result) {
 
 }
 
-/*
- This does not work as intended, yet
 void parse_pes_from_string(const std::string& input_string, bool debug, pes& result)
 {
   yyscan_t scanner;
   yylex_init(&scanner);
 
-  char* cstr = new char [input_string.length() + 1];
-  std::strcpy(cstr, input_string.c_str());;
-  YY_BUFFER_STATE buf = yy_scan_string(cstr, scanner);
+  YY_BUFFER_STATE buf = yy_scan_string(input_string.c_str(), scanner);
+  yyset_lineno(1, scanner);
 
   int parseError = yyparse(scanner, debug, result);
+
   yy_delete_buffer(buf, scanner);
   yylex_destroy(scanner);
 
@@ -68,4 +72,3 @@ void parse_pes_from_string(const std::string& input_string, bool debug, pes& res
                              "==--End of Program Execution-----------------------==\n");
   }
 }
-*/

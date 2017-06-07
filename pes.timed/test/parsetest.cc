@@ -15,18 +15,18 @@
 #define EXAMPLES_DIR_NAME STR(EXAMPLES_DIR)
 
 std::string AFSpecA1String(
-    "CLOCKS :{x1}\n"
-    "CONTROL :{p1(2)}\n"
-    "PREDICATE: {X1}\n"
-    "START: X1\n"
-    "EQUATIONS: {\n"
+  "CLOCKS :{x1}\n"
+  "CONTROL :{p1(2)}\n"
+  "PREDICATE: {X1}\n"
+  "START: X1\n"
+  "EQUATIONS: {\n"
     "1: mu X1 = p1 == 1\n"
-    "    || ((\forall time( \n"
-    "       ( (p1 == 0) -> (X1[p1=0][x1]))\n"
-    "    && ( (p1 == 0) -> (X1[p1=1]))\n"
-    "    && ( (p1 == 1) -> (X1[p1=1])))))\n"
-    "  }\n"
-    "INVARIANT:\n"
+    "    || ((\\forall time( \n"
+  "( (p1 == 0) -> (X1[p1=0][x1]))\n"
+  "&& ( (p1 == 0) -> (X1[p1=1]))\n"
+  "&& ( (p1 == 1) -> (X1[p1=1])))))\n"
+  "}\n"
+  "INVARIANT:\n"
     "  p1 == 0 -> x1 <= 2\n");
 
 TEST(ParseTest, ParseFile)
@@ -40,7 +40,6 @@ TEST(ParseTest, ParseFile)
   EXPECT_EQ("X1", p.start_predicate());
 }
 
-
 TEST(ParseTest, ParseNonexistantFile)
 {
   pes p;
@@ -48,7 +47,6 @@ TEST(ParseTest, ParseNonexistantFile)
   EXPECT_ANY_THROW(parse_pes(filename, false, p));
 }
 
-/*
 TEST(ParseTest, ParseString)
 {
   pes p;
@@ -58,4 +56,3 @@ TEST(ParseTest, ParseString)
   EXPECT_EQ(1, p.atomic().size());
   EXPECT_EQ("X1", p.start_predicate());
 }
-*/
