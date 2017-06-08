@@ -91,16 +91,12 @@ inline bool comp_ph_invs(const ExprNode& e, const SubstList& discrete_state) {
  * of the sequent.
  * @return true: the model has a non-vacuous invariant; false: otherwise. */
 inline bool restrict_to_invariant(const std::vector<const ExprNode*>& invs,
-                                  DBM* const lhs, const SubstList& discrete_state) {
+                                  DBM* const dbm, const SubstList& discrete_state) {
   bool has_nonvacuous_invariant = false;
-  if (invs.empty()) return false;
-  for (SubstList::size_type i = 0; i < discrete_state.nElements(); i++) {
-    for (std::vector<const ExprNode*>::const_iterator it = invs.begin();
-         it != invs.end(); ++it) {
-      if (comp_ph_invs(*(*it), discrete_state)) {
-        lhs->intersect(*(*it)->dbm());
-        has_nonvacuous_invariant = true;
-      }
+  for (const ExprNode* invariant: invs) {
+    if (comp_ph_invs(*invariant, discrete_state)) {
+      dbm->intersect(*invariant->dbm());
+      has_nonvacuous_invariant = true;
     }
   }
   return has_nonvacuous_invariant;
@@ -121,13 +117,11 @@ inline bool restrict_to_invariant(const std::vector<const ExprNode*>& invs,
  * of the sequent.
  * @return true: the DBMList is changed; false: otherwise. */
 inline bool restrict_to_invariant(const std::vector<const ExprNode*>& invs,
-                                  DBMList* const lhs, const SubstList& discrete_state) {
+                                  DBMList* const dbms, const SubstList& discrete_state) {
   bool changed = false;
   if (invs.empty()) return false;
-  std::vector<DBM*>* lList = lhs->getDBMList();
-  for (std::vector<DBM*>::iterator it = lList->begin(); it != lList->end();
-       ++it) {
-    changed = restrict_to_invariant(invs, *it, discrete_state) || changed; // order is important
+  for(DBM* dbm: *dbms->getDBMList()) {
+    changed = restrict_to_invariant(invs, dbm, discrete_state) || changed; // order is important
   }
   return changed;
 }
