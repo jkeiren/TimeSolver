@@ -1142,8 +1142,6 @@ inline bool prover::do_proof_forall_rel(const SubstList& discrete_state,
 // [FC14] Proof rule \exists_{t1}
 inline bool prover::do_proof_exists(const SubstList& discrete_state,
                                     const DBM& zone, const ExprNode& formula) {
-  bool retVal = false;
-
   /* Support for exists(), written by Peter Fontana */
   // This support gives a placeholder variable
   // and uses a similar method do_proof_place
@@ -1163,44 +1161,36 @@ inline bool prover::do_proof_exists(const SubstList& discrete_state,
   // Reset place parent to nullptr
   parentPlaceRef = nullptr;
   placeholder.cf();
-  if (placeholder.emptiness()) {
-    retVal = false;
-    if (cpplogEnabled(cpplogging::debug)) {
-      print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, zone,
-                         placeholder, discrete_state, formula.getOpType());
-      cpplog(cpplogging::debug) << "----(Invalid) Empty Placeholder: No Need "
-                                   "for Placeholder Check-----"
-                                << std::endl
-                                << std::endl;
-    }
-    return retVal;
-  } else {
+
+  bool retVal = false;
+  if (!placeholder.emptiness()) { // If placeholder.emptiness(), result is false
     /* Now check that it works. */
     placeholder.pre();
     /* This cf() is needed. */
     placeholder.cf();
     retVal = placeholder >= zone;
-
-    if (cpplogEnabled(cpplogging::debug)) {
-      print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, zone,
-                         placeholder, discrete_state, formula.getOpType());
-      if (retVal) {
-        cpplog(cpplogging::debug)
-            << "----(Valid) Placeholder Check Passed (Check Only)-----"
-            << std::endl
-            << "----With Placeholder := {" << placeholder << "} ----"
-            << std::endl
-            << std::endl;
-
-      } else {
-        cpplog(cpplogging::debug)
-            << "----(Invalid) Placeholder Check Failed-----" << std::endl
-            << std::endl;
-      }
-    }
-
-    return retVal;
   }
+
+  if (cpplogEnabled(cpplogging::debug)) {
+    print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, zone,
+                       placeholder, discrete_state, formula.getOpType());
+    if (placeholder.emptiness()) {
+      cpplog(cpplogging::debug) << "----(Invalid) Empty Placeholder: No Need "
+                                   "for Placeholder Check-----" << std::endl
+                                << std::endl;
+    } else if (retVal) {
+      cpplog(cpplogging::debug)
+          << "----(Valid) Placeholder Check Passed (Check Only)-----" << std::endl
+          << "----With Placeholder := {" << placeholder << "} ----"
+          << std::endl << std::endl;
+    } else {
+      cpplog(cpplogging::debug)
+          << "----(Invalid) Placeholder Check Failed-----" << std::endl
+          << std::endl;
+    }
+  }
+
+  return retVal;
 }
 
 inline bool prover::do_proof_exists_rel(const SubstList& discrete_state,
@@ -1904,11 +1894,10 @@ inline void prover::do_proof_place_predicate(const SubstList& discrete_state,
 inline void prover::do_proof_place_and(const SubstList& discrete_state,
                                        const DBM& zone, DBMList* place,
                                        const ExprNode& formula) {
-  DBMList placeholder_right(*place);
   do_proof_place(discrete_state, zone, place, *formula.getLeft());
   place->cf();
   if (!place->emptiness()) {
-    placeholder_right.intersect(*place);
+    DBMList placeholder_right(*place);
     do_proof_place(discrete_state, zone, &placeholder_right, *formula.getRight());
     place->intersect(placeholder_right);
   }
