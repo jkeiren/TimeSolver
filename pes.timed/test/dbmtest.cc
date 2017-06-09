@@ -169,6 +169,14 @@ TEST(DBMTest, Emptiness)
     EXPECT_FALSE(DBM(3, make_c3()).emptiness());
 }
 
+TEST(DBMTest, PreEmptyIsEmpty)
+{
+  DBM preEmpty(emptyDBM3());
+  preEmpty.pre();
+  preEmpty.cf();
+  EXPECT_TRUE(preEmpty.emptiness());
+}
+
 TEST(DBMTest, CanonicalEmpty)
 {
     DBM canonical(emptyDBM3());
