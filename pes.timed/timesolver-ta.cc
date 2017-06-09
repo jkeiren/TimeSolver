@@ -39,10 +39,8 @@
 #include "pes.hh"
 #include "parse.hh"
 
-/** Defines DEBUG mode to True (1)
- * if not already defined. */
 #ifndef DEBUG
-#define DEBUG 1
+#define DEBUG true
 #endif
 
 #define DEBUG_PLACEHOLDER_PROVER false
