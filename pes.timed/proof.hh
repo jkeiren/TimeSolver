@@ -492,8 +492,7 @@ protected:
                             const DBM& zone,
                             const DBM* const lhs_succ,
                             const DBMList* placeholder1,
-                            const DBMList* placeholder2,
-                            const DBMList* placeholder2_predecessor) {
+                            const DBMList* placeholder2) {
     result->makeEmpty();
 
     DBMList placeholder1_complement(*placeholder1);
@@ -1067,14 +1066,10 @@ inline bool prover::do_proof_forall_rel(const SubstList& discrete_state,
        * \phi_1 (the left) is the formula. By using the placeholders
        * computed previously, we save time by not having to recompute
        * the formulas. */
-      DBMList placeholder1_predecessor(placeholder1);
-      placeholder1_predecessor.pre();
-      placeholder1_predecessor.cf();
-
       DBMList placeholder_exists(*INFTYDBM);
       /*--- PredCheck code----*/
       predCheckRule(&placeholder_exists, zone, &lhs_succ, &placeholder2,
-                    &placeholder1, &placeholder1_predecessor);
+                    &placeholder1);
       placeholder_exists.cf();
       cpplog(cpplogging::debug)
           << "----() FORALL Rel Exists predCheck placeholder obtained as := {"
@@ -1162,14 +1157,9 @@ inline bool prover::do_proof_exists(const SubstList& discrete_state,
   parentPlaceRef = nullptr;
   placeholder.cf();
 
-  bool retVal = false;
-  if (!placeholder.emptiness()) { // If placeholder.emptiness(), result is false
-    /* Now check that it works. */
-    placeholder.pre();
-    /* This cf() is needed. */
-    placeholder.cf();
-    retVal = placeholder >= zone;
-  }
+  placeholder.pre();
+  placeholder.cf();
+  bool retVal = placeholder >= zone;
 
   if (cpplogEnabled(cpplogging::debug)) {
     print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, zone,
@@ -1222,6 +1212,20 @@ inline bool prover::do_proof_exists_rel(const SubstList& discrete_state,
   } else {
     retVal = true;
 
+    /* We find all the times that satisfy phi_1, and then intersect it
+     * with the time predecessor of the phi_2 placeholders. */
+    DBMList placeholder1(*INFTYDBM);
+    // Since invariants are past closed, we do not need to intersect
+    // this placeholder with the invariant.
+    do_proof_place(discrete_state, zone_succ, &placeholder1, *formula.getLeft());
+    /* Second step: tighten and check the predecessor */
+    // Must check for emptiness to handle the corner case when it is empty
+
+    cpplog(cpplogging::debug)
+        << "----() Placeholder of times where \\phi_1 is true----- {"
+        << placeholder1 << "} ----" << std::endl
+        << std::endl;
+
     /* Now check for the relativization.
      * First, find the subset of the predecessor_< of the placeholder
      * that satisfies the left clause.
@@ -1237,20 +1241,6 @@ inline bool prover::do_proof_exists_rel(const SubstList& discrete_state,
     placeholder2_predecessor.cf();
     /* At this point, placeholder2_predecessor is the time predecessor_{<} of
      * the placeholders that satisfy phi_2, the right hand formula */
-
-    /* We find all the times that satisfy phi_1, and then intersect it
-     * with the time predecessor of the phi_2 placeholders. */
-    DBMList placeholder1(*INFTYDBM);
-    // Since invariants are past closed, we do not need to intersect
-    // this placeholder with the invariant.
-    do_proof_place(discrete_state, zone_succ, &placeholder1, *formula.getLeft());
-    /* Second step: tighten and check the predecessor */
-    // Must check for emptiness to handle the corner case when it is empty
-
-    cpplog(cpplogging::debug)
-        << "----() Placeholder of times where \\phi_1 is true----- {"
-        << placeholder1 << "} ----" << std::endl
-        << std::endl;
 
     // This provides a preliminary check.
     // If the left hand side and right hand side never hold at the same time, we
@@ -1311,8 +1301,7 @@ inline bool prover::do_proof_exists_rel(const SubstList& discrete_state,
                                          // used in the predCheckRule
                                          // computation
       /*--- PredCheck code----*/
-      predCheckRule(&placeholder, zone, &zone_succ, &placeholder1, &placeholder2,
-                    &placeholder2_predecessor);
+      predCheckRule(&placeholder, zone, &zone_succ, &placeholder1, &placeholder2);
       if (placeholder.emptiness()) {
         retVal = false;
 
@@ -2227,12 +2216,8 @@ inline void prover::do_proof_place_forall_rel(const SubstList& discrete_state,
        * \phi_1 (the left) is the formula. By using the placeholders
        * computed previously, we save time by not having to recompute
        * the formulas. */
-      DBMList phi1PredPlace(placeholder1);
-      phi1PredPlace.pre();
-      phi1PredPlace.cf();
       /*--- PredCheck code----*/
-      predCheckRule(&placeholder2, zone, &lhs_succ, &placeholder2, &placeholder1,
-                    &phi1PredPlace);
+      predCheckRule(&placeholder2, zone, &lhs_succ, &placeholder2, &placeholder1);
       placeholder2.cf();
 
       cpplog(cpplogging::debug)
@@ -2452,8 +2437,7 @@ inline void prover::do_proof_place_exists_rel(const SubstList& discrete_state,
 
       /*--- PredCheck code----*/
       DBMList placeholder(placeholder1);
-      predCheckRule(&placeholder, zone, &zone_succ, &placeholder1, &placeholder2,
-                    &placeholder2_predecessor);
+      predCheckRule(&placeholder, zone, &zone_succ, &placeholder1, &placeholder2);
       if (placeholder.emptiness()) {
         cpplog(cpplogging::debug)
             << "----(Invalid) Relativization placeholder failed-----" << std::endl
