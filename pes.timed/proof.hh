@@ -1279,6 +1279,7 @@ inline bool prover::do_proof_exists_rel(const SubstList& discrete_state,
         retVal = placeholder2 >= zone;
 
         if (retVal) {
+          assert(placeholder2 == zone);
           cpplog(cpplogging::debug)
               << "----(Valid) Time Elapse not required and placeholder spans "
                  "zone; hence, formula is true-----"
@@ -1906,10 +1907,11 @@ inline void prover::do_proof_place_or(const SubstList& discrete_state,
   // larger that from the left side.
   if (!placeholder_left.emptiness() &&
       placeholder_left >= *place) { // placeholder_left == *place
+    assert(placeholder_left == *place);
     // why compare to *place; it seems this should be zone
     /* Here, the current transition successful;
      * we are done */
-    *place = placeholder_left;
+    *place = placeholder_left; // can be skipped!
   } else {
 
     // We use place here, since the result of the second call is likely to be
@@ -1959,6 +1961,7 @@ inline void prover::do_proof_place_or_simple(const SubstList& discrete_state,
   // Now do the right proof, and take the right if its placeholder is
   // larger that from the left side.
   if (!placeholder_left.emptiness() && (placeholder_left >= *place)) {
+    assert(placeholder_left == *place);
     /* Here, the current transition successful;
      * we are done */
     *place = placeholder_left;
