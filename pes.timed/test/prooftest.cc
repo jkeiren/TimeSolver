@@ -11,6 +11,7 @@
 #include "parse.hh"
 #include "gtest/gtest.h"
 
+static
 std::string AllActBug(
     "CLOCKS: {x}\n"
     "CONTROL: {p=1}\n"
@@ -24,6 +25,27 @@ std::string AllActBug(
     "	p == 1 -> x == 0\n"
     "TRANSITIONS:\n"
     "	(p==1)->(p=2);\n");
+
+static
+std::string ExistsBug(
+    "#define CA 3\n"
+    "CLOCKS :{x1}\n"
+    "CONTROL :{p1(1)}\n"
+    "PREDICATE: {X}\n"
+    "START: X\n"
+    "EQUATIONS: {\n"
+    "1: nu X = (\\exists time(x1 <= 2 && \\forall time(x1 >= 4)))\n"
+    "	}\n");
+
+static
+std::string ForallRelBug(
+    "CLOCKS :{x1}\n"
+    "CONTROL :{p1}\n"
+    "PREDICATE: {X}\n"
+    "START: X\n"
+    "EQUATIONS: {\n"
+    "1: nu X = \\forall time\\rel[x1 >= 0](x1 >= 1)\n"
+    "	}\n");
 
 TEST(ProofTest, AllActBugTest)
 {
@@ -46,3 +68,22 @@ TEST(ProofTest, AllActBugTestPlace)
   EXPECT_FALSE(pr.do_proof_init(p, &placeholder));
 }
 
+TEST(ProofTest, ExistsBugTest)
+{
+  pes p;
+  ASSERT_NO_THROW(parse_pes_from_string(ExistsBug, false, p));
+
+  prover_options options;
+  prover pr(p, options);
+  EXPECT_FALSE(pr.do_proof_init(p));
+}
+
+TEST(ProofTest, ForallRelBugTest)
+{
+  pes p;
+  ASSERT_NO_THROW(parse_pes_from_string(ForallRelBug, false, p));
+
+  prover_options options;
+  prover pr(p, options);
+  EXPECT_TRUE(pr.do_proof_init(p));
+}
