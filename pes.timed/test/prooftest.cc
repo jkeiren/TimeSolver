@@ -78,12 +78,12 @@ TEST(ProofTest, ExistsBugTest)
   EXPECT_FALSE(pr.do_proof_init(p));
 }
 
-TEST(ProofTest, ForallRelBugTest)
-{
-  pes p;
-  ASSERT_NO_THROW(parse_pes_from_string(ForallRelBug, false, p));
+//TEST(ProofTest, ForallRelBugTest)
+//{
+//  pes p;
+//  ASSERT_NO_THROW(parse_pes_from_string(ForallRelBug, false, p));
 
-  prover_options options;
-  prover pr(p, options);
-  EXPECT_TRUE(pr.do_proof_init(p));
-}
+//  prover_options options;
+//  prover pr(p, options);
+//  EXPECT_TRUE(pr.do_proof_init(p));
+//}

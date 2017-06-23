@@ -16,6 +16,8 @@ CFLAGS_VALGRIND = -g3
 CXXFLAGS_ALL = -O -Wall -Wextra -std=c++11
 CXXFLAGS_PROFILE = -pg
 CXXFLAGS_DEBUG = -g
+#-fsanitize=undefined
+# -fsanitize=address
 CXXFLAGS_VALGRIND = -g3
 
 LDFLAGS_ALL =

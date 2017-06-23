@@ -9,6 +9,7 @@
 #define BIDIRECTIONAL_MAP_HH
 
 #include <map>
+#include <initializer_list>
 
 /** Bidirectional map. Assume the value type is size_t, and that the values are
  *  dense. */
@@ -20,6 +21,22 @@ protected:
 
 public:
   bidirectional_map() {}
+
+  bidirectional_map(std::initializer_list< std::pair<KeyType, ValueType> > il)
+  {
+    for (std::pair<KeyType, ValueType> kv: il) {
+      if (_left.find(kv.first) != _left.end()) {
+        throw std::runtime_error(
+            "Inserting duplicate key into bidirectional map.");
+      }
+      if (_right.find(kv.second) != _right.end()) {
+        throw std::runtime_error(
+            "Inserting duplicate value into bidirectional map.");
+      }
+      _left[kv.first] = kv.second;
+      _right[kv.second] = kv.first;
+    }
+  }
 
   bool operator==(const bidirectional_map<KeyType, ValueType>& other) const {
     return _left == other._left && _right == other._right;

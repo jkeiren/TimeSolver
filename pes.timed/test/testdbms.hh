@@ -11,31 +11,28 @@
 
 #include "DBM.hh"
 
+inline
 bidirectional_map<std::string, int> make_c3()
 {
-  bidirectional_map<std::string, int> c3;
-  c3.insert("x1",1);
-  c3.insert("x2",2);
-  c3.insert("x3",3);
+  static bidirectional_map<std::string, int> c3 = { {"x1",1}, {"x2",2}, {"x3",3} };
   return c3;
 }
 
+inline
 bidirectional_map<std::string, int> make_c4()
 {
-  bidirectional_map<std::string, int> c4;
-  c4 = make_c3();
-  c4.insert("x4",4);
+  static bidirectional_map<std::string, int> c4 = { {"x1",1}, {"x2",2}, {"x3",3}, {"x4",4} };
   return c4;
 }
 
+inline
 bidirectional_map<std::string, int> make_c5()
 {
-  bidirectional_map<std::string, int> c5;
-  c5 = make_c4();
-  c5.insert("x5",5);
+  bidirectional_map<std::string, int> c5 = { {"x1",1}, {"x2",2}, {"x3",3}, {"x4",4}, {"x5",5} };
   return c5;
 }
 
+inline
 DBM emptyDBM3()
 {
     DBM empty(3, make_c3());
@@ -43,6 +40,7 @@ DBM emptyDBM3()
     return empty;
 }
 
+inline
 DBM testDBM1()
 {
     DBM testDBM1(3, make_c3());
@@ -58,6 +56,7 @@ DBM testDBM1()
     return testDBM1;
 }
 
+inline
 DBM testDBM1cf()
 {
     // DBM in canonical form (expected result)
@@ -74,6 +73,7 @@ DBM testDBM1cf()
     return expected;
 }
 
+inline
 DBM testDBM1pre()
 {
     DBM expected(3, make_c3());
@@ -89,6 +89,7 @@ DBM testDBM1pre()
     return expected;
 }
 
+inline
 DBM testDBM1precf()
 {
     DBM expected(3, make_c3());
