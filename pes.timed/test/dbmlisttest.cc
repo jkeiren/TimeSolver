@@ -15,7 +15,7 @@
 // l1b
 DBM testDBM3()
 {
-    DBM testDBM3(3, 0, 1, (-1 << 1) + 1, make_c3());
+    DBM testDBM3(3, 0, 1, clock_value(-1, false), make_c3());
     return testDBM3;
 }
 
@@ -23,8 +23,8 @@ DBM testDBM3()
 DBM testDBM4()
 {
     DBM testDBM4(3, make_c3());
-    testDBM4.addConstraint(1,0, (3 << 1) + 1);
-    testDBM4.addConstraint(2,0, (3 << 1) + 1);
+    testDBM4.addConstraint(1,0, clock_value(3, false));
+    testDBM4.addConstraint(2,0, clock_value(3, false));
     return testDBM4;
 }
 
@@ -32,10 +32,10 @@ DBM testDBM4()
 DBM testDBM5()
 {
     DBM testDBM5(3, make_c3());
-    testDBM5.addConstraint(1,0, (4 << 1));
-    testDBM5.addConstraint(2,0, (4 << 1));
-    testDBM5.addConstraint(0,1, (-2 << 1) + 1);
-    testDBM5.addConstraint(0,2, (-2 << 1) + 1);
+    testDBM5.addConstraint(1,0, clock_value(4, true));
+    testDBM5.addConstraint(2,0, clock_value(4, true));
+    testDBM5.addConstraint(0,1, clock_value(-2, false));
+    testDBM5.addConstraint(0,2, clock_value(-2, false));
     return testDBM5;
 }
 
@@ -43,7 +43,7 @@ DBM testDBM5()
 DBM testDBM6()
 {
     DBM testDBM6(3, make_c3());
-    testDBM6.addConstraint(2,1, (0 << 1) );
+    testDBM6.addConstraint(2, 1, zero(true));
     return testDBM6;
 }
 
@@ -51,8 +51,8 @@ DBM testDBM6()
 DBM testDBM7()
 {
     DBM testDBM7(3, make_c3());
-    testDBM7.addConstraint(1,0, (1 << 1));
-    testDBM7.addConstraint(0,1, (-2 << 1) + 1);
+    testDBM7.addConstraint(1,0, clock_value(1, true));
+    testDBM7.addConstraint(0,1, clock_value(-2, false));
     return testDBM7;
 }
 
@@ -60,7 +60,7 @@ DBM testDBM7()
 DBM testDBM8()
 {
     DBM testDBM8(3, make_c3());
-    testDBM8.addConstraint(0,1, (-1 << 1) + 1);
+    testDBM8.addConstraint(0,1, clock_value(-1, false));
     testDBM8.cf();
     return testDBM8;
 }
@@ -69,7 +69,7 @@ DBM testDBM8()
 DBM testDBM9()
 {
     DBM testDBM9(3, make_c3());
-    testDBM9.addConstraint(1,0, (1 << 1));
+    testDBM9.addConstraint(1,0, clock_value(1, true));
     testDBM9.cf();
     return testDBM9;
 }
@@ -171,35 +171,35 @@ TEST(DBMListTest, CanonicalDBMList5)
     canonical.cf();
 
     DBM testDBM4cf(3, make_c3());
-    testDBM4cf.addConstraint(0,0, 0x1);
-    testDBM4cf.addConstraint(0,1, 0x1);
-    testDBM4cf.addConstraint(0,2, 0x1);
-    testDBM4cf.addConstraint(1,0, (3 << 1) + 1);
-    testDBM4cf.addConstraint(1,1, 0x1);
-    testDBM4cf.addConstraint(1,2, (3 << 1) + 1);
-    testDBM4cf.addConstraint(2,0, (3 << 1) + 1);
-    testDBM4cf.addConstraint(2,1, (3 << 1) + 1);
-    testDBM4cf.addConstraint(2,2, 0x1);
+    testDBM4cf.addConstraint(0,0, zero(false));
+    testDBM4cf.addConstraint(0,1, zero(false));
+    testDBM4cf.addConstraint(0,2, zero(false));
+    testDBM4cf.addConstraint(1,0, clock_value(3, false));
+    testDBM4cf.addConstraint(1,1, zero(false));
+    testDBM4cf.addConstraint(1,2, clock_value(3, false));
+    testDBM4cf.addConstraint(2,0, clock_value(3, false));
+    testDBM4cf.addConstraint(2,1, clock_value(3, false));
+    testDBM4cf.addConstraint(2,2, zero(false));
     DBM testDBM5cf(3, make_c3());
-    testDBM5cf.addConstraint(0,0, 0x1);
-    testDBM5cf.addConstraint(0,1, (-2 << 1) + 1);
-    testDBM5cf.addConstraint(0,2, (-2 << 1) + 1);
-    testDBM5cf.addConstraint(1,0, (4 << 1) + 1);
-    testDBM5cf.addConstraint(1,1, 0x1);
-    testDBM5cf.addConstraint(1,2, (2 << 1) + 1);
-    testDBM5cf.addConstraint(2,0, (4 << 1));
-    testDBM5cf.addConstraint(2,1, (2 << 1));
-    testDBM5cf.addConstraint(2,2, 0x1);
+    testDBM5cf.addConstraint(0,0, zero(false));
+    testDBM5cf.addConstraint(0,1, clock_value(-2, false));
+    testDBM5cf.addConstraint(0,2, clock_value(-2, false));
+    testDBM5cf.addConstraint(1,0, clock_value(4, false));
+    testDBM5cf.addConstraint(1,1, zero(false));
+    testDBM5cf.addConstraint(1,2, clock_value(2, false));
+    testDBM5cf.addConstraint(2,0, clock_value(4, true));
+    testDBM5cf.addConstraint(2,1, clock_value(2, true));
+    testDBM5cf.addConstraint(2,2, zero(false));
     DBM testDBM6cf(3, make_c3());
-    testDBM6cf.addConstraint(0,0, 0x1);
-    testDBM6cf.addConstraint(0,1, 0x0);
-    testDBM6cf.addConstraint(0,2, 0x1);
-    testDBM6cf.addConstraint(1,0, (0xFFF<<1));
-    testDBM6cf.addConstraint(1,1, 0x1);
-    testDBM6cf.addConstraint(1,2, (0xFFF<<1));
-    testDBM6cf.addConstraint(2,0, (0xFFF<<1));
-    testDBM6cf.addConstraint(2,1, 0x0);
-    testDBM6cf.addConstraint(2,2, 0x1);
+    testDBM6cf.addConstraint(0,0, zero(false));
+    testDBM6cf.addConstraint(0,1, zero(true));
+    testDBM6cf.addConstraint(0,2, zero(false));
+    testDBM6cf.addConstraint(1,0, infinity(true));
+    testDBM6cf.addConstraint(1,1, zero(false));
+    testDBM6cf.addConstraint(1,2, infinity(true));
+    testDBM6cf.addConstraint(2,0, infinity(true));
+    testDBM6cf.addConstraint(2,1, zero(true));
+    testDBM6cf.addConstraint(2,2, zero(false));
 
     DBMList expected(testDBM4cf);
     expected.addDBM(testDBM5cf);
