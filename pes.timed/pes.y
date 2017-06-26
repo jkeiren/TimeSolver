@@ -962,7 +962,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
   input_pes.update_max_constant($3);
   int x = input_pes.lookup_clock($1);
   if ( x!= -1){
-    $$->addConstraint(0, x, ((-$3) <<1) + 1);
+    $$->addConstraint(0, x, clock_value(-$3, false));
   }
   else {
     errPrtExit("clock variable not defined");
@@ -980,7 +980,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
   input_pes.update_max_constant(v);
   int x = input_pes.lookup_clock($1);;
   if ( x!= -1){
-    $$->addConstraint(0, x, ((-v) <<1) + 1);
+    $$->addConstraint(0, x, clock_value(-v, false));
   }
   else {
     errPrtExit("clock variable not defined");
@@ -994,7 +994,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
   input_pes.update_max_constant($3);
   int x = input_pes.lookup_clock($1);;
   if ( x!= -1){
-    $$->addConstraint(0, x, (-$3) <<1);
+    $$->addConstraint(0, x, clock_value(-$3, true));
   }
   else {
     errPrtExit("clock variable not defined");
@@ -1012,7 +1012,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
   input_pes.update_max_constant(v);
   int x = input_pes.lookup_clock($1);;
   if ( x!= -1){
-    $$->addConstraint(0, x, (-v) <<1);
+    $$->addConstraint(0, x, clock_value(-v, true));
   }
   else {
     errPrtExit("clock variable not defined");
@@ -1026,7 +1026,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
   input_pes.update_max_constant($3);
   int x = input_pes.lookup_clock($1);
   if ( x!= -1){
-    $$->addConstraint(x, 0, ($3 <<1) + 1);
+    $$->addConstraint(x, 0, clock_value($3, false));
   }
   else {
     errPrtExit("clock variable not defined");
@@ -1044,7 +1044,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
   input_pes.update_max_constant(v);
   int x = input_pes.lookup_clock($1);;
   if ( x!= -1){
-    $$->addConstraint(x, 0, (v <<1) + 1);
+    $$->addConstraint(x, 0, clock_value(v, false));
   }
   else {
     errPrtExit("clock variable not defined");
@@ -1058,7 +1058,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
   input_pes.update_max_constant($3);
   int x = input_pes.lookup_clock($1);;
   if ( x!= -1){
-    $$->addConstraint(x, 0, ($3 <<1));
+    $$->addConstraint(x, 0, clock_value($3, true));
   }
   else {
     errPrtExit("clock variable not defined");
@@ -1076,7 +1076,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
   input_pes.update_max_constant(v);
   int x = input_pes.lookup_clock($1);;
   if ( x!= -1){
-    $$->addConstraint(x, 0, (v <<1));
+    $$->addConstraint(x, 0, clock_value(v, true));
   }
   else {
     errPrtExit("clock variable not defined");
@@ -1090,8 +1090,8 @@ TOK_ID_CLOCK TOK_GE TOK_INT
   input_pes.update_max_constant($3);
   int x = input_pes.lookup_clock($1);;
   if ( x!= -1){
-    $$->addConstraint(x, 0, ($3 <<1) + 1);
-    $$->addConstraint(0, x, ((-$3) <<1) + 1);
+    $$->addConstraint(x, 0, clock_value($3, false));
+    $$->addConstraint(0, x, clock_value(-$3, false));
   }
   else {
     errPrtExit("clock variable not defined");
@@ -1109,8 +1109,8 @@ TOK_ID_CLOCK TOK_GE TOK_INT
   input_pes.update_max_constant(v);
   int x = input_pes.lookup_clock($1);;
   if ( x!= -1){
-    $$->addConstraint(x, 0, (v <<1) + 1);
-    $$->addConstraint(0, x, ((-v) <<1) + 1);
+    $$->addConstraint(x, 0, clock_value(v, false));
+    $$->addConstraint(0, x, clock_value(-v, false));
   }
   else {
     errPrtExit("clock variable not defined");
@@ -1125,7 +1125,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
   int x = input_pes.lookup_clock($1);;
   int y = input_pes.lookup_clock($3);;
   if ( x != -1 && y != -1) {
-    $$->addConstraint(y, x, ((-$5) <<1) + 1);
+    $$->addConstraint(y, x, clock_value(-$5, false));
   }
   else {
     errPrtExit("clock variable not defined");
@@ -1140,7 +1140,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
   int x = input_pes.lookup_clock($1);
   int y = input_pes.lookup_clock($3);
   if ( x != -1 && y != -1) {
-    $$->addConstraint(y, x, (-$5) <<1);
+    $$->addConstraint(y, x, clock_value(-$5, true));
   }
   else {
     errPrtExit("clock variable not defined");
@@ -1155,7 +1155,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
   int x = input_pes.lookup_clock($1);;
   int y = input_pes.lookup_clock($3);;
   if ( x != -1 && y != -1) {
-    $$->addConstraint(x, y, ($5 <<1) + 1);
+    $$->addConstraint(x, y, clock_value($5, false));
   }
   else {
     errPrtExit("clock variable not defined");
@@ -1170,7 +1170,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
   int x = input_pes.lookup_clock($1);;
   int y = input_pes.lookup_clock($3);;
   if ( x != -1 && y != -1) {
-    $$->addConstraint(x, y, ($5 <<1));
+    $$->addConstraint(x, y, clock_value($5, true));
   }
   else {
     errPrtExit("clock variable not defined");
@@ -1185,8 +1185,8 @@ TOK_ID_CLOCK TOK_GE TOK_INT
   int x = input_pes.lookup_clock($1);;
   int y = input_pes.lookup_clock($3);;
   if ( x != -1 && y != -1){
-    $$->addConstraint(x, y, ($5 <<1) + 1);
-    $$->addConstraint(y, x, ((-$5) <<1) + 1);
+    $$->addConstraint(x, y, clock_value($5, false));
+    $$->addConstraint(y, x, clock_value(-$5, false));
   }
   else {
     errPrtExit("clock variable not defined");
