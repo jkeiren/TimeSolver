@@ -2,7 +2,6 @@
 *.map
 *.md5
 *.pdf
-*.tex
 *.html
 *.js
 *.xcscheme
@@ -13,7 +12,6 @@
 *.xcworkspacedata
 *.xcuserstate
 *.pbxproj
-*.sty
 pes.lex.cc
 pes.tab.cc
 pes.tab.hh
