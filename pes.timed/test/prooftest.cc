@@ -183,3 +183,62 @@ TEST(ProofTest, ExistsRelTestTrue)
   }
 }
 
+// In the following example, the property holds. The reason for the property
+// to hold is that the placeholder for the relativized exists accounts for
+// x1 <= 2 && x2 <= 1 && x1 - x2 <= 0; the placeholder for the second disjunct
+// accounts for the region x2 - x1 <= 0. Therefore, the entire initial region
+// is covered.
+static
+std::string ExistsRelTrueDueToOr(
+    "CLOCKS: {x1,x2}\n"
+    "CONTROL: {p1}\n"
+    "INITIALLY: x1 <= 2 && x2<=1\n"
+    "PREDICATE: {X}\n"
+    "START: X\n"
+    "EQUATIONS: {\n"
+    "1: mu X = (\\exists time\\rel[x1 <= 3](x2==3)) || x2 - x1 <= 0\n"
+    "}\n"
+    "TRANSITIONS:\n"
+    );
+
+TEST(ProofTest, ExistsRelTestTrueDueToOr)
+{
+  pes p;
+  ASSERT_NO_THROW(parse_pes_from_string(ExistsRelTrueDueToOr, false, p));
+
+  prover_options options;
+  prover pr(p, options);
+
+  DBMList placeholder(DBM(p.initial_clock_zone()->clocks_size(), p.clocks()));
+
+  EXPECT_TRUE(pr.do_proof_init(p, &placeholder));
+  placeholder.cf();
+/*
+  DBM minimum_region(p.initial_clock_zone()->clocks_size(), p.clocks());
+  minimum_region.addConstraint(1,0, clock_value(2, false));
+  minimum_region.addConstraint(2,0, clock_value(1, false));
+  minimum_region.addConstraint(1,2, clock_value(0, false));
+
+  DBM maximum_region(p.initial_clock_zone()->clocks_size(), p.clocks());
+  maximum_region.addConstraint(0,1, clock_value(0, false));
+  maximum_region.addConstraint(0,2, clock_value(0, false));
+  maximum_region.addConstraint(2,0, clock_value(3, false));
+  maximum_region.addConstraint(1,2, clock_value(0, false));
+
+  DBMList minimum_placeholder(minimum_region);
+  minimum_placeholder.cf();
+  EXPECT_TRUE(minimum_placeholder <= placeholder);
+
+  DBMList maximum_placeholder(maximum_region);
+  maximum_placeholder.cf();
+  EXPECT_TRUE(placeholder <= maximum_placeholder);
+
+
+  if(!(minimum_placeholder <= placeholder) || !(placeholder <= maximum_placeholder))
+  {
+    std::cerr << "Resulting placeholder: " << placeholder << std::endl;
+    std::cerr << "Minimal placeholder: " << minimum_placeholder << std::endl;
+    std::cerr << "Maximal placeholder: " << maximum_placeholder << std::endl;
+  }
+  */
+}
