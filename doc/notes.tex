@@ -313,6 +313,305 @@ in a darker shade.
 \end{tikzpicture}
 \end{center}
 
+\subsection{An additional example}
+
+As an additional example, consider the property
+ $\exists_{x_1 \leq 3}(x_2 = 2 \lor x_2 = 3)$, such that
+ $\placeholder[1] \equiv x_1 \leq 3$, and $\placeholder[2] \equiv x_2 = 2 \lor 
+ x_2 = 3$, and in which the clock region
+ $(\loc, \region) \equiv 0 \leq x_1 \leq 2 \land 0 \leq x_2 \leq 1$.
+ For the sake of conciseness let us write $\placeholder[2]^1 \equiv x_2 = 2$ and
+ $\placeholder[2]^2 \equiv x_2 = 3$.
+
+First, observe that choosing $\placeholder \equiv \placeholder[2]$
+does not satisfy the conditions since $\pre_{<}(x_2 = 2 \lor x _2 = 3) = x_2 < 3$, which includes states outside $x_1 \leq 3$. We show this in the following picture,
+where the relevant regions are shaded ($\placeholder[1]$ green, 
+$\pre_{<}(\placeholder[2])$ blue, and $\suc((\loc, \region))$ red);
+$(\loc, \region)$ is the small rectangle at the bottom-left of the picture.
+
+\begin{center}
+\begin{tikzpicture}
+% axis
+\draw[->] (0,0) -- (6, 0) coordinate (x axis);
+\draw[->] (0, 0) -- (0, 6) coordinate (y axis);
+% ticks
+\foreach \x in {0,...,4,}
+  \draw (\x,1pt) -- (\x,-3pt) node[anchor=north] {\x};
+\foreach \y in {0,...,4}
+  \draw (1pt,\y) -- (-3pt,\y) node[anchor=east] {\y}; 
+
+% labels
+\node[xshift=10pt] at (x axis) {$x_1$};
+\node[yshift=10pt] at (y axis) {$x_2$};
+
+% (l, cc)
+\draw (0,0) rectangle (2,1);
+\node at (1,0.5) {$(\loc, \region)$};
+
+% (x_1 = 3)
+\draw (3,0) -- (3,5);
+\draw[dotted] (3,5) -- (3,6) coordinate (x1 label);
+\node[yshift=10pt] at (x1 label) {$x_1 = 3$};
+
+% (x_2 = 2)
+\draw (0,2) -- (5,2);
+\draw[dotted] (5,2) -- (6,2) coordinate (x2 label);
+\node[xshift=20pt] at (x2 label) {$x_2 = 2$};
+
+% (x_2 = 3)
+\draw (0,3) -- (5,3);
+\draw[dotted] (5,3) -- (6,3) coordinate (x2 label);
+\node[xshift=20pt] at (x2 label) {$x_2 = 3$};
+
+% succ((l,cc)) boundaries
+\draw (0,1) -- (4,5)
+      (2,0) -- (5,3);
+\draw[dotted] (4,5) -- (5,6)
+              (5,3) -- (6,4); 
+% succ((l,cc)) shading
+\draw[fill=red!30, fill opacity=0.3,draw=none] (0,0) -- (0,1) -- (5,6) -- (6,6) -- (6,4) -- (2,0);
+\node[color=red] at (4.5,4) {$\suc((\loc, \region))$};
+
+% placeholder 1
+\draw[fill=green!30, fill opacity=0.2, draw=none] (0,0) rectangle (3,6);
+\node[color=DarkGreen] at (1.5,4) {$\placeholder[1]$};
+
+% pred_{<}(placeholder 2)
+\draw[fill=blue!30, fill opacity=0.2, draw=none]
+(0,0) rectangle (6,2.95);
+\node[color=DarkBlue] at (4.5,1.5) {$\pre_{<}(\placeholder[2])$};
+
+\end{tikzpicture}
+\end{center}
+In particular, the condition is not satisfied due to the triangle in which
+$\suc((\loc, \region))$ and $\pre_{<}(\placeholder[2]^1)$ overlap, which is not included
+in $\placeholder[1]$. To eliminate this, we must restrict $\placeholder$ such
+that $\suc((\loc, \region)) \cap \pre_{<}(\placeholder)$ does not include this
+\emph{bad} triangle.
+
+Now, observe that, contrary to our previous example, we cannot identify this
+bad region by choosing $\mathit{bad} \equiv (\suc((\loc, \region)) \cap
+\pre_{<}(\placeholder[2])) \setminus \placeholder[1]$ (this would lead us to
+identify the same bad region as in the previous example). This is due to the
+placeholder not being convex. This can be overcome by treating the convex
+parts of the placeholder separately. For the good part of the placeholder w.r.t.
+$\placeholder[2]^2$ we refer to the exposition given previously. We here focus
+on $\placeholder[2]^1 \equiv x_2 = 2$.
+
+With respect to $x_2 = 2$, we can identify the bad region by choosing
+$\mathit{bad}^1 \equiv (\suc((\loc, \region)) \cap
+\pre_{<}(\placeholder[2]^1)) \setminus \placeholder[1]$. 
+From this bad region we determine the states in $(\loc, \region)$ from which
+they can be reached using $(\loc, \region) \cap \pre(\mathit{bad}^1)$.
+
+\begin{center}
+  \begin{tikzpicture}
+  % axis
+  \draw[->] (0,0) -- (6, 0) coordinate (x axis);
+  \draw[->] (0, 0) -- (0, 6) coordinate (y axis);
+  % ticks
+  \foreach \x in {0,...,4,}
+    \draw (\x,1pt) -- (\x,-3pt) node[anchor=north] {\x};
+  \foreach \y in {0,...,4}
+    \draw (1pt,\y) -- (-3pt,\y) node[anchor=east] {\y}; 
+  
+  % labels
+  \node[xshift=10pt] at (x axis) {$x_1$};
+  \node[yshift=10pt] at (y axis) {$x_2$};
+  
+  % (l, cc)
+  \draw (0,0) rectangle (2,1);
+  \node at (1,0.5) {$(\loc, \region)$};
+  
+  % (x_1 = 3)
+  \draw (3,0) -- (3,5);
+  \draw[dotted] (3,5) -- (3,6) coordinate (x1 label);
+  \node[yshift=10pt] at (x1 label) {$x_1 = 3$};
+  
+  % (x_2 = 2)
+  \draw (0,2) -- (5,2);
+  \draw[dotted] (5,2) -- (6,2) coordinate (x2 label);
+  \node[xshift=20pt] at (x2 label) {$x_2 = 2$};
+  
+  % succ((l,cc)) boundaries
+  \draw (0,1) -- (4,5)
+        (2,0) -- (5,3);
+  \draw[dotted] (4,5) -- (5,6)
+                (5,3) -- (6,4); 
+  % succ((l,cc)) shading
+  %\draw[fill=red!30, fill opacity=0.3,draw=none] (0,0) -- (0,1) -- (5,6) -- (6,6) -- (6,4) -- (2,0);
+  %\node[color=red] at (4.5,4) {$\suc((\loc, \region))$};
+  
+  % placeholder 1
+  %\draw[fill=green!30, fill opacity=0.2, draw=none] (0,0) rectangle (3,6);
+  %\node[color=DarkGreen] at (1.5,4) {$\placeholder[1]$};
+  
+  % pred_{<}(placeholder 2)
+  %\draw[fill=blue!30, fill opacity=0.2, draw=none]
+  %(0,0) rectangle (6,2.95);
+  %\node[color=DarkBlue] at (4.5,1.5) {$\pre_{<}(\placeholder[2])$};
+  
+  % bad
+  \draw[fill=red!30,draw=none,fill opacity=0.5] (3,1) -- (3,1.95) -- (3.95,1.95) -- (3,1);
+  \node[color=red] at (3.3,1.7) {$\mathit{bad}^1$};
+  \draw[fill=red!30,draw=none, fill opacity=0.5] (1,0) -- (2,1) -- (2,0) -- (1,0);
+  \draw[fill=red!30,draw=none, fill opacity=0.2] (1,0) -- (3,1.95) -- (3.95,1.95) -- (2,0) -- (1,0);
+  
+  
+  \end{tikzpicture}
+  \end{center}
+
+We need to remove those states from $\placeholder[2]^1$ that can be reached from 
+$(\loc, \region) \cap \pre(\mathit{bad}^1)$, which is
+$\placeholder[2]^1 \setminus \suc((\loc, \region) \cap \pre(\mathit{bad}^1)$.
+The bad part of $\placholder[2]^1$ is indicated in red; the good part is indicated in
+blue in de the figure below. Let us call the resulting placeholder $\placeholder^1$.
+
+\begin{center}
+  \begin{tikzpicture}
+  % axis
+  \draw[->] (0,0) -- (6, 0) coordinate (x axis);
+  \draw[->] (0, 0) -- (0, 6) coordinate (y axis);
+  % ticks
+  \foreach \x in {0,...,4,}
+    \draw (\x,1pt) -- (\x,-3pt) node[anchor=north] {\x};
+  \foreach \y in {0,...,4}
+    \draw (1pt,\y) -- (-3pt,\y) node[anchor=east] {\y}; 
+  
+  % labels
+  \node[xshift=10pt] at (x axis) {$x_1$};
+  \node[yshift=10pt] at (y axis) {$x_2$};
+  
+  % (l, cc)
+  \draw (0,0) rectangle (2,1);
+  \node at (1,0.5) {$(\loc, \region)$};
+  
+  % (x_1 = 3)
+  \draw (3,0) -- (3,5);
+  \draw[dotted] (3,5) -- (3,6) coordinate (x1 label);
+  \node[yshift=10pt] at (x1 label) {$x_1 = 3$};
+  
+  % (x_2 = 3)
+  \draw (0,2) -- (5,2);
+  \draw[dotted] (5,2) -- (6,2) coordinate (x2 label);
+  \node[xshift=20pt] at (x2 label) {$x_2 = 2$};
+  
+  % succ((l,cc)) boundaries
+  \draw (0,1) -- (4,5)
+        (2,0) -- (5,3);
+  \draw[dotted] (4,5) -- (5,6)
+                (5,3) -- (6,4); 
+  % succ((l,cc)) shading
+  %\draw[fill=red!30, fill opacity=0.3,draw=none] (0,0) -- (0,1) -- (5,6) -- (6,6) -- (6,4) -- (2,0);
+  %\node[color=red] at (4.5,4) {$\suc((\loc, \region))$};
+  
+  % placeholder 1
+  %\draw[fill=green!30, fill opacity=0.2, draw=none] (0,0) rectangle (3,6);
+  %\node[color=DarkGreen] at (1.5,4) {$\placeholder[1]$};
+  
+  % pred_{<}(placeholder 2)
+  %\draw[fill=blue!30, fill opacity=0.2, draw=none]
+  %(0,0) rectangle (6,2.95);
+  %\node[color=DarkBlue] at (4.5,1.5) {$\pre_{<}(\placeholder[2])$};
+  
+  % bad
+  \draw[fill=red!30,draw=none, fill opacity=0.5] (1,0) -- (2,1) -- (2,0) -- (1,0);
+  \draw[fill=red!30,draw=none, fill opacity=0.2] (1,0) -- (7,6) -- (8,6) -- (2,0) -- (1,0);
+
+  \draw[color=red] (3,2) -- (4,2);
+  \draw[color=blue] (0,2) -- (3,2);
+  \draw[color=blue] (4,2) -- (5.5,2);
+  \draw[color=blue, dotted] (5.5,2) -- (6,2); 
+  
+  \end{tikzpicture}
+  \end{center}
+
+In order to fully satisfy the side condition, we still need to make sure that
+$\pre_<(\placeholder^1) \subseteq \placeholder[1]$, which can be achieved by
+intersecting the aforementioned region with $\placeholder[1]$. The resulting value
+of $\placeholder^1$ is thus $\placeholder^1 \equiv (\placeholder[2]^1 \setminus \suc((\loc, \region) \cap \pre(\mathit{bad}^1)) \cap \placeholder[1]$. 
+
+Finally, we have to wonder about the value of $\placeholder$. Observe that
+$\pre_{<}(\placeholder[2]^1 \lor \placeholder[2]^2) \equiv \pre_{<}(\placeholder[2]^1) \lor \pre_{<}(\placeholder[2]^2)$. Therefore, in particular, $\pre_{<}(\placeholder[2]^1) \lor \pre_{<}(\placeholder[2]^2) \subseteq \placeholder[1] \iff \pre_{<}(\placeholder[2]^1) \subseteq \placeholder[1] \land \pre_{<}(\placeholder[2]^2) \subseteq \placeholder[1]$.
+
+Again, in the proof rule for relativized $\exists$, the value of $\placeholder[\exists]$
+can be chosen such that $\placeholder[\exists] \equiv \pre(\placeholder)$. The
+side condition $(\loc, \region) \cap \placeholder[\exists] \subseteq \pre(\placeholder)$
+is then satisfied immediately. The shaded area in the following diagram gives
+$\placeholder[\exists]$, $(\loc, \region) \cap \placeholder[\exists]$ is indicated
+in a darker shade.
+
+\begin{center}
+\begin{tikzpicture}
+% axis
+\draw[->] (0,0) -- (6, 0) coordinate (x axis);
+\draw[->] (0, 0) -- (0, 6) coordinate (y axis);
+% ticks
+\foreach \x in {0,...,4,}
+  \draw (\x,1pt) -- (\x,-3pt) node[anchor=north] {\x};
+\foreach \y in {0,...,4}
+  \draw (1pt,\y) -- (-3pt,\y) node[anchor=east] {\y}; 
+
+% labels
+\node[xshift=10pt] at (x axis) {$x_1$};
+\node[yshift=10pt] at (y axis) {$x_2$};
+
+% (l, cc)
+\draw (0,0) rectangle (2,1);
+\node at (1.25,0.5) {$(\loc, \region)$};
+
+% (x_1 = 3)
+\draw (3,0) -- (3,5);
+\draw[dotted] (3,5) -- (3,6) coordinate (x1 label);
+\node[yshift=10pt] at (x1 label) {$x_1 = 3$};
+
+% (x_2 = 3)
+\draw (0,3) -- (5,3);
+\draw[dotted] (5,3) -- (6,3) coordinate (x2 label);
+\node[xshift=20pt] at (x2 label) {$x_2 = 3$};
+
+% (x_2 = 2)
+\draw (0,2) -- (5,2);
+\draw[dotted] (5,2) -- (6,2) coordinate (x2' label);
+\node[xshift=20pt] at (x2' label) {$x_2 = 2$};
+
+% % succ((l,cc)) boundaries
+% \draw (0,1) -- (4,5)
+%       (2,0) -- (5,3);
+% \draw[dotted] (4,5) -- (5,6)
+%               (5,3) -- (6,4); 
+% % succ((l,cc)) shading
+% \draw[fill=red!30, fill opacity=0.3,draw=none] (0,0) -- (0,1) -- (5,6) -- (6,6) -- (6,4) -- (2,0);
+% \node[color=red] at (4.5,4) {$\suc((\loc, \region))$};
+
+% resulting placeholder
+\draw[fill=blue!30, fill opacity=0.3] (0,0) -- (0,3) -- (3,3) -- (2,2) -- (3,2) -- (1,0) -- (0,0);
+\node[color=blue] at (.75,1.5) {$\placeholder[\exists]$};
+\draw[color=blue] (0,3) -- (3,3);
+\draw[color=blue] (0,2) -- (3,2);
+
+% % succ((l,cc) \cap placeholder) boundaries
+% \draw (0,1) -- (4,5)
+%       (0,0) -- (4,4);ı
+% \draw[dotted] (4,5) -- (5,6)
+%                (4,4) -- (6,6); 
+% % succ((l,cc) \cap \placeholder) shading
+% \draw[fill=red!30, fill opacity=0.3,draw=none] (0,0) -- (0,1) -- (5,6) -- (6,6) -- (0,0);
+% \node[color=red,rotate=45] at (3.5,4) {$\suc((\loc, \region) \cap \placeholder[\exists])$};
+
+% % placeholder 1
+% \draw[fill=green!30, fill opacity=0.2, draw=none] (0,0) rectangle (3,6);
+% \node[color=DarkGreen] at (1.5,4) {$\placeholder[1]$};
+
+% pred_{<}(placeholdeır 2)
+% \draw[fill=blue!30, fill opacity=0.2, draw=none]
+% (0,0) rectangle (6,2.95);
+% \node[color=DarkBlue] at (4.5,1.5) {$\pre_{<}(\placeholder[2])$};
+
+\end{tikzpicture}
+\end{center}
+
+
 \section{Predicate variables}
 The cases where the proof goal is a predicate variable is handled by the rules \texttt{do\_proof\_predicate} and \texttt{do\_proof\_place\_predicate}.
 
