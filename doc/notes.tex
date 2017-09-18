@@ -55,35 +55,14 @@ The class \texttt{prover} supports proof rules without placeholder, named \textt
 
 Below we describe each of the proof rules as they are implemented in the tool.
 
-\section{Predicate variables}
-The cases where the proof goal is a predicate variable is handled by the rules \texttt{do\_proof\_predicate} and \texttt{do\_proof\_place\_predicate}.
-
-\[
-\proofrule
-{(\loc, \region) \vdash X}
-{(\loc, \region) \vdash \phi}
-%
-\quad
-%
-\proofrule
-{(\loc, \region), \placeholder \vdash X}
-{(\loc, \region), \placeholder \vdash \phi}
-\]
-Where $X \eqsigma \phi \in \E$ is an equation in the PES.
-
-\jk{Describe how the caching and cycle detection works}
-
-
-\section{Boolean operators}
-
-\subsection{Helper functions}
+\section{Helper functions}
 Before we delve into the algorithms for each of the operators, we first look at some side conditions that need to be computed.
 
-The first of these is a side condition that we will use, among others, for relativized exists. Given a region $(\loc, \region)$, placeholders $\placeholder[1]$ and $\placeholder[2]$, we need to find the largest placeholder $\placeholder[\exists]$ such that $(\loc, \region) \cap \placeholder[\exists]$ and $\suc((\loc, \region) \cap \placeholder[\exists]) \cap \pre_{<}(\placeholder[2]) \subseteq \suc((\loc, \region) \cap \placeholder[\exists]) \cap \placeholder[1]$.
+The first of these is a side condition that we will use, among others, for relativized exists. Given a region $(\loc, \region)$, placeholders $\placeholder[1], \placeholder[2] \subseteq \inv(\loc)$, we need to find the largest placeholder $\placeholder \subseteq \placeholder[2]$ such that $\suc((\loc, \region)) \cap \pre_{<}(\placeholder) \subseteq \suc((\loc, \region)) \cap \placeholder[1]$.
 
 We first introduce the problem by considering the property $\exists_{x_1 \leq 3}(x_2 = 3)$, such that $\placeholder[1] \equiv x_1 \leq 3$, and $\placeholder[2] \equiv x_2 = 3$, and in which the clock region $(\loc, \region) \equiv 0 \leq x_1 \leq 2 \land 0 \leq x_2 \leq 1$.
 
-First, observe that choosing $\placeholder[\exists] \equiv \region \equiv 0 \leq x_1 \leq 2 \land 0 \leq x_2 \leq 1$ does not satisfy the conditions. We show this in the following picture, where the relevant regions are shaded ($\placeholder[1]$ green, $\pre_{<}(\placeholder[2])$ blue, and $\suc((\loc, \region))$ red); $(\loc, \region)$ is the small rectangle at the bottom-left of the picture.
+First, observe that choosing $\placeholder \equiv \placeholder[2] \equiv x_2 = 3$ does not satisfy the conditions since $\pre_{<}(x_2 = 3) = x_2 < 3$, which includes states outside $x_1 \leq 3$. We show this in the following picture, where the relevant regions are shaded ($\placeholder[1]$ green, $\pre_{<}(\placeholder[2])$ blue, and $\suc((\loc, \region))$ red); $(\loc, \region)$ is the small rectangle at the bottom-left of the picture.
 
 \begin{center}
 \begin{tikzpicture}
@@ -134,69 +113,141 @@ First, observe that choosing $\placeholder[\exists] \equiv \region \equiv 0 \leq
 
 \end{tikzpicture}
 \end{center}
-In particular, the condition is not satisfied due to the triangle in which $\suc((\loc, \region))$ and $\pre_{<}(\placeholder[2])$ overlap, which is not included in $\placeholder[1]$. To eliminate this, we must restrict $\placeholder[\exists]$ such that $\succ((\loc, \region) \cap \placeholder[\exists])$ does not include this \emph{bad} triangle.
+In particular, the condition is not satisfied due to the triangle in which $\suc((\loc, \region))$ and $\pre_{<}(\placeholder[2])$ overlap, which is not included in $\placeholder[1]$. To eliminate this, we must restrict $\placeholder$ such that $\suc((\loc, \region)) \cap \pre_{<}(\placeholder)$ does not include this \emph{bad} triangle.
 
-This bad region can be identified by $\mathit{bad} \equiv \suc((\loc, \region)) \cap \pre_{<}(\placeholder[2]) \cap \overline{\placeholder[1]}$, where $\overline{S}$ denotes the set-complement of $S$. The bad part of $(\loc, \region)$ can now be established as $(\loc, \region) \cap \pre(\mathit{bad}) \equiv (\loc, \region) \cap \pre(\suc((\loc, \region)) \cap \pre_{<}(\placeholder[2]) \cap \overline{\placeholder[1]})$.
+This bad region can be identified by $\mathit{bad} \equiv (\suc((\loc, \region)) \cap \pre_{<}(\placeholder[2])) \setminus \placeholder[1]$.
+From this bad region we determine the states in $(\loc, \region)$ from which they can be reached using $(\loc, \region) \cap \pre(\mathit{bad})$.
 
 \begin{center}
-\begin{tikzpicture}
-% axis
-\draw[->] (0,0) -- (6, 0) coordinate (x axis);
-\draw[->] (0, 0) -- (0, 6) coordinate (y axis);
-% ticks
-\foreach \x in {0,...,4,}
-  \draw (\x,1pt) -- (\x,-3pt) node[anchor=north] {\x};
-\foreach \y in {0,...,4}
-  \draw (1pt,\y) -- (-3pt,\y) node[anchor=east] {\y}; 
+  \begin{tikzpicture}
+  % axis
+  \draw[->] (0,0) -- (6, 0) coordinate (x axis);
+  \draw[->] (0, 0) -- (0, 6) coordinate (y axis);
+  % ticks
+  \foreach \x in {0,...,4,}
+    \draw (\x,1pt) -- (\x,-3pt) node[anchor=north] {\x};
+  \foreach \y in {0,...,4}
+    \draw (1pt,\y) -- (-3pt,\y) node[anchor=east] {\y}; 
+  
+  % labels
+  \node[xshift=10pt] at (x axis) {$x_1$};
+  \node[yshift=10pt] at (y axis) {$x_2$};
+  
+  % (l, cc)
+  \draw (0,0) rectangle (2,1);
+  \node at (1,0.5) {$(\loc, \region)$};
+  
+  % (x_1 = 3)
+  \draw (3,0) -- (3,5);
+  \draw[dotted] (3,5) -- (3,6) coordinate (x1 label);
+  \node[yshift=10pt] at (x1 label) {$x_1 = 3$};
+  
+  % (x_2 = 3)
+  \draw (0,3) -- (5,3);
+  \draw[dotted] (5,3) -- (6,3) coordinate (x2 label);
+  \node[xshift=20pt] at (x2 label) {$x_2 = 3$};
+  
+  % succ((l,cc)) boundaries
+  \draw (0,1) -- (4,5)
+        (2,0) -- (5,3);
+  \draw[dotted] (4,5) -- (5,6)
+                (5,3) -- (6,4); 
+  % succ((l,cc)) shading
+  %\draw[fill=red!30, fill opacity=0.3,draw=none] (0,0) -- (0,1) -- (5,6) -- (6,6) -- (6,4) -- (2,0);
+  %\node[color=red] at (4.5,4) {$\suc((\loc, \region))$};
+  
+  % placeholder 1
+  %\draw[fill=green!30, fill opacity=0.2, draw=none] (0,0) rectangle (3,6);
+  %\node[color=DarkGreen] at (1.5,4) {$\placeholder[1]$};
+  
+  % pred_{<}(placeholder 2)
+  %\draw[fill=blue!30, fill opacity=0.2, draw=none]
+  %(0,0) rectangle (6,2.95);
+  %\node[color=DarkBlue] at (4.5,1.5) {$\pre_{<}(\placeholder[2])$};
+  
+  % bad
+  \draw[fill=red!30,draw=none,fill opacity=0.5] (3,1) -- (3,2.95) -- (4.95,2.95) -- (3,1);
+  \node[color=red] at (3.5,2.5) {$\mathit{bad}$};
+  \draw[fill=red!30,draw=none, fill opacity=0.5] (0,0) -- (1,1) -- (2,1) -- (2,0) -- (0,0);
+  \draw[fill=red!30,draw=none, fill opacity=0.2] (0,0) -- (3,2.95) -- (4.95,2.95) -- (2,0) -- (0,0);
+  
+  
+  \end{tikzpicture}
+  \end{center}
 
-% labels
-\node[xshift=10pt] at (x axis) {$x_1$};
-\node[yshift=10pt] at (y axis) {$x_2$};
+To compute $\placeholder$ we need to remove those states from $\placeholder[2]$ that can be reached from $(\loc, \region) \cap \pre(\mathit{bad})$, which is $\placeholder[2] \setminus \suc((\loc, \region) \cap \pre(\mathit{bad})$. The bad part of $\placeholder[2]$
+is indicated in red; the good part is indicated in blue in de the figure below.
 
-% (l, cc)
-\draw (0,0) rectangle (2,1);
-\node at (1,0.5) {$(\loc, \region)$};
+\begin{center}
+  \begin{tikzpicture}
+  % axis
+  \draw[->] (0,0) -- (6, 0) coordinate (x axis);
+  \draw[->] (0, 0) -- (0, 6) coordinate (y axis);
+  % ticks
+  \foreach \x in {0,...,4,}
+    \draw (\x,1pt) -- (\x,-3pt) node[anchor=north] {\x};
+  \foreach \y in {0,...,4}
+    \draw (1pt,\y) -- (-3pt,\y) node[anchor=east] {\y}; 
+  
+  % labels
+  \node[xshift=10pt] at (x axis) {$x_1$};
+  \node[yshift=10pt] at (y axis) {$x_2$};
+  
+  % (l, cc)
+  \draw (0,0) rectangle (2,1);
+  \node at (1,0.5) {$(\loc, \region)$};
+  
+  % (x_1 = 3)
+  \draw (3,0) -- (3,5);
+  \draw[dotted] (3,5) -- (3,6) coordinate (x1 label);
+  \node[yshift=10pt] at (x1 label) {$x_1 = 3$};
+  
+  % (x_2 = 3)
+  \draw (0,3) -- (5,3);
+  \draw[dotted] (5,3) -- (6,3) coordinate (x2 label);
+  \node[xshift=20pt] at (x2 label) {$x_2 = 3$};
+  
+  % succ((l,cc)) boundaries
+  \draw (0,1) -- (4,5)
+        (2,0) -- (5,3);
+  \draw[dotted] (4,5) -- (5,6)
+                (5,3) -- (6,4); 
+  % succ((l,cc)) shading
+  %\draw[fill=red!30, fill opacity=0.3,draw=none] (0,0) -- (0,1) -- (5,6) -- (6,6) -- (6,4) -- (2,0);
+  %\node[color=red] at (4.5,4) {$\suc((\loc, \region))$};
+  
+  % placeholder 1
+  %\draw[fill=green!30, fill opacity=0.2, draw=none] (0,0) rectangle (3,6);
+  %\node[color=DarkGreen] at (1.5,4) {$\placeholder[1]$};
+  
+  % pred_{<}(placeholder 2)
+  %\draw[fill=blue!30, fill opacity=0.2, draw=none]
+  %(0,0) rectangle (6,2.95);
+  %\node[color=DarkBlue] at (4.5,1.5) {$\pre_{<}(\placeholder[2])$};
+  
+  % bad
+  \draw[fill=red!30,draw=none, fill opacity=0.5] (0,0) -- (1,1) -- (2,1) -- (2,0) -- (0,0);
+  \draw[fill=red!30,draw=none, fill opacity=0.2] (0,0) -- (6,6) -- (8,6) -- (2,0) -- (0,0);
 
-% (x_1 = 3)
-\draw (3,0) -- (3,5);
-\draw[dotted] (3,5) -- (3,6) coordinate (x1 label);
-\node[yshift=10pt] at (x1 label) {$x_1 = 3$};
+  \draw[color=red] (3,3) -- (5,3);
+  \draw[color=blue] (0,3) -- (3,3);
+  \draw[color=blue] (5,3) -- (5.5,3);
+  \draw[color=blue, dotted] (5.5,3) -- (6,3); 
+  
+  \end{tikzpicture}
+  \end{center}
 
-% (x_2 = 3)
-\draw (0,3) -- (5,3);
-\draw[dotted] (5,3) -- (6,3) coordinate (x2 label);
-\node[xshift=20pt] at (x2 label) {$x_2 = 3$};
-
-% succ((l,cc)) boundaries
-\draw (0,1) -- (4,5)
-      (2,0) -- (5,3);
-\draw[dotted] (4,5) -- (5,6)
-              (5,3) -- (6,4); 
-% succ((l,cc)) shading
-%\draw[fill=red!30, fill opacity=0.3,draw=none] (0,0) -- (0,1) -- (5,6) -- (6,6) -- (6,4) -- (2,0);
-%\node[color=red] at (4.5,4) {$\suc((\loc, \region))$};
-
-% placeholder 1
-%\draw[fill=green!30, fill opacity=0.2, draw=none] (0,0) rectangle (3,6);
-%\node[color=DarkGreen] at (1.5,4) {$\placeholder[1]$};
-
-% pred_{<}(placeholder 2)
-%\draw[fill=blue!30, fill opacity=0.2, draw=none]
-%(0,0) rectangle (6,2.95);
-%\node[color=DarkBlue] at (4.5,1.5) {$\pre_{<}(\placeholder[2])$};
-
-% bad
-\draw[fill=red!30,draw=none,fill opacity=0.5] (3,1) -- (3,2.95) -- (4.95,2.95) -- (3,1);
-\node[color=red] at (3.5,2.5) {$\mathit{bad}$};
-\draw[fill=red!30,draw=none, fill opacity=0.2] (0,0) -- (3,2.95) -- (4.95,2.95) -- (2,0) -- (0,0);
-
-\end{tikzpicture}
-\end{center}
-
-If, in contrast, we would like to find the \emph{good} part of $(\loc, \region)$, and assign this to $\placeholder[\exists]$, we compute
-$(\loc, \region) \cap \overline((\loc, \region) \cap \pre(\mathit{bad}))$, which simplifies to $(\loc, \region) \cap \overline{\pre(\mathit{bad})} \equiv (\loc, \region) \cap \overline{\pre(\suc((\loc, \region)) \cap \pre_{<}(\placeholder[2]) \cap \overline{\placeholder[1]})}$
-
-The resulting $\placeholder[\exists]$ satisfies the conditions. This situation is shown in the following figure.
+In order to fully satisfy the side condition, we still need to make sure that
+$\pre_<(\placeholder) \subseteq \placeholder[1]$, which can be achieved by
+intersecting the aforementioned region with $\placholder[1]$. The resulting value
+of $\placeholder$ is thus $\placeholder \equiv (\placeholder[2] \setminus \suc((\loc, \region) \cap \pre(\mathit{bad})) \cap \placeholder[1]$. The resulting placeholder $\placeholder$ is indicated in the
+following figure.
+In the proof rule for relativized $\exists$, the value of $\placeholder[\exists]$
+can be chosen such that $\placeholder[\exists] \equiv \pre(\placeholder)$. The
+side condition $(\loc, \region) \cap \placeholder[\exists] \subseteq \pre(\placeholder)$
+is then satisfied immediately. The shaded area in the following diagram gives
+$\placeholder[\exists]$, $(\loc, \region) \cap \placeholder[\exists]$ is indicated
+in a darker shade.
 
 \begin{center}
 \begin{tikzpicture}
@@ -237,29 +288,51 @@ The resulting $\placeholder[\exists]$ satisfies the conditions. This situation i
 % \node[color=red] at (4.5,4) {$\suc((\loc, \region))$};
 
 % resulting placeholder
-\draw[fill=red!30] (0,0) -- (0,1) -- (1,1) -- (0,0);
-\node[color=red] at (0.25,0.5) {$\placeholder[\exists]$};
+\draw[fill=blue!30, fill opacity=0.3] (0,0) -- (0,3) -- (3,3) -- (0,0);
+\node[color=blue] at (1,2) {$\placeholder[\exists]$};
+\draw[color=blue] (0,3) -- (3,3);
 
-% succ((l,cc) \cap placeholder) boundaries
-\draw (0,1) -- (4,5)
-      (0,0) -- (4,4);
-\draw[dotted] (4,5) -- (5,6)
-               (4,4) -- (6,6); 
-% succ((l,cc) \cap \placeholder) shading
-\draw[fill=red!30, fill opacity=0.3,draw=none] (0,0) -- (0,1) -- (5,6) -- (6,6) -- (0,0);
-\node[color=red,rotate=45] at (3.5,4) {$\suc((\loc, \region) \cap \placeholder[\exists])$};
+% % succ((l,cc) \cap placeholder) boundaries
+% \draw (0,1) -- (4,5)
+%       (0,0) -- (4,4);ı
+% \draw[dotted] (4,5) -- (5,6)
+%                (4,4) -- (6,6); 
+% % succ((l,cc) \cap \placeholder) shading
+% \draw[fill=red!30, fill opacity=0.3,draw=none] (0,0) -- (0,1) -- (5,6) -- (6,6) -- (0,0);
+% \node[color=red,rotate=45] at (3.5,4) {$\suc((\loc, \region) \cap \placeholder[\exists])$};
 
-% placeholder 1
-\draw[fill=green!30, fill opacity=0.2, draw=none] (0,0) rectangle (3,6);
-\node[color=DarkGreen] at (1.5,4) {$\placeholder[1]$};
+% % placeholder 1
+% \draw[fill=green!30, fill opacity=0.2, draw=none] (0,0) rectangle (3,6);
+% \node[color=DarkGreen] at (1.5,4) {$\placeholder[1]$};
 
-% pred_{<}(placeholder 2)
-\draw[fill=blue!30, fill opacity=0.2, draw=none]
-(0,0) rectangle (6,2.95);
-\node[color=DarkBlue] at (4.5,1.5) {$\pre_{<}(\placeholder[2])$};
+% pred_{<}(placeholdeır 2)
+% \draw[fill=blue!30, fill opacity=0.2, draw=none]
+% (0,0) rectangle (6,2.95);
+% \node[color=DarkBlue] at (4.5,1.5) {$\pre_{<}(\placeholder[2])$};
 
 \end{tikzpicture}
 \end{center}
+
+\section{Predicate variables}
+The cases where the proof goal is a predicate variable is handled by the rules \texttt{do\_proof\_predicate} and \texttt{do\_proof\_place\_predicate}.
+
+\[
+\proofrule
+{(\loc, \region) \vdash X}
+{(\loc, \region) \vdash \phi}
+%
+\quad
+%
+\proofrule
+{(\loc, \region), \placeholder \vdash X}
+{(\loc, \region), \placeholder \vdash \phi}
+\]
+Where $X \eqsigma \phi \in \E$ is an equation in the PES.
+
+\jk{Describe how the caching and cycle detection works}
+
+
+\section{Boolean operators}
 
 \subsection{Conjunction}
 
