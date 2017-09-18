@@ -476,6 +476,70 @@ protected:
   bool do_proof_place_unablewaitinf(const SubstList& discrete_state,
                                     const DBM& zone, DBMList* place);
 
+  inline void establish_exists_rel_sidecondition(
+      DBMList* result,
+      const DBM& zone,
+      const DBMList& placeholder1,
+      const DBMList& placeholder2) {
+
+    DBM succ_zone(zone);
+    succ_zone.suc();
+
+    // First check if placeholder2 works without restricting.
+    DBMList pred_placeholder2_strict(placeholder2);
+    pred_placeholder2_strict.pre();
+    pred_placeholder2_strict.closure();
+
+    // left hand side of containment check
+    DBMList succ_zone_and_pred_placeholder2_strict(succ_zone);
+    succ_zone_and_pred_placeholder2_strict.intersect(pred_placeholder2_strict);
+    // right hand side of containment check
+    DBMList succ_zone_and_placeholder1(succ_zone);
+    succ_zone_and_placeholder1.intersect(placeholder1);
+
+    if(succ_zone_and_pred_placeholder2_strict <= succ_zone_and_placeholder1) {
+      *result = placeholder2;
+    } else {
+      result->makeEmpty();
+
+      // Process on a per-DBM basis
+      for (const DBM* const placeholder2_zone: *placeholder2.getDBMList())
+      {
+        DBMList placeholder1_complement(placeholder1);
+        !placeholder1_complement;
+
+        DBM pred_placeholder2_zone_strict(*placeholder2_zone);
+        pred_placeholder2_zone_strict.pre();
+        pred_placeholder2_zone_strict.closure();
+
+        // left hand side of containment check
+        DBMList succ_zone_and_pred_placeholder2_zone_strict(succ_zone);
+        succ_zone_and_pred_placeholder2_zone_strict.intersect(pred_placeholder2_zone_strict);
+
+
+        DBMList bad(succ_zone_and_pred_placeholder2_zone_strict);
+        bad.intersect(placeholder1_complement);
+
+        DBMList bad_predecessors(bad);
+        bad.pre();
+
+        DBMList zone_bad_predecessors(zone);
+        zone_bad_predecessors.intersect(bad_predecessors);
+
+        DBMList succ_zone_bad_predecessors_complement(zone_bad_predecessors);
+        succ_zone_bad_predecessors_complement.suc();
+        !succ_zone_bad_predecessors_complement;
+
+        DBMList placeholder(*placeholder2_zone);
+        placeholder.intersect(succ_zone_bad_predecessors_complement);
+        placeholder.intersect(placeholder1);
+
+        result->addDBMList(placeholder);
+      }
+    }
+
+  }
+
   /** Method to compute the predecessor check of relativized exists operators.
    * This method is inlined for performance reasons.
    * @param zone (*) the left-hand clock set
@@ -2440,7 +2504,8 @@ inline void prover::do_proof_place_exists_rel(const SubstList& discrete_state,
 
       /*--- PredCheck code----*/
       DBMList placeholder(placeholder1);
-      predCheckRule(&placeholder, zone, &zone_succ, &placeholder1, &placeholder2);
+      establish_exists_rel_sidecondition(&placeholder, zone, placeholder1, placeholder2);
+      //predCheckRule(&placeholder, zone, &zone_succ, &placeholder1, &placeholder2);
       if (placeholder.emptiness()) {
         cpplog(cpplogging::debug)
             << "----(Invalid) Relativization placeholder failed-----" << std::endl
