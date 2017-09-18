@@ -279,12 +279,16 @@ TEST(DBMListTest, Equal)
 {
     DBMList list3 = testDBMList3();
     DBMList list4 = testDBMList4();
+    DBMList empty = testDBMList3();
+    empty.makeEmpty();
     DBM infty(3, make_c3());
 
     EXPECT_TRUE(list3 == infty);
     EXPECT_FALSE(list4 == infty);
     EXPECT_FALSE(list4 == list3);
     EXPECT_FALSE(list3 == list4);
+    EXPECT_TRUE(empty == DBMList(emptyDBM3()));
+    EXPECT_EQ(DBMList(emptyDBM3()), empty);
 }
 
 TEST(DBMListTest, DBMList7Test)

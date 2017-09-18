@@ -196,15 +196,21 @@ private:
   const bidirectional_map<std::string, int> &declared_clocks_;
 
   size_type offset(const size_type row, const size_type col) const {
+    assert(row < nClocks);
+    assert(col < nClocks);
     const size_type index = (row * nClocks) + col;
     return index * sizeof(clock_value_t);
   }
 
   const clock_value_t* cell(const size_type row, const size_type col) const {
+    assert(row < nClocks);
+    assert(col < nClocks);
     return (clock_value_t*)&(storage[offset(row,col)]);
   }
 
   clock_value_t* cell(const size_type row, const size_type col) {
+    assert(row < nClocks);
+    assert(col < nClocks);
     return (clock_value_t *)&(storage[offset(row,col)]);
   }
 
@@ -218,6 +224,8 @@ private:
    * with 0 being the first column.
    * @return The value of the upper bound constraint on row - col. */
   clock_value_t operatorRead(const size_type row, const size_type col) const {
+    assert(row < nClocks);
+    assert(col < nClocks);
     return *cell(row,col);
   }
 
@@ -234,6 +242,8 @@ private:
    * @return A reference to the element indexed at the row "row" and column
    * "col". A reference is returned to allow the constraint to be changed. */
   clock_value_t &operatorWrite(const size_type row, const size_type col) {
+    assert(row < nClocks);
+    assert(col < nClocks);
     /* Indexes are zero based */
     return *cell(row, col);
   }
@@ -248,6 +258,7 @@ private:
   template<class BinaryPredicate>
   bool compare(const DBM& other, BinaryPredicate cmp) const
   {
+    assert(nClocks == other.nClocks);
     for (size_type i = 0; i < nClocks; ++i) {
       for (size_type j = 0; j < nClocks; ++j) {
         if (cmp(this->operatorRead(i, j), other.operatorRead(i, j))) {
@@ -272,6 +283,7 @@ public:
       : OneDIntArray(numClocks * numClocks),
         nClocks(numClocks),
         declared_clocks_(cs) {
+    assert(nClocks >= 1);
     for (size_type i = 0; i < nClocks; i++) {
       for (size_type j = 0; j < nClocks; j++) {
         this->operatorWrite(i, j) = infinity(true);
@@ -302,6 +314,7 @@ public:
       : OneDIntArray(numClocks * numClocks),
         nClocks(numClocks),
         declared_clocks_(cs) {
+    assert(nClocks >= 1);
     for (size_type i = 0; i < nClocks; i++) {
       for (size_type j = 0; j < nClocks; j++) {
         if (i == 0) {
@@ -402,6 +415,8 @@ public:
    * @return true: the constraint is implicit (no constraint),
    * false: otherwise */
   bool isConstraintImplicit(const size_type row, const size_type col) const {
+    assert(row < nClocks);
+    assert(col < nClocks);
     if (row == 0 || row == col) {
       return (this->operatorRead(row, col)) == zero(false);
     } else {
@@ -429,6 +444,7 @@ public:
    * calling DBM is changed.
    * @param Y (&) The DBM to intersect */
   DBM& intersect(const DBM& Y) {
+    assert(nClocks == Y.nClocks);
     /* Should we check for same number of clocks (?)
      * Currently, the code does not. */
     for (size_type i = 0; i < nClocks; i++) {
@@ -488,6 +504,7 @@ public:
    * @note This method assumes that the calling DBM and Y have the same
    * number of clocks. */
   int relation(const DBM &Y) {
+    assert(nClocks == Y.nClocks);
     /* Should we check for same number of clocks (?)
      * Currently, the code does not. */
     bool gt = true;
