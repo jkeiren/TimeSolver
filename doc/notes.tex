@@ -611,6 +611,25 @@ in a darker shade.
 \end{tikzpicture}
 \end{center}
 
+\subsection{Pseudocode}
+
+\begin{algorithm}[H]
+  \caption{$\method{establish\_exists\_rel\_sidecondition}(\loc, \region, \placeholder[1], \placeholder[2])$}
+  \begin{algorithmic}
+  \IF{$\suc((\loc, \region)) \cap \pre_{<}(\placeholder[2]) \subseteq \suc((\loc, \region)) \cap \placeholder[1]$}
+    \STATE $\placeholder \gets \placeholder[2]$
+  \ELSE
+    \STATE $\placeholder \gets \emptyset$
+    \STATE Let $\placeholder[2] = \bigcup_{i=0}^{n}\placeholder[2]^i$
+    \FOR{\textbf{each} $\placeholder[2]^i$ in $\placeholder[2]$}
+      \STATE $\var{bad} \gets \suc((\loc, \region)) \cap \pre_{<}(\placeholder[2]^i) \cap \overline{\placeholder[1]}$
+      \STATE $\placeholder^i \gets \placeholder[2]^i \cap \overline{\suc((\loc, \region) \cap \pre{\var{bad}})} \cap \placeholder[1]$
+      \STATE $\placeholder \gets \placeholder \cup \placeholder^i$
+    \ENDFOR
+  \ENDIF
+  \RETURN $\placeholder$
+  \end{algorithmic}
+\end{algorithm}
 
 \section{Predicate variables}
 The cases where the proof goal is a predicate variable is handled by the rules \texttt{do\_proof\_predicate} and \texttt{do\_proof\_place\_predicate}.
