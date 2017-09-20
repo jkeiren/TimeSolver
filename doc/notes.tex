@@ -632,7 +632,7 @@ in a darker shade.
     \STATE Let $\placeholder[2] = \bigcup_{i=0}^{n}\placeholder[2]^i$
     \FOR{\textbf{each} $\placeholder[2]^i$ in $\placeholder[2]$}
       \STATE $\var{bad} \gets \suc((\loc, \region)) \cap \pre_{<}(\placeholder[2]^i) \cap \overline{\placeholder[1]}$
-      \STATE $\placeholder^i \gets \placeholder[2]^i \cap \overline{\suc((\loc, \region) \cap \pre{\var{bad}})} \cap \placeholder[1]$
+      \STATE $\placeholder^i \gets \placeholder[2]^i \cap \overline{\suc((\loc, \region) \cap \pre(\var{bad})}$%$ \cap \placeholder[1]$
       \STATE $\placeholder \gets \placeholder \cup \placeholder^i$
     \ENDFOR
   \ENDIF
