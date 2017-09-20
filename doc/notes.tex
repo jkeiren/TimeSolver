@@ -47,8 +47,9 @@
 
 
 In this note we describe the proof rules as they are implemented in TimeSolver. We stick as close as possible to the implementation.
-The rules were described originally in \cite{ZC:05rtss}, and the rules with placeholder stem from \cite{FC:14}. A more elaborate
-discussion about (some of) the proof rules can be found in \cite{FC:14report}.
+The rules were described originally in~\cite{ZC:05rtss}, and the rules with
+placeholder stem from~\cite{FC:14}. A more elaborate
+discussion about (some of) the proof rules can be found in~\cite{FC:14report}.
 
 The proof rules are implemented in the file \texttt{proof.hh}. This is a header-only implementation to allow the compiler to inline wherever possible.
 The class \texttt{prover} supports proof rules without placeholder, named \texttt{do\_proof\_*}, and proof rules with placeholder, named \texttt{do\_proof\_place\_*}. Note that the rules without placeholders can call the rules with placeholders, but not the other way around. The methods with placeholder correspond to those proof rules in which a placeholder is present in the goal.
@@ -58,8 +59,14 @@ Below we describe each of the proof rules as they are implemented in the tool.
 \section{Helper functions}
 Before we delve into the algorithms for each of the operators, we first look at some side conditions that need to be computed.
 
-The first of these is a side condition that we will use, among others, for relativized exists. Given a region $(\loc, \region)$, placeholders $\placeholder[1], \placeholder[2] \subseteq \inv(\loc)$, we need to find the largest placeholder $\placeholder \subseteq \placeholder[2]$ such that $\suc((\loc, \region)) \cap \pre_{<}(\placeholder) \subseteq \suc((\loc, \region)) \cap \placeholder[1]$.
+\subsection{Side condition for relativized exists}
+The first side condition to be computed is the one used for relativized exists.
+Given a region $(\loc, \region)$, placeholders
+$\placeholder[1], \placeholder[2] \subseteq \inv(\loc)$, we need to find the
+largest placeholder $\placeholder \subseteq \placeholder[2]$ such that
+$\suc((\loc, \region)) \cap \pre_{<}(\placeholder) \subseteq \suc((\loc, \region)) \cap \placeholder[1]$.
 
+\subsubsection{Example}
 We first introduce the problem by considering the property $\exists_{x_1 \leq 3}(x_2 = 3)$, such that $\placeholder[1] \equiv x_1 \leq 3$, and $\placeholder[2] \equiv x_2 = 3$, and in which the clock region $(\loc, \region) \equiv 0 \leq x_1 \leq 2 \land 0 \leq x_2 \leq 1$.
 
 First, observe that choosing $\placeholder \equiv \placeholder[2] \equiv x_2 = 3$ does not satisfy the conditions since $\pre_{<}(x_2 = 3) = x_2 < 3$, which includes states outside $x_1 \leq 3$. We show this in the following picture, where the relevant regions are shaded ($\placeholder[1]$ green, $\pre_{<}(\placeholder[2])$ blue, and $\suc((\loc, \region))$ red); $(\loc, \region)$ is the small rectangle at the bottom-left of the picture.
@@ -113,14 +120,24 @@ First, observe that choosing $\placeholder \equiv \placeholder[2] \equiv x_2 = 3
 
 \end{tikzpicture}
 \end{center}
-In particular, the condition is not satisfied due to the triangle in which $\suc((\loc, \region))$ and $\pre_{<}(\placeholder[2])$ overlap, which is not included in $\placeholder[1]$. To eliminate this, we must restrict $\placeholder$ such that $\suc((\loc, \region)) \cap \pre_{<}(\placeholder)$ does not include this \emph{bad} triangle.
-
-This bad region can be identified by $\mathit{bad} \equiv (\suc((\loc, \region)) \cap \pre_{<}(\placeholder[2])) \setminus \placeholder[1]$. Note that bad now contains all states in
+In particular, the condition is not satisfied due to the triangle in which $\suc((\loc, \region))$ and $\pre_{<}(\placeholder[2])$ overlap, which is not included in $\placeholder[1]$.
+To eliminate this, we must compute $\placeholder \subseteq \placeholder[2]$, such
+that $\suc((\loc, \region)) \cap \pre_{<}(\placeholder)$ does not include this
+\emph{bad} triangle.
+%
+This bad region can be identified by
+\begin{equation}
+\mathit{bad} \equiv (\suc((\loc, \region)) \cap \pre_{<}(\placeholder[2])) \setminus \placeholder[1].
+\end{equation}
+Note that $\mathit{bad}$ now contains all states in
 $\suc((\loc, \region)) \cap \pre_{<}(\placeholder[2])$ that are
-not in $\placeholder[1]$, and therefore all states in $\suc((\loc, \region)) \cap \pre_{<}(\placeholder[2])$ not in $\suc((\loc, \region)) \cap \placeholder[1]$ \todo{Prove}.
+not in $\placeholder[1]$. In particular, we have that\todo{prove?}
+\begin{equation}
+\suc((\loc, \region)) \cap \pre_{<}(\placeholder[2]) \cap \overline{\suc((\loc, \region)) \cap \placeholder[1]} \subseteq \mathit{bad}
+\end{equation}
 
-
-From this bad region we determine the states in $(\loc, \region)$ from which they can be reached using $(\loc, \region) \cap \pre(\mathit{bad})$.
+From this bad region we determine the states in $(\loc, \region)$ from which
+they can be reached using $(\loc, \region) \cap \pre(\mathit{bad})$.
 
 \begin{center}
   \begin{tikzpicture}
@@ -179,7 +196,11 @@ From this bad region we determine the states in $(\loc, \region)$ from which the
   \end{tikzpicture}
   \end{center}
 
-To compute $\placeholder$ we need to remove those states from $\placeholder[2]$ that can be reached from $(\loc, \region) \cap \pre(\mathit{bad})$, which is $\placeholder[2] \setminus \suc((\loc, \region) \cap \pre(\mathit{bad})$. The bad part of $\placeholder[2]$
+To compute $\placeholder$ we need to remove those states from $\placeholder[2]$ that can be reached from $(\loc, \region) \cap \pre(\mathit{bad})$, which is
+\begin{equation}
+  \placeholder \equiv \placeholder[2] \setminus \suc((\loc, \region)) \cap \pre(\mathit{bad}).
+\end{equation}
+The bad part of $\placeholder[2]$
 is indicated in red; the good part is indicated in blue in de the figure below.
 
 \begin{center}
@@ -241,14 +262,15 @@ is indicated in red; the good part is indicated in blue in de the figure below.
   \end{tikzpicture}
   \end{center}
 
-In order to fully satisfy the side condition, we still need to make sure that
-$\suc((\loc, \region)) \cap \pre_<(\placeholder) \subseteq \suc((\loc, \region)) \cap \placeholder[1]$. Since $\placeholder$ excludes all elements from $\suc((\loc, \region)) \cap \pre(\mathit{bad})$, this follows from the definition of $\mathit{bad}$.
+The newly established placeholder is now such that it satisfies the side
+condition, \ie, $\suc((\loc, \region)) \cap \pre_<(\placeholder) \subseteq \suc((\loc, \region)) \cap \placeholder[1]$.
 
 % which can be achieved by
 % intersecting the aforementioned region with $\placholder[1]$. The resulting value
 % of $\placeholder$ is thus $\placeholder \equiv (\placeholder[2] \setminus \suc((\loc, \region) \cap \pre(\mathit{bad})) \cap \placeholder[1]$.
 The resulting placeholder $\placeholder$ is indicated in the
-following figure.
+following figure as a subset of $x_2 = 3$.
+
 In the proof rule for relativized $\exists$, the value of $\placeholder[\exists]$
 can be chosen such that $\placeholder[\exists] \equiv \pre(\placeholder)$. The
 side condition $(\loc, \region) \cap \placeholder[\exists] \subseteq \pre(\placeholder)$
@@ -322,21 +344,23 @@ in a darker shade.
 \end{tikzpicture}
 \end{center}
 
-\subsection{An additional example}
-
-As an additional example, consider the property
+\subsubsection{A non-convex example}
+Next, we consider an example in which the placeholder for the second subformula
+of relativized exists is not convex. Consider the property 
  $\exists_{x_1 \leq 3}(x_2 = 2 \lor x_2 = 3)$, such that
  $\placeholder[1] \equiv x_1 \leq 3$, and $\placeholder[2] \equiv x_2 = 2 \lor 
  x_2 = 3$, and in which the clock region
  $(\loc, \region) \equiv 0 \leq x_1 \leq 2 \land 0 \leq x_2 \leq 1$.
- For the sake of conciseness let us write $\placeholder[2]^1 \equiv x_2 = 2$ and
+ For the sake of conciseness let us write $\placeholder[2]^{1} \equiv x_2 = 2$ and
  $\placeholder[2]^2 \equiv x_2 = 3$.
 
 First, observe that choosing $\placeholder \equiv \placeholder[2]$
-does not satisfy the conditions since $\pre_{<}(x_2 = 2 \lor x _2 = 3) = x_2 < 3$, which includes states outside $x_1 \leq 3$. We show this in the following picture,
+does not satisfy the side condition since $\pre_{<}(x_2 = 2 \lor x _2 = 3) = x_2 < 3$, which includes states outside $x_1 \leq 3$. We show this in the following picture,
 where the relevant regions are shaded ($\placeholder[1]$ green, 
 $\pre_{<}(\placeholder[2])$ blue, and $\suc((\loc, \region))$ red);
 $(\loc, \region)$ is the small rectangle at the bottom-left of the picture.
+Note that non-convexity in this case causes the strict predecessor to be identical
+to the strict predecessor of $x_2 = 3$.
 
 \begin{center}
 \begin{tikzpicture}
@@ -394,8 +418,7 @@ $(\loc, \region)$ is the small rectangle at the bottom-left of the picture.
 \end{center}
 In particular, the condition is not satisfied due to the triangle in which
 $\suc((\loc, \region))$ and $\pre_{<}(\placeholder[2]^1)$ overlap, which is not included
-in $\placeholder[1]$. To eliminate this, we must restrict $\placeholder$ such
-that $\suc((\loc, \region)) \cap \pre_{<}(\placeholder)$ does not include this
+in $\placeholder[1]$. To eliminate this, we must compute $\placeholder \subseteq \placeholder[2]$ such that $\suc((\loc, \region)) \cap \pre_{<}(\placeholder)$ does not include this
 \emph{bad} triangle.
 
 Now, observe that, contrary to our previous example, we cannot identify this
@@ -408,8 +431,10 @@ $\placeholder[2]^2$ we refer to the exposition given previously. We here focus
 on $\placeholder[2]^1 \equiv x_2 = 2$.
 
 With respect to $x_2 = 2$, we can identify the bad region by choosing
-$\mathit{bad}^1 \equiv (\suc((\loc, \region)) \cap
-\pre_{<}(\placeholder[2]^1)) \setminus \placeholder[1]$. 
+\begin{equation}
+  \mathit{bad}^1 \equiv (\suc((\loc, \region)) \cap
+\pre_{<}(\placeholder[2]^1)) \setminus \placeholder[1].
+\end{equation} 
 From this bad region we determine the states in $(\loc, \region)$ from which
 they can be reached using $(\loc, \region) \cap \pre(\mathit{bad}^1)$.
 
@@ -471,10 +496,12 @@ they can be reached using $(\loc, \region) \cap \pre(\mathit{bad}^1)$.
   \end{center}
 
 We need to remove those states from $\placeholder[2]^1$ that can be reached from 
-$(\loc, \region) \cap \pre(\mathit{bad}^1)$, which is
-$\placeholder[2]^1 \setminus \suc((\loc, \region) \cap \pre(\mathit{bad}^1)$.
-The bad part of $\placeholder[2]^1$ is indicated in red; the good part is indicated in
-blue in de the figure below. Let us call the resulting placeholder $\placeholder^1$.
+$(\loc, \region) \cap \pre(\mathit{bad}^1)$. This gets us the new placeholder
+\begin{equation}
+  \placeholder^1 \equiv \placeholder[2]^1 \setminus \suc((\loc, \region)) \cap \pre(\mathit{bad}^1).
+\end{equation}
+The bad part of $\placeholder[2]^1$ is indicated in red; the good part, $\placeholder^1$,
+is indicated in blue in de the figure below.
 
 \begin{center}
   \begin{tikzpicture}
@@ -535,13 +562,16 @@ blue in de the figure below. Let us call the resulting placeholder $\placeholder
   \end{tikzpicture}
   \end{center}
 
-In order to fully satisfy the side condition, we still need to make sure that
-$\pre_<(\placeholder^1) \subseteq \placeholder[1]$, which can be achieved by
-intersecting the aforementioned region with $\placeholder[1]$. The resulting value
-of $\placeholder^1$ is thus $\placeholder^1 \equiv (\placeholder[2]^1 \setminus \suc((\loc, \region) \cap \pre(\mathit{bad}^1)) \cap \placeholder[1]$. 
+% In order to fully satisfy the side condition, we still need to make sure that
+% $\pre_<(\placeholder^1) \subseteq \placeholder[1]$, which can be achieved by
+% intersecting the aforementioned region with $\placeholder[1]$. The resulting value
+% of $\placeholder^1$ is thus $\placeholder^1 \equiv (\placeholder[2]^1 \setminus \suc((\loc, \region) \cap \pre(\mathit{bad}^1)) \cap \placeholder[1]$. 
 
 Finally, we have to wonder about the value of $\placeholder$. Observe that
-$\pre_{<}(\placeholder[2]^1 \lor \placeholder[2]^2) \equiv \pre_{<}(\placeholder[2]^1) \lor \pre_{<}(\placeholder[2]^2)$. Therefore, in particular, $\pre_{<}(\placeholder[2]^1) \lor \pre_{<}(\placeholder[2]^2) \subseteq \placeholder[1] \iff \pre_{<}(\placeholder[2]^1) \subseteq \placeholder[1] \land \pre_{<}(\placeholder[2]^2) \subseteq \placeholder[1]$.
+$\pre_{<}(\placeholder[2]^1 \lor \placeholder[2]^2) \equiv \pre_{<}(\placeholder[2]^1) \lor \pre_{<}(\placeholder[2]^2)$.
+
+Therefore, in particular, $\suc((\loc, \region)) \cap \pre_{<}(\placeholder[2]^1 \lor \placeholder[2]^2) \subseteq \suc((\loc, \region)) \cap \placeholder[1]$ if and only if
+$\suc((\loc, \region)) \cap \pre_{<}(\placeholder[2]^1) \subseteq \suc((\loc, \region)) \cap \placeholder[1] \land \suc((\loc, \region)) \cap \pre_{<}(\placeholder[2]^2) \subseteq \suc((\loc, \region)) \cap \placeholder[1]$.\todo{Prove}
 
 Again, in the proof rule for relativized $\exists$, the value of $\placeholder[\exists]$
 can be chosen such that $\placeholder[\exists] \equiv \pre(\placeholder)$. The
@@ -575,13 +605,11 @@ in a darker shade.
 \node[yshift=10pt] at (x1 label) {$x_1 = 3$};
 
 % (x_2 = 3)
-\draw (0,3) -- (5,3);
-\draw[dotted] (5,3) -- (6,3) coordinate (x2 label);
+\draw[dotted] (0,3) -- (6,3) coordinate (x2 label);
 \node[xshift=20pt] at (x2 label) {$x_2 = 3$};
 
 % (x_2 = 2)
-\draw (0,2) -- (5,2);
-\draw[dotted] (5,2) -- (6,2) coordinate (x2' label);
+\draw[dotted] (0,2) -- (6,2) coordinate (x2' label);
 \node[xshift=20pt] at (x2' label) {$x_2 = 2$};
 
 % % succ((l,cc)) boundaries
@@ -595,9 +623,13 @@ in a darker shade.
 
 % resulting placeholder
 \draw[fill=blue!30, fill opacity=0.3] (0,0) -- (0,3) -- (3,3) -- (2,2) -- (3,2) -- (1,0) -- (0,0);
+\draw[fill=blue!30, fill opacity=0.3] (2,0) -- (5,3) -- (6,3) -- (6,0) -- (2,0);
 \node[color=blue] at (.75,1.5) {$\placeholder[\exists]$};
-\draw[color=blue] (0,3) -- (3,3);
-\draw[color=blue] (0,2) -- (3,2);
+\draw[color=blue] (0,3) -- (3,3)
+                  (5,3) -- (6,3);
+\draw[color=blue] (0,2) -- (3,2)
+                  (4,2) -- (6,2);
+\draw[fill=blue!70, fill opacity=0.3] (0,0) -- (0,1) -- (2,1) -- (1,0) -- (0,0);
 
 % % succ((l,cc) \cap placeholder) boundaries
 % \draw (0,1) -- (4,5)
@@ -612,7 +644,7 @@ in a darker shade.
 % \draw[fill=green!30, fill opacity=0.2, draw=none] (0,0) rectangle (3,6);
 % \node[color=DarkGreen] at (1.5,4) {$\placeholder[1]$};
 
-% pred_{<}(placeholdeır 2)
+% pred_{<}(placeholder 2)
 % \draw[fill=blue!30, fill opacity=0.2, draw=none]
 % (0,0) rectangle (6,2.95);
 % \node[color=DarkBlue] at (4.5,1.5) {$\pre_{<}(\placeholder[2])$};
@@ -632,7 +664,7 @@ in a darker shade.
     \STATE Let $\placeholder[2] = \bigcup_{i=0}^{n}\placeholder[2]^i$
     \FOR{\textbf{each} $\placeholder[2]^i$ in $\placeholder[2]$}
       \STATE $\var{bad} \gets \suc((\loc, \region)) \cap \pre_{<}(\placeholder[2]^i) \cap \overline{\placeholder[1]}$
-      \STATE $\placeholder^i \gets \placeholder[2]^i \cap \overline{\suc((\loc, \region) \cap \pre(\var{bad})}$%$ \cap \placeholder[1]$
+      \STATE $\placeholder^i \gets \placeholder[2]^i \cap \overline{\suc((\loc, \region)) \cap \pre(\var{bad})}$%$ \cap \placeholder[1]$
       \STATE $\placeholder \gets \placeholder \cup \placeholder^i$
     \ENDFOR
   \ENDIF
@@ -716,7 +748,7 @@ Currently, this leads to incorrect output of the tool!
 \end{algorithm}
 
 \subsection{Disjunction}
-The proof rules for $\lor$ given in \cite{FC:14} are the following.
+The proof rules for $\lor$ given in~\cite{FC:14} are the following.
 \[
 \proofrule[\lor_l]
 {(\loc, \region) \vdash \phi_1 \lor \phi_2}
@@ -827,7 +859,7 @@ the placeholder will always either be completely empty, or completely full.
 %
 For $\exists(\phi)$ we need to ensure that we only consider valid time advances (those satisfying the invariants).
 We therefore consider $\exists(\inv(\loc) \land \phi)$ instead.
-We get the following derivation (which is given in \cite[Appendix C.2]{FC:14}.
+We get the following derivation (which is given in~\cite[Appendix C.2]{FC:14}).
 \[
 \proofrule[\exists_{t_1}]
 {(\loc, \region) \vdash \exists(\inv(\loc) \land \phi)}
@@ -874,7 +906,7 @@ call to \method{do\_proof} only restricts the placeholder, and does not enlarge 
 \]
 
 If we add the placeholder to the proof rule, we have a similar modification as
-before. If we again do the derivation from \cite[Appendix C.2]{FC:14report} we get:
+before. If we again do the derivation from~\cite[Appendix C.2]{FC:14report} we get:
 \[
 \proofrule[\exists_{t_2}]
 {(\loc, \region), \placeholder[\exists] \vdash \exists(\inv(\loc) \land \phi)}
@@ -1212,7 +1244,7 @@ This gives rise to the following pseudocode.
 \end{algorithmic}
 \end{algorithm}
 
-Now let us consider relativized forall. The actual proof rules are derived using \cite[Lemma 1]{FC:14}, which states that $\forall_{\phi_1}(\phi_2) = \forall(\phi_2) \lor \exists_{\phi_2}(\phi_1 \land \phi_2)$.
+Now let us consider relativized forall. The actual proof rules are derived using~\cite[Lemma 1]{FC:14}, which states that $\forall_{\phi_1}(\phi_2) = \forall(\phi_2) \lor \exists_{\phi_2}(\phi_1 \land \phi_2)$.
 % \[
 % \proofrule[\text{Lemma 1 (i)}]
 % {(\loc, \region) \vdash \forall_{\phi_1}(\phi_2)}
@@ -1227,7 +1259,7 @@ The first disjunct of the lemma directly induces proof rule $\forall_{ro_1}$.
 
 For the second disjunct, we first derive a simplified proof using the proof rules for relativized
 exists, analogous to the
-derivation in \cite[Appendix C.1]{FC:14report}.
+derivation in~\cite[Appendix C.1]{FC:14report}.
 \[
 \proofrule[\exists_{r_2}]
 {(\loc, \region), \placeholder[\exists] \vdash \exists_{\phi_2}(\phi_1 \land \phi_2)}
@@ -1263,7 +1295,7 @@ can be combined, and we have the following specialized proof rule.
 \]
 
 {\color{red}
-Note that \cite[Appendix C.1]{FC:14report} gives the following proof rule instead.
+Note that~\cite[Appendix C.1]{FC:14report} gives the following proof rule instead.
 \[
 \proofrule
 {(\loc, \region), \placeholder[\exists] \vdash \exists_{\phi_2}(\phi_1 \land \phi_2)}
@@ -1337,7 +1369,7 @@ the last side condition may include times before $(\loc, \region)$, that should 
 Therefore, for the sake of completeness, we should instead incorporate the successor in this
 side condition, replacing the side condition $\pre(\placeholder[1]') \subseteq \placeholder[2]$ 
 by $\suc((\loc, \region)) \cap \pre(\placeholder[1]') \subseteq \suc((\loc, \region)) \cap \placeholder[2]$.
-This is the side condition that is also given in \cite[Appendix C.1]{FC:14report}.
+This is the side condition that is also given in~\cite[Appendix C.1]{FC:14report}.
 The resulting rule for $\forall$ is thus:
 \[
 \proofrule[\forall_{ro_3}]
@@ -1354,9 +1386,9 @@ The resulting rule for $\forall$ is thus:
 \end{array}
 \]
 Note there are some special cases here that can be used to simplify the proof. First of all,
-if $(\loc, \region) \subseteq \placeholder[1]$ and $(\loc, \region) \subseteq \placeholder[2]$, the formula $\exists_{\phi_1}(\phi_1 \land \phi_2)$ is satisfied immediately, and $(\loc, \region) \subseteq \placeholder[\exists]$, and the other side conditions need not be checked. This corresponds to \cite[proof rule $\forall_{ro_2}$]{FC:14}.
+if $(\loc, \region) \subseteq \placeholder[1]$ and $(\loc, \region) \subseteq \placeholder[2]$, the formula $\exists_{\phi_1}(\phi_1 \land \phi_2)$ is satisfied immediately, and $(\loc, \region) \subseteq \placeholder[\exists]$, and the other side conditions need not be checked. This corresponds to~\cite[proof rule $\forall_{ro_2}$]{FC:14}.
 
-A second special case appears when $\phi_1$ can be ignored altogether (e.g. when $\placeholder[1]$ is empty). In that case, it suffices if $\forall(\phi_2)$ holds. This is \cite[proof rule $\forall_{ro_1}$]{FC:14report}.
+A second special case appears when $\phi_1$ can be ignored altogether (e.g.\ when $\placeholder[1]$ is empty). In that case, it suffices if $\forall(\phi_2)$ holds. This is~\cite[proof rule $\forall_{ro_1}$]{FC:14report}.
 \[
 \proofrule[\forall_{ro_1}]
 {(\loc, \region) \vdash \forall_{\phi_1}(\phi_2)}
