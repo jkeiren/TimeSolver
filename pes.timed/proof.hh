@@ -571,8 +571,12 @@ protected:
 
         DBMList placeholder(*placeholder2_zone);
         placeholder.intersect(succ_zone_bad_predecessors_complement);
-        placeholder.intersect(placeholder1);
         placeholder.cf();
+
+//        if(!(placeholder <= succ_zone_and_placeholder1)) {
+//          placeholder.intersect(placeholder1);
+//          placeholder.cf();
+//        }
 
         cpplog(cpplogging::debug, "exists_rel_sidecondition") << "    adding placeholder " << placeholder << std::endl;
 

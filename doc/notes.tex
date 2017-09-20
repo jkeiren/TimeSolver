@@ -115,7 +115,11 @@ First, observe that choosing $\placeholder \equiv \placeholder[2] \equiv x_2 = 3
 \end{center}
 In particular, the condition is not satisfied due to the triangle in which $\suc((\loc, \region))$ and $\pre_{<}(\placeholder[2])$ overlap, which is not included in $\placeholder[1]$. To eliminate this, we must restrict $\placeholder$ such that $\suc((\loc, \region)) \cap \pre_{<}(\placeholder)$ does not include this \emph{bad} triangle.
 
-This bad region can be identified by $\mathit{bad} \equiv (\suc((\loc, \region)) \cap \pre_{<}(\placeholder[2])) \setminus \placeholder[1]$.
+This bad region can be identified by $\mathit{bad} \equiv (\suc((\loc, \region)) \cap \pre_{<}(\placeholder[2])) \setminus \placeholder[1]$. Note that bad now contains all states in
+$\suc((\loc, \region)) \cap \pre_{<}(\placeholder[2])$ that are
+not in $\placeholder[1]$, and therefore all states in $\suc((\loc, \region)) \cap \pre_{<}(\placeholder[2])$ not in $\suc((\loc, \region)) \cap \placeholder[1]$ \todo{Prove}.
+
+
 From this bad region we determine the states in $(\loc, \region)$ from which they can be reached using $(\loc, \region) \cap \pre(\mathit{bad})$.
 
 \begin{center}
@@ -238,9 +242,12 @@ is indicated in red; the good part is indicated in blue in de the figure below.
   \end{center}
 
 In order to fully satisfy the side condition, we still need to make sure that
-$\pre_<(\placeholder) \subseteq \placeholder[1]$, which can be achieved by
-intersecting the aforementioned region with $\placholder[1]$. The resulting value
-of $\placeholder$ is thus $\placeholder \equiv (\placeholder[2] \setminus \suc((\loc, \region) \cap \pre(\mathit{bad})) \cap \placeholder[1]$. The resulting placeholder $\placeholder$ is indicated in the
+$\suc((\loc, \region)) \cap \pre_<(\placeholder) \subseteq \suc((\loc, \region)) \cap \placeholder[1]$. Since $\placeholder$ excludes all elements from $\suc((\loc, \region)) \cap \pre(\mathit{bad})$, this follows from the definition of $\mathit{bad}$.
+
+% which can be achieved by
+% intersecting the aforementioned region with $\placholder[1]$. The resulting value
+% of $\placeholder$ is thus $\placeholder \equiv (\placeholder[2] \setminus \suc((\loc, \region) \cap \pre(\mathit{bad})) \cap \placeholder[1]$.
+The resulting placeholder $\placeholder$ is indicated in the
 following figure.
 In the proof rule for relativized $\exists$, the value of $\placeholder[\exists]$
 can be chosen such that $\placeholder[\exists] \equiv \pre(\placeholder)$. The
@@ -274,13 +281,12 @@ in a darker shade.
 \node[yshift=10pt] at (x1 label) {$x_1 = 3$};
 
 % (x_2 = 3)
-\draw (0,3) -- (5,3);
-\draw[dotted] (5,3) -- (6,3) coordinate (x2 label);
+% \draw (0,3) -- (5,3);
+\draw[dotted] (0,3) -- (6,3) coordinate (x2 label);
 \node[xshift=20pt] at (x2 label) {$x_2 = 3$};
 
 % % succ((l,cc)) boundaries
-% \draw (0,1) -- (4,5)
-%       (2,0) -- (5,3);
+\draw (2,0) -- (5,3);
 % \draw[dotted] (4,5) -- (5,6)
 %               (5,3) -- (6,4); 
 % % succ((l,cc)) shading
@@ -289,8 +295,11 @@ in a darker shade.
 
 % resulting placeholder
 \draw[fill=blue!30, fill opacity=0.3] (0,0) -- (0,3) -- (3,3) -- (0,0);
+\draw[fill=blue!30, fill opacity=0.3] (2,0) -- (5,3) -- (6,3) -- (6,0) -- (2,0);
+\draw[fill=blue!70, fill opacity=0.3] (0,0) -- (0,1) -- (1,1) -- (0,0);
 \node[color=blue] at (1,2) {$\placeholder[\exists]$};
 \draw[color=blue] (0,3) -- (3,3);
+\draw[color=blue] (5,3) -- (6,3);
 
 % % succ((l,cc) \cap placeholder) boundaries
 % \draw (0,1) -- (4,5)
@@ -464,7 +473,7 @@ they can be reached using $(\loc, \region) \cap \pre(\mathit{bad}^1)$.
 We need to remove those states from $\placeholder[2]^1$ that can be reached from 
 $(\loc, \region) \cap \pre(\mathit{bad}^1)$, which is
 $\placeholder[2]^1 \setminus \suc((\loc, \region) \cap \pre(\mathit{bad}^1)$.
-The bad part of $\placholder[2]^1$ is indicated in red; the good part is indicated in
+The bad part of $\placeholder[2]^1$ is indicated in red; the good part is indicated in
 blue in de the figure below. Let us call the resulting placeholder $\placeholder^1$.
 
 \begin{center}
