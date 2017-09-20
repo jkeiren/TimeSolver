@@ -198,7 +198,7 @@ they can be reached using $(\loc, \region) \cap \pre(\mathit{bad})$.
 
 To compute $\placeholder$ we need to remove those states from $\placeholder[2]$ that can be reached from $(\loc, \region) \cap \pre(\mathit{bad})$, which is
 \begin{equation}
-  \placeholder \equiv \placeholder[2] \setminus \suc((\loc, \region)) \cap \pre(\mathit{bad}).
+  \placeholder \equiv \placeholder[2] \setminus \suc((\loc, \region) \cap \pre(\mathit{bad})).
 \end{equation}
 The bad part of $\placeholder[2]$
 is indicated in red; the good part is indicated in blue in de the figure below.
@@ -263,7 +263,7 @@ is indicated in red; the good part is indicated in blue in de the figure below.
   \end{center}
 
 The newly established placeholder is now such that it satisfies the side
-condition, \ie, $\suc((\loc, \region)) \cap \pre_<(\placeholder) \subseteq \suc((\loc, \region)) \cap \placeholder[1]$.
+condition, i.e., $\suc((\loc, \region)) \cap \pre_<(\placeholder) \subseteq \suc((\loc, \region)) \cap \placeholder[1]$.
 
 % which can be achieved by
 % intersecting the aforementioned region with $\placholder[1]$. The resulting value
@@ -422,7 +422,7 @@ in $\placeholder[1]$. To eliminate this, we must compute $\placeholder \subseteq
 \emph{bad} triangle.
 
 Now, observe that, contrary to our previous example, we cannot identify this
-bad region by choosing $\mathit{bad} \equiv (\suc((\loc, \region)) \cap
+bad region by choosing $\mathit{bad} \equiv \suc((\loc, \region) \cap
 \pre_{<}(\placeholder[2])) \setminus \placeholder[1]$ (this would lead us to
 identify the same bad region as in the previous example). This is due to the
 placeholder not being convex. This can be overcome by treating the convex
@@ -432,7 +432,7 @@ on $\placeholder[2]^1 \equiv x_2 = 2$.
 
 With respect to $x_2 = 2$, we can identify the bad region by choosing
 \begin{equation}
-  \mathit{bad}^1 \equiv (\suc((\loc, \region)) \cap
+  \mathit{bad}^1 \equiv \suc((\loc, \region) \cap
 \pre_{<}(\placeholder[2]^1)) \setminus \placeholder[1].
 \end{equation} 
 From this bad region we determine the states in $(\loc, \region)$ from which
@@ -498,7 +498,7 @@ they can be reached using $(\loc, \region) \cap \pre(\mathit{bad}^1)$.
 We need to remove those states from $\placeholder[2]^1$ that can be reached from 
 $(\loc, \region) \cap \pre(\mathit{bad}^1)$. This gets us the new placeholder
 \begin{equation}
-  \placeholder^1 \equiv \placeholder[2]^1 \setminus \suc((\loc, \region)) \cap \pre(\mathit{bad}^1).
+  \placeholder^1 \equiv \placeholder[2]^1 \setminus \suc((\loc, \region) \cap \pre(\mathit{bad}^1)).
 \end{equation}
 The bad part of $\placeholder[2]^1$ is indicated in red; the good part, $\placeholder^1$,
 is indicated in blue in de the figure below.
@@ -664,7 +664,7 @@ in a darker shade.
     \STATE Let $\placeholder[2] = \bigcup_{i=0}^{n}\placeholder[2]^i$
     \FOR{\textbf{each} $\placeholder[2]^i$ in $\placeholder[2]$}
       \STATE $\var{bad} \gets \suc((\loc, \region)) \cap \pre_{<}(\placeholder[2]^i) \cap \overline{\placeholder[1]}$
-      \STATE $\placeholder^i \gets \placeholder[2]^i \cap \overline{\suc((\loc, \region)) \cap \pre(\var{bad})}$%$ \cap \placeholder[1]$
+      \STATE $\placeholder^i \gets \placeholder[2]^i \cap \overline{\suc((\loc, \region) \cap \pre(\var{bad}))}$%$ \cap \placeholder[1]$
       \STATE $\placeholder \gets \placeholder \cup \placeholder^i$
     \ENDFOR
   \ENDIF
