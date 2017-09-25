@@ -136,8 +136,8 @@ not in $\placeholder[1]$. In particular, we have that\todo{prove?}
 \suc((\loc, \region)) \cap \pre_{<}(\placeholder[2]) \cap \overline{\suc((\loc, \region)) \cap \placeholder[1]} \subseteq \mathit{bad}
 \end{equation}
 
-From this bad region we determine the states in $(\loc, \region)$ from which
-they can be reached using $(\loc, \region) \cap \pre(\mathit{bad})$.
+The bad subset of $\placeholder[2]$ that can be reached from $\mathit{bad}$
+can be computed from this as $\succ_{>}(\mathit{bad}$.
 
 \begin{center}
   \begin{tikzpicture}
@@ -164,7 +164,7 @@ they can be reached using $(\loc, \region) \cap \pre(\mathit{bad})$.
   \node[yshift=10pt] at (x1 label) {$x_1 = 3$};
   
   % (x_2 = 3)
-  \draw (0,3) -- (5,3);
+  %\draw (0,3) -- (5,3);
   \draw[dotted] (5,3) -- (6,3) coordinate (x2 label);
   \node[xshift=20pt] at (x2 label) {$x_2 = 3$};
   
@@ -189,78 +189,24 @@ they can be reached using $(\loc, \region) \cap \pre(\mathit{bad})$.
   % bad
   \draw[fill=red!30,draw=none,fill opacity=0.5] (3,1) -- (3,2.95) -- (4.95,2.95) -- (3,1);
   \node[color=red] at (3.5,2.5) {$\mathit{bad}$};
-  \draw[fill=red!30,draw=none, fill opacity=0.5] (0,0) -- (1,1) -- (2,1) -- (2,0) -- (0,0);
-  \draw[fill=red!30,draw=none, fill opacity=0.2] (0,0) -- (3,2.95) -- (4.95,2.95) -- (2,0) -- (0,0);
+  %\draw[fill=red!30,draw=none, fill opacity=0.5] (0,0) -- (1,1) -- (2,1) -- (2,0) -- (0,0);
+  %\draw[fill=red!30,draw=none, fill opacity=0.2] (0,0) -- (3,2.95) -- (4.95,2.95) -- (2,0) -- (0,0);
+  \draw[fill=red!30,draw=none, fill opacity=0.2] (3,3) -- (6,6) -- (8,6) -- (3,1) -- (3,3);
   
-  
-  \end{tikzpicture}
-  \end{center}
-
-To compute $\placeholder$ we need to remove those states from $\placeholder[2]$ that can be reached from $(\loc, \region) \cap \pre(\mathit{bad})$, which is
-\begin{equation}
-  \placeholder \equiv \placeholder[2] \setminus \suc((\loc, \region) \cap \pre(\mathit{bad})).
-\end{equation}
-The bad part of $\placeholder[2]$
-is indicated in red; the good part is indicated in blue in de the figure below.
-
-\begin{center}
-  \begin{tikzpicture}
-  % axis
-  \draw[->] (0,0) -- (6, 0) coordinate (x axis);
-  \draw[->] (0, 0) -- (0, 6) coordinate (y axis);
-  % ticks
-  \foreach \x in {0,...,4,}
-    \draw (\x,1pt) -- (\x,-3pt) node[anchor=north] {\x};
-  \foreach \y in {0,...,4}
-    \draw (1pt,\y) -- (-3pt,\y) node[anchor=east] {\y}; 
-  
-  % labels
-  \node[xshift=10pt] at (x axis) {$x_1$};
-  \node[yshift=10pt] at (y axis) {$x_2$};
-  
-  % (l, cc)
-  \draw (0,0) rectangle (2,1);
-  \node at (1,0.5) {$(\loc, \region)$};
-  
-  % (x_1 = 3)
-  \draw (3,0) -- (3,5);
-  \draw[dotted] (3,5) -- (3,6) coordinate (x1 label);
-  \node[yshift=10pt] at (x1 label) {$x_1 = 3$};
-  
-  % (x_2 = 3)
-  \draw (0,3) -- (5,3);
-  \draw[dotted] (5,3) -- (6,3) coordinate (x2 label);
-  \node[xshift=20pt] at (x2 label) {$x_2 = 3$};
-  
-  % succ((l,cc)) boundaries
-  \draw (0,1) -- (4,5)
-        (2,0) -- (5,3);
-  \draw[dotted] (4,5) -- (5,6)
-                (5,3) -- (6,4); 
-  % succ((l,cc)) shading
-  %\draw[fill=red!30, fill opacity=0.3,draw=none] (0,0) -- (0,1) -- (5,6) -- (6,6) -- (6,4) -- (2,0);
-  %\node[color=red] at (4.5,4) {$\suc((\loc, \region))$};
-  
-  % placeholder 1
-  %\draw[fill=green!30, fill opacity=0.2, draw=none] (0,0) rectangle (3,6);
-  %\node[color=DarkGreen] at (1.5,4) {$\placeholder[1]$};
-  
-  % pred_{<}(placeholder 2)
-  %\draw[fill=blue!30, fill opacity=0.2, draw=none]
-  %(0,0) rectangle (6,2.95);
-  %\node[color=DarkBlue] at (4.5,1.5) {$\pre_{<}(\placeholder[2])$};
-  
-  % bad
-  \draw[fill=red!30,draw=none, fill opacity=0.5] (0,0) -- (1,1) -- (2,1) -- (2,0) -- (0,0);
-  \draw[fill=red!30,draw=none, fill opacity=0.2] (0,0) -- (6,6) -- (8,6) -- (2,0) -- (0,0);
-
   \draw[color=red] (3,3) -- (5,3);
   \draw[color=blue] (0,3) -- (3,3);
   \draw[color=blue] (5,3) -- (5.5,3);
   \draw[color=blue, dotted] (5.5,3) -- (6,3); 
-  
+
   \end{tikzpicture}
   \end{center}
+
+To compute $\placeholder$ we need to remove those states from $\placeholder[2]$ that can be reached from $\mathit{bad}$, which is
+\begin{equation}
+  \placeholder \equiv \placeholder[2] \setminus \suc_{>}(\mathit{bad}).
+\end{equation}
+The bad part of $\placeholder[2]$
+is indicated in red; the good part is indicated in blue in de the figure above.
 
 The newly established placeholder is now such that it satisfies the side
 condition, i.e., $\suc((\loc, \region)) \cap \pre_<(\placeholder) \subseteq \suc((\loc, \region)) \cap \placeholder[1]$.
@@ -435,8 +381,7 @@ With respect to $x_2 = 2$, we can identify the bad region by choosing
   \mathit{bad}^1 \equiv \suc((\loc, \region) \cap
 \pre_{<}(\placeholder[2]^1)) \setminus \placeholder[1].
 \end{equation} 
-From this bad region we determine the states in $(\loc, \region)$ from which
-they can be reached using $(\loc, \region) \cap \pre(\mathit{bad}^1)$.
+From this bad region we determine the bad portion op $\placeholder[2]$ as $\suc_{>}(\mathit{bad}^1)$.
 
 \begin{center}
   \begin{tikzpicture}
@@ -488,72 +433,10 @@ they can be reached using $(\loc, \region) \cap \pre(\mathit{bad}^1)$.
   % bad
   \draw[fill=red!30,draw=none,fill opacity=0.5] (3,1) -- (3,1.95) -- (3.95,1.95) -- (3,1);
   \node[color=red] at (3.3,1.7) {$\mathit{bad}^1$};
-  \draw[fill=red!30,draw=none, fill opacity=0.5] (1,0) -- (2,1) -- (2,0) -- (1,0);
-  \draw[fill=red!30,draw=none, fill opacity=0.2] (1,0) -- (3,1.95) -- (3.95,1.95) -- (2,0) -- (1,0);
+  % \draw[fill=red!30,draw=none, fill opacity=0.5] (1,0) -- (2,1) -- (2,0) -- (1,0);
+  % \draw[fill=red!30,draw=none, fill opacity=0.2] (1,0) -- (3,1.95) -- (3.95,1.95) -- (2,0) -- (1,0);
+  \draw[fill=red!30,draw=none, fill opacity=0.2] (3,2) -- (7,6) -- (8,6) -- (3,1) -- (3,2);
   
-  
-  \end{tikzpicture}
-  \end{center}
-
-We need to remove those states from $\placeholder[2]^1$ that can be reached from 
-$(\loc, \region) \cap \pre(\mathit{bad}^1)$. This gets us the new placeholder
-\begin{equation}
-  \placeholder^1 \equiv \placeholder[2]^1 \setminus \suc((\loc, \region) \cap \pre(\mathit{bad}^1)).
-\end{equation}
-The bad part of $\placeholder[2]^1$ is indicated in red; the good part, $\placeholder^1$,
-is indicated in blue in de the figure below.
-
-\begin{center}
-  \begin{tikzpicture}
-  % axis
-  \draw[->] (0,0) -- (6, 0) coordinate (x axis);
-  \draw[->] (0, 0) -- (0, 6) coordinate (y axis);
-  % ticks
-  \foreach \x in {0,...,4,}
-    \draw (\x,1pt) -- (\x,-3pt) node[anchor=north] {\x};
-  \foreach \y in {0,...,4}
-    \draw (1pt,\y) -- (-3pt,\y) node[anchor=east] {\y}; 
-  
-  % labels
-  \node[xshift=10pt] at (x axis) {$x_1$};
-  \node[yshift=10pt] at (y axis) {$x_2$};
-  
-  % (l, cc)
-  \draw (0,0) rectangle (2,1);
-  \node at (1,0.5) {$(\loc, \region)$};
-  
-  % (x_1 = 3)
-  \draw (3,0) -- (3,5);
-  \draw[dotted] (3,5) -- (3,6) coordinate (x1 label);
-  \node[yshift=10pt] at (x1 label) {$x_1 = 3$};
-  
-  % (x_2 = 3)
-  \draw (0,2) -- (5,2);
-  \draw[dotted] (5,2) -- (6,2) coordinate (x2 label);
-  \node[xshift=20pt] at (x2 label) {$x_2 = 2$};
-  
-  % succ((l,cc)) boundaries
-  \draw (0,1) -- (4,5)
-        (2,0) -- (5,3);
-  \draw[dotted] (4,5) -- (5,6)
-                (5,3) -- (6,4); 
-  % succ((l,cc)) shading
-  %\draw[fill=red!30, fill opacity=0.3,draw=none] (0,0) -- (0,1) -- (5,6) -- (6,6) -- (6,4) -- (2,0);
-  %\node[color=red] at (4.5,4) {$\suc((\loc, \region))$};
-  
-  % placeholder 1
-  %\draw[fill=green!30, fill opacity=0.2, draw=none] (0,0) rectangle (3,6);
-  %\node[color=DarkGreen] at (1.5,4) {$\placeholder[1]$};
-  
-  % pred_{<}(placeholder 2)
-  %\draw[fill=blue!30, fill opacity=0.2, draw=none]
-  %(0,0) rectangle (6,2.95);
-  %\node[color=DarkBlue] at (4.5,1.5) {$\pre_{<}(\placeholder[2])$};
-  
-  % bad
-  \draw[fill=red!30,draw=none, fill opacity=0.5] (1,0) -- (2,1) -- (2,0) -- (1,0);
-  \draw[fill=red!30,draw=none, fill opacity=0.2] (1,0) -- (7,6) -- (8,6) -- (2,0) -- (1,0);
-
   \draw[color=red] (3,2) -- (4,2);
   \draw[color=blue] (0,2) -- (3,2);
   \draw[color=blue] (4,2) -- (5.5,2);
@@ -562,10 +445,12 @@ is indicated in blue in de the figure below.
   \end{tikzpicture}
   \end{center}
 
-% In order to fully satisfy the side condition, we still need to make sure that
-% $\pre_<(\placeholder^1) \subseteq \placeholder[1]$, which can be achieved by
-% intersecting the aforementioned region with $\placeholder[1]$. The resulting value
-% of $\placeholder^1$ is thus $\placeholder^1 \equiv (\placeholder[2]^1 \setminus \suc((\loc, \region) \cap \pre(\mathit{bad}^1)) \cap \placeholder[1]$. 
+We need to remove those bad states from $\placeholder[2]^1$. This gets us the new placeholder
+\begin{equation}
+  \placeholder^1 \equiv \placeholder[2]^1 \setminus \suc_{>}(\mathit{bad}^1).
+\end{equation}
+The bad part of $\placeholder[2]^1$ is indicated in red; the good part, $\placeholder^1$,
+is indicated in blue in de the figure above.
 
 Finally, we have to wonder about the value of $\placeholder$. Observe that
 $\pre_{<}(\placeholder[2]^1 \lor \placeholder[2]^2) \equiv \pre_{<}(\placeholder[2]^1) \lor \pre_{<}(\placeholder[2]^2)$.
@@ -652,6 +537,23 @@ in a darker shade.
 \end{tikzpicture}
 \end{center}
 
+\subsubsection{An interesting, linear example (corner case)}
+Next, consider a system with a single location with invariant $x < 3$, with
+initial clock valuation $x = 0$. We check the property $\exists_{x < 2}(x \geq 2)$. If we use the procedure outlined above, we get the following.
+
+First observe that $\placeholder[1] \equiv x < 2$, $\placeholder[2] \equiv x \geq 2 \land x < 3$, and $\suc((\loc, \region)) \equiv 0 \leq x < 3$.
+Note that $\pre_{<}(\placeholder[2]) \equiv x < 3$. Therefore, $0 \leq x < 3 \equiv \suc((\loc, \region)) \cap \pre_{<}(\placeholder[2]) \not \subseteq \suc((\loc, \region)) \cap \placeholder[1] \equiv 0 \leq x < 2$.
+
+According to the definition
+\begin{equation}
+  \mathit{bad} \equiv \suc((\loc, \region)) \cap \pre_{<}(\placeholder[2]) \cap \overline{\placeholder[1]} \equiv 0 \leq x < 3 \cap x < 3 \cap x \geq 2 \equiv 2 \leq x < 3
+\end{equation}
+Therefore, $\suc_{>}(\mathit{bad}) \equiv 2 < x$. The resulting placeholder we find is, therefore $\placeholder \equiv placeholder[2] \setminus \suc_{>}(\mathit{bad}) \equiv x = 2$.
+Note that this placeholder satisfies the side condition.
+
+This example also illustrates that we need to consider the strict successor of
+the bad region; just taking the successor would lead to an erroneous result.
+
 \subsection{Pseudocode}
 
 \begin{algorithm}[H]
@@ -664,7 +566,7 @@ in a darker shade.
     \STATE Let $\placeholder[2] = \bigcup_{i=0}^{n}\placeholder[2]^i$
     \FOR{\textbf{each} $\placeholder[2]^i$ in $\placeholder[2]$}
       \STATE $\var{bad} \gets \suc((\loc, \region)) \cap \pre_{<}(\placeholder[2]^i) \cap \overline{\placeholder[1]}$
-      \STATE $\placeholder^i \gets \placeholder[2]^i \cap \overline{\suc((\loc, \region) \cap \pre(\var{bad}))}$%$ \cap \placeholder[1]$
+      \STATE $\placeholder^i \gets \placeholder[2]^i \cap \overline{\suc(\var{bad})}$%$ \cap \placeholder[1]$
       \STATE $\placeholder \gets \placeholder \cup \placeholder^i$
     \ENDFOR
   \ENDIF

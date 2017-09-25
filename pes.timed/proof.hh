@@ -513,7 +513,7 @@ protected:
     succ_zone_and_placeholder1.intersect(placeholder1);
     succ_zone_and_placeholder1.cf();
 
-    cpplog(cpplogging::debug, "exists_rel_sidecondition") << "  succ((l,cc)) && placeholder1 = " << succ_zone_and_pred_placeholder2_strict << std::endl;
+    cpplog(cpplogging::debug, "exists_rel_sidecondition") << "  succ((l,cc)) && placeholder1 = " << succ_zone_and_placeholder1 << std::endl;
 
     if(succ_zone_and_pred_placeholder2_strict <= succ_zone_and_placeholder1) {
       *result = placeholder2;
@@ -522,6 +522,7 @@ protected:
       result->makeEmpty();
 
       DBMList placeholder1_complement(placeholder1);
+      //placeholder1_complement.closure(); // seems to be needed in some corner cases; check why
       !placeholder1_complement;
       placeholder1_complement.cf();
 
@@ -551,32 +552,18 @@ protected:
 
         cpplog(cpplogging::debug, "exists_rel_sidecondition") << "    bad = " << bad << std::endl;
 
-        DBMList bad_predecessors(bad);
-        bad_predecessors.pre();
-        bad_predecessors.cf();
-        cpplog(cpplogging::debug, "exists_rel_sidecondition") << "    pre(bad) = " << bad_predecessors << std::endl;
+        DBMList bad_successors_strict(bad);
+        bad_successors_strict.suc();
+        bad_successors_strict.closureRev();
+        bad_successors_strict.cf();
 
-        DBMList zone_bad_predecessors(zone);
-        zone_bad_predecessors.intersect(bad_predecessors);
-        zone_bad_predecessors.cf();
-        cpplog(cpplogging::debug, "exists_rel_sidecondition") << "    (l,cc) && pre(bad) = " << zone_bad_predecessors << std::endl;
-
-
-        DBMList succ_zone_bad_predecessors_complement(zone_bad_predecessors);
-        succ_zone_bad_predecessors_complement.suc();
-        !succ_zone_bad_predecessors_complement;
-        succ_zone_bad_predecessors_complement.cf();
-        cpplog(cpplogging::debug, "exists_rel_sidecondition") << "    !succ((l,cc) && pre(bad)) = " << succ_zone_bad_predecessors_complement << std::endl;
-
+        DBMList bad_successors_strict_complement(bad_successors_strict);
+        !bad_successors_strict_complement;
+        bad_successors_strict_complement.cf();
 
         DBMList placeholder(*placeholder2_zone);
-        placeholder.intersect(succ_zone_bad_predecessors_complement);
+        placeholder.intersect(bad_successors_strict_complement);
         placeholder.cf();
-
-//        if(!(placeholder <= succ_zone_and_placeholder1)) {
-//          placeholder.intersect(placeholder1);
-//          placeholder.cf();
-//        }
 
         cpplog(cpplogging::debug, "exists_rel_sidecondition") << "    adding placeholder " << placeholder << std::endl;
 

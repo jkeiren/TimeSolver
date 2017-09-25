@@ -113,7 +113,7 @@ TEST(ProofTest, ExistsRelTestFalse)
   //maximum_region2.addConstraint(0,1, clock_value(0, false));
   //maximum_region2.addConstraint(0,2, clock_value(0, false));
   maximum_region2.addConstraint(2,0, clock_value(3, false));
-  maximum_region2.addConstraint(2,1, clock_value(-2, true)); // Why does the tool not comput this strict?
+  maximum_region2.addConstraint(2,1, clock_value(-2, false)); // Should this inequality be strict?
 
   DBMList minimum_placeholder(minimum_region);
   minimum_placeholder.cf();
@@ -245,4 +245,32 @@ TEST(ProofTest, ExistsRelTestTrueDueToOr)
     std::cerr << "Maximal placeholder: " << maximum_placeholder << std::endl;
   }
   */
+}
+
+static
+std::string RelSplit3(
+    "CLOCKS: {x1}\n"
+    "CONTROL: {p1}\n"
+    "INITIALLY: x1 == 0\n"
+    "PREDICATE: {X}\n"
+    "START: X\n"
+    "EQUATIONS: {\n"
+    "1: nu X = \\exists time\\rel[x1 <2](x1>=2) || \\forall time(x1 < 2)\n"
+    "}\n"
+    "INVARIANT:\n"
+    "  p1 == 0 -> x1 < 3\n"
+    "TRANSITIONS:\n");
+
+TEST(ProofTest, RelSplit3Test)
+{
+  pes p;
+  ASSERT_NO_THROW(parse_pes_from_string(RelSplit3, false, p));
+
+  prover_options options;
+  prover pr(p, options);
+
+  DBMList placeholder(DBM(p.initial_clock_zone()->clocks_size(), p.clocks()));
+
+  EXPECT_TRUE(pr.do_proof_init(p, &placeholder));
+  placeholder.cf();
 }
