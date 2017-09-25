@@ -104,16 +104,12 @@ TEST(ProofTest, ExistsRelTestFalse)
   minimum_region.addConstraint(1,2, clock_value(0, false));
 
   DBM maximum_region1(p.initial_clock_zone()->clocks_size(), p.clocks());
-  //maximum_region1.addConstraint(0,1, clock_value(0, false));
-  //maximum_region1.addConstraint(0,2, clock_value(0, false));
   maximum_region1.addConstraint(2,0, clock_value(3, false));
   maximum_region1.addConstraint(1,2, clock_value(0, false));
 
   DBM maximum_region2(p.initial_clock_zone()->clocks_size(), p.clocks());
-  //maximum_region2.addConstraint(0,1, clock_value(0, false));
-  //maximum_region2.addConstraint(0,2, clock_value(0, false));
   maximum_region2.addConstraint(2,0, clock_value(3, false));
-  maximum_region2.addConstraint(2,1, clock_value(-2, false)); // Should this inequality be strict?
+  maximum_region2.addConstraint(2,1, clock_value(-2, false));
 
   DBMList minimum_placeholder(minimum_region);
   minimum_placeholder.cf();
@@ -217,34 +213,6 @@ TEST(ProofTest, ExistsRelTestTrueDueToOr)
 
   EXPECT_TRUE(pr.do_proof_init(p, &placeholder));
   placeholder.cf();
-/*
-  DBM minimum_region(p.initial_clock_zone()->clocks_size(), p.clocks());
-  minimum_region.addConstraint(1,0, clock_value(2, false));
-  minimum_region.addConstraint(2,0, clock_value(1, false));
-  minimum_region.addConstraint(1,2, clock_value(0, false));
-
-  DBM maximum_region(p.initial_clock_zone()->clocks_size(), p.clocks());
-  maximum_region.addConstraint(0,1, clock_value(0, false));
-  maximum_region.addConstraint(0,2, clock_value(0, false));
-  maximum_region.addConstraint(2,0, clock_value(3, false));
-  maximum_region.addConstraint(1,2, clock_value(0, false));
-
-  DBMList minimum_placeholder(minimum_region);
-  minimum_placeholder.cf();
-  EXPECT_TRUE(minimum_placeholder <= placeholder);
-
-  DBMList maximum_placeholder(maximum_region);
-  maximum_placeholder.cf();
-  EXPECT_TRUE(placeholder <= maximum_placeholder);
-
-
-  if(!(minimum_placeholder <= placeholder) || !(placeholder <= maximum_placeholder))
-  {
-    std::cerr << "Resulting placeholder: " << placeholder << std::endl;
-    std::cerr << "Minimal placeholder: " << minimum_placeholder << std::endl;
-    std::cerr << "Maximal placeholder: " << maximum_placeholder << std::endl;
-  }
-  */
 }
 
 static
