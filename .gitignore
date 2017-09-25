@@ -29,3 +29,10 @@ pes.timed/timesolver-ta.creator
 pes.timed/timesolver-ta.creator.user
 pes.timed/timesolver-ta.files
 pes.timed/timesolver-ta.includes
+notes.log
+pes.timed/location.hh
+pes.timed/pes.lex.hh
+pes.timed/position.hh
+pes.timed/stack.hh
+parsetest
+prooftest
