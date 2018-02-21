@@ -25,18 +25,22 @@ def filterTimes(lines):
 def compare(expectedFileName, given, printDiff = False):
     """Compare the output in the file with name expectedFileName to the
     string given"""
-    with gzip.open(expectedFileName, 'rt') as f:
-        expectedFile = filterTimes(f.readlines())
-        givenLines = filterTimes(given.splitlines(keepends=True))
+    try:
+        with gzip.open(expectedFileName, 'rt') as f:
+            expectedFile = filterTimes(f.readlines())
+            givenLines = filterTimes(given.splitlines(keepends=True))
 
-        result = expectedFile == givenLines
-        if(printDiff and not result):
-            sys.stdout.write("[!!!] Output has changed for {0}\n".format(expectedFileName))
-            sys.stdout.write("[!!!] Diff follows")
-            d = difflib.Differ()
-            diff = d.compare(expectedFile, givenLines)
-            sys.stdout.writelines(diff)
-        return result
+            result = expectedFile == givenLines
+            if(printDiff and not result):
+                sys.stdout.write("[!!!] Output has changed for {0}\n".format(expectedFileName))
+                sys.stdout.write("[!!!] Diff follows")
+                d = difflib.Differ()
+                diff = d.compare(expectedFile, givenLines)
+                sys.stdout.writelines(diff)
+            return result
+    except:
+        sys.stdout.write("[!!!] Failed to compare with existing file {0}\n".format(expectedFileName))
+        return False
 
 
 def runTestCase(dirName, fileName, overwrite, printdiff, debug, diff):
