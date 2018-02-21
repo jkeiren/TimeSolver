@@ -842,7 +842,7 @@ void makeAssignmentList(const ExprNode& e,
  * @param op The Expression type of the proof rule; this is the rule that the
  * model checker applies to continue the proof.
  * @return None */
-inline void print_sequent(std::ostream& os, const int step, const bool retVal,
+inline void print_sequent(std::ostream& os, const size_t step, const bool retVal,
                           const DBM& lhs, const ExprNode& rhs,
                           const SubstList& sub, const opType op) {
   os << "seq#" << step << "  " << retVal << "  " << lhs << ", " << sub
@@ -860,7 +860,7 @@ inline void print_sequent(std::ostream& os, const int step, const bool retVal,
  * @param op The Expression type of the proof rule; this is the rule that the
  * model checker applies to continue the proof.
  * @return None */
-inline void print_sequentCheck(std::ostream& os, const int step,
+inline void print_sequentCheck(std::ostream& os, const size_t step,
                                const bool retVal, const DBM& lhs,
                                const DBMList& rhsList,
                                const SubstList& sub, const opType op) {
@@ -878,7 +878,7 @@ inline void print_sequentCheck(std::ostream& os, const int step,
  * @param op The Expression type of the proof rule; this is the rule that the
  * model checker applies to continue the proof.
  * @return None */
-inline void print_sequent_place(std::ostream& os, const int step,
+inline void print_sequent_place(std::ostream& os, const size_t step,
                                 const bool retVal, const DBM& lhs,
                                 const DBMList& place, const ExprNode& rhs,
                                 const SubstList& sub, const opType op) {
@@ -901,7 +901,7 @@ inline void print_sequent_place(std::ostream& os, const int step,
  * @param op The Expression type of the proof rule; this is the rule that the
  * model checker applies to continue the proof.
  * @return None */
-inline void print_sequent_placeCheck(std::ostream& os, const int step,
+inline void print_sequent_placeCheck(std::ostream& os, const size_t step,
                                      const bool retVal, const DBM& lhs,
                                      const DBMList& place,
                                      const DBMList& rhsList,
