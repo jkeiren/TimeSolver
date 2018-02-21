@@ -1399,7 +1399,7 @@ inline bool prover::do_proof_exists_rel(const SubstList& discrete_state,
                                          // used in the predCheckRule
                                          // computation
       /*--- PredCheck code----*/
-      predCheckRule(&placeholder, zone, &zone_succ, &placeholder1, &placeholder2);
+      establish_exists_rel_sidecondition(&placeholder, zone, placeholder1, placeholder2);
       if (placeholder.emptiness()) {
         retVal = false;
 
@@ -2538,7 +2538,6 @@ inline void prover::do_proof_place_exists_rel(const SubstList& discrete_state,
       /*--- PredCheck code----*/
       DBMList placeholder(placeholder1);
       establish_exists_rel_sidecondition(&placeholder, zone, placeholder1, placeholder2);
-      //predCheckRule(&placeholder, zone, &zone_succ, &placeholder1, &placeholder2);
       if (placeholder.emptiness()) {
         cpplog(cpplogging::debug)
             << "----(Invalid) Relativization placeholder failed-----" << std::endl
