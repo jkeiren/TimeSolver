@@ -242,3 +242,29 @@ TEST(ProofTest, RelSplit3Test)
   EXPECT_TRUE(pr.do_proof_init(p, &placeholder));
   placeholder.cf();
 }
+
+static
+std::string ExistsRelFalseFirstSubformula(
+    "CLOCKS: {x1}\n"
+    "CONTROL: {p1}\n"
+    "INITIALLY: x1 == 0\n"
+    "PREDICATE: {X}\n"
+    "START: X\n"
+    "EQUATIONS: {\n"
+    "1: nu X = \\exists time\\rel[x1 >= 3](x1 <= 3)\n"
+    "}\n"
+    "TRANSITIONS:\n");
+
+TEST(ProofTest, ExistsRelFalseFirstSubformulaTest)
+{
+  pes p;
+  ASSERT_NO_THROW(parse_pes_from_string(ExistsRelFalseFirstSubformula, false, p));
+
+  prover_options options;
+  prover pr(p, options);
+
+  DBMList placeholder(DBM(p.initial_clock_zone()->clocks_size(), p.clocks()));
+
+  EXPECT_TRUE(pr.do_proof_init(p, &placeholder));
+  placeholder.cf();
+}
