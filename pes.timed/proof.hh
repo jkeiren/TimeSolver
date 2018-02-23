@@ -2001,22 +2001,13 @@ inline void prover::do_proof_place_or(const SubstList& discrete_state,
                                       const DBM& zone, DBMList* place,
                                       const ExprNode& formula) {
   place->cf();
-  DBMList placeholder_left(*place); // FIXME: why initialise with *place here?
+  DBMList placeholder_left(*place);
 
   do_proof_place(discrete_state, zone, &placeholder_left, *formula.getLeft());
   placeholder_left.cf();
 
-  // Now do the right proof, and take the right if its placeholder is
-  // larger that from the left side.
-  if (!placeholder_left.emptiness() &&
-      placeholder_left >= *place) { // placeholder_left == *place
-    assert(placeholder_left == *place);
-    // why compare to *place; it seems this should be zone
-    /* Here, the current transition successful;
-     * we are done */
-    *place = placeholder_left; // can be skipped!
-  } else {
-
+  if (!(placeholder_left >= *place))
+  {
     // We use place here, since the result of the second call is likely to be
     // part of the result anyway. If not, we will roll back later.
     // *place is thus placeholder_right.
