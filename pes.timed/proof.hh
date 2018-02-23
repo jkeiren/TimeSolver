@@ -828,8 +828,6 @@ inline bool prover::do_proof_predicate(const SubstList& discrete_state,
         }
         return true; // greatest fixed point circularity found
       }
-
-      h->push_sequent(new DBM(zone));
     } else { // Thus, a least fixpoint
       // Now look for a Circularity
       bool newSequent;
@@ -851,9 +849,8 @@ inline bool prover::do_proof_predicate(const SubstList& discrete_state,
         }
         return false; // least fixed point circularity found
       }
-
-      h->push_sequent(new DBM(zone));
     }
+    h->push_sequent(new DBM(zone));
   } // End scope for circularity
   assert(h != nullptr);
   // no least/greatest fixed point circularity was found; the sequent has been
