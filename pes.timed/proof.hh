@@ -1304,6 +1304,7 @@ inline bool prover::do_proof_exists_rel(const SubstList& discrete_state,
                                 << std::endl;
     }
   } else {
+    retVal = true;
 
     /* We find all the times that satisfy phi_1, and then intersect it
      * with the time predecessor of the phi_2 placeholders. */
