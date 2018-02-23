@@ -974,6 +974,7 @@ inline bool prover::do_proof_or(const SubstList& discrete_state,
   // otherwise we need to prove the right hand side for a fresh placeholder.
 
   // Reset place parent to nullptr
+  assert(parentPlaceRef == nullptr); // For debugging purposes; why is this here? (JK)
   parentPlaceRef = nullptr;
   if (placeholder1.emptiness()) {
     retVal = do_proof(discrete_state, zone, *formula.getRight());
@@ -988,6 +989,7 @@ inline bool prover::do_proof_or(const SubstList& discrete_state,
     placeholder2.cf();
 
     // Reset place parent to nullptr
+    assert(parentPlaceRef == nullptr); // For debugging purposes; why is this here? (JK)
     parentPlaceRef = nullptr;
     if (placeholder2.emptiness()) {
       retVal = false;
@@ -1058,6 +1060,7 @@ inline bool prover::do_proof_forall_rel(const SubstList& discrete_state,
   placeholder1.cf();
 
   // Reset place parent to nullptr
+  assert(parentPlaceRef == nullptr); // For debugging purposes; why is this here? (JK)
   parentPlaceRef = nullptr;
 
   if (placeholder1.emptiness()) { // Here, \forall phi_2 needs to hold.
@@ -1125,6 +1128,7 @@ inline bool prover::do_proof_forall_rel(const SubstList& discrete_state,
         << std::endl;
 
     // Reset place parent to nullptr
+    assert(parentPlaceRef == nullptr); // For debugging purposes; why is this here? (JK)
     parentPlaceRef = nullptr;
     if (placeholder2.emptiness()) { // \phi_2 is satisfied nowhere.
       retVal = false;
@@ -1246,10 +1250,13 @@ inline bool prover::do_proof_exists(const SubstList& discrete_state,
   DBMList placeholder(*INFTYDBM);
   restrict_to_invariant(input_pes.invariants(), &placeholder, discrete_state);
 
+  DBMList placeholder_dbg_copy(placeholder); // Check assumption on do_proof_place
   do_proof_place(discrete_state, lhs_succ, &placeholder, *formula.getQuant());
   // Reset place parent to nullptr
+  assert(parentPlaceRef == nullptr);
   parentPlaceRef = nullptr;
   placeholder.cf();
+  assert(placeholder <= placeholder_dbg_copy);
 
   placeholder.pre();
   placeholder.cf();
@@ -1291,6 +1298,7 @@ inline bool prover::do_proof_exists_rel(const SubstList& discrete_state,
 
   do_proof_place(discrete_state, zone_succ, &placeholder2, *formula.getRight());
   // Reset place parent to nullptr
+  assert(parentPlaceRef == nullptr);
   parentPlaceRef = nullptr;
   placeholder2.cf();
   if (placeholder2.emptiness()) {
@@ -1637,6 +1645,7 @@ inline bool prover::do_proof_existact(const SubstList& discrete_state,
                                  *transition->getRightExpr());
 
     // Reset place parent to nullptr
+    assert(parentPlaceRef == nullptr); // For debugging purposes; why is this here? (JK)
     parentPlaceRef = nullptr;
     if (!tempPlace.emptiness()) {
       // At least a partial solution for the existence of a transition was found
@@ -2275,6 +2284,7 @@ inline void prover::do_proof_place_forall_rel(const SubstList& discrete_state,
         << std::endl;
 
     // Reset place parent to nullptr
+    assert(parentPlaceRef == nullptr); // For debugging purposes; why is this here? (JK)
     parentPlaceRef = nullptr;
 
     if (placeholder2.emptiness()) {
