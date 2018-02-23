@@ -522,7 +522,6 @@ protected:
       result->makeEmpty();
 
       DBMList placeholder1_complement(placeholder1);
-      //placeholder1_complement.closure(); // seems to be needed in some corner cases; check why
       !placeholder1_complement;
       placeholder1_complement.cf();
 
@@ -1366,6 +1365,7 @@ inline bool prover::do_proof_exists_rel(const SubstList& discrete_state,
        * If so, make a non-empty placeholder. In this case, the third
        * Check will be true by default and can be skipped.
        * Else, return empty and break */
+      // FIXME: the following code can be simplified significantly (only the inclusion is needed)
       placeholder2.intersect(zone); // zone here is before the time elapse
       placeholder2.cf();
       if (placeholder2.emptiness()) {
@@ -1430,10 +1430,11 @@ inline bool prover::do_proof_exists_rel(const SubstList& discrete_state,
         }
 
         // Allow for the possibility of the time instant after the elapse
-        placeholder.closure();
+        //placeholder.closure();
         /* Extract the new refined placeholder. */
-        placeholder.intersect(placeholder2);
-        placeholder.cf();
+        //placeholder.intersect(placeholder2);
+        //placeholder.cf();
+        assert(placeholder <= placeholder2);
 
         /* Now check that it works. */
         placeholder.pre();
@@ -2507,6 +2508,7 @@ inline void prover::do_proof_place_exists_rel(const SubstList& discrete_state,
        * Else, return empty and break */
       placeholder2.intersect(zone); // zone here is before the time elapse
       placeholder2.cf();
+      *place = placeholder2;
       if (placeholder2.emptiness()) {
         cpplog(cpplogging::debug)
             << "----(Invalid) Time Elapsed required for formula to be true; "
@@ -2560,12 +2562,6 @@ inline void prover::do_proof_place_exists_rel(const SubstList& discrete_state,
                                     << std::endl;
         }
 
-
-        // Allow for the possibility of the time instant after the elapse
-        placeholder.closure();
-        /* Extract the new refined placeholder */
-        placeholder.intersect(placeholder2);
-        placeholder.cf();
 
         /* Now check that it works (the new placeholder can be
          * obtained from the old
