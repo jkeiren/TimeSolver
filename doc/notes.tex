@@ -45,28 +45,448 @@
 
 \maketitle
 
+In this note we describe the proof rules for $\mu$-calculus model checking of timed automata as they are implemented in TimeSolver. We stick as close as possible to the implementation. The rules were described originally in~\cite{ZC:05rtss}, and the rules with placeholder stem from~\cite{FC:14}. A more elaborate discussion of (some of) the proof rules can be found in~\cite{FC:14report}.
 
-In this note we describe the proof rules as they are implemented in TimeSolver. We stick as close as possible to the implementation.
-The rules were described originally in~\cite{ZC:05rtss}, and the rules with
-placeholder stem from~\cite{FC:14}. A more elaborate
-discussion about (some of) the proof rules can be found in~\cite{FC:14report}.
-
-The proof rules are implemented in the file \texttt{proof.hh}. This is a header-only implementation to allow the compiler to inline wherever possible.
-The class \texttt{prover} supports proof rules without placeholder, named \texttt{do\_proof\_*}, and proof rules with placeholder, named \texttt{do\_proof\_place\_*}. Note that the rules without placeholders can call the rules with placeholders, but not the other way around. The methods with placeholder correspond to those proof rules in which a placeholder is present in the goal.
+The proof rules are implemented in the file \texttt{proof.hh}. This is a header-only implementation to allow the compiler to inline wherever possible. The class \texttt{prover} supports proof rules without placeholder, named \texttt{do\_proof\_*}, and proof rules with placeholder, named \texttt{do\_proof\_place\_*}. Note that the rules without placeholders can call the rules with placeholders, but not the other way around. The methods with placeholder correspond to those proof rules in which a placeholder is present in the goal. 
 
 Below we describe each of the proof rules as they are implemented in the tool.
 
-\section{Helper functions}
-Before we delve into the algorithms for each of the operators, we first look at some side conditions that need to be computed.
+\section{Predicate variables}
+The cases where the proof goal is a predicate variable is handled by the rules \texttt{do\_proof\_predicate} and \texttt{do\_proof\_place\_predicate}.
 
-\subsection{Side condition for relativized exists}
-The first side condition to be computed is the one used for relativized exists.
-Given a region $(\loc, \region)$, placeholders
-$\placeholder[1], \placeholder[2] \subseteq \inv(\loc)$, we need to find the
-largest placeholder $\placeholder \subseteq \placeholder[2]$ such that
-$\suc((\loc, \region)) \cap \pre_{<}(\placeholder) \subseteq \suc((\loc, \region)) \cap \placeholder[1]$.
+\[
+\proofrule
+{(\loc, \region) \vdash X}
+{(\loc, \region) \vdash \phi}
+%
+\quad
+%
+\proofrule
+{(\loc, \region), \placeholder \vdash X}
+{(\loc, \region), \placeholder \vdash \phi}
+\]
+Where $X \eqsigma \phi \in \E$ is an equation in the PES.
 
-\subsubsection{Example}
+\jk{Describe how the caching and cycle detection works}
+
+
+\section{Boolean operators}
+
+\subsection{Conjunction}
+
+\subsubsection{Without placeholder}
+\[
+\proofrule[\land]
+{(\loc, \region) \vdash \phi_1 \land \phi_2}
+{(\loc, \region) \vdash \phi_1
+\quad (\loc, \region) \vdash \phi_2}
+\]
+
+\begin{algorithm}[H]
+\caption{$\method{do\_proof\_and}(\loc, \region, \phi_1 \land \phi_2)$}
+\begin{algorithmic}
+\STATE $\var{result} \gets \method{do\_proof}(\loc, \region, \phi_1)$
+\IF{\var{result}}
+  \STATE $\var{result} \gets \method{do\_proof}(\loc, \region, \phi_2)$
+\ENDIF
+\RETURN \var{result}
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{With placeholder}
+The following rule, with placeholders, is not described explicitly in~\cite{FC:14,FC:14report}, we invent a new name for it. The description is straightforward.
+\[
+\proofrule[\land_p]
+{(\loc, \region), \placeholder \vdash \phi_1 \land \phi_2}
+{(\loc, \region), \placeholder[1] \vdash \phi_1
+\quad (\loc, \region), \placeholder[2] \vdash \phi_2}
+\placeholder = \placeholder[1] \cap \placeholder[2]
+\]
+
+\begin{algorithm}[H]
+\caption{$\method{do\_proof\_place\_and}(\loc, \region, \placeholder, \phi_1 \land \phi_2)$}
+\begin{algorithmic}
+\STATE $\placeholder[1] \gets \infty$
+\STATE $\method{do\_proof\_place}(\loc, \region, \placeholder[1], \phi_1)$
+\STATE $\placeholder \gets \placeholder \cap \placeholder[1]$
+\IF{$\placeholder = \emptyset$}
+  \STATE $\placeholder[2] \gets \infty$
+  \STATE $\method{do\_proof\_place}(\loc, \region, \placeholder[2] \phi_2)$
+  \STATE $\placeholder \gets \placeholder \cap \placeholder[2]$
+\ENDIF
+\end{algorithmic}
+\end{algorithm}
+Note that if all proof methods simply restrict the placeholder, we could simplify this to the following code.
+Currently, this leads to incorrect output of the tool!
+\begin{algorithm}[H]
+\caption{$\method{do\_proof\_place\_and}(\loc, \region, \placeholder, \phi_1 \land \phi_2)$}
+\begin{algorithmic}
+\STATE $\method{do\_proof\_place}(\loc, \region, \placeholder, \phi_1)$
+\IF{$\placeholder = \emptyset$}
+  \STATE $\method{do\_proof\_place}(\loc, \region, \placeholder, \phi_2)$
+\ENDIF
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Disjunction}
+
+\subsubsection{Without placeholder}
+
+The proof rules for $\lor$ given in~\cite{FC:14} are the following.
+\[
+\proofrule[\lor_l]
+{(\loc, \region) \vdash \phi_1 \lor \phi_2}
+{(\loc, \region) \vdash \phi_1}
+%
+\quad
+\proofrule[\lor_r]
+{(\loc, \region) \vdash \phi_1 \lor \phi_2}
+{(\loc, \region) \vdash \phi_2}
+\quad
+\proofrule[\lor_c]
+{(\loc, \region) \vdash \phi_1 \lor \phi_2}
+{(\loc, \region), \placeholder \vdash \phi_1
+\quad
+(\loc, \region), \lnot \placeholder \vdash \phi_2
+}
+\]
+
+\[
+\proofrule[\lor_s]
+{(\loc, \region) \vdash \phi_1 \lor \phi_2}
+{(\loc, \region), \placeholder[1] \vdash \phi_1
+\quad (\loc, \region), \placeholder[2] \vdash \phi_2}
+(\loc, \region) \subseteq \placeholder[1] \cup \placeholder[2]
+\]
+
+This is combined into the following code.
+\begin{algorithm}[H]
+\caption{$\method{do\_proof\_or}(\loc, \region, \phi_1 \lor \phi_2)$}
+\begin{algorithmic}
+\STATE $\placeholder[1] \gets \infty$
+\STATE $\method{do\_proof\_place}(\loc, \region, \placeholder[1], \phi_1)$
+\IF[Rule $\lor_r$]{$\placeholder[1] = \emptyset$}
+  \STATE $\var{result} \gets \method{do\_proof}(\loc, \region, \phi_2)$
+\ELSIF[Rule $\lor_l$]{$(\loc, \region) \subseteq \placeholder[1]$}
+   \STATE $\var{result} \gets \true$
+\ELSE[Rule $\lor_s$]
+  \STATE $\placeholder[2] = \infty$
+  \STATE $\method{do\_proof\_place}(\loc, \region, \placeholder[2], \phi_2)$
+  \STATE $\var{result} \gets (l,cc) \subseteq \placeholder[1] \cup \placeholder[2]$
+\ENDIF
+\RETURN \var{result}
+\end{algorithmic}
+\end{algorithm}
+
+The tool also implements a ``simple or'' operator which can always be proven using the $\lor_l$ and $\lor_r$ rules.
+
+\begin{algorithm}[H]
+\caption{$\method{do\_proof\_or\_simple}(\loc, \region, \phi_1 \lor \phi_2)$}
+\begin{algorithmic}
+\STATE $\var{result} \gets \method{do\_proof}(\loc, \region, \phi_1)$
+\COMMENT{Try rule $\lor_l$ first}
+\IF[Rule $\lor_r$]{$\lnot \var{result}$}
+  \STATE $\var{result} \gets \method{do\_proof}(\loc, \region, \phi_2)$
+\ENDIF
+\RETURN \var{result}
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{With placeholder}
+With placeholders, we get the following proof rule, which generalises $\lor_s$. Note this is not given in
+\cite{FC:14,FC:14report}.
+\[
+\proofrule[\lor_{s_2}]
+{(\loc, \region), \placeholder \vdash \phi_1 \lor \phi_2}
+{(\loc, \region), \placeholder[1] \vdash \phi_1
+\quad (\loc, \region), \placeholder[2] \vdash \phi_2}
+(\loc, \region) \cap \placeholder \subseteq \placeholder[1] \cup \placeholder[2]
+\]
+This sidecondition can be validated by ensuring $\placeholder \subseteq \placeholder[1] \cup \placeholder[2]$.
+This gives rise to the following code.
+
+\begin{algorithm}[H]
+\caption{$\method{do\_proof\_place\_or}(\loc, \region, \placeholder, \phi_1 \lor \phi_2)$}
+\begin{algorithmic}
+\STATE $\placeholder[1] \gets \placeholder$
+\STATE $\method{do\_proof\_place}(\loc, \region, \placeholder[1], \phi_1)$
+\IF[First subgoal does not yet cover the entire placeholder]{$\placeholder[1] \neq \placeholder$}
+  \STATE $\placeholder[2] = \placeholder$
+  \STATE $\method{do\_proof\_place}(\loc, \region, \placeholder[2], \phi_2)$
+  \STATE $\placeholder \gets \placeholder[1] \cup \placeholder[2]$
+\ENDIF
+\end{algorithmic}
+\end{algorithm}
+
+Again the case for simple or is considered separately. The language construct appears to be such that
+the placeholder will always either be completely empty, or completely full.
+\begin{algorithm}[H]
+\caption{$\method{do\_proof\_place\_or\_simple}(\loc, \region, \placeholder, \phi_1 \lor \phi_2)$}
+\begin{algorithmic}
+\STATE $\placeholder[1] \gets \placeholder$
+\STATE $\method{do\_proof\_place}(\loc, \region, \placeholder[1], \phi_1)$
+\IF{$\placeholder[1] = \placeholder$}
+  \STATE $\placeholder \gets \placeholder[1]$
+\ELSE
+  \STATE $\method{do\_proof\_place}(\loc, \region, \placeholder, \phi_2)$
+\ENDIF
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Exists}
+
+\subsubsection{Without placeholder}
+\[
+\proofrule[\exists_{t_1}]
+{(\loc, \region) \vdash \exists(\phi)}
+{\suc((\loc, \region)), \placeholder \vdash \phi}
+(\loc, \region) \subseteq \pre(\placeholder)
+\]
+%
+For $\exists(\phi)$ we need to ensure that we only consider valid time advances (those satisfying the invariants).
+We therefore consider $\exists(\inv(\loc) \land \phi)$ instead.
+We get the following derivation (which is given in~\cite[Appendix C.2]{FC:14}).
+\[
+\proofrule[\exists_{t_1}]
+{(\loc, \region) \vdash \exists(\inv(\loc) \land \phi)}
+{
+  \proofrule[\land_p]
+  {\suc((\loc, \region)), \placeholder \vdash \inv(\loc) \land \phi}
+  {\suc((\loc, \region)), \placeholder[1] \vdash \inv(\loc)
+  \quad \suc((\loc, \region)), \placeholder[2] \vdash \phi}
+  \placeholder = \placeholder[1] \cap \placeholder[2]
+}
+(\loc, \region) \subseteq \pre(\placeholder)
+\]
+The subgoal involving $\inv(\loc)$ can be proven setting $\placeholder[1] = \inv(\loc)$, which is
+the most liberal placeholder to prove the subgoal. If we take this simplification, this forces $\placeholder[2] \subseteq \inv(\loc)$,
+and we get the following proof rule (writing $\placeholder$ instead of $\placeholder[2]$).
+\[
+\proofrule
+{(\loc, \region) \vdash \exists(\inv(\loc) \land \phi)}
+{\suc((\loc, \region)), \placeholder \vdash \phi}
+\begin{array}{l}
+\placeholder \subseteq \inv(\loc) \\
+(\loc, \region) \subseteq \pre(\placeholder)
+\end{array}
+\]
+
+This is implemented in the following pseudocode. Note that this assumes the recursive
+call to \method{do\_proof} only restricts the placeholder, and does not enlarge it.
+
+\begin{algorithm}[H]
+\caption{$\method{do\_proof\_exists}(\loc, \region, \exists(\phi))$}
+\begin{algorithmic}
+\STATE $\placeholder \gets \inv(\loc)$ \COMMENT{Rule $\exists_{t_1}$}
+\STATE $\method{do\_proof\_place}(\loc, \suc(\region), \placeholder, \phi)$
+\RETURN $\region \subseteq \pre(\placeholder)$
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{With placeholder}
+The original proof rule is
+\[
+%
+\proofrule[\exists_{t_2}]
+{(\loc, \region), \placeholder[\exists] \vdash \exists(\phi)}
+{\suc((\loc, \region)), \placeholder \vdash \phi}
+\placeholder[\exists] \subseteq \pre(\placeholder)
+\]
+
+If we add the placeholder to the proof rule, we have a similar modification as
+before. If we again do the derivation from~\cite[Appendix C.2]{FC:14report} we get:
+\[
+\proofrule[\exists_{t_2}]
+{(\loc, \region), \placeholder[\exists] \vdash \exists(\inv(\loc) \land \phi)}
+{\proofrule[\land_p]
+  {\suc((\loc, \region)), \placeholder \vdash \inv(\loc) \land \phi}
+  {\suc((\loc, \region)), \placeholder[1] \vdash \inv(\loc)
+   \quad \suc((\loc, \region)), \placeholder[2] \vdash \phi}
+  \placeholder = \placeholder[1] \cap \placeholder[2]
+}
+(\loc, \region) \cap \placeholder[\exists] \subseteq \pre(\placeholder)
+\]
+We can again set $\placeholder[1] = \inv(\loc)$ to get rid of the first subgoal of the $\land$,
+obtaining the following proof.
+\[
+\proofrule[\exists_{t_2}]
+{(\loc, \region), \placeholder[\exists] \vdash \exists(\inv(\loc) \land \phi)}
+{\suc((\loc, \region)), \placeholder \vdash \phi}
+\begin{array}{l}
+\placeholder \subseteq \inv(l)\\
+(\loc, \region) \cap \placeholder[\exists] \subseteq \pre(\placeholder)
+\end{array}
+\]
+The second side condition can be ensured immediately by ensuring $\placeholder[\exists] \subseteq \pre(\placeholder)$.
+
+\begin{algorithm}[H]
+\caption{$\method{do\_proof\_exists\_place}(\loc, \region, \placeholder[\exists], \exists(\phi))$}
+\begin{algorithmic}
+\STATE $\placeholder \gets \inv(\loc)$ \COMMENT{Rule $\exists_{t_2}$}
+\STATE $\method{do\_proof\_place}(\loc, \suc(\region), \placeholder, \phi)$
+\STATE $\placeholder[\exists] \gets \placeholder[\exists] \cap \pre(\placeholder)$
+\end{algorithmic}
+\end{algorithm}
+
+% \[
+% \proofrule[\exists_{t_1}-Inv]
+% {(\loc, \region) \vdash \exists(\inv(\loc) \land \phi)}
+% {\suc((\loc, \region)), \placeholder \vdash \inv(\loc)
+% \quad \suc((\loc, \region)), \placeholder \vdash \phi}
+% (\loc, \region) \subseteq \pre(\placeholder)
+% %
+% \quad
+% %
+% \proofrule[\exists_{t_2}]
+% {(\loc, \region), \placeholder[\exists] \vdash \exists(\phi)}
+% {\suc((\loc, \region)), \placeholder \vdash \phi}
+% \placeholder[\exists] \subseteq \pre(\placeholder)
+% \]
+
+\subsection{Relativized exists}
+\subsubsection{Without placeholder}
+For relativized $\exists$ we have the following proof rule.
+\[
+\proofrule[\exists_{r_1}]
+{(\loc, \region) \vdash \exists_{\phi_1}(\phi_2)}
+{\suc((\loc,\region)), \placeholder[2] \vdash \phi_2
+\quad
+\suc((\loc, \region)), \pre_{<}(\placeholder[2]) \vdash \phi_1
+}
+(\loc, \region) \subseteq \pre(\placeholder[2])
+\]
+
+Note that here we also need to incorporate the invariant into the proof rule. We therefore
+need to prove that $\exists_{(\inv(\loc) \land \phi_1)}(\inv(\loc) \land \phi_2)$ instead.
+\[
+\proofrule[\exists_{r_1}]
+{(\loc, \region) \vdash \exists_{\inv(\loc) \land \phi_1}(\inv(\loc) \land \phi_2)}
+{\suc((\loc,\region)), \placeholder[2] \vdash \inv(\loc) \land \phi_2
+\quad
+\suc((\loc, \region)), \pre_{<}(\placeholder[2]) \vdash \inv(\loc) \land \phi_1
+}
+(\loc, \region) \subseteq \pre(\placeholder[2])
+\]
+
+For the first subgoal, we have the following derivation.
+\[
+\proofrule[\land_p]
+{\suc((\loc,\region)), \placeholder[2] \vdash \inv(\loc) \land \phi_2}
+{\suc((\loc,\region)), \placeholder[2,1] \vdash \inv(\loc)
+\quad \suc((\loc,\region)), \placeholder[2,2] \vdash \phi_2}
+\placeholder[2] = \placeholder[2,1] \cap \placeholder[2,2]
+\]
+In this proof we can set $\placeholder[2,1] = \inv(\loc)$, if we simplify we obtain the following.
+\[
+\proofrule[\land_p]
+{\suc((\loc,\region)), \placeholder[2] \vdash \inv(\loc) \land \phi_2}
+{\suc((\loc,\region)), \placeholder[2,2] \vdash \phi_2}
+\placeholder[2] = \inv(\loc) \cap \placeholder[2,2]
+\]
+
+For te second subgoal, we first replace $\pre_{<}(\placeholder[2])$ with a fresh
+placeholder $\placeholder[1]$, and require $\suc((\loc, \region)) \cap \pre_{<}(\placeholder[2]) \subseteq \suc((\loc, \region)) \cap \placeholder[1]$.
+Subsequently we apply the $\land_p$ rule.
+\[
+\proofrule
+{\suc((\loc, \region)), \pre_{<}(\placeholder[2]) \vdash \inv(\loc) \land \phi_1}
+{\proofrule[\land_p]
+  {\suc((\loc, \region)), \placeholder[1] \vdash \inv(\loc) \land \phi_1}
+  {\suc((\loc, \region)), \placeholder[1,1] \vdash \inv(\loc)
+  \quad \suc((\loc, \region)), \placeholder[1,2] \vdash \phi_1}
+  \placeholder[1] = \placeholder[1,1] \cap \placeholder[1,2]
+}
+\suc((\loc, \region)) \cap \pre_{<}(\placeholder[2]) \subseteq \suc((\loc, \region)) \cap \placeholder[1]
+\]
+We can again set $\placeholder[1,1] = \inv(\loc)$, and simplifying we obtain
+\[
+\proofrule
+{\suc((\loc, \region)), \pre_{<}(\placeholder[2]) \vdash \inv(\loc) \land \phi_1}
+{\suc((\loc, \region)), \placeholder[1,2] \vdash \phi_1}
+\suc((\loc, \region)) \cap \pre_{<}(\placeholder[2]) \subseteq \suc((\loc, \region)) \cap \inv(\loc) \cap \placeholder[1,2]
+\]
+%
+If we combine all of this, we get the following derived proof rule for relativized~$\exists$.
+\[
+\proofrule
+{(\loc, \region) \vdash \exists_{\inv(\loc) \land \phi_1}(\inv(\loc) \land \phi_2)}
+{\suc((\loc,\region)), \placeholder[2,2] \vdash \phi_2
+\quad \suc((\loc, \region)), \placeholder[1,2] \vdash \phi_1
+\quad }
+\begin{array}{l}
+(\loc, \region) \subseteq \pre(\placeholder[2]) \\
+\placeholder[2] = \inv(\loc) \cap \placeholder[2,2] \\
+\placeholder[1] = \inv(\loc) \cap \placeholder[1,2] \\
+\suc((\loc, \region)) \cap \pre_{<}(\placeholder[2]) \subseteq \suc((\loc, \region)) \cap \placeholder[1]
+\end{array}
+\]
+
+Finally, we incorporate the assumption that invariants are \emph{past closed}, we therefore get that $\pre_{<}(\placeholder[2]) \subseteq \placeholder[1]$ iff $\pre_{<}(\placeholder[2]) \subseteq \placeholder[1,2]$. We simplify to the following.
+\[
+\proofrule
+{(\loc, \region) \vdash \exists_{\inv(\loc) \land \phi_1}(\inv(\loc) \land \phi_2)}
+{\suc((\loc,\region)), \placeholder[2] \vdash \phi_2
+\quad \suc((\loc, \region)), \placeholder[1] \vdash \phi_1
+}
+\begin{array}{l}
+(\loc, \region) \subseteq \pre(\placeholder[2]) \\
+\placeholder[1] \subseteq \inv(\loc) \\
+\placeholder[2] \subseteq \inv(\loc) \\
+\suc((\loc, \region)) \cap \pre_{<}(\placeholder[2]) \subseteq \suc((\loc, \region)) \cap \placeholder[1]
+\end{array}
+\]
+Note that if $\placeholder[1] = \emptyset$, the property can still hold if $\phi_2$ is satisfied immediately (so $\pre_{<}(\placeholder[2]) = \emptyset$). Another issue that arises here is that $\placeholder[2]$ can be larger than strictly needed to get a valid prove, while not satisfying the side condition. We therefore introduce a restriction of $\placeholder[2]$, $\placeholder \subseteq \placeholder[2]$, that should satisfy the side condition. We implement this in the following rule.
+
+\[
+\proofrule
+{(\loc, \region) \vdash \exists_{\inv(\loc) \land \phi_1}(\inv(\loc) \land \phi_2)}
+{\suc((\loc,\region)), \placeholder[2] \vdash \phi_2
+\quad \suc((\loc, \region)), \placeholder[1] \vdash \phi_1
+}
+\begin{array}{l}
+(\loc, \region) \subseteq \pre(\placeholder) \\
+\placeholder[1] \subseteq \inv(\loc) \\
+\placeholder[2] \subseteq \inv(\loc) \\
+\placeholder \subseteq \placeholder[2] \\
+\suc((\loc, \region)) \cap \pre_{<}(\placeholder) \subseteq \suc((\loc, \region)) \cap \placeholder[1]
+\end{array}
+\]
+
+This gives rise to the following pseudocode.
+
+\begin{algorithm}[H]
+\caption{$\method{do\_proof\_exists\_rel}(\loc, \region, \exists_{\phi_1}(\phi_2))$}
+\begin{algorithmic}
+\STATE $\placeholder[2] \gets \inv(\loc)$ \COMMENT{Rule $\exists_{r_1}$}
+\STATE $\method{do\_proof\_place}(\loc, \suc(\region), \placeholder[2], \phi_2)$
+\IF[First subgoal fails]{$\placeholder[2] = \emptyset$}
+  \STATE $\var{result} \gets \false$
+\ELSE[Solve second subgoal and check side conditions]
+  \STATE $\placeholder[1] \gets \infty$
+  \STATE $\method{do\_proof\_place}(\loc, \suc(\region), \placeholder[1], \phi_1)$
+  \IF[$\phi_2$ needs to hold immediately]{$\placeholder[1] \cap \pre_{<}(\placeholder[2]) = \emptyset$}
+    \STATE $\var{result} \gets \region \subseteq \placeholder[2]$
+    % \STATE $\placeholder[2] \gets \placeholder[2] \cap \region$
+    % \IF{$\placeholder[2] = \emptyset$}
+    %   \STATE $\var{result} \gets \false$
+    % \ELSE
+    %   \STATE $\var{result} \gets \region \subseteq \placeholder[2]$
+    % \ENDIF
+  \ELSE[Check the side conditions]
+    \STATE $\placeholder \gets \method{establish\_exists\_rel\_sidecondition}(\loc, \region, \placeholder[1], \placeholder[2])$
+    % Let $\placeholder$ be such that $\placeholder \subseteq \placeholder[2]$, and
+    % $\pre_{<}(\placeholder) \subseteq \placeholder[1]$ if such $\placeholder$ exists, en $\placeholder = \emptyset$ otherwise.
+    \STATE $\var{result} \gets \region \subseteq \pre(\placeholder)$
+  \ENDIF
+\ENDIF
+\RETURN $\var{result}$
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Side condition for relativized exists}
+The first side condition to be computed is the one used for relativized exists. Given a region $(\loc, \region)$, placeholders $\placeholder[1], \placeholder[2] \subseteq \inv(\loc)$, we need to find the largest placeholder $\placeholder \subseteq \placeholder[2]$ such that $\suc((\loc, \region)) \cap \pre_{<}(\placeholder) \subseteq \suc((\loc, \region)) \cap \placeholder[1]$.
+
+\paragraph{Example}
 We first introduce the problem by considering the property $\exists_{x_1 \leq 3}(x_2 = 3)$, such that $\placeholder[1] \equiv x_1 \leq 3$, and $\placeholder[2] \equiv x_2 = 3$, and in which the clock region $(\loc, \region) \equiv 0 \leq x_1 \leq 2 \land 0 \leq x_2 \leq 1$.
 
 First, observe that choosing $\placeholder \equiv \placeholder[2] \equiv x_2 = 3$ does not satisfy the conditions since $\pre_{<}(x_2 = 3) = x_2 < 3$, which includes states outside $x_1 \leq 3$. We show this in the following picture, where the relevant regions are shaded ($\placeholder[1]$ green, $\pre_{<}(\placeholder[2])$ blue, and $\suc((\loc, \region))$ red); $(\loc, \region)$ is the small rectangle at the bottom-left of the picture.
@@ -290,7 +710,7 @@ in a darker shade.
 \end{tikzpicture}
 \end{center}
 
-\subsubsection{A non-convex example}
+\paragraph{A non-convex example}
 Next, we consider an example in which the placeholder for the second subformula
 of relativized exists is not convex. Consider the property 
  $\exists_{x_1 \leq 3}(x_2 = 2 \lor x_2 = 3)$, such that
@@ -537,7 +957,7 @@ in a darker shade.
 \end{tikzpicture}
 \end{center}
 
-\subsubsection{An interesting, linear example (corner case)}
+\paragraph{An interesting, linear example (corner case)}
 Next, consider a system with a single location with invariant $x < 3$, with
 initial clock valuation $x = 0$. We check the property $\exists_{x < 2}(x \geq 2)$. If we use the procedure outlined above, we get the following.
 
@@ -554,7 +974,7 @@ Note that this placeholder satisfies the side condition.
 This example also illustrates that we need to consider the strict successor of
 the bad region; just taking the successor would lead to an erroneous result.
 
-\subsection{Pseudocode}
+\paragraph{Pseudocode}
 
 \begin{algorithm}[H]
   \caption{$\method{establish\_exists\_rel\_sidecondition}(\loc, \region, \placeholder[1], \placeholder[2])$}
@@ -574,410 +994,7 @@ the bad region; just taking the successor would lead to an erroneous result.
   \end{algorithmic}
 \end{algorithm}
 
-\section{Predicate variables}
-The cases where the proof goal is a predicate variable is handled by the rules \texttt{do\_proof\_predicate} and \texttt{do\_proof\_place\_predicate}.
-
-\[
-\proofrule
-{(\loc, \region) \vdash X}
-{(\loc, \region) \vdash \phi}
-%
-\quad
-%
-\proofrule
-{(\loc, \region), \placeholder \vdash X}
-{(\loc, \region), \placeholder \vdash \phi}
-\]
-Where $X \eqsigma \phi \in \E$ is an equation in the PES.
-
-\jk{Describe how the caching and cycle detection works}
-
-
-\section{Boolean operators}
-
-\subsection{Conjunction}
-
-\[
-\proofrule[\land]
-{(\loc, \region) \vdash \phi_1 \land \phi_2}
-{(\loc, \region) \vdash \phi_1
-\quad (\loc, \region) \vdash \phi_2}
-\]
-
-\begin{algorithm}[H]
-\caption{$\method{do\_proof\_and}(\loc, \region, \phi_1 \land \phi_2)$}
-\begin{algorithmic}
-\STATE $\var{result} \gets \method{do\_proof}(\loc, \region, \phi_1)$
-\IF{\var{result}}
-  \STATE $\var{result} \gets \method{do\_proof}(\loc, \region, \phi_2)$
-\ENDIF
-\RETURN \var{result}
-\end{algorithmic}
-\end{algorithm}
-
-The following rule, with placeholders, is not described explicitly in~\cite{FC:14,FC:14report}, we invent a new name for it. The description is straightforward.
-\[
-\proofrule[\land_p]
-{(\loc, \region), \placeholder \vdash \phi_1 \land \phi_2}
-{(\loc, \region), \placeholder[1] \vdash \phi_1
-\quad (\loc, \region), \placeholder[2] \vdash \phi_2}
-\placeholder = \placeholder[1] \cap \placeholder[2]
-\]
-
-\begin{algorithm}[H]
-\caption{$\method{do\_proof\_place\_and}(\loc, \region, \placeholder, \phi_1 \land \phi_2)$}
-\begin{algorithmic}
-\STATE $\placeholder[1] \gets \infty$
-\STATE $\method{do\_proof\_place}(\loc, \region, \placeholder[1], \phi_1)$
-\STATE $\placeholder \gets \placeholder \cap \placeholder[1]$
-\IF{$\placeholder = \emptyset$}
-  \STATE $\placeholder[2] \gets \infty$
-  \STATE $\method{do\_proof\_place}(\loc, \region, \placeholder[2] \phi_2)$
-  \STATE $\placeholder \gets \placeholder \cap \placeholder[2]$
-\ENDIF
-\end{algorithmic}
-\end{algorithm}
-Note that if all proof methods simply restrict the placeholder, we could simplify this to the following code.
-Currently, this leads to incorrect output of the tool!
-\begin{algorithm}[H]
-\caption{$\method{do\_proof\_place\_and}(\loc, \region, \placeholder, \phi_1 \land \phi_2)$}
-\begin{algorithmic}
-\STATE $\method{do\_proof\_place}(\loc, \region, \placeholder, \phi_1)$
-\IF{$\placeholder = \emptyset$}
-  \STATE $\method{do\_proof\_place}(\loc, \region, \placeholder \phi_2)$
-\ENDIF
-\end{algorithmic}
-\end{algorithm}
-
-\subsection{Disjunction}
-The proof rules for $\lor$ given in~\cite{FC:14} are the following.
-\[
-\proofrule[\lor_l]
-{(\loc, \region) \vdash \phi_1 \lor \phi_2}
-{(\loc, \region) \vdash \phi_1}
-%
-\quad
-\proofrule[\lor_r]
-{(\loc, \region) \vdash \phi_1 \lor \phi_2}
-{(\loc, \region) \vdash \phi_2}
-\quad
-\proofrule[\lor_c]
-{(\loc, \region) \vdash \phi_1 \lor \phi_2}
-{(\loc, \region), \placeholder \vdash \phi_1
-\quad
-(\loc, \region), \lnot \placeholder \vdash \phi_2
-}
-\]
-
-\[
-\proofrule[\lor_s]
-{(\loc, \region) \vdash \phi_1 \lor \phi_2}
-{(\loc, \region), \placeholder[1] \vdash \phi_1
-\quad (\loc, \region), \placeholder[2] \vdash \phi_2}
-(\loc, \region) \subseteq \placeholder[1] \cup \placeholder[2]
-\]
-
-This is combined into the following code.
-\begin{algorithm}[H]
-\caption{$\method{do\_proof\_or}(\loc, \region, \phi_1 \lor \phi_2)$}
-\begin{algorithmic}
-\STATE $\placeholder[1] \gets \infty$
-\STATE $\method{do\_proof\_place}(\loc, \region, \placeholder[1], \phi_1)$
-\IF[Rule $\lor_r$]{$\placeholder[1] = \emptyset$}
-  \STATE $\var{result} \gets \method{do\_proof}(\loc, \region, \phi_2)$
-\ELSIF[Rule $\lor_l$]{$(\loc, \region) \subseteq \placeholder[1]$}
-   \STATE $\var{result} \gets \true$
-\ELSE[Rule $\lor_s$]
-  \STATE $\placeholder[2] = \infty$
-  \STATE $\method{do\_proof\_place}(\loc, \region, \placeholder[2], \phi_2)$
-  \STATE $\var{result} \gets (l,cc) \subseteq \placeholder[1] \cup \placeholder[2]$
-\ENDIF
-\RETURN \var{result}
-\end{algorithmic}
-\end{algorithm}
-
-The tool also implements a ``simple or'' operator which can always be proven using the $\lor_l$ and $\lor_r$ rules.
-
-\begin{algorithm}[H]
-\caption{$\method{do\_proof\_or\_simple}(\loc, \region, \phi_1 \lor \phi_2)$}
-\begin{algorithmic}
-\STATE $\var{result} \gets \method{do\_proof}(\loc, \region, \phi_1)$
-\COMMENT{Try rule $\lor_l$ first}
-\IF[Rule $\lor_r$]{$\lnot \var{result}$}
-  \STATE $\var{result} \gets \method{do\_proof}(\loc, \region, \phi_2)$
-\ENDIF
-\RETURN \var{result}
-\end{algorithmic}
-\end{algorithm}
-
-With placeholders, we get the following proof rule, which generalised $\lor_s$. Note this is not given in
-\cite{FC:14,FC:14report}.
-\[
-\proofrule[\lor_{s_2}]
-{(\loc, \region), \placeholder \vdash \phi_1 \lor \phi_2}
-{(\loc, \region), \placeholder[1] \vdash \phi_1
-\quad (\loc, \region), \placeholder[2] \vdash \phi_2}
-(\loc, \region) \cap \placeholder \subseteq \placeholder[1] \cup \placeholder[2]
-\]
-This sidecondition can be validated by ensuring $\placeholder \subseteq \placeholder[1] \cup \placeholder[2]$.
-
-This gives rise to the following code.
-\begin{algorithm}[H]
-\caption{$\method{do\_proof\_place\_or}(\loc, \region, \placeholder, \phi_1 \lor \phi_2)$}
-\begin{algorithmic}
-\STATE $\placeholder[1] \gets \placeholder$
-\STATE $\method{do\_proof\_place}(\loc, \region, \placeholder[1], \phi_1)$
-\IF[First subgoal does not yet cover the entire placeholder]{$\placeholder[1] \neq \placeholder$}
-  \STATE $\placeholder[2] = \placeholder$
-  \STATE $\method{do\_proof\_place}(\loc, \region, \placeholder[2], \phi_2)$
-  \STATE $\placeholder \gets \placeholder[1] \cup \placeholder[2]$
-\ENDIF
-\end{algorithmic}
-\end{algorithm}
-
-Again the case for simple or is considered separately. The language construct appears to be such that
-the placeholder will always either be completely empty, or completely full.
-\begin{algorithm}[H]
-\caption{$\method{do\_proof\_place\_or\_simple}(\loc, \region, \placeholder, \phi_1 \lor \phi_2)$}
-\begin{algorithmic}
-\STATE $\placeholder[1] \gets \placeholder$
-\STATE $\method{do\_proof\_place}(\loc, \region, \placeholder[1], \phi_1)$
-\IF{$\placeholder[1] = \placeholder$}
-  \STATE $\placeholder \gets \placeholder[1]$
-\ELSE
-  \STATE $\method{do\_proof\_place}(\loc, \region, \placeholder, \phi_2)$
-\ENDIF
-\end{algorithmic}
-\end{algorithm}
-
-\subsection{Exists}
-
-\[
-\proofrule[\exists_{t_1}]
-{(\loc, \region) \vdash \exists(\phi)}
-{\suc((\loc, \region)), \placeholder \vdash \phi}
-(\loc, \region) \subseteq \pre(\placeholder)
-\]
-%
-For $\exists(\phi)$ we need to ensure that we only consider valid time advances (those satisfying the invariants).
-We therefore consider $\exists(\inv(\loc) \land \phi)$ instead.
-We get the following derivation (which is given in~\cite[Appendix C.2]{FC:14}).
-\[
-\proofrule[\exists_{t_1}]
-{(\loc, \region) \vdash \exists(\inv(\loc) \land \phi)}
-{
-  \proofrule[\land_p]
-  {\suc((\loc, \region)), \placeholder \vdash \inv(\loc) \land \phi}
-  {\suc((\loc, \region)), \placeholder[1] \vdash \inv(\loc)
-  \quad \suc((\loc, \region)), \placeholder[2] \vdash \phi}
-  \placeholder = \placeholder[1] \cap \placeholder[2]
-}
-(\loc, \region) \subseteq \pre(\placeholder)
-\]
-The subgoal involving $\inv(\loc)$ can be proven setting $\placeholder[1] = \inv(\loc)$, which is
-the most liberal placeholder to prove the subgoal. If we take this simplification, this forces $\placeholder[2] \subseteq \inv(\loc)$,
-and we get the following proof rule (writing $\placeholder$ instead of $\placeholder[2]$).
-\[
-\proofrule
-{(\loc, \region) \vdash \exists(\inv(\loc) \land \phi)}
-{\suc((\loc, \region)), \placeholder \vdash \phi}
-\begin{array}{l}
-\placeholder \subseteq \inv(\loc) \\
-(\loc, \region) \subseteq \pre(\placeholder)
-\end{array}
-\]
-
-This is implemented in the following pseudocode. Note that this assumes the recursive
-call to \method{do\_proof} only restricts the placeholder, and does not enlarge it.
-
-\begin{algorithm}[H]
-\caption{$\method{do\_proof\_exists}(\loc, \region, \exists(\phi))$}
-\begin{algorithmic}
-\STATE $\placeholder \gets \inv(\loc)$ \COMMENT{Rule $\exists_{t_1}$}
-\STATE $\method{do\_proof\_place}(\loc, \suc(\region), \placeholder, \phi)$
-\RETURN $\region \subseteq \pre(\placeholder)$
-\end{algorithmic}
-\end{algorithm}
-
-\[
-%
-\proofrule[\exists_{t_2}]
-{(\loc, \region), \placeholder[\exists] \vdash \exists(\phi)}
-{\suc((\loc, \region)), \placeholder \vdash \phi}
-\placeholder[\exists] \subseteq \pre(\placeholder)
-\]
-
-If we add the placeholder to the proof rule, we have a similar modification as
-before. If we again do the derivation from~\cite[Appendix C.2]{FC:14report} we get:
-\[
-\proofrule[\exists_{t_2}]
-{(\loc, \region), \placeholder[\exists] \vdash \exists(\inv(\loc) \land \phi)}
-{\proofrule[\land_p]
-  {\suc((\loc, \region)), \placeholder \vdash \inv(\loc) \land \phi}
-  {\suc((\loc, \region)), \placeholder[1] \vdash \inv(\loc)
-   \quad \suc((\loc, \region)), \placeholder[2] \vdash \phi}
-  \placeholder = \placeholder[1] \cap \placeholder[2]
-}
-(\loc, \region) \cap \placeholder[\exists] \subseteq \pre(\placeholder)
-\]
-We can again set $\placeholder[1] = \inv(\loc)$ to get rid of the first subgoal of the $\land$,
-obtaining the following proof.
-\[
-\proofrule[\exists_{t_2}]
-{(\loc, \region), \placeholder[\exists] \vdash \exists(\inv(\loc) \land \phi)}
-{\suc((\loc, \region)), \placeholder \vdash \phi}
-\begin{array}{l}
-\placeholder \subseteq \inv(l)\\
-(\loc, \region) \cap \placeholder[\exists] \subseteq \pre(\placeholder)
-\end{array}
-\]
-The second side condition can be ensured immediately by ensuring $\placeholder[\exists] \subseteq \pre(\placeholder)$.
-
-\begin{algorithm}[H]
-\caption{$\method{do\_proof\_exists\_place}(\loc, \region, \placeholder[\exists], \exists(\phi))$}
-\begin{algorithmic}
-\STATE $\placeholder \gets \inv(\loc)$ \COMMENT{Rule $\exists_{t_2}$}
-\STATE $\method{do\_proof\_place}(\loc, \suc(\region), \placeholder, \phi)$
-\STATE $\placeholder[\exists] \gets \placeholder[\exists] \cap \pre(\placeholder)$
-\end{algorithmic}
-\end{algorithm}
-
-% \[
-% \proofrule[\exists_{t_1}-Inv]
-% {(\loc, \region) \vdash \exists(\inv(\loc) \land \phi)}
-% {\suc((\loc, \region)), \placeholder \vdash \inv(\loc)
-% \quad \suc((\loc, \region)), \placeholder \vdash \phi}
-% (\loc, \region) \subseteq \pre(\placeholder)
-% %
-% \quad
-% %
-% \proofrule[\exists_{t_2}]
-% {(\loc, \region), \placeholder[\exists] \vdash \exists(\phi)}
-% {\suc((\loc, \region)), \placeholder \vdash \phi}
-% \placeholder[\exists] \subseteq \pre(\placeholder)
-% \]
-
-For relativized $\exists$ we have the following proof rule.
-\[
-\proofrule[\exists_{r_1}]
-{(\loc, \region) \vdash \exists_{\phi_1}(\phi_2)}
-{\suc((\loc,\region)), \placeholder[2] \vdash \phi_2
-\quad
-\suc((\loc, \region)), \pre_{<}(\placeholder[2]) \vdash \phi_1
-}
-(\loc, \region) \subseteq \pre(\placeholder[2])
-\]
-
-Note that here we also need to incorporate the invariant into the proof rule. We therefore
-need to prove that $\exists_{(\inv(\loc) \land \phi_1)}(\inv(\loc) \land \phi_2)$ instead.
-\[
-\proofrule[\exists_{r_1}]
-{(\loc, \region) \vdash \exists_{\inv(\loc) \land \phi_1}(\inv(\loc) \land \phi_2)}
-{\suc((\loc,\region)), \placeholder[2] \vdash \inv(\loc) \land \phi_2
-\quad
-\suc((\loc, \region)), \pre_{<}(\placeholder[2]) \vdash \inv(\loc) \land \phi_1
-}
-(\loc, \region) \subseteq \pre(\placeholder[2])
-\]
-
-For the first subgoal, we have the following derivation.
-\[
-\proofrule[\land_p]
-{\suc((\loc,\region)), \placeholder[2] \vdash \inv(\loc) \land \phi_2}
-{\suc((\loc,\region)), \placeholder[2,1] \vdash \inv(\loc)
-\quad \suc((\loc,\region)), \placeholder[2,2] \vdash \phi_2}
-\placeholder[2] = \placeholder[2,1] \cap \placeholder[2,2]
-\]
-In this proof we can set $\placeholder[2,1] = \inv(\loc)$, if we simplify we obtain the following.
-\[
-\proofrule[\land_p]
-{\suc((\loc,\region)), \placeholder[2] \vdash \inv(\loc) \land \phi_2}
-{\suc((\loc,\region)), \placeholder[2,2] \vdash \phi_2}
-\placeholder[2] = \inv(\loc) \cap \placeholder[2,2]
-\]
-
-For te second subgoal, we first replace $\pre_{<}(\placeholder[2])$ with a fresh
-placeholder $\placeholder[1]$, and require $\suc((\loc, \region)) \cap \pre_{<}(\placeholder[2]) \subseteq \suc((\loc, \region)) \cap \placeholder[1]$.
-Subsequently we apply the $\land_p$ rule.
-\[
-\proofrule
-{\suc((\loc, \region)), \pre_{<}(\placeholder[2]) \vdash \inv(\loc) \land \phi_1}
-{\proofrule[\land_p]
-  {\suc((\loc, \region)), \placeholder[1] \vdash \inv(\loc) \land \phi_1}
-  {\suc((\loc, \region)), \placeholder[1,1] \vdash \inv(\loc)
-  \quad \suc((\loc, \region)), \placeholder[1,2] \vdash \phi_1}
-  \placeholder[1] = \placeholder[1,1] \cap \placeholder[1,2]
-}
-\suc((\loc, \region)) \cap \pre_{<}(\placeholder[2]) \subseteq \suc((\loc, \region)) \cap \placeholder[1]
-\]
-We can again set $\placeholder[1,1] = \inv(\loc)$, and simplifying we obtain
-\[
-\proofrule
-{\suc((\loc, \region)), \pre_{<}(\placeholder[2]) \vdash \inv(\loc) \land \phi_1}
-{\suc((\loc, \region)), \placeholder[1,2] \vdash \phi_1}
-\suc((\loc, \region)) \cap \pre_{<}(\placeholder[2]) \subseteq \suc((\loc, \region)) \cap \inv(\loc) \cap \placeholder[1,2]
-\]
-%
-If we combine all of this, we get the following derived proof rule for relativized~$\exists$.
-\[
-\proofrule
-{(\loc, \region) \vdash \exists_{\inv(\loc) \land \phi_1}(\inv(\loc) \land \phi_2)}
-{\suc((\loc,\region)), \placeholder[2,2] \vdash \phi_2
-\quad \suc((\loc, \region)), \placeholder[1,2] \vdash \phi_1
-\quad }
-\begin{array}{l}
-(\loc, \region) \subseteq \pre(\placeholder[2]) \\
-\placeholder[2] = \inv(\loc) \cap \placeholder[2,2] \\
-\placeholder[1] = \inv(\loc) \cap \placeholder[1,2] \\
-\suc((\loc, \region)) \cap \pre_{<}(\placeholder[2]) \subseteq \suc((\loc, \region)) \cap \placeholder[1]
-\end{array}
-\]
-
-Finally, we incorporate the assumption that invariants are \emph{past closed}, we therefore get that $\pre_{<}(\placeholder[2]) \subseteq \placeholder[1]$ iff $\pre_{<}(\placeholder[2]) \subseteq \placeholder[1,2]$. We simplify to the following.
-\[
-\proofrule
-{(\loc, \region) \vdash \exists_{\inv(\loc) \land \phi_1}(\inv(\loc) \land \phi_2)}
-{\suc((\loc,\region)), \placeholder[2] \vdash \phi_2
-\quad \suc((\loc, \region)), \placeholder[1] \vdash \phi_1
-}
-\begin{array}{l}
-(\loc, \region) \subseteq \pre(\placeholder[2]) \\
-\placeholder[1] \subseteq \inv(\loc) \\
-\placeholder[2] \subseteq \inv(\loc) \\
-\suc((\loc, \region)) \cap \pre_{<}(\placeholder[2]) \subseteq \suc((\loc, \region)) \cap \placeholder[1]
-\end{array}
-\]
-Note that if $\placeholder[1] = \emptyset$, the property can still hold if $\phi_2$ is satisfied immediately (so $\pre_{<}(\placeholder[2]) = \emptyset$). This gives rise to the following pseudocode.
-
-\begin{algorithm}[H]
-\caption{$\method{do\_proof\_exists\_rel}(\loc, \region, \exists_{\phi_1}(\phi_2))$}
-\begin{algorithmic}
-\STATE $\placeholder[2] \gets \inv(\loc)$ \COMMENT{Rule $\exists_{r_1}$}
-\STATE $\method{do\_proof\_place}(\loc, \suc(\region), \placeholder[2], \phi_2)$
-\IF[First subgoal fails]{$\placeholder[2] = \emptyset$}
-  \STATE $\var{result} \gets \false$
-\ELSE[Solve second subgoal and check side conditions]
-  \STATE $\placeholder[1] \gets \infty$
-  \STATE $\method{do\_proof\_place}(\loc, \suc(\region), \placeholder[1], \phi_1)$
-  \IF[$\phi_2$ needs to hold immediately]{$\placeholder[1] \cap \pre_{<}(\placeholder[2]) = \emptyset$}
-    \STATE $\var{result} \gets \region \subseteq \placeholder[2]$
-    % \STATE $\placeholder[2] \gets \placeholder[2] \cap \region$
-    % \IF{$\placeholder[2] = \emptyset$}
-    %   \STATE $\var{result} \gets \false$
-    % \ELSE
-    %   \STATE $\var{result} \gets \region \subseteq \placeholder[2]$
-    % \ENDIF
-  \ELSE[Check the side conditions]
-    \STATE Let $\placeholder$ be such that $\placeholder \subseteq \placeholder[2]$, and
-    $\pre_{<}(\placeholder) \subseteq \placeholder[1]$ if such $\placeholder$ exists, en $\placeholder = \emptyset$ otherwise.
-    \STATE $\var{result} \gets \region \subseteq \pre(\placeholder)$
-  \ENDIF
-\ENDIF
-\RETURN $\var{result}$
-\end{algorithmic}
-\end{algorithm}
- \todo{Check the inner else carefully, I believe this is what the implementation does in predCheckRule.}
-
+\subsection{Relativized exists, with placeholder}
 If we incorporate the placeholder, we get the following proof rule.
 
 \[
@@ -1016,7 +1033,23 @@ The derivations for the two subgoals are the same as before, only the side condi
 \suc((\loc, \region)) \cap \pre_{<}(\placeholder[2]) \subseteq \suc((\loc, \region)) \cap \placeholder[1]
 \end{array}
 \]
-The first side condition can easily be validated by setting $\placeholder[\exists] = \pre(\placeholder[2])$.
+
+Again, as before, $\placeholder[2]$ can be too big, and we need to restrict it to $\placeholder \subseteq \placeholder[2]$ for which the sidecondition can be satisfied. We obtain the following proof rule.
+\[
+\proofrule
+{(\loc, \region), \placeholder[\exists] \vdash \exists_{\inv(\loc) \land \phi_1}(\inv(\loc) \land \phi_2)}
+{\suc((\loc,\region)), \placeholder[2] \vdash \phi_2
+\quad \suc((\loc, \region)), \placeholder[1] \vdash \phi_1
+}
+\begin{array}{l}
+(\loc, \region) \cap \placeholder[\exists] \subseteq \pre(\placeholder) \\
+\placeholder[1] \subseteq \inv(\loc) \\
+\placeholder[2] \subseteq \inv(\loc) \\
+\placeholder \subseteq \placeholder[2] \\
+\suc((\loc, \region)) \cap \pre_{<}(\placeholder) \subseteq \suc((\loc, \region)) \cap \placeholder[1]
+\end{array}
+\]
+Note that the first side condition can easily be validated by setting $\placeholder[\exists] = \pre(\placeholder)$.
 
 \begin{algorithm}[H]
 \caption{$\method{do\_proof\_place\_exists\_rel}(\loc, \region, \placeholder[\exists], \exists_{\phi_1}(\phi_2))$}
@@ -1031,28 +1064,13 @@ The first side condition can easily be validated by setting $\placeholder[\exist
   \IF[$\phi_2$ needs to hold immediately]{$\placeholder[1] \cap \pre_{<}(\placeholder[2]) = \emptyset$}
     \STATE $\placeholder[\exists] \gets \region \cap \placeholder[2]$
   \ELSE[Check the side conditions]
-    \STATE Let $\placeholder$ be such that $\placeholder \subseteq \placeholder[2]$, and
-    $\pre_{<}(\placeholder) \subseteq \placeholder[1]$ if such $\placeholder$ exists, en $\placeholder = \emptyset$ otherwise.
+    \STATE $\placeholder \gets \method{establish\_exists\_rel\_sidecondition}(\loc, \region, \placeholder[1], \placeholder[2])$
     \STATE $\placeholder[\exists] \gets \placeholder[\exists] \cap \pre(\placeholder)$
   \ENDIF
 \ENDIF
 \end{algorithmic}
 \end{algorithm}
 
-
-
-Note that this pseudocode assumes we can find $\placeholder$ such that 
-$\placeholder \subseteq \placeholder[2]$, and
-$\pre_{<}(\placeholder) \subseteq \placeholder[1]$ if such $\placeholder$ exists,
-and $\placeholder = \emptyset$ otherwise.
-
-{\color{red} NOTE: we need to ensure that the placeholder can be reached, so we in fact need to
-check $\suc((\loc, \region)) \cap \pre_{<}(\placeholder) \subseteq \suc((\loc, \region)) \cap \placeholder[1]$.}
-
-Given $\placeholder[1] \subseteq \inv(\loc)$, $\placeholder[2] \subseteq \inv(\loc)$, we need to find $\placeholder \subseteq \placeholder[2]$ such that
-$\suc((\loc, \region)) \cap \pre_{<}(\placeholder) \subseteq \suc((\loc, \region)) \cap \placeholder[1]$.
-
-Observe that we can decide whether $\placeholder[2]$ satisfies this side condition by checking $\suc((\loc, \region)) \cap \pre_{<}(\placeholder[2]) \cap \overline{\suc((\loc, \region)) \cap \placeholder[1]} = \emptyset$.
 
 \subsection{Forall}
 
