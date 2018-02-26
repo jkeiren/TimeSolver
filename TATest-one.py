@@ -8,6 +8,7 @@ import os
 import re
 import subprocess
 import sys
+from pprint import pprint
 
 # These paths are relative to the directory in which this script is stored.
 # We make sure we are in the appropriate directory in the __main__ at the
@@ -17,7 +18,7 @@ EXECUTABLE = os.path.join("pes.timed", "timesolver-ta")
 def filterTimes(lines):
     """Filter times from the output. This data is variable, so should not be
        taken into account in the comparison."""
-    invalid = re.compile(r"(running|Program|start|end) (t|T)(ime)|demo|timesolver")
+    invalid = re.compile(r"(running|Program|start|end) (t|T)(ime)|(input)|demo|timesolver")
     return list(filter(lambda x: invalid.search(x) is None, lines))
 
 
@@ -33,9 +34,10 @@ def compare(expectedFileName, given, printDiff = False):
             if(printDiff and not result):
                 sys.stdout.write("[!!!] Output has changed for {0}\n".format(expectedFileName))
                 sys.stdout.write("[!!!] Diff follows")
-                d = difflib.Differ()
-                diff = d.compare(expectedFile, givenLines)
+                diff = difflib.context_diff(expectedFile, givenLines)
                 sys.stdout.writelines(diff)
+            if(not result):
+              print("False compare")
             return result
     except:
         sys.stdout.write("[!!!] Failed to compare with existing file {0}\n".format(expectedFileName))
@@ -121,7 +123,7 @@ def main():
 
 if __name__ == "__main__":
     result = main()
-    if result == 0:
-        sys.exit(0)
+    if result:
+      sys.exit(0)
     else:
-        sys.exit(1)
+      sys.exit(1)
