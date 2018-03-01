@@ -55,6 +55,10 @@ cmake .. -DCMAKE_INSTALL_PREFIX=/path/to/prefix
 
 If you followed the instructions above, you can clean up by doing `rm -r build` from the root of your repository.
 
+### Generating source code documentation
+
+You can generate source code documentation using `make doxygen`. The output will be generated in the directory `build/pes.timed/html`.
+
 ### Dependencies
 
 No additional libraries are needed. For testing, googletest is used, but this is downloaded on-demand.
