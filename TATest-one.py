@@ -49,6 +49,8 @@ def runTestCase(fileName, overwrite, printdiff, debug, diff):
     True, the expected output is overwritten. If overwrite is False, the output
     is compared to the file in which the expected output is stored."""
     global EXECUTABLE
+    resultPath = fileName + ".expectedout.gz"
+
     try:
         if debug:
             cmd = [EXECUTABLE, "-d", fileName]
@@ -60,8 +62,6 @@ def runTestCase(fileName, overwrite, printdiff, debug, diff):
                              stderr=subprocess.PIPE,
                              universal_newlines=True, check=True)
         
-        resultPath = fileName + ".expectedout.gz"
-
         # Check whether the file exists. If it exists, compare the result, and
         # do not overwrite if the content is the same
         if diff:
