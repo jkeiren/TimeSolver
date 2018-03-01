@@ -43,10 +43,10 @@ target_link_libraries(timesolver-ta cpplogger ExprNode parse)
 install (TARGETS timesolver-ta DESTINATION bin)
 
 # Enable unit-testing (conditionally)
-if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.10")
-  add_subdirectory(test)
-else()
+if(${CMAKE_VERSION} VERSION_LESS "3.10")
   message(WARNING "Not building unit tests; consider switching to CMake 3.10 or newer")
+else()
+  add_subdirectory(test)
 endif()
 
 # Detect doxygen. If doxygen is available, allow generating doxygen documentation.
