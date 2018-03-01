@@ -34,7 +34,7 @@ def compare(expectedFileName, given, printDiff = False):
             if(printDiff and not result):
                 sys.stdout.write("[!!!] Output has changed for {0}\n".format(expectedFileName))
                 sys.stdout.write("[!!!] Diff follows")
-                diff = difflib.context_diff(expectedFile, givenLines)
+                diff = difflib.ndiff(expectedFile, givenLines)
                 sys.stdout.writelines(diff)
             if(not result):
               print("False compare")

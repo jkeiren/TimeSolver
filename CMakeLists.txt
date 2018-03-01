@@ -25,9 +25,15 @@ foreach(file ${EXAMPLE_FILES})
   if(NOT SKIP)
     string(REGEX MATCH "GRC-4" NODEBUG "${TESTNAME}")
     if(NODEBUG)
-      set(TATEST_ARG ${TATEST_ARG} --nodebug)
+      set(NODEBUG_ARG --nodebug)
+    else()
+      unset(NODEBUG_ARG)
     endif()
 
-    add_test(tooltest-${TESTNAME} "${PROJECT_SOURCE_DIR}/TATest-one.py" -d ${TATEST_ARG} "${PROJECT_BINARY_DIR}/pes.timed/timesolver-ta" ${file} DEPENDS timesolver-ta)
+    add_test(tooltest-${TESTNAME}
+             ${PROJECT_SOURCE_DIR}/TATest-one.py -d ${NODEBUG_ARG}
+             ${PROJECT_BINARY_DIR}/pes.timed/timesolver-ta
+             ${file}
+             DEPENDS timesolver-ta)
   endif()
 endforeach()
