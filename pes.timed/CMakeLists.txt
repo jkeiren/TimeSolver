@@ -50,9 +50,13 @@ else()
 endif()
 
 # Detect doxygen. If doxygen is available, allow generating doxygen documentation.
-find_package(Doxygen)
-if(${DOXYGEN_FOUND})
-  doxygen_add_docs(doxygen
-    ${PROJECT_SOURCE_DIR}
-    COMMENT "Generate doxygen documentation")
+if(${CMAKE_VERSION} VERSION_LESS "3.9.6")
+  message(WARNING "Not generating Doxygen documentation; consider switching to CMake 3.9.6 or newer")
+else()
+  find_package(Doxygen)
+  if(${DOXYGEN_FOUND})
+    doxygen_add_docs(doxygen
+      ${PROJECT_SOURCE_DIR}
+      COMMENT "Generate doxygen documentation")
+  endif()
 endif()
