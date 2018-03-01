@@ -1,24 +1,20 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.0.2)
 project (timesolver)
 
+# Allow generating tests
 enable_testing()
 
-# Used in testing using the parser
+# Add definition used in unit testing.
 add_definitions("-DEXAMPLES_DIR=${CMAKE_SOURCE_DIR}/examples")
 
-# Recursive
+# Recursively build the tool
 add_subdirectory("pes.timed")
 
-add_custom_target(tool-test 
-  COMMAND "${CMAKE_SOURCE_DIR}/TATest.py"
-  DEPENDS timesolver-ta)
-add_custom_target(tool-test-examples
-  COMMAND "${CMAKE_SOURCE_DIR}/TATest.py -xn"
-  DEPENDS timesolver-ta)
-
-# Find all examples
+# Add tool tests, running all examples
+# First, let's find all examples
 file(GLOB_RECURSE EXAMPLE_FILES "${PROJECT_SOURCE_DIR}/examples/*.in")
 
+# For each example we add a test case.
 foreach(file ${EXAMPLE_FILES})
   string(REPLACE "${PROJECT_SOURCE_DIR}/examples/" "" TESTNAME ${file})
   string(REGEX MATCH "(FISCHER-[5-9])|(GRC-[5-9])|(LEADER-[5-9])|Train[4-9]" SKIP "${TESTNAME}" )
@@ -34,6 +30,7 @@ foreach(file ${EXAMPLE_FILES})
              ${PROJECT_SOURCE_DIR}/TATest-one.py -d ${NODEBUG_ARG}
              ${PROJECT_BINARY_DIR}/pes.timed/timesolver-ta
              ${file}
-             DEPENDS timesolver-ta)
+             DEPENDS timesolver-ta
+             TIMEOUT 420)
   endif()
 endforeach()

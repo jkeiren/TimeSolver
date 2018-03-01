@@ -2,41 +2,57 @@ set (CMAKE_CXX_STANDARD 11)
 set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O -Wall")
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O -Wall -Wextra")
 
-# 	# Stack size set to 4GB for Mac, since terminal hard limit is 64MB
-# 	# My machine has 16GB of RAM
-# 	# This number is the number of bytes in Hex
 if(APPLE)
-  set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-stack_size,200000000")
+  if (NOT DEFINED TIMESOLVER_OSX_STACK_SIZE)
+    # Stack size set to 4GB for Mac, since terminal hard limit is 64MB
+    # This number is the number of bytes in Hex
+    set (TIMESOLVER_OSX_STACK_SIZE "200000000")
+  endif()
+  set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-stack_size,${TIMESOLVER_OSX_STACK_SIZE}")
 endif()
 
+# Include the logging library
 add_subdirectory(external/cpplogging)
 
+# Generate lexer and parser
 find_package(BISON)
 find_package(FLEX)
-
 BISON_TARGET(PesParser pes.y ${CMAKE_CURRENT_BINARY_DIR}/pes.tab.cc)
 FLEX_TARGET(PesScanner pes.l ${CMAKE_CURRENT_BINARY_DIR}/pes.lex.cc)
 ADD_FLEX_BISON_DEPENDENCY(PesScanner PesParser)
 
-include_directories(${CMAKE_CURRENT_BINARY_DIR}
+
+include_directories(${CMAKE_CURRENT_BINARY_DIR} # for lexer/parser
   ${CMAKE_CURRENT_SOURCE_DIR}
   external/cpplogging/include)
 
+# Build two libraries for the sake of unit testing
 add_library(ExprNode ExprNode.cc)
 add_library(parse parse.cc pes.lex.cc pes.tab.cc)
 
+# Build the actual executable
 add_executable(timesolver-ta
   timesolver-ta.cc
   ${BISON_PesParser_OUTPUTS}
   ${FLEX_PesScanner_OUTPUTS}
   )
+# Link executable
 target_link_libraries(timesolver-ta cpplogger ExprNode parse)
 
+# Make install by default installs to the bin directory.
 install (TARGETS timesolver-ta DESTINATION bin)
 
-add_subdirectory(test)
+# Enable unit-testing (conditionally)
+if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.10")
+  add_subdirectory(test)
+else()
+  message(WARNING "Not building unit tests; consider switching to CMake 3.10 or newer")
+endif()
 
+# Detect doxygen. If doxygen is available, allow generating doxygen documentation.
 find_package(Doxygen)
-doxygen_add_docs(doxygen 
-  ${PROJECT_SOURCE_DIR}
-  COMMENT "Generate doxygen documentation")
+if(${DOXYGEN_FOUND})
+  doxygen_add_docs(doxygen
+    ${PROJECT_SOURCE_DIR}
+    COMMENT "Generate doxygen documentation")
+endif()
