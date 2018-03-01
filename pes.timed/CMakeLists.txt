@@ -1,4 +1,8 @@
+cmake_minimum_required(VERSION 3.5.0)
+
 set (CMAKE_CXX_STANDARD 11)
+set (CMAKE_CXX_STANDARD_REQUIRED ON)
+set (CMAKE_CXX_EXTENSIONS OFF)
 set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O -Wall")
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O -Wall -Wextra")
 
@@ -18,9 +22,8 @@ add_subdirectory(external/cpplogging)
 find_package(BISON)
 find_package(FLEX)
 BISON_TARGET(PesParser pes.y ${CMAKE_CURRENT_BINARY_DIR}/pes.tab.cc)
-FLEX_TARGET(PesScanner pes.l ${CMAKE_CURRENT_BINARY_DIR}/pes.lex.cc)
+FLEX_TARGET(PesScanner pes.l ${CMAKE_CURRENT_BINARY_DIR}/pes.lex.cc DEFINES_FILE pes.lex.hh)
 ADD_FLEX_BISON_DEPENDENCY(PesScanner PesParser)
-
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR} # for lexer/parser
   ${CMAKE_CURRENT_SOURCE_DIR}
