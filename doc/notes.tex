@@ -1074,6 +1074,8 @@ Note that the first side condition can easily be validated by setting $\placehol
 
 \subsection{Forall}
 
+\subsubsection{Without placeholder}
+
 The forall rule without placeholder is described as follows.
 \[
 \proofrule[\forall_{t_1}]
@@ -1082,7 +1084,7 @@ The forall rule without placeholder is described as follows.
 \]
 
 In the implementation, care needs to be taken that only the valid time successors of $\region$ are considered,
-i.e., only thos time successors of $\region$ are considered that satisfy $\inv(\loc)$. To achieve this,
+i.e., only those time successors of $\region$ are considered that satisfy $\inv(\loc)$. To achieve this,
 instead of $\forall(\phi)$, the invariant is incorporated, and the formula $\forall(\inv(\loc) \implies \phi)$
 is proven. Note this formula is simplified to $\forall(\lnot \inv(\loc) \lor \phi)$.
 We can now derive the following, using our rules:
@@ -1106,6 +1108,7 @@ The following implementation for $\forall(\phi)$ is now obtained.
 \end{algorithmic}
 \end{algorithm}
 
+\subsubsection{With placeholders}
 The case of $\forall$ with placeholders is described using the following rule.
 \[
 \proofrule[\forall_{t_2}]
@@ -1114,7 +1117,7 @@ The case of $\forall$ with placeholders is described using the following rule.
 \suc((\loc, \region) \cap \placeholder[\forall]) \subseteq \suc((\loc, \region)) \land \placeholder
 \]
 
-Here we again need to incorporate the invariant, so we again look at applying the rule
+Here we again need to incorporate the invariant, so we apply the rule
 to $\forall(\lnot \inv(\loc) \lor \phi)$ instead.
 \[
 \proofrule[\forall_{t_2}]
@@ -1144,9 +1147,53 @@ Here we can again set $\placeholder[1] = \lnot \inv(\loc)$. If we fill this in, 
 }
 \begin{array}{l}
 \suc((\loc, \region) \cap \placeholder[\forall])\\
-\quad \subseteq \suc((\loc, \region)) \land \placeholder
+\quad \subseteq \suc((\loc, \region)) \cap \placeholder
 \end{array}
 \]
+
+When folding all this into a single rule, we get
+\[
+\proofrule
+{(\loc, \region), \placeholder[\forall] \vdash \forall(\lnot \inv(\loc) \lor \phi)}
+{\suc((\loc, \region)), \placeholder[2] \vdash \phi}
+\begin{array}{l}
+\suc((\loc, \region)) \cap \placeholder \subseteq \lnot \inv(\loc) \cup \placeholder[2]\\
+ \suc((\loc, \region) \cap \placeholder[\forall]) \subseteq \suc((\loc, \region)) \cap \placeholder
+\end{array}
+\]
+% Finally, observe that $\suc((\loc, \region)) \subseteq \inv(\loc)$ by definition of $\suc$, hence $\suc((\loc, \region)) \cap \placeholder \subseteq \lnot \inv(\loc) \cup \placeholder[2]$ is equivalent to saying $\suc((\loc, \region)) \cap \placeholder \subseteq \placeholder[2]$, hence the two side conditions can be collapsed into a single side condition, resulting in
+% \[
+% \proofrule
+% {(\loc, \region), \placeholder[\forall] \vdash \forall(\lnot \inv(\loc) \lor \phi)}
+% {\suc((\loc, \region)), \placeholder[2] \vdash \phi}
+%  \suc((\loc, \region) \cap \placeholder[\forall]) \subseteq \placeholder[2]
+% \]
+
+The side condition is computed as follows.
+\begin{algorithm}[H]
+\begin{algorithmic}
+  \caption{$\method{establish\_forall\_sidecondition}(\loc, \region, \placeholder[2])$}
+  %\COMMENT{Establish $\placeholder[\forall]$ such that $\suc((\loc, \region) \cap \placeholder[\forall]) \subseteq \suc((\loc, \region)) \cap \placeholder$ and $\suc((\loc, \region)) \cap \placeholder \subseteq \lnot \inv(\loc) \cup \placeholder[2]$}
+  \STATE $\placeholder \gets \lnot \inv(\loc) \cup \placeholder[2]$ \COMMENT{First sidecondition}
+  \STATE $\mathit{\placeholder[\forall]} \gets \placeholder$
+  \COMMENT{First check if $\placeholder$ is a good guess to satisfy second sidecondition}
+  \IF{$\suc(\region \cap \placeholder[\forall]) \subseteq \suc(\region) \cap \placeholder$}
+    \RETURN $\placeholder[\forall]$
+  \ELSE
+    \STATE $\mathit{bad} \gets \overline{\placeholder} \cap \suc(\region \cap \placeholder[\forall])$
+    \COMMENT{Those states in $\suc(\region \cap \placeholder[\forall])$ that are outside $\placeholder$ ($\suc(\loc)$ is optimized out)}
+    \STATE $\mathit{good} \gets \overline{\pre(\mathit{bad})} \cap \suc(\region)$
+    \COMMENT{Essentially compute $\lnot \exists(\mathit{bad})$}
+    \STATE $\placeholder[\forall] \gets \placeholder[\forall] \cap \mathit{good} \cap \suc(\loc, \region)$
+    \IF[Ensure this satisfies the sidecondition]{$\suc(\region \cap \placeholder[\forall]) \subseteq \placeholder \cup \lnot \inv(\loc))$}
+      \RETURN $\placeholder[\forall]$
+    \ELSE[This case should not occur. To err on the side of caution, we return the empty set here]
+      \RETURN $\emptyset$
+    \ENDIF
+  \ENDIF
+\end{algorithmic}
+\end{algorithm}
+
 
 This gives rise to the following pseudocode.
 \begin{algorithm}[H]
@@ -1157,13 +1204,13 @@ This gives rise to the following pseudocode.
 \IF{$\placeholder[2] = \emptyset$}
   \STATE $\placeholder[\forall] = \emptyset$
 \ELSE
-  \STATE Let $\placeholder[\forall]$ be such that 
-  $\suc((\loc, \region) \cap \placeholder[\forall]) \quad \subseteq \suc((\loc, \region)) \land \placeholder$
-  and $\suc((\loc, \region)) \cap \placeholder \subseteq \lnot \inv(\loc) \cup \placeholder[2]$
+  \STATE $\placeholder[\forall] \gets \method{establish\_forall\_sidecondition}(\loc, \region, \placeholder[2])$
 \ENDIF
 \end{algorithmic}
 \end{algorithm}
 
+
+\subsection{Relativized forall}
 Now let us consider relativized forall. The actual proof rules are derived using~\cite[Lemma 1]{FC:14}, which states that $\forall_{\phi_1}(\phi_2) = \forall(\phi_2) \lor \exists_{\phi_2}(\phi_1 \land \phi_2)$.
 % \[
 % \proofrule[\text{Lemma 1 (i)}]

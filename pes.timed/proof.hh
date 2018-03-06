@@ -654,6 +654,97 @@ protected:
     // does this case come up due to how pred check works?
   }
 
+  inline void establish_forall_place_sidecondition(DBMList* result,
+                                                   const SubstList& discrete_state,
+                                                   const DBM& zone,
+                                                   const DBMList& placeholder2)
+  {
+    assert(placeholder2.isInCf());
+
+    // First, we establish whether placeholder2 is a good candidate for the result.
+    // i.e. assume placeholder = !inv(l) || placeholder2
+    DBM succ_zone(zone);
+    succ_zone.suc();
+    succ_zone.cf();
+
+    // establish placeholder = !inv(l) || placeholder2
+    // this ensures satisfaction of first sidecondition.
+    DBMList placeholder(placeholder2);
+    DBMList invariant_region(*INFTYDBM);
+    bool nonempty_invariant = restrict_to_invariant(
+        input_pes.invariants(), &invariant_region, discrete_state);
+    if (nonempty_invariant) {
+      !invariant_region;
+      invariant_region.cf();
+      placeholder.addDBMList(invariant_region);
+      placeholder.cf();
+    }
+
+    // Guess placeholder_forall == placeholder is enough to satisfy second sidecondition.
+    DBMList placeholder_forall(placeholder);
+
+    // succ((l,cc)) && placeholder
+    DBMList succ_zone_and_placeholder(placeholder);
+    succ_zone_and_placeholder.intersect(succ_zone);
+    succ_zone_and_placeholder.cf();
+
+    // succ((l,cc) && placeholder_forall)
+    DBMList succ_zone_restricted_to_placeholder_forall(zone);
+    succ_zone_restricted_to_placeholder_forall.intersect(placeholder_forall);
+    succ_zone_restricted_to_placeholder_forall.cf();
+    succ_zone_restricted_to_placeholder_forall.suc();
+    succ_zone_restricted_to_placeholder_forall.cf();
+
+    if(succ_zone_restricted_to_placeholder_forall <= succ_zone_and_placeholder) {
+      // success
+      *result = placeholder_forall;
+    } else {
+      // restrict placeholder_forall.
+      // oberve that forall(placeholder) = !exists(!placeholderl).
+      // compute the subset of !placeholder that can be reached from (l,cc) && placeholder_forall
+      DBMList not_placeholder(placeholder);
+      !not_placeholder;
+      not_placeholder.intersect(succ_zone_restricted_to_placeholder_forall);
+      not_placeholder.cf();
+
+      // Note for exists(!placeholder), we determine all predecessors that
+      // lead to this set.
+      not_placeholder.pre();
+      not_placeholder.cf();
+      // we now have an approximation of exists(!placeholder_forall)
+      !not_placeholder;
+      // and this leads to an approximation of !exists(!placeholder_forall);
+      // We do ensure all these states are reachable from (l,cc).
+      not_placeholder.intersect(succ_zone);
+      not_placeholder.cf();
+
+      // Restrict placeholder!
+      placeholder_forall.intersect(not_placeholder);
+      placeholder_forall.cf();
+
+      // Check that this is indeed correct.
+      // succ((l,cc) && placeholder_forall)
+      succ_zone_restricted_to_placeholder_forall = zone;
+      succ_zone_restricted_to_placeholder_forall.intersect(placeholder_forall);
+      succ_zone_restricted_to_placeholder_forall.cf();
+      succ_zone_restricted_to_placeholder_forall.suc();
+      succ_zone_restricted_to_placeholder_forall.cf();
+
+      if(succ_zone_restricted_to_placeholder_forall.emptiness() || succ_zone_restricted_to_placeholder_forall <= succ_zone_and_placeholder) {
+        *result = placeholder_forall;
+      } else {
+        cpplog(cpplogging::debug, "forall_place_sidecondition")
+            << "placeholder_forall: " << placeholder_forall << std::endl
+            << "succ((l,cc) && placeholder_forall): " << succ_zone_restricted_to_placeholder_forall << std::endl
+            << "succ((l,cc)) && old placeholder_forall: " << succ_zone_and_placeholder << std::endl;
+        assert(succ_zone_restricted_to_placeholder_forall <= succ_zone_and_placeholder);
+        // The old implementation simply returns the empty placeholder here.
+        // JK is wondering whether this is really reachable.
+        result->makeEmpty();
+      }
+    }
+  }
+
   /** Performs the succCheck rule of FORALL (and FORALL_REL) rules, including
    * the computing of the premise, the consequent, and the tightening of the
    * placeholder placeholder_forall.
@@ -709,10 +800,10 @@ protected:
       DBMList badVals(*placeholder_forall);
       // !(badVals || !succPrem || !succLHS) == !badVals && succPrem && succLHS
       !badVals; // All states outside currPlace
-      badVals.cf();
+      //badVals.cf();
       badVals.intersect(premise_and_placeholder_succ); // that can be reached from zone &
                                              // currPlace
-      badVals.intersect(*lhs_succ);          // *and* that can be reached from zone -- this should be
+      //badVals.intersect(*lhs_succ);          // *and* that can be reached from zone -- this should be
                                              // superfluous
       badVals.cf();
       badVals.pre();
@@ -746,6 +837,7 @@ protected:
         // use previously solved place, not new one for right hand side
         if (!(lhs_succ_and_placeholder >= premise_and_placeholder_succ)) {
           placeholder_forall->makeEmpty();
+          assert(false);
         }
       }
     }
@@ -2101,7 +2193,8 @@ inline void prover::do_proof_place_forall(const SubstList& discrete_state,
      */
 
     DBMList placeholder_forall(*place);
-    succCheckRule(&discrete_state, zone, &lhs_succ, place, &placeholder_forall);
+    establish_forall_place_sidecondition(&placeholder_forall, discrete_state, zone, *place);
+    //succCheckRule(&discrete_state, zone, &lhs_succ, place, &placeholder_forall);
     *place = placeholder_forall;
 
     if (cpplogEnabled(cpplogging::debug)) {
@@ -2152,7 +2245,6 @@ inline void prover::do_proof_place_forall_rel(const SubstList& discrete_state,
   lhs_succ.suc();
 
   DBMList placeholder1(*INFTYDBM);
-  restrict_to_invariant(input_pes.invariants(), &placeholder1, discrete_state);
   do_proof_place(discrete_state, lhs_succ, &placeholder1, *formula.getLeft());
   placeholder1.cf();
 
