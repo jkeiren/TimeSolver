@@ -744,104 +744,6 @@ protected:
       }
     }
   }
-
-  /** Performs the succCheck rule of FORALL (and FORALL_REL) rules, including
-   * the computing of the premise, the consequent, and the tightening of the
-   * placeholder placeholder_forall.
-   * @param discrete_state (*) reference to the discrete state for which we are
-   * proving
-   * @param zone (*) the reference to the left hand side of the sequent
-   * @param placeholder (*) the reference to the current placeholder.
-   * @param placeholder_forall (*) the placeholder that is tightened such that
-   *        the side condition on the successors holds. It is the empty
-   * placeholder if no such placeholder can be found. */
-  inline void succCheckRule(const SubstList* const discrete_state,
-                            const DBM& zone, const DBM* const lhs_succ,
-                            const DBMList* placeholder,
-                            DBMList* placeholder_forall) {
-    // Initially guess that the resulting placeholder is the placeholder that
-    // was precomputed, extended with the complement of the invariant of the
-    // current discrete state. The intuition is that we compute the implication:
-    // if the invariant holds, then the placeholder is satisfied.
-    *placeholder_forall = *placeholder;
-
-    DBMList invariant_region(*INFTYDBM);
-    bool nonempty_invariant = restrict_to_invariant(
-        input_pes.invariants(), &invariant_region, *discrete_state);
-    if (nonempty_invariant) {
-      !invariant_region;
-      invariant_region.cf();
-      placeholder_forall->addDBMList(invariant_region);
-      placeholder_forall->cf();
-    }
-
-    // intersect with new placeholder
-    DBMList lhs_succ_and_placeholder(*placeholder_forall);
-    lhs_succ_and_placeholder.intersect(*lhs_succ);
-    lhs_succ_and_placeholder.cf(); // The consequent
-
-    /* Computing Premise of Right part of proof */
-    /* Compute Succ(Premise and First Placeholder) */
-    // succLHS is the successor of the left-hand side, so do not repeat the work
-    DBMList premise_and_placeholder_succ(zone);
-    premise_and_placeholder_succ.intersect(*placeholder_forall);
-    premise_and_placeholder_succ.cf();
-    premise_and_placeholder_succ.suc();
-    premise_and_placeholder_succ.cf();
-
-    // First start by setting the place holder to the value of the new
-    // placeholder
-    if (!(lhs_succ_and_placeholder >= premise_and_placeholder_succ)) {
-      /* If we are here, then we have one of two cases:
-       * 1. The succCheck fails (since it is not possible)
-       * 2. THe placeholder needs to be tightened so it can pass.
-       * Invariants make this tricky */
-      // Find the bad zones;
-      DBMList badVals(*placeholder_forall);
-      // !(badVals || !succPrem || !succLHS) == !badVals && succPrem && succLHS
-      !badVals; // All states outside currPlace
-      //badVals.cf();
-      badVals.intersect(premise_and_placeholder_succ); // that can be reached from zone &
-                                             // currPlace
-      //badVals.intersect(*lhs_succ);          // *and* that can be reached from zone -- this should be
-                                             // superfluous
-      badVals.cf();
-      badVals.pre();
-      // all states with a delay into those states outside currPlace that can be
-      // reached from zone & currPlace
-      badVals.cf();
-      // At this point, we have the bad valuations. Now intersect their
-      // complement
-      !badVals;
-      // all states for which all delays remain inside currPlace, or can be
-      // reached from zone & currPlace
-      badVals.cf();
-      // Good values must be after succLHS
-      badVals.intersect(*lhs_succ);
-      // all states for which all delays remain inside currPlace, or can be
-      // reached from zone & currPlace, that can be reached from zone. really, at
-      // this point badVals contains the *good* values
-      badVals.cf();
-      placeholder_forall->intersect(badVals);
-      placeholder_forall->cf();
-      if(!placeholder_forall->emptiness()) {
-        // The placheolder has shrunk; we now check whether the side condition is
-        // satisfied.
-        // leave conseq unchanged, since that placeholder did not shrink
-        premise_and_placeholder_succ = zone;
-        premise_and_placeholder_succ.intersect(*placeholder_forall);
-        premise_and_placeholder_succ.cf();
-        premise_and_placeholder_succ.suc();
-        premise_and_placeholder_succ.cf();
-
-        // use previously solved place, not new one for right hand side
-        if (!(lhs_succ_and_placeholder >= premise_and_placeholder_succ)) {
-          placeholder_forall->makeEmpty();
-          assert(false);
-        }
-      }
-    }
-  }
 };
 
 /* IMPLEMENTATION PROOF WITHOUT PLACEHOLDERS */
@@ -1124,10 +1026,13 @@ inline bool prover::do_proof_forall(const SubstList& discrete_state,
   return do_proof(discrete_state, succ_lhs, *formula.getQuant());
 }
 
+
+
 // [FC14] Proof rules \forall_{ro1}, \forall_{ro2}, \forall_{ro3}
 inline bool prover::do_proof_forall_rel(const SubstList& discrete_state,
                                         const DBM& zone,
                                         const ExprNode& formula) {
+
   /* Proof methodology:
    * first, see if \phi_1 is satisfied during the time advance.
    * If it is, check that phi_2 is true both at and before those
@@ -1231,7 +1136,7 @@ inline bool prover::do_proof_forall_rel(const SubstList& discrete_state,
        * nor everything. */
 
       DBMList placeholder_forall(*INFTYDBM);
-      succCheckRule(&discrete_state, zone, &lhs_succ, &placeholder2, &placeholder_forall);
+      establish_forall_place_sidecondition(&placeholder_forall, discrete_state, zone, placeholder2);
       placeholder_forall.cf();
 
       if (cpplogEnabled(cpplogging::debug)) {
@@ -2194,7 +2099,6 @@ inline void prover::do_proof_place_forall(const SubstList& discrete_state,
 
     DBMList placeholder_forall(*place);
     establish_forall_place_sidecondition(&placeholder_forall, discrete_state, zone, *place);
-    //succCheckRule(&discrete_state, zone, &lhs_succ, place, &placeholder_forall);
     *place = placeholder_forall;
 
     if (cpplogEnabled(cpplogging::debug)) {
@@ -2271,7 +2175,7 @@ inline void prover::do_proof_place_forall_rel(const SubstList& discrete_state,
        */
 
       DBMList placeholder_forall(*place);
-      succCheckRule(&discrete_state, zone, &lhs_succ, place, &placeholder_forall);
+      establish_forall_place_sidecondition(&placeholder_forall, discrete_state, zone, *place);
       *place = placeholder_forall;
 
       if (cpplogEnabled(cpplogging::debug)) {
@@ -2379,7 +2283,7 @@ inline void prover::do_proof_place_forall_rel(const SubstList& discrete_state,
        * nor everything. */
 
       DBMList forallPlace(placeholder2);
-      succCheckRule(&discrete_state, zone, &lhs_succ, &placeholder2, &forallPlace);
+      establish_forall_place_sidecondition(&forallPlace, discrete_state, zone, placeholder2);
       forallPlace.cf();
 
       if (cpplogEnabled(cpplogging::debug)) {
