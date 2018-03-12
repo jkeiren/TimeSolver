@@ -1248,6 +1248,21 @@ For the first disjunct, we simply get the analogous proof to the one for relativ
 
 For the second disjunct, we derive a simplified proof using the rules for relativized exists analogous to the derivation in~\cite[Appendix C.1]{FC:14report}.
 
+% \[
+% \proofrule
+% {(\loc, \region), \placeholder[\exists] \vdash \exists_{\inv(\loc) \land \phi_1}(\inv(\loc) \land \phi_2)}
+% {\suc((\loc,\region)), \placeholder[2] \vdash \phi_2
+% \quad \suc((\loc, \region)), \placeholder[1] \vdash \phi_1
+% }
+% \begin{array}{l}
+% (\loc, \region) \cap \placeholder[\exists] \subseteq \pre(\placeholder) \\
+% \placeholder[1] \subseteq \inv(\loc) \\
+% \placeholder[2] \subseteq \inv(\loc) \\
+% \placeholder \subseteq \placeholder[2] \\
+% \suc((\loc, \region)) \cap \pre_{<}(\placeholder) \subseteq \suc((\loc, \region)) \cap \placeholder[1]
+% \end{array}
+% \]
+
 \[
 \proofrule
 {(\loc, \region), \placeholder[\exists] \vdash \exists_{\inv(\loc) \land \phi_2}(\inv(\loc) \land \phi_1 \land \phi_2)}
@@ -1261,8 +1276,8 @@ For the second disjunct, we derive a simplified proof using the rules for relati
   (\loc, \region) \cap \placeholder[\exists] \subseteq \pre(\placeholder') \\
   \placeholder[\land] \subseteq \inv(\loc) \\
   \placeholder[2] \subseteq \inv(\loc) \\
-  \placeholder' \subseteq \placeholder[2] \\
-  \suc((\loc, \region)) \cap \pre_{<}(\placeholder') \subseteq \suc((\loc, \region)) \cap \placeholder[\land]
+  \placeholder' \subseteq \placeholder[\land] \\
+  \suc((\loc, \region)) \cap \pre_{<}(\placeholder') \subseteq \suc((\loc, \region)) \cap \placeholder[2]
   \end{array}
 \]
 Where at $\vdots (\land)$ the following subproof is performed.
@@ -1289,8 +1304,8 @@ All three subproofs share the same goal $\suc((\loc, \region)),\placeholder[2] \
   \placeholder[\land] = \placeholder[1] \cap \placeholder[2] \\
   \placeholder[\land] \subseteq \inv(\loc) \\
   \placeholder[2] \subseteq \inv(\loc) \\
-  \placeholder' \subseteq \placeholder[2] \\
-  \suc((\loc, \region)) \cap \pre_{<}(\placeholder') \subseteq \suc((\loc, \region)) \cap \placeholder[\land]
+  \placeholder' \subseteq \placeholder[\land] \\
+  \suc((\loc, \region)) \cap \pre_{<}(\placeholder') \subseteq \suc((\loc, \region)) \cap \placeholder[2]
 \end{array}
 \]
 
@@ -1310,8 +1325,8 @@ Finally, observe that we can replace the side condition $\placeholder[\land] \su
   \placeholder[1] \subseteq \inv(\loc) \\
   \placeholder[2] \subseteq \inv(\loc) \\
   \placeholder[\land] = \placeholder[1] \cap \placeholder[2] \\
-  \placeholder' \subseteq \placeholder[2] \\
-  \suc((\loc, \region)) \cap \pre_{<}(\placeholder') \subseteq \suc((\loc, \region)) \cap \placeholder[\land]
+  \placeholder' \subseteq \placeholder[\land] \\
+  \suc((\loc, \region)) \cap \pre_{<}(\placeholder') \subseteq \suc((\loc, \region)) \cap \placeholder[2]
 \end{array}
 \]
 
