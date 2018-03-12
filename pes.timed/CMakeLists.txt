@@ -32,7 +32,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR} # for lexer/parser
 
 # Build two libraries for the sake of unit testing
 add_library(ExprNode ExprNode.cc)
-add_library(parse parse.cc pes.lex.cc pes.tab.cc)
+add_library(parse parse.cc ${CMAKE_CURRENT_BINARY_DIR}/pes.lex.cc ${CMAKE_CURRENT_BINARY_DIR}/pes.tab.cc)
 
 # Build the actual executable
 add_executable(timesolver-ta
