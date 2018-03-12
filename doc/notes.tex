@@ -1209,215 +1209,134 @@ This gives rise to the following pseudocode.
 \end{algorithmic}
 \end{algorithm}
 
-
 \subsection{Relativized forall}
+
 Now let us consider relativized forall. The actual proof rules are derived using~\cite[Lemma 1]{FC:14}, which states that $\forall_{\phi_1}(\phi_2) = \forall(\phi_2) \lor \exists_{\phi_2}(\phi_1 \land \phi_2)$.
-% \[
-% \proofrule[\text{Lemma 1 (i)}]
-% {(\loc, \region) \vdash \forall_{\phi_1}(\phi_2)}
-% {(\loc, \region) \vdash \forall(\phi_2)}
-% \quad
-% \proofrule[\text{Lemma 1 (ii)}]
-% {(\loc, \region) \vdash \forall_{\phi_1}(\phi_2)}
-% {(\loc, \region) \vdash \exists_{\phi_2}(\phi_1 \land \phi_2)}
-% \]
 
-The first disjunct of the lemma directly induces proof rule $\forall_{ro_1}$.
+Incorporating the invariant, we need to prove $\forall(\lnot \inv(\loc) \lor \phi_2) \lor \exists_{\inv(\loc) \land \phi_2}(\inv(\loc) \land \phi_1 \land \phi_2)$.
 
-For the second disjunct, we first derive a simplified proof using the proof rules for relativized
-exists, analogous to the
-derivation in~\cite[Appendix C.1]{FC:14report}.
+Now, let us consider the overall proof.
 \[
-\proofrule[\exists_{r_2}]
-{(\loc, \region), \placeholder[\exists] \vdash \exists_{\phi_2}(\phi_1 \land \phi_2)}
-{ {\proofrule[\land_p]
-  {\suc((\loc, \region)), \placeholder[2] \vdash \phi_1 \land \phi_2}
-  {\suc((\loc, \region)), \placeholder[2,1] \vdash \phi_1
-    \quad \suc((\loc, \region)), \placeholder[2,2] \vdash \phi_2}
+\proofrule[\mathit{Lemma}]
+{(\loc, \region) \vdash \forall_{\phi_1}(\phi_2)}
+{
+  \proofrule[\lor_s]
+  {(\loc, \region) \vdash \forall(\lnot \inv(\loc) \lor \phi_2) \lor \exists_{\inv(\loc) \land \phi_2}(\inv(\loc) \land \phi_1 \land \phi_2)}
+  {
+    \proofrule[\forall_{t_2}]
+    {(\loc, \region), \placeholder[\forall] \vdash \forall(\lnot \inv(\loc) \lor \phi_2)}
+    {\vdots (\forall)}
+    \quad
+    \proofrule
+    {(\loc, \region), \placeholder[\exists] \vdash \exists_{\inv(\loc) \land \phi_2}(\inv(\loc) \land \phi_1 \land \phi_2)}
+    {\vdots (\exists)}
+  }
+  (\loc, \region) \subseteq \placeholder[\forall] \cup \placeholder[\exists]
+}
+\]
+
+For the first disjunct, we simply get the analogous proof to the one for relativized forall.
+\[
+\proofrule
+  {(\loc, \region), \placeholder[\forall] \vdash \forall(\lnot \inv(\loc) \lor \phi_2)}
+  {\suc((\loc, \region)), \placeholder[2] \vdash \phi_2}
   \begin{array}{l}
-  \placeholder[2] = \\
-  \quad \placeholder[2,1] \cap \placeholder[2,2]
+    \suc((\loc, \region)) \cap \placeholder \subseteq \lnot \inv(\loc) \cup \placeholder[2]\\
+    \suc((\loc, \region) \cap \placeholder[\forall]) \subseteq \suc((\loc, \region)) \cap \placeholder 
   \end{array}
-  }
- %\quad
- \suc((\loc, \region)), \pre_{<}(\placeholder[2]) \vdash \phi_2
- }
-\begin{array}{l}
-(\loc, \region) \cap \placeholder[\exists] \\
-\quad \subseteq \pre(\placeholder[2])
-\end{array}
 \]
-Since $\placeholder[2] \subseteq \placeholder[2,2]$, the premise of the second and third subgoal
-can be combined, and we have the following specialized proof rule.
+
+For the second disjunct, we derive a simplified proof using the rules for relativized exists analogous to the derivation in~\cite[Appendix C.1]{FC:14report}.
+
 \[
 \proofrule
-{(\loc, \region), \placeholder[\exists] \vdash \exists_{\phi_2}(\phi_1 \land \phi_2)}
-{ \suc((\loc, \region)), \placeholder[1] \vdash \phi_1
-\quad \suc((\loc, \region)), \pre(\placeholder[2]) \vdash \phi_2
+{(\loc, \region), \placeholder[\exists] \vdash \exists_{\inv(\loc) \land \phi_2}(\inv(\loc) \land \phi_1 \land \phi_2)}
+{ \suc((\loc, \region)), \placeholder[2] \vdash \phi_2
+ \quad
+ {\proofrule
+  {\suc((\loc, \region)), \placeholder[\land] \vdash \phi_1 \land \phi_2}
+  {\vdots (\land)}}
  }
-\begin{array}{l}
-\placeholder[2] \subseteq \placeholder[1]\\
-\placeholder[\exists] \subseteq \pre(\placeholder[2])
-\end{array}
+ \begin{array}{l}
+  (\loc, \region) \cap \placeholder[\exists] \subseteq \pre(\placeholder') \\
+  \placeholder[\land] \subseteq \inv(\loc) \\
+  \placeholder[2] \subseteq \inv(\loc) \\
+  \placeholder' \subseteq \placeholder[2] \\
+  \suc((\loc, \region)) \cap \pre_{<}(\placeholder') \subseteq \suc((\loc, \region)) \cap \placeholder[\land]
+  \end{array}
 \]
-
-{\color{red}
-Note that~\cite[Appendix C.1]{FC:14report} gives the following proof rule instead.
+Where at $\vdots (\land)$ the following subproof is performed.
 \[
-\proofrule
-{(\loc, \region), \placeholder[\exists] \vdash \exists_{\phi_2}(\phi_1 \land \phi_2)}
-{ \suc((\loc, \region)), \placeholder[1] \vdash \phi_1
-\quad \suc((\loc, \region)), \pre(\placeholder[1]) \vdash \phi_2
- }
-\begin{array}{l}
-\placeholder[\exists] \subseteq \pre(\placeholder[1])
-\end{array}
-\]
-This proof rule is implied by the rule we derived above, but not the other way around. Therefore, the rule may not be complete. This warrants further investigation.
-}
-
-Directly applying the lemma, and using the above derived proof rule,
-the following proof is derived for relativized forall.
-\[
-\proofrule[Lemma]
-{(\loc, \region) \vdash \forall_{\phi_1}(\phi_2)
-}
-{\proofrule[\lor_s]
-  {(\loc, \region) \vdash \exists_{\phi_2}(\phi_1 \lor \phi_2) \lor \forall(\phi_2)}
-  { \proofrule
-    {(\loc, \region), \placeholder[\exists] \vdash \exists_{\phi_2}(\phi_1 \land \phi_2)}
-    {\vdots \dagger}
-  \quad
-    \proofrule[\forall_{t_2}] 
-    {(\loc, \region), \placeholder[\forall] \vdash \forall(\phi_2)}
-    {\vdots *}
-  }
-}
-\]
-
-Where the subproofs are as follows.
-\begin{itemize}
-  \item[$*$] $
-  \proofrule
-   {(\loc, \region), \placeholder[\forall] \vdash \forall(\phi_2)}
-   {\suc((\loc, \region)), \placeholder[2] \vdash \phi_2}
-   \suc((\loc, \region) \cap \placeholder[\forall]) \subseteq \suc((\loc, \region)) \cap \placeholder[2]
-  $
-  \item[$\dagger$]
-  $
-  \proofrule
-  {(\loc, \region), \placeholder[\exists] \vdash \exists_{\phi_2}(\phi_1 \land \phi_2)}
+\proofrule[\land_p]
+  {\suc((\loc, \region)), \placeholder[\land] \vdash \phi_1 \land \phi_2}
   {\suc((\loc, \region)), \placeholder[1] \vdash \phi_1
-      \quad \suc((\loc, \region)), \pre(\placeholder[1]') \vdash \phi_2}
-  \begin{array}{l}
-  \placeholder[1]' \subseteq \placeholder[1]\\
-  \placeholder[\exists] \subseteq \pre(\placeholder[1]')
-  \end{array}
-  $
-\end{itemize}
-
-Observe that we can combine the subgoal of $*$ with the second subgoal of $\dagger$, by imposing an additional sidecondition. This intuitively gives the following simplified proof rule.
+    \quad \suc((\loc, \region)), \placeholder[2] \vdash \phi_2}
+  \placeholder[\land] = \placeholder[1] \cap \placeholder[2]
+\]
+All three subproofs share the same goal $\suc((\loc, \region)),\placeholder[2] \vdash \phi_2$. We only need to prove this subgoal once, and the rest of the work is performed in the sidecondition. Folding all this into a single proof rule we find the following proof rule.
 \[
 \proofrule
-{(\loc, \region) \vdash \forall_{\phi_1}(\phi_2)}
-{\suc((\loc, \region)), \placeholder[1] \vdash \phi_1
-  \quad \suc((\loc, \region)), \placeholder[2] \vdash \phi_2
+{(\loc, \region), \placeholder[\exists] \vdash \exists_{\inv(\loc) \land \phi_2}(\inv(\loc) \land \phi_1 \land \phi_2)}
+{
+  \suc((\loc, \region)), \placeholder[2] \vdash \phi_2
+  \quad \suc((\loc, \region)), \placeholder[1] \vdash \phi_1
 }
 \begin{array}{l}
-\suc((\loc, \region) \cap \placeholder[\forall]) \subseteq \suc((\loc, \region)) \cap \placeholder[2]\\
-\placeholder[1]' \subseteq \placeholder[1]\\
-\placeholder[\exists] \subseteq \pre(\placeholder[1]')\\
-(\loc, \region) \subseteq \placeholder[\forall] \cup \placeholder[\exists]\\
-\pre(\placeholder[1]') \subseteq \placeholder[2]
+  (\loc, \region) \subseteq \placeholder[\forall] \cup \placeholder[\exists] \\
+  \suc((\loc, \region)) \cap \placeholder \subseteq \lnot \inv(\loc) \cup \placeholder[2]\\
+  \suc((\loc, \region) \cap \placeholder[\forall]) \subseteq \suc((\loc, \region)) \cap \placeholder \\
+  (\loc, \region) \cap \placeholder[\exists] \subseteq \pre(\placeholder') \\
+  \placeholder[\land] = \placeholder[1] \cap \placeholder[2] \\
+  \placeholder[\land] \subseteq \inv(\loc) \\
+  \placeholder[2] \subseteq \inv(\loc) \\
+  \placeholder' \subseteq \placeholder[2] \\
+  \suc((\loc, \region)) \cap \pre_{<}(\placeholder') \subseteq \suc((\loc, \region)) \cap \placeholder[\land]
 \end{array}
 \]
-However, if we apply the proof rule as given above, the application $\pre(\placeholder[1]')$ in 
-the last side condition may include times before $(\loc, \region)$, that should not be included.
-Therefore, for the sake of completeness, we should instead incorporate the successor in this
-side condition, replacing the side condition $\pre(\placeholder[1]') \subseteq \placeholder[2]$ 
-by $\suc((\loc, \region)) \cap \pre(\placeholder[1]') \subseteq \suc((\loc, \region)) \cap \placeholder[2]$.
-This is the side condition that is also given in~\cite[Appendix C.1]{FC:14report}.
-The resulting rule for $\forall$ is thus:
-\[
-\proofrule[\forall_{ro_3}]
-{(\loc, \region) \vdash \forall_{\phi_1}(\phi_2)}
-{\suc((\loc, \region)), \placeholder[1] \vdash \phi_1
-  \quad \suc((\loc, \region)), \placeholder[2] \vdash \phi_2
-}
-\begin{array}{l}
-\suc((\loc, \region) \cap \placeholder[\forall]) \subseteq \suc((\loc, \region)) \cap \placeholder[2]\\
-\placeholder[1]' \subseteq \placeholder[1]\\
-\placeholder[\exists] \subseteq \pre(\placeholder[1]')\\
-(\loc, \region) \subseteq \placeholder[\forall] \cup \placeholder[\exists]\\
-\suc((\loc, \region)) \cap \pre(\placeholder[1]') \subseteq \suc((\loc, \region)) \cap \placeholder[2]
-\end{array}
-\]
-Note there are some special cases here that can be used to simplify the proof. First of all,
-if $(\loc, \region) \subseteq \placeholder[1]$ and $(\loc, \region) \subseteq \placeholder[2]$, the formula $\exists_{\phi_1}(\phi_1 \land \phi_2)$ is satisfied immediately, and $(\loc, \region) \subseteq \placeholder[\exists]$, and the other side conditions need not be checked. This corresponds to~\cite[proof rule $\forall_{ro_2}$]{FC:14}.
 
-A second special case appears when $\phi_1$ can be ignored altogether (e.g.\ when $\placeholder[1]$ is empty). In that case, it suffices if $\forall(\phi_2)$ holds. This is~\cite[proof rule $\forall_{ro_1}$]{FC:14report}.
+Finally, observe that we can replace the side condition $\placeholder[\land] \subseteq \inv(\loc)$ by condition $\placeholder[1] \subseteq \inv(\loc)$. The final rule is
+\[
+\proofrule
+{(\loc, \region), \placeholder[\exists] \vdash \exists_{\inv(\loc) \land \phi_2}(\inv(\loc) \land \phi_1 \land \phi_2)}
+{
+  \suc((\loc, \region)), \placeholder[2] \vdash \phi_2
+  \quad \suc((\loc, \region)), \placeholder[1] \vdash \phi_1
+}
+\begin{array}{l}
+  (\loc, \region) \subseteq \placeholder[\forall] \cup \placeholder[\exists] \\
+  \suc((\loc, \region)) \cap \placeholder \subseteq \lnot \inv(\loc) \cup \placeholder[2]\\
+  \suc((\loc, \region) \cap \placeholder[\forall]) \subseteq \suc((\loc, \region)) \cap \placeholder \\
+  (\loc, \region) \cap \placeholder[\exists] \subseteq \pre(\placeholder') \\
+  \placeholder[1] \subseteq \inv(\loc) \\
+  \placeholder[2] \subseteq \inv(\loc) \\
+  \placeholder[\land] = \placeholder[1] \cap \placeholder[2] \\
+  \placeholder' \subseteq \placeholder[2] \\
+  \suc((\loc, \region)) \cap \pre_{<}(\placeholder') \subseteq \suc((\loc, \region)) \cap \placeholder[\land]
+\end{array}
+\]
+
+
+\paragraph{Special cases}
+Note there are some special cases here that can be used to simplify the proof. First of all, observe that if $\placeholder[1] = \emptyset$, it suffices to check
+$(\loc, \region) \vdash \forall(\phi_2)$, and there is no need to involve a placeholder computation. This is consistent with ~\cite[proof rule $\forall_{ro_1}$]{FC:14report}. We immediately incorporate the invariant.
+
+Also, if $(\loc, \region) \subseteq \placeholder[1]$ and $(\loc, \region) \subseteq \placeholder[2]$, the formula $\exists_{\phi_1}(\phi_1 \land \phi_2)$ is satisfied immediately, and $(\loc, \region) \subseteq \placeholder[\exists]$, and the other side conditions need not be checked. This corresponds to~\cite[proof rule $\forall_{ro_2}$]{FC:14}.
+
 \[
 \proofrule[\forall_{ro_1}]
 {(\loc, \region) \vdash \forall_{\phi_1}(\phi_2)}
 { \proofrule[\forall_{t_1}]
-  {(\loc, \region) \vdash \forall(\phi_2)}
-  {\suc((\loc, \region)) \vdash \phi_2}
+  {(\loc, \region) \vdash \forall(\lnot \inv(\loc) \lor \phi_2)}
+  {\suc((\loc, \region)) \cap \inv(\loc) \vdash \phi_2}
 }
 \quad
 \proofrule[\forall_{ro_2}]
 {(\loc, \region) \vdash \forall_{\phi_1}(\phi_2)}
 {(\loc, \region) \vdash \phi_1 \land \phi_2}
 \]
+The latter rule is implemented by first checking whether $(\loc, \region) \subseteq \placeholder[1]$. Note that when this is true and $(\loc, \region) \not \subseteq \placeholder[2]$, the original property does not hold.
 
-Finally, as before, we incorporate the invariant into the formula, and derive the rule for that.
-We take $\forall_{ro_3}$ as starting point, and check $\forall_{\inv(\loc) \implies \phi_1}(\inv(\loc) \implies \phi_2)$. We first get rid of the implications, and consider $\forall_{\lnot \inv(\loc) \lor \phi_1}(\lnot \inv(\loc) \lor \phi_2)$
-\[
-\proofrule[\forall_{ro_3}]
-{(\loc, \region) \vdash \forall_{\lnot \inv(\loc) \lor \phi_1}(\lnot \inv(\loc) \lor \phi_2)}
-{ \proofrule
-  {\suc((\loc, \region)), \placeholder[1] \vdash \lnot \inv(\loc) \lor \phi_1}
-  {\suc((\loc, \region)), \placeholder[1,1] \vdash \lnot \inv(\loc)
-   \quad \suc((\loc, \region)), \placeholder[1,2] \vdash \phi_1}
-  \quad 
-  \proofrule
-  {\suc((\loc, \region)), \placeholder[2] \vdash \lnot \inv(\loc) \lor \phi_2}
-  {\suc((\loc, \region)), \placeholder[2,1] \vdash \lnot \inv(\loc)
-  \quad \suc((\loc, \region)), \placeholder[2,2] \vdash \phi_2}
-}
-\]
-with side conditions:
-\[
-\begin{array}{l}
-\placeholder[1] = \placeholder[1,1] \cup \placeholder[1,2]\\
-\placeholder[2] = \placeholder[2,1] \cup \placeholder[2,2]\\
-\suc((\loc, \region) \cap \placeholder[\forall]) \subseteq \suc((\loc, \region)) \cap \placeholder[2]\\
-\placeholder[1]' \subseteq \placeholder[1]\\
-\placeholder[\exists] \subseteq \pre(\placeholder[1]')\\
-(\loc, \region) \subseteq \placeholder[\forall] \cup \placeholder[\exists]\\
-\suc((\loc, \region)) \cap \pre(\placeholder[1]') \subseteq \suc((\loc, \region)) \cap \placeholder[2]
-\end{array}
-\]
 
-Here we can again set $\placeholder[1,1] = \placeholder[2,1] = \lnot \inv(\loc)$, and simplify, leading to:
-\[
-\proofrule[\forall_{ro_3}]
-{(\loc, \region) \vdash \forall_{\lnot \inv(\loc) \lor \phi_1}(\lnot \inv(\loc) \lor \phi_2)}
-{ {\suc((\loc, \region)), \placeholder[1] \vdash \phi_1}
-  \quad {\suc((\loc, \region)), \placeholder[2] \vdash \phi_2}
-}
-% \]
-% with side conditions:
-% \[
-\begin{array}{l}
-\placeholder[1] \subseteq \inv(\loc)\\
-\placeholder[2] \subseteq \inv(\loc)\\
-\suc((\loc, \region) \cap \placeholder[\forall]) \subseteq \suc((\loc, \region)) \cap \placeholder[2]\\
-\placeholder[1]' \subseteq \placeholder[1]\\
-\placeholder[\exists] \subseteq \pre(\placeholder[1]')\\
-(\loc, \region) \subseteq \placeholder[\forall] \cup \placeholder[\exists]\\
-\suc((\loc, \region)) \cap \pre(\placeholder[1]') \subseteq \suc((\loc, \region)) \cap \placeholder[2]
-\end{array}
-\]
 
 \begin{algorithm}[H]
 \caption{$\method{do\_proof\_forall\_rel}(\loc, \region, \forall_{\phi_1}(\phi_2))$}
@@ -1426,10 +1345,10 @@ Here we can again set $\placeholder[1,1] = \placeholder[2,1] = \lnot \inv(\loc)$
 \STATE $\method{do\_proof\_place}(\loc, \suc(\region), \placeholder[1], \phi_1)$
 \IF[Rules $\forall_{ro_1}$ and $\forall_{t_1}$ combined]{$\placeholder[1] = \emptyset$}
   \STATE $\var{result} \gets \method{do\_proof}(\loc, \suc(\region) \cap \inv(\loc), \phi_2)$
-\ELSIF[Rule $\forall_{ro_2}$]{$\region \subseteq \placeholder[1] \land \method{do\_proof}(\loc, \region, \phi_2)$}
-  \STATE $\var{result} \gets \true$
+\ELSIF[Rule $\forall_{ro_2}$]{$\region \subseteq \placeholder[1]$}
+  \STATE $\var{result} \gets \method{do\_proof}(\loc, \region, \phi_2)$
 \ELSE
-\STATE $\placeholder[2] \gets \infty$
+\STATE $\placeholder[2] \gets \inv(\loc)$
 \STATE $\method{do\_proof\_place}(\loc, \suc(\region), \placeholder[2], \phi_2)$
   \IF{$\placeholder[2] = \emptyset$}
     \STATE $\var{result} \gets \false$
