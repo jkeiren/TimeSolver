@@ -57,6 +57,7 @@ private:
    * the (simple) method of performing a DBM that is the union of all
    * the negated constraints of the DBM. This method is private
    * because it is not needed by the prover.
+   * Does not preserve canonical form.
    * @param Y (&) The DBM to complement.
    * @return The complemented DBM, given as a DBMList. */
   DBMList *complementDBM(const DBM &Y) {
@@ -232,13 +233,18 @@ public:
   /** Union the calling DBMList with DBM Y; perform this by making
    * a deep copy of Y and adding to the list of DBMs.
    * The calling DBMList is changed.
+   * Only preserves canonical form of the individual DBMs, not of the list.
    * @param Y (&) The DBM to add to the list of DBMs.
    * @return None. */
-  void addDBM(const DBM &Y) { dbmListVec->push_back(new DBM(Y)); }
+  void addDBM(const DBM &Y) {
+    dbmListVec->push_back(new DBM(Y));
+    isCf = false; // only set isCf to false; individual DBMs are still in Cf.
+  }
 
   /** Union the calling DBMList with DBMList Y; perform this by making
    * a deep copy of each DBM in Y and adding to the list of DBMs.
    * The calling DBMList is changed.
+   * Only preserves canonical form of the individual DBMs, not of the list.
    * @param Y (&) The DBMList to add to the list of DBMs.
    * @return None. */
   void addDBMList(const DBMList &Y) {
@@ -302,6 +308,7 @@ public:
    * the negated constraints of the DBM, and complementing
    * DBM-by-DBM by converting the complement of the DBMs into
    * disjunctive normal form.
+   * Does not preserve canonical form.
    * @return The complemented DBMList, given as a DBMList. */
   DBMList &operator!() {
     std::vector<DBM *> *tempList = dbmListVec;
