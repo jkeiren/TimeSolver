@@ -484,9 +484,7 @@ protected:
 
     // By default do not print the debugging info for computing side condition.
     // The this next line to debug to get the output
-    if(cpplogging::logger::get_reporting_level("exists_rel_sidecondition") > cpplogging::verbose) {
       cpplogging::logger::set_reporting_level(cpplogging::verbose, "exists_rel_sidecondition");
-    }
 
     cpplog(cpplogging::debug, "exists_rel_sidecondition") << "Computing side condition for relativized exists with zone " << zone << std::endl
                               << " placeholder1: " << placeholder1 << std::endl
@@ -1133,28 +1131,7 @@ inline bool prover::do_proof_forall_rel(const SubstList& discrete_state,
             << std::endl;
       }
     }
-
-    // Check whether the result is equivalent to that obtained when using the encoding into relativized exists
-    #ifdef TIMESOLVER_DEBUG
-      // Create new formula
-      cpplogging::log_level_t loglevel = cpplogging::logger::get_reporting_level();
-      cpplogging::log_level_t loglevel_exists_rel = cpplogging::logger::get_reporting_level();
-      cpplogging::logger::set_reporting_level(cpplogging::quiet);
-      cpplogging::logger::set_reporting_level(cpplogging::quiet, "exists_rel_sidecondition");
-      ExprNode* phi1 = new ExprNode(*formula.getLeft());
-      ExprNode* phi2 = new ExprNode(*formula.getRight());
-      ExprNode* and_formula = new ExprNode(AND, phi1, phi2, input_pes.clocks(), input_pes.atomic());
-      ExprNode* exists_rel_formula = new ExprNode(EXISTS_REL, phi2, and_formula, input_pes.clocks(), input_pes.atomic());
-      ExprNode* forall_formula = new ExprNode(FORALL, phi2, input_pes.clocks(), input_pes.atomic());
-      ExprNode* or_formula = new ExprNode(OR, forall_formula, exists_rel_formula, input_pes.clocks(), input_pes.atomic());
-      bool result_reduction = do_proof(discrete_state,zone,*or_formula);
-      assert(retVal == result_reduction);
-      cpplogging::logger::set_reporting_level(loglevel);
-      cpplogging::logger::set_reporting_level(loglevel_exists_rel, "exists_rel_sidecondition");
-    #endif
   }
-
-
 
   return retVal;
 }
@@ -2069,10 +2046,6 @@ inline void prover::do_proof_place_forall_rel(const SubstList& discrete_state,
                                                   const DBM& zone,
                                                   DBMList* place,
                                                   const ExprNode& formula) {
-#ifdef TIMESOLVER_DEBUG
-  DBMList place_debug(*place);
-#endif
-
   bool retVal = false;
   /* Proof methodology:
    * first, see if \phi_1 is satisfied during the time advance.
@@ -2303,36 +2276,7 @@ inline void prover::do_proof_place_forall_rel(const SubstList& discrete_state,
         << std::endl
         << std::endl;
   }
-
-  // First do the proof without performing optimisations
-  #ifdef TIMESOLVER_DEBUG
-    // Create new formula
-    //std::cerr << "For zone: " << zone << std::endl;
-    //std::cerr << "Placeholder; " << place_debug << std::endl;
-    cpplogging::log_level_t loglevel = cpplogging::logger::get_reporting_level();
-    cpplogging::log_level_t loglevel_exists_rel = cpplogging::logger::get_reporting_level();
-    cpplogging::logger::set_reporting_level(cpplogging::quiet);
-    cpplogging::logger::set_reporting_level(cpplogging::quiet, "exists_rel_sidecondition");
-    ExprNode* phi1 = new ExprNode(*formula.getLeft());
-    ExprNode* phi2 = new ExprNode(*formula.getRight());
-    ExprNode* and_formula = new ExprNode(AND, phi1, phi2, input_pes.clocks(), input_pes.atomic());
-    ExprNode* exists_rel_formula = new ExprNode(EXISTS_REL, phi2, and_formula, input_pes.clocks(), input_pes.atomic());
-    ExprNode* forall_formula = new ExprNode(FORALL, phi2, input_pes.clocks(), input_pes.atomic());
-    ExprNode* or_formula = new ExprNode(OR, forall_formula, exists_rel_formula, input_pes.clocks(), input_pes.atomic());
-    do_proof_place(discrete_state,zone, &place_debug, *or_formula);
-    place_debug.cf();
-    place->cf();
-    if(!(*place == place_debug)) {
-      std::cerr << "Placeholder computed directly " << *place << std::endl;
-      std::cerr << "Placeholder computed using encoding into rel. exists: " << place_debug << std::endl;
-    }
-    //assert(*place == place_debug);
-    cpplogging::logger::set_reporting_level(loglevel);
-    cpplogging::logger::set_reporting_level(loglevel_exists_rel, "exists_rel_sidecondition");
-  #endif
-
 }
-
 
 inline void prover::do_proof_place_exists(const SubstList& discrete_state,
                                               const DBM& zone,
