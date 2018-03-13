@@ -569,89 +569,6 @@ protected:
         result->addDBMList(placeholder);
       }
     }
-
-  }
-
-  /** Method to compute the predecessor check of relativized exists operators.
-   * This method is inlined for performance reasons.
-   * @param zone (*) the left-hand clock set
-   * @param lhsSucc (*) the successor of the left-hand clock constraint, after
-   * applying invariants.
-   * @param phi1Place (*) the set of clock valuations that satisfy phi1, the
-   * left hand formula (the relativized formula).
-   * @param phi2Place (*) the set of clock valuations that satisfy phi2, the
-   * right hand formula.
-   * @param phi2PredPlace (*) the time predecessor of phi2Place; this
-   * predecessor may by <= or <, depending on the proof rule that calls this
-   * method. */
-  inline void predCheckRule(DBMList* result,
-                            const DBM& zone,
-                            const DBM* const lhs_succ,
-                            const DBMList* placeholder1,
-                            const DBMList* placeholder2) {
-    result->makeEmpty();
-
-    DBMList placeholder1_complement(*placeholder1);
-    !placeholder1_complement; // all values outside placeholder1
-    placeholder1_complement.cf();
-    bool previouslyUpdated = false;
-    /* Iterate through each DBM of phi2Place and union the results. */
-
-    for (const DBM* const placeholder2_dbm: *placeholder2->getDBMList()) {
-      DBM placeholder2_dbm_pred(*placeholder2_dbm);
-      placeholder2_dbm_pred.pre();
-      placeholder2_dbm_pred.cf();
-
-      DBMList currDBMList(placeholder1_complement);
-      currDBMList.intersect(placeholder2_dbm_pred);
-      currDBMList.intersect(*lhs_succ); // Intersect with the successor of the zone;
-      // So currDBMList now contains all states that are not in placeholder1,
-      // from which placeholder2 can be reached, and which can be reached from
-      // zone.
-
-      DBMList placeholder2_dbm_complement(*placeholder2_dbm);
-      !placeholder2_dbm_complement;
-      placeholder2_dbm_complement.cf();
-
-      currDBMList.intersect(placeholder2_dbm_complement);
-      // We restrict this to states that furthermore are not in placeholder2.
-      // So currDBMList now contains all states that are not in placeholder1,
-      // from which placeholder2 can be reached, but which are themselves not in
-      // placeholder2, and which can be reached from zone.
-      currDBMList.cf();
-      currDBMList.pre();
-      currDBMList.intersect(*lhs_succ);
-      currDBMList.cf();
-      // currDBMList currently is the set of bad times; LHS must have
-      // no such times in this.
-      if (currDBMList.emptiness()) { // no bad times, so no shrinkage
-        *result = *placeholder1;
-        break;
-      }
-      /* If this is nonempty, then we have something to deal with */
-      // Also, the placeholder cannot be completely contained in this
-      currDBMList.intersect(zone);
-      currDBMList.cf();
-      if (!previouslyUpdated) {
-        previouslyUpdated = true;
-      }
-
-      if (!currDBMList.emptiness()) {
-        result->addDBMList(currDBMList);
-      }
-    }
-
-    /* We also need to make another placeholder check: that the phi1Place
-     * is a placeholder that can be formed
-     * by taking the predecessor
-     * and intersecting it with succ(\Gamma). We need phi1Place to be
-     * the entire predecessor, and not just the upper part of it. */
-    if (!(*result >= zone)) {
-      // simple empty case
-      result->makeEmpty();
-    }
-    // else, we just need to check for gaps in the DBM and eliminate them.
-    // does this case come up due to how pred check works?
   }
 
   inline void establish_forall_place_sidecondition(DBMList* result,
@@ -1158,8 +1075,10 @@ inline bool prover::do_proof_forall_rel(const SubstList& discrete_state,
        * the formulas. */
       DBMList placeholder_exists(*INFTYDBM);
       /*--- PredCheck code----*/
-      predCheckRule(&placeholder_exists, zone, &lhs_succ, &placeholder2,
-                    &placeholder1);
+      DBMList placeholder_and(placeholder2);
+      placeholder_and.intersect(placeholder1);
+      placeholder_and.cf();
+      establish_exists_rel_sidecondition(&placeholder_exists, zone, placeholder2, placeholder_and);
       placeholder_exists.cf();
       cpplog(cpplogging::debug)
           << "----() FORALL Rel Exists predCheck placeholder obtained as := {"
@@ -1205,6 +1124,7 @@ inline bool prover::do_proof_forall_rel(const SubstList& discrete_state,
         } else if (!(placeholder_forall <= placeholder_exists)) {
           /* This case requires us to union the two placeholders. */
           placeholder_exists.addDBMList(placeholder_forall);
+          placeholder_exists.cf();
         }
       }
       retVal = placeholder_exists >= zone;
@@ -1392,7 +1312,7 @@ inline bool prover::do_proof_exists_rel(const SubstList& discrete_state,
       // we therefore need to check the side-conditions
       DBMList placeholder(placeholder1); // tightened placeholder for the
                                          // result; copy since placeholder1 is
-                                         // used in the predCheckRule
+                                         // used in the sidecondition
                                          // computation
       /*--- PredCheck code----*/
       establish_exists_rel_sidecondition(&placeholder, zone, placeholder1, placeholder2);
@@ -2304,7 +2224,7 @@ inline void prover::do_proof_place_forall_rel(const SubstList& discrete_state,
        * computed previously, we save time by not having to recompute
        * the formulas. */
       /*--- PredCheck code----*/
-      predCheckRule(&placeholder2, zone, &lhs_succ, &placeholder2, &placeholder1);
+      establish_exists_rel_sidecondition(&placeholder2, zone, placeholder2, placeholder1);
       placeholder2.cf();
 
       cpplog(cpplogging::debug)
