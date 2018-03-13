@@ -1094,9 +1094,6 @@ inline bool prover::do_proof_forall_rel(const SubstList& discrete_state,
         placeholder_exists.pre();
         /* This cf() is needed. */
         placeholder_exists.cf();
-        // Need we intersect this with succ(Gamma) or
-        // do we need to perform an elapse check?
-        // what if this is empty?
 
         if (cpplogEnabled(cpplogging::debug)) {
           print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal,

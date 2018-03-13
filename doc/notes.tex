@@ -1370,10 +1370,8 @@ The latter rule is implemented by first checking whether $(\loc, \region) \subse
   \ELSIF{$\suc(\region) \subseteq \placeholder[2]$}
     \STATE $\var{result} \gets \true$
   \ELSE
-    \STATE Let $\placeholder[\forall]$ be such that $\suc((\loc, \region) \cap \placeholder[\forall]) \subseteq \suc((\loc, \region)) \cap \placeholder[2]$
-    \COMMENT{Is this what succCheckRule does?}
-    \STATE Let $\placeholder[\exists]$ be such that $\placeholder[\exists] \subseteq \pre(\placeholder[1])$ and $\suc((\loc, \region)) \cap \pre(\placeholder[1]) \subseteq \suc((\loc, \region)) \cap \placeholder[2]$ 
-    \COMMENT{Is this what predCheckRule does?}
+    \STATE $\placeholder[\forall] \gets \method{establish\_forall\_place\_sidecondition}(\loc, \region, \placeholder[2])$
+    \STATE $\placeholder[\exists] \gets \method{establish\_exists\_rel\_sidecondition}(\loc, \region, \placeholder[2], \placeholder[1] \cap \placeholder[2])$
     \IF{$\placeholder[\exists] \neq \emptyset$}
       \STATE $\placeholder[\exists] \gets \pre(\placeholder[\exists] \cap \placeholder[1])$
     \ENDIF
