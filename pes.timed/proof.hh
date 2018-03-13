@@ -2061,6 +2061,7 @@ inline void prover::do_proof_place_forall_rel(const SubstList& discrete_state,
   lhs_succ.suc();
 
   DBMList placeholder1(*INFTYDBM);
+  restrict_to_invariant(input_pes.invariants(), &placeholder1, discrete_state);
   do_proof_place(discrete_state, lhs_succ, &placeholder1, *formula.getLeft());
   placeholder1.cf();
 
@@ -2080,15 +2081,17 @@ inline void prover::do_proof_place_forall_rel(const SubstList& discrete_state,
      * the substitued constraints and sees if the
      * zone satifies the constraints */
 
-    do_proof_place(discrete_state, lhs_succ, place, *formula.getRight());
-    place->cf();
-    if (!place->emptiness()) {// Only do if a nonempty placeholder
+    DBMList placeholder2(*place);
+    do_proof_place(discrete_state, lhs_succ, &placeholder2, *formula.getRight());
+    placeholder2.cf();
+    if (placeholder2.emptiness()) {
+      place->makeEmpty();
+    } else { // Only do if a nonempty placeholder
       /* Now do the second proof rule to compute the first placeholder
        */
 
-      DBMList placeholder_forall(*place);
-      establish_forall_place_sidecondition(&placeholder_forall, discrete_state, zone, *place);
-      *place = placeholder_forall;
+      establish_forall_place_sidecondition(place, discrete_state, zone, placeholder2);
+      place->cf();
 
       if (cpplogEnabled(cpplogging::debug)) {
         // This work is done in the succCheck method.
@@ -2135,24 +2138,21 @@ inline void prover::do_proof_place_forall_rel(const SubstList& discrete_state,
     }
 
     // If here, we neither need a placeholder nor to elapse time
-    DBMList infPlace(*INFTYDBM);
-    do_proof_place(discrete_state, zone, &infPlace, *formula.getRight());
-    infPlace.cf();
-    if (!(infPlace.emptiness())) { // Only do if a nonempty placeholder
-      /* Now do the second proof rule to compute the first placeholder */
+    do_proof_place(discrete_state, zone, place, *formula.getRight());
+    place->cf();
+    if (!place->emptiness()) { // Only do if a nonempty placeholder
       retVal = true;
 
       if (cpplogEnabled(cpplogging::debug)) {
         print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal,
-                           zone, infPlace, discrete_state, formula.getOpType());
+                           zone, *place, discrete_state, formula.getOpType());
         cpplog(cpplogging::debug)
             << "----(Valid) Placeholder Check Passed-----" << std::endl
-            << "--With Placeholder := {" << infPlace << "} ----"
+            << "--With Placeholder := {" << *place << "} ----"
             << std::endl
             << std::endl;
       }
     }
-    *place = infPlace;
 
   } else {
     // This is the more complicated case that requires a placeholder
@@ -2168,6 +2168,8 @@ inline void prover::do_proof_place_forall_rel(const SubstList& discrete_state,
     /* We omit the check that we can elapse to the placeholder;
      * We will check that once at the end */
     DBMList placeholder2(*INFTYDBM);
+    restrict_to_invariant(input_pes.invariants(), &placeholder2, discrete_state);
+    placeholder2.cf();
     do_proof_place(discrete_state, lhs_succ, &placeholder2, *formula.getRight());
     placeholder2.cf();
 
@@ -2183,8 +2185,7 @@ inline void prover::do_proof_place_forall_rel(const SubstList& discrete_state,
       retVal = false;
       *place = placeholder2;
     } else if (placeholder2 >= lhs_succ) {
-      /* In this simple case, all possible times satisfy \phi_2
-       * so we can avoid many checks. */
+      /* \forallrel(\phi_2) holds, avoid extra work. */
       retVal = true;
       *place = placeholder2;
     } else {
@@ -2194,9 +2195,9 @@ inline void prover::do_proof_place_forall_rel(const SubstList& discrete_state,
        * (the relativization formula condition) are neither empty
        * nor everything. */
 
-      DBMList forallPlace(placeholder2);
-      establish_forall_place_sidecondition(&forallPlace, discrete_state, zone, placeholder2);
-      forallPlace.cf();
+      DBMList placeholder_forall(*INFTYDBM);
+      establish_forall_place_sidecondition(&placeholder_forall, discrete_state, zone, placeholder2);
+      placeholder_forall.cf();
 
       if (cpplogEnabled(cpplogging::debug)) {
         print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal,
@@ -2204,70 +2205,60 @@ inline void prover::do_proof_place_forall_rel(const SubstList& discrete_state,
         cpplog(cpplogging::debug)
             << "----() FORALL (of FORALL_REL) Placeholder Check obtained  FA "
                "Placeholder := {"
-            << forallPlace << "} ----" << std::endl
+            << placeholder_forall << "} ----" << std::endl
             << std::endl;
       }
 
-      /* Now we do the pred check to find the exists placeholder;
-       * This involves the predCheck method and checking that time can
-       * can elapse. Note that the exists is a simplified version
-       * where \phi_2 (the right) is the relativized clause and
-       * \phi_1 (the left) is the formula. By using the placeholders
-       * computed previously, we save time by not having to recompute
-       * the formulas. */
-      /*--- PredCheck code----*/
-      establish_exists_rel_sidecondition(&placeholder2, zone, placeholder2, placeholder1);
-      placeholder2.cf();
+
+      DBMList placeholder_exists(*INFTYDBM);
+      DBMList placeholder_and(placeholder2);
+      placeholder_and.intersect(placeholder1);
+      placeholder_and.cf();
+      establish_exists_rel_sidecondition(&placeholder_exists, zone, placeholder2, placeholder_and);
+      placeholder_exists.cf();
 
       cpplog(cpplogging::debug)
           << "----() FORALL Rel Exists placeholder obtained as := {"
           << placeholder2 << "} ----" << std::endl
           << std::endl;
 
-      if (!placeholder2.emptiness()) {
-        /* if it is nonempty, it passes the second check and we continue
-         * Given the FORALL rule rewrite, do not allow the instance
-         * after the time elapse. */
-        /* Extract the new refined placeholder. */
-        placeholder2.intersect(placeholder1);
-        placeholder2.cf();
-
+      if (!placeholder_exists.emptiness()) {
         /* Now check that it works. */
         /* Since we are not using retPlace anymore, we do not
          * need to copy it for the check. */
-        placeholder2.pre();
+        placeholder_exists.pre();
         /* This cf() is needed. */
-        placeholder2.cf();
+        placeholder_exists.cf();
         // check elapse further?
 
         if (cpplogEnabled(cpplogging::debug)) {
           print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal,
-                             zone, placeholder2, discrete_state, formula.getOpType());
+                             zone, placeholder_exists, discrete_state, formula.getOpType());
           cpplog(cpplogging::debug) << "----() FORALL Rel Exists placeholder "
                                        "after time elapse check is := {"
-                                    << placeholder2 << "} ----" << std::endl
+                                    << placeholder_exists << "} ----" << std::endl
                                     << std::endl;
         }
       }
+
       /* Last, we do an "or" check on the two placeholders */
-      bool forallEmpty = forallPlace.emptiness();
-      bool existsEmpty = placeholder2.emptiness();
+      bool forallEmpty = placeholder_forall.emptiness();
+      bool existsEmpty = placeholder_exists.emptiness();
       retVal = true;
       if (forallEmpty && existsEmpty) {
         place->makeEmpty();
-        retVal = false;
       } else if (forallEmpty) {
-        *place = placeholder2;
+        *place = placeholder_exists;
       } else if (existsEmpty) {
-        *place = forallPlace;
-      } else if (forallPlace <= placeholder2) {
-        *place = placeholder2;
-      } else if (placeholder2 <= forallPlace) {
-        *place = forallPlace;
+        *place = placeholder_forall;
+      } else if (placeholder_forall <= placeholder_exists) {
+        *place = placeholder_exists;
+      } else if (placeholder_exists <= placeholder_forall) {
+        *place = placeholder_forall;
       } else {
-        *place = placeholder2;
+        *place = placeholder_exists;
         /* This case requires us to union the two placeholders. */
-        place->addDBMList(forallPlace);
+        place->addDBMList(placeholder_forall);
       }
     }
 
