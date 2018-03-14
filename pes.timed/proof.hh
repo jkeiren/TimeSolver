@@ -2067,7 +2067,7 @@ inline void prover::do_proof_place_forall_rel(const SubstList& discrete_state,
 
   if (placeholder1.emptiness()) {
     if (cpplogEnabled(cpplogging::debug)) {
-      print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal,
+      print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, false,
                          lhs_succ, placeholder1, discrete_state, formula.getOpType());
       cpplog(cpplogging::debug) << "--------() Empty Relativization "
                                    "Placeholder: phi1 is never true ----------"
@@ -2096,7 +2096,7 @@ inline void prover::do_proof_place_forall_rel(const SubstList& discrete_state,
       if (cpplogEnabled(cpplogging::debug)) {
         // This work is done in the succCheck method.
         // Perhaps I should move the debug rule there?
-        retVal = !place->emptiness();
+        bool retVal = !place->emptiness();
 
         DBMList succRuleConseq(zone);
         succRuleConseq.intersect(*place);
@@ -2126,7 +2126,7 @@ inline void prover::do_proof_place_forall_rel(const SubstList& discrete_state,
    * given the proof rules. */
 
     if (cpplogEnabled(cpplogging::debug)) {
-      print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, zone,
+      print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, false, zone,
                          placeholder1, discrete_state, formula.getOpType());
       cpplog(cpplogging::debug)
           << "----(Valid) EXISTS (in FORALL_REL) Placeholder indicates no "
@@ -2141,10 +2141,8 @@ inline void prover::do_proof_place_forall_rel(const SubstList& discrete_state,
     do_proof_place(discrete_state, zone, place, *formula.getRight());
     place->cf();
     if (!place->emptiness()) { // Only do if a nonempty placeholder
-      retVal = true;
-
       if (cpplogEnabled(cpplogging::debug)) {
-        print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal,
+        print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, true,
                            zone, *place, discrete_state, formula.getOpType());
         cpplog(cpplogging::debug)
             << "----(Valid) Placeholder Check Passed-----" << std::endl
@@ -2182,11 +2180,9 @@ inline void prover::do_proof_place_forall_rel(const SubstList& discrete_state,
     parentPlaceRef = nullptr;
 
     if (placeholder2.emptiness()) {
-      retVal = false;
       *place = placeholder2;
     } else if (placeholder2 >= lhs_succ) {
       /* \forallrel(\phi_2) holds, avoid extra work. */
-      retVal = true;
       *place = placeholder2;
     } else {
       /* Now do a succ check on phi_2 to get \phi_forall
@@ -2200,7 +2196,7 @@ inline void prover::do_proof_place_forall_rel(const SubstList& discrete_state,
       placeholder_forall.cf();
 
       if (cpplogEnabled(cpplogging::debug)) {
-        print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal,
+        print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, false,
                            lhs_succ, placeholder2, discrete_state, formula.getOpType());
         cpplog(cpplogging::debug)
             << "----() FORALL (of FORALL_REL) Placeholder Check obtained  FA "
@@ -2232,7 +2228,7 @@ inline void prover::do_proof_place_forall_rel(const SubstList& discrete_state,
         // check elapse further?
 
         if (cpplogEnabled(cpplogging::debug)) {
-          print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal,
+          print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, false,
                              zone, placeholder_exists, discrete_state, formula.getOpType());
           cpplog(cpplogging::debug) << "----() FORALL Rel Exists placeholder "
                                        "after time elapse check is := {"
@@ -2244,16 +2240,11 @@ inline void prover::do_proof_place_forall_rel(const SubstList& discrete_state,
       /* Last, we do an "or" check on the two placeholders */
       bool forallEmpty = placeholder_forall.emptiness();
       bool existsEmpty = placeholder_exists.emptiness();
-      retVal = true;
       if (forallEmpty && existsEmpty) {
         place->makeEmpty();
-      } else if (forallEmpty) {
+      } else if (forallEmpty || placeholder_forall <= placeholder_exists) {
         *place = placeholder_exists;
-      } else if (existsEmpty) {
-        *place = placeholder_forall;
-      } else if (placeholder_forall <= placeholder_exists) {
-        *place = placeholder_exists;
-      } else if (placeholder_exists <= placeholder_forall) {
+      } else if (existsEmpty || placeholder_exists <= placeholder_forall) {
         *place = placeholder_forall;
       } else {
         *place = placeholder_exists;
