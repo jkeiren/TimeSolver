@@ -51,7 +51,7 @@ private:
   /** The Number of clocks in the space for the DBMList. This
    * number includes the "zero clock." This number is also
    * the same for all DBMs in the DBMList. */
-  short int nClocks;
+  DBM::size_type nClocks;
 
   /** Private method that returns the complement of a DBM. This uses
    * the (simple) method of performing a DBM that is the union of all
@@ -169,7 +169,7 @@ public:
    * "zero clock". Hence, there are numClocks - 1 actual clocks
    * with 1 "zero" clock.
    * @return [Constructor] */
-  DBMList(const short int numClocks,
+  DBMList(const DBM::size_type numClocks,
           const bidirectional_map<std::string, int> &cs)
       : isCf(false),
         dbmListVec(new std::vector<DBM*>),
@@ -601,7 +601,7 @@ public:
    * The final DBMList is not in canonical form.
    * @param x The clock to reset to 0.
    * @return The reference to the changed, calling resulting DBMList. */
-  DBMList &reset(const short int x) {
+  DBMList &reset(const DBM::size_type x) {
     std::for_each(dbmListVec->begin(), dbmListVec->end(),
         [&](DBM* d){ d->reset(x); });
     isCf = false;
@@ -626,7 +626,7 @@ public:
    * @param x The clock to change the value of
    * @param y The clock to reset the first clock to.
    * @return The reference to the changed, calling resulting DBMList. */
-  DBMList &reset(const short int x, const short int y) {
+  DBMList &reset(const DBM::size_type x, const DBM::size_type y) {
     std::for_each(dbmListVec->begin(), dbmListVec->end(),
         [&](DBM* d){ d->reset(x, y); });
     isCf = false;
@@ -641,7 +641,7 @@ public:
    * after this operation.
    * @param x The clock that was just reset (after the predecessor zone).
    * @return The reference to the modified DBMList. */
-  DBMList &preset(const short int x) {
+  DBMList &preset(const DBM::size_type x) {
     std::for_each(dbmListVec->begin(), dbmListVec->end(),
         [&](DBM* d){ d->preset(x); });
     isCf = false;
@@ -672,7 +672,7 @@ public:
    * @param x The clock that was just reset (after the predecessor zone).
    * @param y The second clock; the clock whose value x was just assigned to.
    * @return The reference to the modified DBMList. */
-  DBMList &preset(const short int x, const short int y) {
+  DBMList &preset(const DBM::size_type x, const DBM::size_type y) {
     std::for_each(dbmListVec->begin(), dbmListVec->end(),
         [&](DBM* d){ d->preset(x, y); });
     isCf = false;
@@ -687,7 +687,7 @@ public:
    * @return none
    * @note This only works when the timed automaton is "diagonal-free,"
    * or does not have any clock difference constraints in the automaton. */
-  void bound(const int maxc) {
+  void bound(const clock_value_t maxc) {
     std::for_each(dbmListVec->begin(), dbmListVec->end(),
         [&](DBM* d){ d->bound(maxc); });
     isCf = false;

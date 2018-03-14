@@ -109,7 +109,7 @@ public:
   const bidirectional_map<std::string, int>& clocks() const { return _clocks; }
 
   /** Number of clocks, including the implicit 0 clock x0 */
-  int spaceDimension() const { return _clocks.size() + 1; }
+  DBM::size_type spaceDimension() const { return _clocks.size() + 1; }
 
   /** Add clock with name @name */
   int add_clock(const std::string& name) {
@@ -322,7 +322,7 @@ public:
     if (initial_clock_zone_ == nullptr)
     {
       initial_clock_zone_ = new DBM(spaceDimension(), clocks());
-      for (int i = 0; i < spaceDimension(); ++i) {
+      for (DBM::size_type i = 0; i < spaceDimension(); ++i) {
         initial_clock_zone_->addConstraint(i, 0, 0x1);
       }
       initial_clock_zone_->cf();

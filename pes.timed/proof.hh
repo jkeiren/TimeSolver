@@ -2046,7 +2046,6 @@ inline void prover::do_proof_place_forall_rel(const SubstList& discrete_state,
                                                   const DBM& zone,
                                                   DBMList* place,
                                                   const ExprNode& formula) {
-  bool retVal = false;
   /* Proof methodology:
    * first, see if \phi_1 is satisfied during the time advance.
    * If it is, check that phi_2 is true both at and before those
