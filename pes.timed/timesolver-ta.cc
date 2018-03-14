@@ -182,10 +182,8 @@ int main(int argc, char** argv) {
   if (cpplogEnabled(cpplogging::debug)) {
     // Print Transitions
     cpplog(cpplogging::debug) << std::endl << "TRANSITIONS:" << std::endl;
-    for (std::vector<const Transition*>::const_iterator it =
-             input_pes.transitions().begin();
-         it != input_pes.transitions().end(); it++) {
-      cpplog(cpplogging::debug) << **it << std::endl;
+    for (Transition* const transition: input_pes.transitions()) {
+      cpplog(cpplogging::debug) << *transition << std::endl;
     }
     cpplog(cpplogging::debug) << std::endl;
   }
