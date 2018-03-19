@@ -16,7 +16,7 @@ public:
   /** Constructor for transitions. This is used in the parser
    * to form transition objects
    * @param destParent (*) a reference for the expression that is the
-   * parent of the desitnation expression that follows the transition
+   * parent of the destination expression that follows the transition
    * in a proof.
    * @param leftExprIn (*) The ExprNode representing the left
    * (enabling conditions) of the transition.
@@ -80,7 +80,7 @@ public:
    * the enabling condition of the transition.
    * @return The ExprNode describing the enabling conditions of the
    * transition. */
-  const ExprNode* getLeftExpr() const { return leftExpr; }
+  const ExprNode* guard() const { return leftExpr; }
 
   /** Retrieve the expression that specifies
    * the destination (state change) of the transition.
@@ -91,7 +91,7 @@ public:
   /** Retrieve the list of clock assignments stored by this transition.
    * @return the vector containing the ordered list of clock assignments
    * that occur on the edge of this transition. */
-  const std::vector<std::pair<short int, short int>>* getAssignmentVector()
+  const std::vector<std::pair<short int, short int>>* clock_assignments()
       const {
     return clockAssignmentList;
   }
@@ -117,13 +117,11 @@ public:
         rightExpr = destExpr;
       }
     }
-
-    return;
   }
 
   /** Returns the clock set of the clocks reset by this transition.
    * @return the clocks reset by this transition. */
-  const ClockSet* getCSet() const { return resetList; }
+  const ClockSet* reset_clocks() const { return resetList; }
 
   /** Given the location of a state that satisfies the
    * location constraints of the transition, this gives
@@ -131,18 +129,14 @@ public:
    * helps augment a guard to ensure that the entering location's
    * invariant is satisfied.
    * @param source (*) The leaving location (the discrete state component).
-   * @return The entering location if the given location executed this
-   * transition. */
-  const SubstList* getEnteringLocation(const SubstList* const source) const {
+   * @return The location entered after the transition has been executed from the source location. */
+  const SubstList destination_location(const SubstList* const source_location) const {
     // Since a new substList is created, delete it when finished.
-    SubstList* st = nullptr;
     if (destList == nullptr) {
-      st = new SubstList(*source);
+      return *source_location;
     } else {
-      st = new SubstList(destList, source);
+      return SubstList(destList, source_location);
     }
-
-    return st;
   }
 
   /** Prints out the transition to the desired output stream.

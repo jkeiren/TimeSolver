@@ -1378,10 +1378,10 @@ inline bool prover::do_proof_allact(const SubstList& discrete_state,
 
   for (Transition* const transition: input_pes.transitions()) {
     /* Obtain the entire ExprNode and prove it */
-    DBM tempLHS(zone);
+    DBM guard_zone(zone);
 
     bool guard_satisfied =
-        comp_ph(&tempLHS, *(transition->getLeftExpr()), discrete_state);
+        comp_ph(&guard_zone, *(transition->guard()), discrete_state);
     if (!guard_satisfied) {
       cpplog(cpplogging::debug)
           << "Transition: " << transition << " cannot be taken." << std::endl;
@@ -1391,39 +1391,37 @@ inline bool prover::do_proof_allact(const SubstList& discrete_state,
     /* Now check the invariant; if the invariant is satisfiable, we update the
        left hand side to be the part of the left hand side that satisfies the
        location invariant. */
-    DBM invariant_region(*INFTYDBM);
-    const SubstList* source_location = transition->getEnteringLocation(&discrete_state);
+    DBM invariant_zone(*INFTYDBM);
     bool invariant_satisfiable = restrict_to_invariant(
-        input_pes.invariants(), &invariant_region, *source_location);
-    delete source_location;
+        input_pes.invariants(), &invariant_zone, transition->destination_location(&discrete_state));
 
     if (invariant_satisfiable) {
-      invariant_region.cf();
+      invariant_zone.cf();
       // Some clocks are reset on this transition
-      const ClockSet* reset_clocks = transition->getCSet();
+      const ClockSet* reset_clocks = transition->reset_clocks();
       if (reset_clocks != nullptr) {
-        invariant_region.preset(reset_clocks);
+        invariant_zone.preset(reset_clocks);
       }
-      invariant_region.cf();
+      invariant_zone.cf();
       /* Now perform clock assignments sequentially: perform the
        * front assignments first */
       const std::vector<std::pair<short int, short int>>* clock_assignments =
-          transition->getAssignmentVector();
+          transition->clock_assignments();
       if (clock_assignments != nullptr) {
         // Iterate over the vector and print it
         for (const std::pair<short int, short int>& clock_assignment: *clock_assignments) {
-          invariant_region.preset(clock_assignment.first, clock_assignment.second);
-          invariant_region.cf();
+          invariant_zone.preset(clock_assignment.first, clock_assignment.second);
+          invariant_zone.cf();
         }
       }
 
-      tempLHS.intersect(invariant_region);
-      tempLHS.cf();
-      if (tempLHS.emptiness()) {
+      guard_zone.intersect(invariant_zone);
+      guard_zone.cf();
+      if (guard_zone.emptiness()) {
         cpplog(cpplogging::debug)
             << "Transition: " << transition
             << " cannot be taken; entering invariant is false." << std::endl
-            << "\tExtra invariant condition: " << invariant_region << std::endl;
+            << "\tExtra invariant condition: " << invariant_zone << std::endl;
         continue;
       }
     }
@@ -1436,16 +1434,16 @@ inline bool prover::do_proof_allact(const SubstList& discrete_state,
      * the LHS by expanding the zone so it contains
      * all the proper regions where the clocks
      * exceed a certain constant value. */
-    tempLHS.cf();
-    tempLHS.bound(input_pes.max_constant());
-    tempLHS.cf();
+    guard_zone.cf();
+    guard_zone.bound(input_pes.max_constant());
+    guard_zone.cf();
 
     cpplog(cpplogging::debug)
         << "Executing transition (with destination) " << transition << std::endl
-        << "\tExtra invariant condition: " << invariant_region << std::endl;
+        << "\tExtra invariant condition: " << invariant_zone << std::endl;
 
     numLocations++;
-    retVal = do_proof(discrete_state, tempLHS, *transition->getRightExpr());
+    retVal = do_proof(discrete_state, guard_zone, *transition->getRightExpr());
     if (!retVal) {
       cpplog(cpplogging::debug)
           << "Trainsition: " << transition << std::endl
@@ -1479,7 +1477,7 @@ inline bool prover::do_proof_existact(const SubstList& discrete_state,
     DBMList tempPlace(*INFTYDBM);
     DBM tempLHS(zone);
     bool guard_satisfied = comp_ph_exist_place(
-        &tempLHS, &tempPlace, *(transition->getLeftExpr()), discrete_state);
+        &tempLHS, &tempPlace, *(transition->guard()), discrete_state);
     if (!guard_satisfied) {
       cpplog(cpplogging::debug)
           << "Transition: " << transition << " cannot be taken." << std::endl;
@@ -1488,13 +1486,11 @@ inline bool prover::do_proof_existact(const SubstList& discrete_state,
 
     /* Now check the invariant */
     DBM invariant_region(*INFTYDBM);
-    const SubstList* source_location = transition->getEnteringLocation(&discrete_state);
     bool invariant_satisfiable = restrict_to_invariant(
-        input_pes.invariants(), &invariant_region, *source_location);
-    delete source_location;
+        input_pes.invariants(), &invariant_region, transition->destination_location(&discrete_state));
     if (invariant_satisfiable) {
       invariant_region.cf();
-      const ClockSet* reset_clocks = transition->getCSet();
+      const ClockSet* reset_clocks = transition->reset_clocks();
       if (reset_clocks != nullptr) {
         invariant_region.preset(reset_clocks);
       }
@@ -1502,7 +1498,7 @@ inline bool prover::do_proof_existact(const SubstList& discrete_state,
       /* Now perform clock assignments sequentially: perform the
        * front assignments first */
       const std::vector<std::pair<short int, short int>>* clock_assignments =
-          transition->getAssignmentVector();
+          transition->clock_assignments();
       if (clock_assignments != nullptr) {
         for (const std::pair<short int, short int>& clock_assignment: *clock_assignments) {
           invariant_region.preset(clock_assignment.first, clock_assignment.second);
@@ -1634,10 +1630,8 @@ inline bool prover::do_proof_reset(const SubstList& discrete_state,
 
 inline bool prover::do_proof_assign(const SubstList& discrete_state,
                                     const DBM& zone, const ExprNode& formula) {
+  // Formula is phi[x:=y] with x and y clocks.
   DBM lhs_assign(zone);
-  /* Here the DBM zone is where the value of
-   * clock x is reset to clock y, which is possibly
-   * a constant or a value*/
   lhs_assign.reset(formula.getcX(), formula.getcY());
   lhs_assign.cf();
   return do_proof(discrete_state, lhs_assign, *formula.getExpr());
@@ -2491,7 +2485,7 @@ inline void prover::do_proof_place_allact(const SubstList& discrete_state,
 
     DBMList guard_region(*place);
     bool guard_satisfied =
-        comp_ph_all_place(&tempLHS, &guard_region, *(transition->getLeftExpr()),
+        comp_ph_all_place(&tempLHS, &guard_region, *(transition->guard()),
                           discrete_state);
     if (!guard_satisfied) {
       cpplog(cpplogging::debug)
@@ -2505,15 +2499,13 @@ inline void prover::do_proof_place_allact(const SubstList& discrete_state,
     /* Now check the invariant */
     DBMList transition_placeholder(*place);
     DBM invariant_region(*INFTYDBM);
-    const SubstList* source_location = transition->getEnteringLocation(&discrete_state);
     bool invariant_satisfiable = restrict_to_invariant(input_pes.invariants(),
                                                        &invariant_region,
-                                                       *source_location);
-    delete source_location;
+                                                       transition->destination_location(&discrete_state));
 
     if (invariant_satisfiable) {
       invariant_region.cf();
-      const ClockSet* reset_clocks = transition->getCSet();
+      const ClockSet* reset_clocks = transition->reset_clocks();
       if (reset_clocks != nullptr) {
         invariant_region.preset(reset_clocks);
       }
@@ -2521,7 +2513,7 @@ inline void prover::do_proof_place_allact(const SubstList& discrete_state,
       /* Now perform clock assignments sequentially: perform the
        * front assignments first */
       const std::vector<std::pair<short int, short int>>* clock_assignments =
-          transition->getAssignmentVector();
+          transition->clock_assignments();
       if (clock_assignments != nullptr) {
         // Iterate over the vector and print it
         for (const std::pair<short int, short int>& clock_assignment: *clock_assignments) {
@@ -2700,7 +2692,7 @@ inline void prover::do_proof_place_existact(const SubstList& discrete_state,
     // Method tightens zone and place to those subsets satisfying the guard
     // (leftExpr).
     bool guard_satisfied = comp_ph_exist_place(&tempLHS, &tempPlace,
-                                        *(transition->getLeftExpr()), discrete_state);
+                                        *(transition->guard()), discrete_state);
     if (!guard_satisfied) {
       cpplog(cpplogging::debug)
           << "Transition: " << transition << " cannot be taken." << std::endl;
@@ -2710,13 +2702,11 @@ inline void prover::do_proof_place_existact(const SubstList& discrete_state,
     /* Now check the invariant of the target location (getEnteringLocation gives
        the destination location of the transition */
     DBM invariant_region(*INFTYDBM);
-    const SubstList* source_location = transition->getEnteringLocation(&discrete_state);
     bool invariant_satisfiable = restrict_to_invariant(
-        input_pes.invariants(), &invariant_region, *source_location);
-    delete source_location;
+        input_pes.invariants(), &invariant_region, transition->destination_location(&discrete_state));
     if (invariant_satisfiable) { // the invariant does not hold vacuously.
       invariant_region.cf();
-      const ClockSet* reset_clocks = transition->getCSet();
+      const ClockSet* reset_clocks = transition->reset_clocks();
       if (reset_clocks != nullptr) {
         invariant_region.preset(reset_clocks);
       }
@@ -2724,7 +2714,7 @@ inline void prover::do_proof_place_existact(const SubstList& discrete_state,
       /* Now perform clock assignments sequentially: perform the
        * front assignments first */
       const std::vector<std::pair<short int, short int>>* clock_assignments =
-          transition->getAssignmentVector();
+          transition->clock_assignments();
       if (clock_assignments != nullptr) {
         // Iterate over the vector and print it
         for (const std::pair<short int, short int>& clock_assignment: *clock_assignments) {
@@ -2982,33 +2972,30 @@ inline void prover::do_proof_place_reset(const SubstList& discrete_state,
                                              const DBM& zone,
                                              DBMList* place,
                                              const ExprNode& formula) {
-  // Bound the LHS to prevent infinite proofs
   DBM lhs_reset(zone);
-  lhs_reset.bound(input_pes.max_constant());
-  lhs_reset.cf();
+// JK: It does not become clear why this is necessary here
+//  lhs_reset.bound(input_pes.max_constant());
+//  lhs_reset.cf();
   lhs_reset.reset(formula.getClockSet());
   lhs_reset.cf();
 
-  DBMList tPlace(*INFTYDBM);
-  do_proof_place(discrete_state, lhs_reset, &tPlace, *formula.getExpr());
-  tPlace.cf();
-  if (tPlace.emptiness()) {
-    *place = tPlace;
+  DBMList placeholder1(*INFTYDBM);
+  do_proof_place(discrete_state, lhs_reset, &placeholder1, *formula.getExpr());
+  placeholder1.cf();
+  if (placeholder1.emptiness()) {
+    *place = placeholder1;
   } else {
-    /* Now do the check that the new placeholder follows from
-     * the previous placeholder. by setting it to such */
-    // Apply the reset (weakest precondition operator)
-    tPlace.preset(formula.getClockSet());
+    // Apply the preset (weakest precondition operator)
+    placeholder1.preset(formula.getClockSet());
 
     // Use the rule to compute what the old place holder should be
-    place->intersect(tPlace);
+    place->intersect(placeholder1);
     place->cf();
-    bool retVal = !place->emptiness();
 
     if (cpplogEnabled(cpplogging::debug)) {
-      print_sequent_placeCheck(std::cerr, step - 1, retVal, zone, *place, tPlace,
+      print_sequent_placeCheck(std::cerr, step - 1, !place->emptiness(), zone, *place, placeholder1,
                                discrete_state, formula.getOpType());
-      if (retVal) {
+      if (!place->emptiness()) {
         cpplog(cpplogging::debug)
             << "----(Valid) Placeholder Check Passed-----" << std::endl
             << "--With Placeholder := {" << *place << "} ----" << std::endl
@@ -3026,7 +3013,6 @@ inline void prover::do_proof_place_assign(const SubstList& discrete_state,
                                               const DBM& zone,
                                               DBMList* place,
                                               const ExprNode& formula) {
-  // use zone->cf() for more efficiency
   DBM lhs_assign(zone);
   /* Here the DBM zone is where the value of
    * clock x is reset to clock y, which is possibly
