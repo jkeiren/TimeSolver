@@ -19,7 +19,7 @@
  * @param sublist The discrete state in which to evaluate e.
  * @return true if e is satisfied in the discreate state, false otherwise.
  */
-inline bool comp_ph_default(const ExprNode& e, const SubstList& discrete_state)
+inline bool eval_atomic(const ExprNode& e, const SubstList& discrete_state)
 {
   switch (e.getOpType()) {
     case BOOL: {
@@ -71,7 +71,7 @@ inline bool comp_ph_invs(const ExprNode& e, const SubstList& discrete_state) {
               comp_ph_invs(*(e.getRight()), discrete_state));
     }
     default: {
-      return comp_ph_default(e, discrete_state);
+      return eval_atomic(e, discrete_state);
     }
   }
 }
@@ -165,14 +165,14 @@ inline bool comp_ph(DBM* const zone, const ExprNode& e,
     case OR_SIMPLE: {
       /* This OR rule only works when there is at most one constraint.
        * By definition of its input, we have a discrete state (with
-       * && and || notes) conjuncted with an intersection of constraints.
+       * && and || nodes) conjuncted with an intersection of constraints.
        * By construction of the fed input to this function, the above
        * bad case will never occur. */
       return (comp_ph(zone, *(e.getLeft()), discrete_state) ||
               comp_ph(zone, *(e.getRight()), discrete_state));
     }
     default: {
-      return comp_ph_default(e, discrete_state);
+      return eval_atomic(e, discrete_state);
     }
   }
 }
@@ -217,7 +217,7 @@ inline bool comp_ph_exist(const DBM* const zone, const ExprNode& e,
               comp_ph_exist(zone, *(e.getRight()), discrete_state));
     }
     default: {
-      return comp_ph_default(e, discrete_state);
+      return eval_atomic(e, discrete_state);
     }
   }
 }
@@ -279,7 +279,7 @@ inline bool comp_ph_exist_place(DBM* const zone, DBMList* const place,
               comp_ph_exist_place(zone, place, *(e.getRight()), discrete_state));
     }
     default: {
-      return comp_ph_default(e, discrete_state);
+      return eval_atomic(e, discrete_state);
     }
   }
 }
@@ -325,7 +325,7 @@ inline bool comp_ph_all_place(DBM* const zone, DBMList* const place,
               comp_ph_all_place(zone, place, *(e.getRight()), discrete_state));
     }
     default: {
-      return comp_ph_default(e, discrete_state);
+      return eval_atomic(e, discrete_state);
     }
   }
 }
