@@ -140,6 +140,9 @@ public:
   SubstList(const SubstList& Y)
       : OneDIntArray(Y), declared_atomic(Y.declared_atomic){}
 
+  // Default move constructor.
+  SubstList(SubstList&& other) = default;
+
   /** Destructor.  Does nothing.
    * @return [Destructor]. */
   ~SubstList() {}
@@ -173,6 +176,7 @@ public:
    * @param val The value to change the desired element to.
    * @return a pointer to the SubstList that was just changed. */
   SubstList* addst(const size_type index, const element_type val) {
+    assert(index < quantity);
     this->operator[](index) = val;
     return this;
   }
