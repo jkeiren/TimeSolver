@@ -301,7 +301,7 @@ public:
   void add_transition(Transition* t) { _transitions.push_back(t); }
 
   /** Get the largest constant in the system */
-  int max_constant() const { return max_constant_; }
+  clock_value_t max_constant() const { return max_constant_; }
 
   /** Update the largest constant in the system (if needed) */
   void update_max_constant(const int v) { max_constant_ = std::max(max_constant_, v); }
