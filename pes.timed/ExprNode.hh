@@ -61,6 +61,9 @@ enum opType {
   UNABLEWAITINF
 };
 
+typedef DBM::size_type atomic_size_type;
+typedef clock_value_t atomic_value_t;
+
 /** Prints out the expression type (opType) to the desired output stream.
  * The typical output stream is cout.
  * @param op (*) The expression type.
@@ -459,7 +462,7 @@ public:
    * @note Using this constructor with an opType value other than one of
    * the values given above may result in program errors.
    * @return [Constructor]. */
-  ExprNode(const opType o, ExprNode* l, const short int cx, const short int cy,
+  ExprNode(const opType o, ExprNode* l, const DBM::size_type cx, const DBM::size_type cy,
            const bidirectional_map<std::string, int>& cs,
            const bidirectional_map<std::string, int>& as)
       : left(l),
@@ -581,7 +584,7 @@ public:
    * @return The id of the atomic (location, or clock)
    * variable stored in the expression.
    * @see The Constructor(s) comments for more information. */
-  short int getAtomic() const { return atomic; }
+  atomic_size_type getAtomic() const { return atomic; }
 
   /** Returns the value (name) of the predicate variable in
    * the expression.
@@ -593,7 +596,7 @@ public:
    * stored in atomic.
    * @return The value of the variable relevant to the atomic variable.
    * @see The Constructor(s) comments for more information. */
-  short int getIntVal() const { return intVal; }
+  atomic_value_t getIntVal() const { return intVal; }
 
   /** Returns the left (or single) child of the ExprNode.
    * @note This does the same thing as getQuant() and getLeft(), and is
@@ -619,7 +622,7 @@ public:
    * the expression.
    * @note This does the same thing as getAtomic().
    * @see The Constructor(s) comments for more information. */
-  short int getcX() const { return atomic; }
+  atomic_size_type getcX() const { return atomic; }
 
   /** Returns the value to assign a clock to. For this method,
    * the value is intended to be the index of the clock to take its
@@ -627,7 +630,7 @@ public:
    * @return the value of the variable relevant to the atomic variable.
    * @note This does the same thing as getIntVal().
    * @see The Constructor(s) comments for more information. */
-  short int getcY() const { return intVal; }
+  atomic_value_t getcY() const { return intVal; }
 
   /** Sets the parity of the expression, using true = gfp and false = lfp.
    * @param parity The desired parity: true = gfp and false = lfp.
@@ -655,7 +658,7 @@ public:
    * expression's block.
    * @note This function does the same thing as getIntVal() and getcY().
    * @see The Constructor(s) comments for more information. */
-  short int get_Block() const { return intVal; }
+  atomic_value_t get_Block() const { return intVal; }
 
   /** Checks if atomic (usually location variable) a has value b; this
    * method is used when checking invariants.  This method
@@ -665,7 +668,7 @@ public:
    * @param b The candidate intVal value.
    * @returns true: if a is the atomic id in the expression and b is the intVal
    * value in the expression; false: otherwise. */
-  bool inv_loc(const int a, const int b) {
+  bool inv_loc(const atomic_size_type a, const atomic_value_t b) {
     return ((a == atomic) && (b == intVal));
   }
 
@@ -776,7 +779,7 @@ protected:
    * For opTypes RESET, and ASSIGN:
    * the atomic variable represents the clock variable (clock index)
    * The parser converts variable names into integer indexes.*/
-  short int atomic;
+  atomic_size_type atomic;
   /** Used to store an integer value that corresponds to different
    * meanings, depending on the opType.
    * For opTypes ATOMIC, ATOMIC_NOT, ATOMIC_LT, ATOMIC_GT, and REPLACE:
@@ -785,7 +788,7 @@ protected:
    * with ATOMIC and REPLACE corresponding to =) to the intVal.
    * For opType ASSIGN: intVal is the integer of the clock index
    * to assign to the clock stored in int atomic.*/
-  short int intVal;
+  atomic_value_t intVal;
 
   /** Used as the boolean value of an expression or its parity.
    * For opType BOOL: b is the truth of the expression. For
@@ -830,7 +833,7 @@ inline std::ostream& operator<<(std::ostream& os, const ExprNode& e) {
  * clock assignments.  */
 inline
 void makeAssignmentList(const ExprNode& e,
-                        std::vector<std::pair<short int, short int>>* av) {
+                        std::vector<std::pair<atomic_size_type, atomic_value_t>>* av) {
   if (e.getOpType() == ASSIGN) {
     av->push_back(std::make_pair(e.getAtomic(), e.getIntVal()));
     makeAssignmentList(*e.getExpr(), av);

@@ -235,9 +235,9 @@ trans_left_list TOK_IMPLY trans_dest_list_top trans_reset_list_top trans_replace
     delete tempExprC;
     rightExpr = $5;
   }
-  vector<pair<short int, short int> > * assignVector = nullptr;
+  vector<pair<atomic_size_type, atomic_value_t> > * assignVector = nullptr;
   if($5 != nullptr) {
-    assignVector = new vector<pair<short int, short int> >(0);
+    assignVector = new vector<pair<atomic_size_type, atomic_value_t> >(0);
     makeAssignmentList(*$5, assignVector);
   }
   Transition * t = new Transition(parExpr, leftExpr, rightExpr, leftBool, $3, $4, assignVector);
@@ -327,9 +327,9 @@ trans_left_list TOK_IMPLY trans_dest_list_top trans_reset_list_top trans_replace
     delete tempExprC;
     rightExpr = $6;
   }
-  vector<pair<short int, short int> > * assignVector = nullptr;
+  vector<pair<atomic_size_type, atomic_value_t> > * assignVector = nullptr;
   if($6 != nullptr) {
-    assignVector = new vector<pair<short int, short int> >(0);
+    assignVector = new vector<pair<atomic_size_type, atomic_value_t> >(0);
     makeAssignmentList(*$6, assignVector);
   }
   Transition * t = new Transition(parExpr, leftExpr, rightExpr, leftBool, $4, $5, assignVector);

@@ -1395,7 +1395,7 @@ inline bool prover::do_proof_allact(const SubstList& discrete_state,
     bool invariant_satisfiable = restrict_to_invariant(
         input_pes.invariants(), &invariant_zone, transition->destination_location(&discrete_state));
 
-    if (invariant_satisfiable) {
+    if (invariant_satisfiable) { // The transition exists
       invariant_zone.cf();
       // Some clocks are reset on this transition
       const ClockSet* reset_clocks = transition->reset_clocks();
@@ -1405,11 +1405,11 @@ inline bool prover::do_proof_allact(const SubstList& discrete_state,
       invariant_zone.cf();
       /* Now perform clock assignments sequentially: perform the
        * front assignments first */
-      const std::vector<std::pair<short int, short int>>* clock_assignments =
+      const std::vector<std::pair<DBM::size_type, clock_value_t>>* clock_assignments =
           transition->clock_assignments();
       if (clock_assignments != nullptr) {
         // Iterate over the vector and print it
-        for (const std::pair<short int, short int>& clock_assignment: *clock_assignments) {
+        for (const std::pair<DBM::size_type, clock_value_t>& clock_assignment: *clock_assignments) {
           invariant_zone.preset(clock_assignment.first, clock_assignment.second);
           invariant_zone.cf();
         }
@@ -1497,10 +1497,10 @@ inline bool prover::do_proof_existact(const SubstList& discrete_state,
       invariant_region.cf();
       /* Now perform clock assignments sequentially: perform the
        * front assignments first */
-      const std::vector<std::pair<short int, short int>>* clock_assignments =
+      const std::vector<std::pair<DBM::size_type, clock_value_t>>* clock_assignments =
           transition->clock_assignments();
       if (clock_assignments != nullptr) {
-        for (const std::pair<short int, short int>& clock_assignment: *clock_assignments) {
+        for (const std::pair<DBM::size_type, clock_value_t>& clock_assignment: *clock_assignments) {
           invariant_region.preset(clock_assignment.first, clock_assignment.second);
           invariant_region.cf();
         }
@@ -2512,11 +2512,11 @@ inline void prover::do_proof_place_allact(const SubstList& discrete_state,
       invariant_region.cf();
       /* Now perform clock assignments sequentially: perform the
        * front assignments first */
-      const std::vector<std::pair<short int, short int>>* clock_assignments =
+      const std::vector<std::pair<DBM::size_type, clock_value_t>>* clock_assignments =
           transition->clock_assignments();
       if (clock_assignments != nullptr) {
         // Iterate over the vector and print it
-        for (const std::pair<short int, short int>& clock_assignment: *clock_assignments) {
+        for (const std::pair<DBM::size_type, clock_value_t>& clock_assignment: *clock_assignments) {
           invariant_region.preset(clock_assignment.first, clock_assignment.second);
           invariant_region.cf();
         }
@@ -2713,11 +2713,11 @@ inline void prover::do_proof_place_existact(const SubstList& discrete_state,
       invariant_region.cf();
       /* Now perform clock assignments sequentially: perform the
        * front assignments first */
-      const std::vector<std::pair<short int, short int>>* clock_assignments =
+      const std::vector<std::pair<DBM::size_type, clock_value_t>>* clock_assignments =
           transition->clock_assignments();
       if (clock_assignments != nullptr) {
         // Iterate over the vector and print it
-        for (const std::pair<short int, short int>& clock_assignment: *clock_assignments) {
+        for (const std::pair<DBM::size_type, clock_value_t>& clock_assignment: *clock_assignments) {
           invariant_region.preset(clock_assignment.first, clock_assignment.second);
           invariant_region.cf();
         }

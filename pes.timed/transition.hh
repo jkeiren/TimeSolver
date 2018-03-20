@@ -33,14 +33,14 @@ public:
   Transition(ExprNode* const destParent, const ExprNode* const leftExprIn,
              ExprNode* const rightExprIn, const bool isDestOnLeft,
              const SubstList* const dest, const ClockSet* const reset,
-             const std::vector<std::pair<short int, short int>>* const
+             const std::vector<std::pair<DBM::size_type, clock_value_t>>* const
                  clockAssignments)
       : destPar(destParent),
         isDestLeft(isDestOnLeft),
         clockAssignmentList(
             clockAssignments == 0
                 ? nullptr
-                : new std::vector<std::pair<short int, short int>>(
+                : new std::vector<std::pair<DBM::size_type, clock_value_t>>(
                       *clockAssignments)),
         leftExpr(leftExprIn),
         rightExpr(rightExprIn),
@@ -91,7 +91,7 @@ public:
   /** Retrieve the list of clock assignments stored by this transition.
    * @return the vector containing the ordered list of clock assignments
    * that occur on the edge of this transition. */
-  const std::vector<std::pair<short int, short int>>* clock_assignments()
+  const std::vector<std::pair<DBM::size_type, clock_value_t >>* clock_assignments()
       const {
     return clockAssignmentList;
   }
@@ -168,7 +168,7 @@ private:
    * sequentially, the list is assumed to have no clock swaps
    * (i.e. no conflicts in clock assignments). By construction,
    * the innermost assignments are at the back. */
-  const std::vector<std::pair<short int, short int>>* clockAssignmentList;
+  const std::vector<std::pair<DBM::size_type, clock_value_t>>* clockAssignmentList;
 
   /** The enabling conditions of the transition. */
   const ExprNode* leftExpr;
