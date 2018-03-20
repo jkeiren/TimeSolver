@@ -69,6 +69,195 @@ Where $X \eqsigma \phi \in \E$ is an equation in the PES.
 
 \jk{Describe how the caching and cycle detection works}
 
+\section{Basic inequalities}
+\subsection{Constraints}
+
+\subsubsection{Without placeholder}
+A constraint (conjunction of linear inequalities, representable as a DBM) holds according to the following proof rule ($cc$ is a clock constraint)
+\[
+  \proofrule
+  {(\loc, \region) \vdash cc}
+  {}
+  \region \subseteq cc
+\]
+
+\begin{algorithm}[H]
+  \caption{$\method{do\_proof\_constraint}(\loc, \region, \phi)$}
+  \begin{algorithmic}
+  \RETURN $\region \subseteq \phi$
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{With placeholder}
+A constraint (conjunction of linear inequalities, representable as a DBM) holds according to the following proof rule ($cc$ is a clock constraint)
+\[
+  \proofrule
+  {(\loc, \region), \placeholder \vdash cc}
+  {}
+  \region \cap \placeholder \subseteq cc
+\]
+
+This can be achieved by restricting $\placeholder$ to $cc$. In fact, we can restrict $\placeholder$ further to $cc \cap \region$ if we want to simplify the surrounding proof that uses the placeholder.
+\begin{algorithm}[H]
+  \caption{$\method{do\_proof\_place\_constraint}(\loc, \region, \placeholder, \phi)$}
+  \begin{algorithmic}
+  \IF{$\region \not \subseteq cc$}
+    \STATE $\placeholder \gets \placeholder \cap cc$
+    \IF{$\placeholder \cap \region = \emptyset$}
+      \STATE $\placeholder \gets \emptyset$
+    \ENDIF
+  \ENDIF
+\end{algorithmic}
+\end{algorithm}
+
+
+\subsection{Boolean variables}
+
+Let $b$ be a Boolean variable. The rule is the same for the case with and without placeholder (the placeholder is simply omitted for the case without placeholder).
+\[
+  \proofrule
+  {(\loc, \region), \placeholder \vdash b}
+  {}
+  b
+\]
+
+The implementation combines the case with and without placeholder.
+\begin{algorithm}[H]
+  \caption{$\method{do\_proof\_place\_bool}(\loc, \region, \placeholder, b)$}
+  \begin{algorithmic}
+  \STATE $\var{result} \gets b$
+  \IF{$\lnot \var{result}$}
+    \STATE $\placeholder \gets \emptyset$
+  \ENDIF
+  \RETURN $\var{result}$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Atomic}
+Let $\loc_i$ be an atomic variable in $\loc$. Atomic denotes equality of a location variable to a given value.
+\newcommand{\val}{\mathit{val}}
+Let $\val(\loc, \loc_i)$ be the value of atomic variable $\loc_i$ in location $\loc$.
+\[
+  \proofrule
+  {(\loc, \region), \placeholder \vdash \loc_i = c}
+  {}
+  \val(\loc, \loc_i) = c 
+\]
+
+The implementation combines the case with and without placeholder.
+\begin{algorithm}[H]
+  \caption{$\method{do\_proof\_place\_atomic}(\loc, \region, \placeholder, \loc_i = c)$}
+  \begin{algorithmic}
+  \STATE $\var{result} \gets \val(\loc, \loc_i) = c$
+  \IF{$\lnot \var{result}$}
+    \STATE $\placeholder \gets \emptyset$
+  \ENDIF
+  \RETURN $\var{result}$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Atomic not}
+Let $\loc_i$ be an atomic variable in $\loc$. Atomic not denotes inequality of a location variable to a given value.
+\[
+  \proofrule
+  {(\loc, \region), \placeholder \vdash \loc_i \neq c}
+  {}
+  \val(\loc, \loc_i) \neq c 
+\]
+
+The implementation combines the case with and without placeholder.
+\begin{algorithm}[H]
+  \caption{$\method{do\_proof\_place\_atomic\_not}(\loc, \region, \placeholder, \loc_i \neq c)$}
+  \begin{algorithmic}
+  \STATE $\var{result} \gets \val(\loc, \loc_i) \neq c$
+  \IF{$\lnot \var{result}$}
+    \STATE $\placeholder \gets \emptyset$
+  \ENDIF
+  \RETURN $\var{result}$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Atomic less than}
+Let $\loc_i$ be an atomic variable in $\loc$. 
+\[
+  \proofrule
+  {(\loc, \region), \placeholder \vdash \loc_i < c}
+  {}
+  \val(\loc, \loc_i) < c 
+\]
+
+\begin{algorithm}[H]
+  \caption{$\method{do\_proof\_place\_atomic\_lt}(\loc, \region, \placeholder, \loc_i < c)$}
+  \begin{algorithmic}
+  \STATE $\var{result} \gets \val(\loc, \loc_i) < c$
+  \IF{$\lnot \var{result}$}
+    \STATE $\placeholder \gets \emptyset$
+  \ENDIF
+  \RETURN $\var{result}$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Atomic greater than}
+
+Let $\loc_i$ be an atomic variable in $\loc$. 
+\[
+  \proofrule
+  {(\loc, \region), \placeholder \vdash \loc_i > c}
+  {}
+  \val(\loc, \loc_i) > c 
+\]
+
+\begin{algorithm}[H]
+  \caption{$\method{do\_proof\_place\_atomic\_gt}(\loc, \region, \placeholder, \loc_i > c)$}
+  \begin{algorithmic}
+  \STATE $\var{result} \gets \val(\loc, \loc_i) > c$
+  \IF{$\lnot \var{result}$}
+    \STATE $\placeholder \gets \emptyset$
+  \ENDIF
+  \RETURN $\var{result}$
+\end{algorithmic}
+\end{algorithm}
+
+
+\subsection{Atomic less than or equal to}
+Let $\loc_i$ be an atomic variable in $\loc$. 
+\[
+  \proofrule
+  {(\loc, \region), \placeholder \vdash \loc_i \leq c}
+  {}
+  \val(\loc, \loc_i) \leq c 
+\]
+
+\begin{algorithm}[H]
+  \caption{$\method{do\_proof\_place\_atomic\_le}(\loc, \region, \placeholder, \loc_i \leq c)$}
+  \begin{algorithmic}
+  \STATE $\var{result} \gets \val(\loc, \loc_i) \leq c$
+  \IF{$\lnot \var{result}$}
+    \STATE $\placeholder \gets \emptyset$
+  \ENDIF
+  \RETURN $\var{result}$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Atomic greater than or equal to}
+Let $\loc_i$ be an atomic variable in $\loc$. 
+\[
+  \proofrule
+  {(\loc, \region), \placeholder \vdash \loc_i \geq c}
+  {}
+  \val(\loc, \loc_i) \geq c 
+\]
+
+\begin{algorithm}[H]
+  \caption{$\method{do\_proof\_place\_atomic\_ge}(\loc, \region, \placeholder, \loc_i \geq c)$}
+  \begin{algorithmic}
+  \STATE $\var{result} \gets \val(\loc, \loc_i) \geq c$
+  \IF{$\lnot \var{result}$}
+    \STATE $\placeholder \gets \emptyset$
+  \ENDIF
+  \RETURN $\var{result}$
+\end{algorithmic}
+\end{algorithm}
 
 \section{Boolean operators}
 
@@ -86,7 +275,7 @@ Where $X \eqsigma \phi \in \E$ is an equation in the PES.
 \caption{$\method{do\_proof\_and}(\loc, \region, \phi_1 \land \phi_2)$}
 \begin{algorithmic}
 \STATE $\var{result} \gets \method{do\_proof}(\loc, \region, \phi_1)$
-\IF{\var{result}}
+\IF{$\var{result}$}
   \STATE $\var{result} \gets \method{do\_proof}(\loc, \region, \phi_2)$
 \ENDIF
 \RETURN \var{result}
@@ -231,6 +420,61 @@ the placeholder will always either be completely empty, or completely full.
   \STATE $\method{do\_proof\_place}(\loc, \region, \placeholder, \phi_2)$
 \ENDIF
 \end{algorithmic}
+\end{algorithm}
+
+\subsection{Implication}
+In a formula $\phi \implies \psi$, $\phi$ is restricted to conjunctions and disjunctions over atomic propositions and clock constraints. \textbf{Note that all clock constraints must be grouped into a single subformula that does not contain conjunctions and disjunctions over atomic propositions.} For instance, $x < 3 \lor p \neq 0 \lor x > 4 \implies p = 0$ does not work (try this in an initial state $p=0$ and initial zone $x \leq 5$).
+
+% INITIALLY: x1 <=5
+% PREDICATE: {X}
+% START: X
+% EQUATIONS: {
+% 1: nu X = (x1 < 3 || p1 != 0 || x1 > 4) -> p1 == 0
+% }
+% TRANSITIONS:
+
+We use the restriction on the left hand side to efficiently restrict the part of the zone for which we need to check the right hand side.
+
+\subsubsection{Without placeholder}
+
+We get the proof rule
+\[
+\proofrule
+{(\loc, \region) \vdash \phi_1 \implies \phi_2}
+{(\loc, \region), \phi_1 \vdash \phi_2}
+\]
+
+We get the following code.
+\begin{algorithm}[H]
+  \caption{$\method{do\_proof\_imply}(\loc, \region, \phi_1 \implies \phi_2)$}
+  \begin{algorithmic}
+  \STATE $\region \gets \region \cap \phi_1$
+  \IF{$\region = \emptyset$}
+    \RETURN $\mathit{true}$
+  \ELSE
+    \RETURN $\method{do\_proof}(\loc, \region, \phi_2)$
+  \ENDIF
+  \end{algorithmic}
+\end{algorithm}
+
+\subsubsection{With placeholder}
+
+We get the proof rule
+\[
+\proofrule
+{(\loc, \region), \placeholder \vdash \phi_1 \implies \phi_2}
+{(\loc, \region), \phi_1, \placeholder \vdash \phi_2}
+\]
+
+We get the following code.
+\begin{algorithm}[H]
+  \caption{$\method{do\_proof\_place\_imply}(\loc, \region, \placeholder, \phi_1 \implies \phi_2)$}
+  \begin{algorithmic}
+  \STATE $\region \gets \region \cap \phi_1$
+  \IF{$\region \neq \emptyset$}
+    \STATE $\method{do\_proof}(\loc, \region, \placeholder, \phi_2)$
+  \ENDIF
+  \end{algorithmic}
 \end{algorithm}
 
 \subsection{Exists}
@@ -1455,48 +1699,226 @@ Again, there are two special cases, that extend from the previous special cases.
   \end{algorithm}
   
 
-% Note that the implementation uses $\suc(\region) \land \inv(\loc)$ instead of $\suc(\region)$, using a call to the function $\mathit{restrict\_to\_invariant}$.
+\section{Assignments}
 
-% The relativized forall uses the following rules.
-% \[
-% \proofrule
-% {(\loc, \region) \vdash \forall_{\phi_1}(\phi_2)}
-% {\not \exists \placeholder[1] \colon (\loc, \suc(\region)), \placeholder[1] \not \vdash \phi_1
-% \quad (\loc, \suc(\region)) \vdash \phi_2}
-% \]
+\subsection{Clock reset}
 
-% \[
-% \proofrule
-% {(\loc, \region) \vdash \forall_{\phi_1}(\phi_2)}
-% {(\loc, \suc(\region)), \placeholder[1] \vdash \phi_1
-% \quad (\loc, \suc(\region)) \vdash \phi_2}
-% \region \subseteq \placeholder[1]
-% \]
-
-% \[
-% \proofrule
-% {(\loc, \region) \vdash \forall_{\phi_1}(\phi_2)}
-% {(\loc, \suc(\region)), \placeholder[1] \vdash \phi_1
-% \quad (\loc, \suc(\region)), \placeholder[2] \vdash \phi_2
-% }
-% \placeholder[2] \subseteq \suc(\region)
-% \]
-
-
-\section{Substitution}
-
+\subsubsection{Without placeholder}
+The first proof rule for clock resets performs the reset without placeholder.
 \[
 \proofrule[{[]}]
 {(\loc, \region) \vdash \phi[\lambda := 0]}
 {(\loc, \post(\region, \lambda := 0)) \vdash \phi}
 \]
+Now, note that, whenever $c$ is a constant, $\post(\region, \lambda := c)) = \region[\lambda := c]$. We therefore get the following proofrule.
+\[
+  \proofrule[{[]}]
+  {(\loc, \region) \vdash \phi[\lambda := 0]}
+  {(\loc, \region[\lambda := 0]) \vdash \phi}
+\]
+%
+This results in the following pseudocode.
+\begin{algorithm}[H]
+  \caption{$\method{do\_proof\_reset}(\loc, \region, \phi[\lambda := 0]$}
+  \begin{algorithmic}
+  \RETURN $\method{do\_proof}(\loc, \region[\lambda := 0], \phi)$
+  \end{algorithmic}
+  \end{algorithm}
 
+\subsubsection{With placeholder}
+
+The authors give the following rule in~\cite{FC:14report}.
 \[
 \proofrule[{[]_p}]
 {(\loc, \region), \placeholder[{[]}] \vdash \phi[\lambda := 0]}
 {(\loc, \post(\region, \lambda := 0)), \placeholder \vdash \phi}
 \placeholder[{[]}] \subseteq \placeholder[][\lambda := 0]
 \]
+We instead derive the rule from first principles:
+\[
+\proofrule
+{(\loc, \region), \placeholder[{[]}] \vdash \phi[\lambda := 0]}
+{(\loc, \post(\region, \lambda := 0)), \post(\placeholder[{[]}], \lambda := 0)\vdash \phi}
+\]
+Where we can introduce a new placeholder, and establish the corresponding sidecondition.
+\[
+\proofrule
+{(\loc, \region), \placeholder[{[]}] \vdash \phi[\lambda := 0]}
+{(\loc, \post(\region, \lambda := 0)), \placeholder \vdash \phi}
+\post(\placeholder[{[]}], \lambda := 0) \subseteq \placeholder
+\]
+This sidecondition is equivalent to $\placeholder[{[]}] \subseteq \mathit{pre}(\placeholder, \lambda := 0)$ (property of weakest precondition and strongest postcondition). We can establish this by setting  $\placeholder[{[]}]$ to $ç$.
+
+Here we use the same observations as before to obtain the following proof rule.
+\[
+\proofrule
+{(\loc, \region), \placeholder[{[]}] \vdash \phi[\lambda := 0]}
+{(\loc, \region[\lambda := 0]), \placeholder \vdash \phi}
+\placeholder[{[]}] \subseteq \mathit{pre}(\placeholder, \lambda := 0)
+\]
+
+\begin{algorithm}[H]
+  \caption{$\method{do\_proof\_place\_reset}(\loc, \region, \placeholder, \phi[\lambda := 0]$}
+  \begin{algorithmic}
+    \STATE $\placeholder[1] \gets \infty$
+    \STATE $\method{do\_proof\_place}(\loc, \region[\lambda := 0], \placeholder[1], \phi)$
+    \STATE $\placeholder \gets \placeholder[1] \cap \mathit{pre}(\placeholder, \lambda := 0)$
+  \end{algorithmic}
+  \end{algorithm}
+
+\subsection{State update}
+Analogous to clock resets we have updates of the discrete state, $\phi[p := c]$, where we set control variable $p$ to value $c$.
+
+\subsubsection{Without placeholders}
+With this goes the proof rule
+\[
+\proofrule
+{(\loc, \region) \vdash \phi[p := c]}
+{(\post(\loc, p := c), \region) \vdash \phi}
+\]
+which simply reduces to
+\[
+\proofrule
+{(\loc, \region) \vdash \phi[p := c]}
+{(\loc[p := c], \region) \vdash \phi}
+\]
+
+\begin{algorithm}[H]
+  \caption{$\method{do\_proof\_sublist}(\loc, \region, \phi[p := c]$}
+  \begin{algorithmic}
+  \RETURN $\method{do\_proof}(\loc[p := c], \region, \phi)$
+  \end{algorithmic}
+  \end{algorithm}
+
+\subsubsection{With placeholders}
+With this goes the proof rule
+\[
+\proofrule
+{(\loc, \region), \placeholder \vdash \phi[p := c]}
+{(\post(\loc, p := c), \region), \placeholder \vdash \phi}
+\]
+which simply reduces to
+\[
+\proofrule
+{(\loc, \region), \placeholder \vdash \phi[p := c]}
+{(\loc[p := c], \region), \placeholder \vdash \phi}
+\]
+
+\begin{algorithm}[H]
+  \caption{$\method{do\_proof\_place\_sublist}(\loc, \region, \placeholder, \phi[p := c]$}
+  \begin{algorithmic}
+  \STATE $\method{do\_proof\_place}(\loc[p := c], \region, \placeholder, \phi)$
+  \end{algorithmic}
+  \end{algorithm}
+
+
+\subsection{Clock assignment}
+
+Copying one clock to another, i.e., $\phi[x := y]$ for $x,y$ clocks, is similar to clock reset.
+
+\subsubsection{Without placeholder}
+We have the following rule (not listed in \cite{FC:14report}).
+\[
+\proofrule
+{(\loc, \region) \vdash \phi[x := y]}
+{(\loc, \post(\region, x := y)) \vdash \phi}
+\]
+Analogous to what we saw before, $ \post(\region, x := y) = \region[x := y]$, so we get the following proofrule.
+\[
+  \proofrule[{[]}]
+  {(\loc, \region) \vdash \phi[x := y]}
+  {(\loc, \region[x := y]) \vdash \phi}
+\]
+%
+This results in the following pseudocode.
+\begin{algorithm}[H]
+  \caption{$\method{do\_proof\_assign}(\loc, \region, \phi[x := y]$}
+  \begin{algorithmic}
+  \RETURN $\method{do\_proof}(\loc, \region[x := y], \phi)$
+  \end{algorithmic}
+  \end{algorithm}
+
+\subsubsection{With placeholder}
+This is, again, analogous to the clock reset.
+\[
+\proofrule
+{(\loc, \region), \placeholder[{[]}] \vdash \phi[x := y]}
+{(\loc, \post(\region, x := y)), \post(\placeholder[{[]}], x := y)\vdash \phi}
+\]
+Where we can introduce a new placeholder, and establish the corresponding sidecondition.
+\[
+\proofrule
+{(\loc, \region), \placeholder[{[]}] \vdash \phi[x := y]}
+{(\loc, \post(\region, x := y)), \placeholder \vdash \phi}
+\post(\placeholder[{[]}], x := y) \subseteq \placeholder
+\]
+This sidecondition is equivalent to $\placeholder[{[]}] \subseteq \mathit{pre}(\placeholder, x := y)$ (property of weakest precondition and strongest postcondition). We can establish this by setting  $\placeholder[{[]}]$ to $\mathit{pre}(\placeholder, x := y)$.
+
+Here we use the same observations as before to obtain the following proof rule.
+\[
+\proofrule
+{(\loc, \region), \placeholder[{[]}] \vdash \phi[x := y]}
+{(\loc, \post(\region, x := y)), \placeholder \vdash \phi}
+\placeholder[{[]}] \subseteq \mathit{pre}(\placeholder, x := y)
+\]
+
+\begin{algorithm}[H]
+  \caption{$\method{do\_proof\_place\_assign}(\loc, \region, \placeholder, \phi[x := y]$}
+  \begin{algorithmic}
+    \STATE $\placeholder[1] \gets \infty$
+    \STATE $\method{do\_proof\_place}(\loc, \region[x := y], \placeholder[1], \phi)$
+    \STATE $\placeholder \gets \placeholder \cap \mathit{pre}(\placeholder[1], x := y)$
+  \end{algorithmic}
+  \end{algorithm}
+
+\subsection{State assignment}
+Analogous to clock assignments there is a state assignment $
+\phi[p := q]$ where discrete state variable $p$ is assigned the value of $q$. 
+
+
+\subsubsection{Without placeholders}
+With this goes the proof rule
+\[
+\proofrule
+{(\loc, \region) \vdash \phi[p := q]}
+{(\post(\loc, p := q), \region) \vdash \phi}
+\]
+which simply reduces to
+\[
+\proofrule
+{(\loc, \region) \vdash \phi[p := q]}
+{(\loc[p := q], \region) \vdash \phi}
+\]
+
+\begin{algorithm}[H]
+  \caption{$\method{do\_proof\_sublist}(\loc, \region, \phi[p := q]$}
+  \begin{algorithmic}
+  \RETURN $\method{do\_proof}(\loc[p := q], \region, \phi)$
+  \end{algorithmic}
+  \end{algorithm}
+
+\subsubsection{With placeholders}
+With this goes the proof rule
+\[
+\proofrule
+{(\loc, \region), \placeholder \vdash \phi[p := q]}
+{(\post(\loc, p := q), \region), \placeholder \vdash \phi}
+\]
+which simply reduces to
+\[
+\proofrule
+{(\loc, \region), \placeholder \vdash \phi[p := q]}
+{(\loc[p := q], \region), \placeholder \vdash \phi}
+\]
+
+\begin{algorithm}[H]
+  \caption{$\method{do\_proof\_place\_sublist}(\loc, \region, \placeholder, \phi[p := q]$}
+  \begin{algorithmic}
+  \STATE $\method{do\_proof\_place}(\loc[p := q], \region, \placeholder, \phi)$
+  \end{algorithmic}
+  \end{algorithm}
+
+
 
 \section{Modalities}
 
@@ -1537,6 +1959,15 @@ The following rules for $\langle \rangle$ are incomplete, and need to be fixed
 {(\loc, \region) \vdash \langle a_i \rangle \phi}
 a_i \in \Sigma
 \]
+
+\subsection{Ablewaitinf}
+
+$\exists(z . (\forall (z \leq 1)))$
+
+\subsection{Unablewaitinf}
+
+$\forall(z . (\exists (z \leq 1)))$
+
 
 \bibliographystyle{alpha}
 \bibliography{hybrid}
