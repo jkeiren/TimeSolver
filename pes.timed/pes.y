@@ -154,12 +154,16 @@ trans_list_top: /* empty */ { }
 trans_list: /* Do not allow an empty list of transitions */
 /* Grammar for transitions. Note that any (or all) of the components
  * can be empty. */
+// trans_dest_list_top gives assignments to atomic variables
+// trans_reset_list_top gives resets of clock variables
+// trans_replace_list_top gives assignments to clock variables.
 trans_left_list TOK_IMPLY trans_dest_list_top trans_reset_list_top trans_replace_list_top TOK_SEMICOLON
 {
   ExprNode *leftExpr = $1;
   ExprNode *parExpr = nullptr;
   ExprNode *rightExpr = nullptr;
   bool leftBool = true;
+  // leftBool = false iff there are no assignments to atomic variables, no clock resets, and no assignments to clock variables
   if($3==nullptr && $4==nullptr && $5==nullptr) {
     rightExpr = nullptr;
     leftBool = false;
