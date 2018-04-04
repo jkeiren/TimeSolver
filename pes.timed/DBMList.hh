@@ -241,6 +241,14 @@ public:
     isCf = false; // only set isCf to false; individual DBMs are still in Cf.
   }
 
+  void union_(const DBM& other) {
+    if(*this <= other) {
+      *this = other;
+    } else if (!(*this >= other)) { // we really need a union here, since this DBM is not the result yet.
+      addDBM(other);
+    }
+  }
+
   /** Union the calling DBMList with DBMList Y; perform this by making
    * a deep copy of each DBM in Y and adding to the list of DBMs.
    * The calling DBMList is changed.
@@ -250,6 +258,17 @@ public:
   void addDBMList(const DBMList &Y) {
     std::for_each(Y.dbmListVec->begin(), Y.dbmListVec->end(),
         [&](DBM* d){ addDBM(*d); });
+  }
+
+  /** Compute the union of the other DBMList with this one, and store the result in
+   * the current DBM. Note that this is an optimised version of addDBMList, which does not
+   * require the union in case one of the DBMs is included in the other */
+  void union_(const DBMList& other) {
+    if(*this <= other) {
+      *this = other;
+    } else if (!(other <= *this)) { // we really need a union here, since this DBM is not the result yet.
+      addDBMList(other);
+    }
   }
 
   /** Performs a deep copy of the DBMList.
@@ -427,6 +446,7 @@ public:
    * @param Y (&) The right DBM.
    * @return true: *this <= Y; false: otherwise. */
   bool operator<=(const DBM &Y) const {
+    if(emptiness()) return true;
     for (const DBM* const dbm: *dbmListVec) {
       if (!(*dbm <= Y)) {
         return false;
@@ -445,6 +465,7 @@ public:
    * @param Y (&) The right DBMList.
    * @return true: *this <= Y; false: otherwise. */
   bool operator<=(const DBMList &Y) const {
+    if(emptiness()) return true;
     if (dbmListVec->size() == 1) {
       return Y >= *dbmListVec->front();
     }
@@ -828,6 +849,8 @@ public:
     }
   }
 };
+
+
 
 /** Stream operator for DBMLists */
 inline std::ostream &operator<<(std::ostream &os, const DBMList &l) {
