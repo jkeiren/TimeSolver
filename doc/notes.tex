@@ -28,6 +28,7 @@
 \newcommand{\pre}{\mathit{pred}}
 \newcommand{\inv}{\mathit{inv}}
 \newcommand{\post}{\mathit{post}}
+\newcommand{\wpre}{\mathit{wp}}
 
 \newcommand{\var}[1]{\ensuremath{\mathit{#1}}}
 \newcommand{\method}[1]{\ensuremath{\mathbf{#1}}}
@@ -1922,16 +1923,50 @@ which simply reduces to
 
 \section{Modalities}
 
+\subsection{Box modality}
+
+\subsubsection{Without placeholders}
+
+Note that the implementation does not only support clock resets, but also clock assignments of the form $x := y$, where $x$ and $y$ are clocks. In the code below we therefore write $(\loc, a, g, \lambda, \sigma, \loc')$ for transitions, instead of just $(\loc, a, g, \lambda, \loc')$. Here $\lambda$ contains the clocks that are reset, and $\sigma$ contains assignments $x_1 := y_1, \ldots x_n := y_n$.
+We base ourselves on the proof rule for singular hybrid automata by Cleaveland and Keiren.
+\[
+\proofrule
+{(\loc, \region) \vdash [a] \phi}
+{(\loc_1, (\region \land g_1)[\lambda_1 := 0][\vec{x}_1 := \vec{y}_1] \land \inv(\loc_1) \vdash \phi
+\quad
+\cdots
+\quad
+(\loc_n, (\region \land g_n)[\lambda_n := 0][\vec{x}_n := \vec{y}_n] \land \inv(\loc_n) \vdash \phi
+}
+\]
+where$ \{(\loc,a,g_i,\lambda_i,\loc_i) \mid 1 \leq i \leq n \} = \{ (l', a', g, \lambda, l'') \in E \mid l = l' \land a = a' \}$
+
+Fontana and Cleaveland \cite{FC:14report} given the following alternative for timed automata.
 \[
 \proofrule[{[a]_{\mathit{Act}}}]
 {(\loc, \region) \vdash [a]\phi}
-{(\loc_1, \region \land g_1) \vdash \phi{[\lambda_1 := 0]}
+{(\loc_1, \region \land g_1) \vdash \phi{[\lambda_1 := 0][\vec{x}_1 := \vec{y}_1]}
 \quad \cdots \quad
-(\loc_n, \region \land g_n) \vdash \phi{[\lambda_n := 0]}
+(\loc_n, \region \land g_n) \vdash \phi{[\lambda_n := 0][\vec{x}_n := \vec{y}_n]}
 }
-\bigcup_i \{ (g_i,\lambda_i,\loc_i) \} = \{ (\loc', g', \lambda') \mid (\loc, a, g', \lambda', \loc') \in E \}
 \]
+where $\bigcup_i \{ (g_i,\lambda_i,\loc_i) \} = \{ (\loc', g', \lambda') \mid (\loc, a, g', \lambda', \loc') \in E \}$
 
+
+For timed automata, these two are equivalent. This can be seen from the following derivation.
+\begin{align*}
+  & \post(\region \land g, \lambda := 0, \vec{x} := \vec{y}) \land \inv(\loc') \subseteq \phi \\
+\iff & \post(\region \land g, \lambda := 0, \vec{x} := \vec{y}) \subseteq \inv(\loc') \implies \phi \\
+\iff & \post(\region \land g, \lambda := 0, \vec{x} := \vec{y}) \subseteq \lnot \inv(\loc') \lor \phi \\
+\iff & \region \land g \subseteq \wpre(\lnot \inv(\loc') \lor \phi, \lambda := 0, \vec{x} := \vec{y})\\
+\iff & \region \land g \subseteq \wpre(\lnot \inv(\loc'), \lambda := 0, \vec{x} := \vec{y}) \lor \wpre(\phi, \lambda := 0, \vec{x} := \vec{y})\\
+\iff & \region \land g \subseteq \lor \wpre(\phi, \lambda := 0, \vec{x} := \vec{y})\\
+\iff & \region \land g \land \wpre(\inv(\loc'), \lambda := 0, \vec{x} := \vec{y}) \subseteq \wpre(\phi, \lambda := 0, \vec{x} := \vec{y}) \\
+\iff & \region \land g \land \wpre(\inv(\loc'), \lambda := 0, \vec{x} := \vec{y}) \subseteq \phi[\lambda := 0][\vec{x} := \vec{y}]
+\end{align*}
+where $\post(\region \land g, \lambda := 0, \vec{x} := \vec{y})$ is a shorthand for $\post(\post(\region \land g, \lambda := 0), \vec{x} := \vec{y})$, and likewise for $\wpre$.
+
+Note that the proof rule can trivially be generalised to cover all actions.
 \[
 \proofrule[{[-]_{\mathit{Act}}}]
 {(\loc, \region) \vdash [-]\phi}
@@ -1941,7 +1976,92 @@ which simply reduces to
 \Sigma = \{ a_1, \ldots, a_n \}
 \]
 
+Using the version of the proof rule from~\cite{FC:14report}, we obtain the following pseudocode.
+\begin{algorithm}[H]
+  \caption{$\method{do\_proof\_allact}(\loc, \region, [-]\phi$}
+  \begin{algorithmic}
+  \STATE $\var{result} \gets \mathit{true}$
+  \FOR{$(\loc, a, g, \lambda, \loc') \in E$}
+    \IF{$\region \cap g \neq \emptyset$}
+      \IF{$\inv(\loc') \neq \emptyset$}
+        \STATE $\var{inv} \gets \mathit{pre}(\inv(\loc'), \lambda := 0)$
+        \FOR{$x_i := y_1 \text{ in } \sigma$}
+          \STATE $\var{inv} \gets \mathit{pre}(\var{inv}, x_i := y_i)$
+        \ENDFOR
+        \IF{$\region \cap g \cap \var{inv} \neq \emptyset$}
+          \STATE $\var{result} \gets \method{do\_proof}(\loc, \region \cap g \cap \var{inv}, \phi)$
+        \ENDIF
+      \ENDIF
+    \ENDIF
+  \ENDFOR
+  \end{algorithmic}
+  \end{algorithm}
 
+\subsubsection{With placeholders}
+The version of the proof rule with placeholders is more involved. Note that no rule for this case is given in~\cite{FC:14report}.
+
+We can, however, easily derive an algorithm from the proof rule without placeholders as follows.
+\[
+\proofrule
+{(\loc, \region), \placeholder \vdash [a] \phi}
+{(\loc_1, (\region \land \placeholder \land g_1)[\lambda_1 := 0][\vec{x}_1 := \vec{y}_1] \land \inv(\loc_1) \vdash \phi
+\quad
+\cdots
+\quad
+(\loc_n, (\region \land \placeholder \land g_n)[\lambda_n := 0][\vec{x}_n := \vec{y}_n] \land \inv(\loc_n) \vdash \phi
+}
+\]
+The subgoal, for an arbitrary $i$, here corresponds with
+\[
+  \post(\region \land \placeholder \land g_i, \lambda_i := 0, \vec{x}_i := \vec{y}_i) \land \inv(\loc_i) \subseteq \phi
+  \]
+Using the derivation shown before, we find this is equivalent to 
+\[
+  \region \land \placeholder \land g_i \land \wpre(\inv(\loc_i), \lambda_i := 0, \vec{x}_i := \vec{y}_i) \subseteq \wpre(\phi,\lambda_i := 0, \vec{x}_i := \vec{y}_i)
+\]
+Then we find for $\placeholder$, that
+\[
+  \placeholder \subseteq \lnot(\region \land g_i) \lor \lnot \wpre(\inv(\loc_i), \lambda_i := 0, \vec{x}_i := \vec{y}_i) \lor \wpre(\phi,\lambda_i := 0, \vec{x}_i := \vec{y}_i)
+\]
+
+For the sake of completeness, we write the proof rule with individual placeholders for each subgoal:
+\[
+\proofrule
+{(\loc, \region), \placeholder \vdash [a] \phi}
+{(\loc_1, (\region \land \placeholder[1] \land g_1)[\lambda_1 := 0][\vec{x}_1 := \vec{y}_1] \land \inv(\loc_1) \vdash \phi
+\quad
+\cdots
+\quad
+(\loc_n, (\region \land \placeholder[n] \land g_n)[\lambda_n := 0][\vec{x}_n := \vec{y}_n] \land \inv(\loc_n) \vdash \phi
+}
+\]
+with sidecondition $\placeholder \implies \bigwedge_{i=1}^n \placeholder[n]$.
+
+Using this idea, the algorithm becomes the following.
+
+\begin{algorithm}[H]
+  \caption{$\method{do\_proof\_place\_allact}(\loc, \region, \placeholder, [-]\phi$}
+  \begin{algorithmic}
+  \FOR{$(\loc, a, g, \lambda, \loc') \in E$}
+    \STATE $\region_g \gets \region \cap g$
+    \STATE $\placeholder[g] \gets \placeholder \cap g$    
+    \IF{$\region_g \neq \emptyset \land \placeholder[g] \neq \emptyset$}
+      \STATE $\var{inv} \gets \inv(\loc')$
+      \IF{$\inv(\loc') \neq \emptyset$}
+        \STATE $\var{inv} \gets \mathit{pre}(\var{inv}, \lambda := 0)$
+        \FOR{$x_i := y_1 \text{ in } \sigma$}
+          \STATE $\var{inv} \gets \mathit{pre}(\var{inv}, x_i := y_i)$
+        \ENDFOR
+      \ENDIF
+      \STATE $\method{do\_proof\_place}(\loc, \region_g \cap \var{inv}, \placeholder[e] \cap \var{inv}, \phi)$
+      \STATE $\placeholder \gets \placeholder \cap (\placeholder[e] \cup \lnot \var{inv} \cup \lnot \placeholder[g])$
+    \ENDIF
+  \ENDFOR
+  \end{algorithmic}
+  \end{algorithm}
+
+
+\subsection{Diamond modality}
 The following rules for $\langle \rangle$ are incomplete, and need to be fixed
 \[
 \proofrule[\langle a \rangle_{\mathit{Act}}]
