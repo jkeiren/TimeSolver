@@ -1103,22 +1103,9 @@ inline bool prover::do_proof_forall_rel(const SubstList& discrete_state,
               << std::endl;
         }
       }
-      /* Last, we do an or check on the two placeholders */
-      bool forallEmpty = placeholder_forall.emptiness();
-      bool existsEmpty = placeholder_exists.emptiness();
-      if (forallEmpty && existsEmpty) {
-        retVal = false;
-      } else if (existsEmpty) {
-        placeholder_exists = placeholder_forall;
-      } else if (!forallEmpty && !existsEmpty) {
-        if (placeholder_exists <= placeholder_forall) {
-          placeholder_exists = placeholder_forall;
-        } else if (!(placeholder_forall <= placeholder_exists)) {
-          /* This case requires us to union the two placeholders. */
-          placeholder_exists.addDBMList(placeholder_forall);
+
+      placeholder_exists.union_(placeholder_forall);
           placeholder_exists.cf();
-        }
-      }
       retVal = placeholder_exists >= zone;
 
       // Debug information here?
@@ -1424,8 +1411,12 @@ inline bool prover::do_proof_allact(const SubstList& discrete_state,
             << "\tExtra invariant condition: " << invariant_zone << std::endl;
         continue;
       }
-    }
+    } // end if invariant_satisfiable
 
+    // We add the body of the allact to the formula that holds after the transition.
+    // Note that this formula after the transition already contains the resets and assignments,
+    // so, when we call getRightExpr() later, we in fact look at the weakest precondition of
+    // formula.getQuant with respect to this transition.
     transition->getNewTrans(formula.getQuant());
 
     /* Constraints are bounded by input_pes.max_constant() */
@@ -1443,6 +1434,8 @@ inline bool prover::do_proof_allact(const SubstList& discrete_state,
         << "\tExtra invariant condition: " << invariant_zone << std::endl;
 
     numLocations++;
+    // Recursively proof that the weakest precondition of the body of allact
+    // is satisfied. See the remark about getNewTrans above.
     retVal = do_proof(discrete_state, guard_zone, *transition->getRightExpr());
     if (!retVal) {
       cpplog(cpplogging::debug)
@@ -1920,16 +1913,8 @@ inline void prover::do_proof_place_or(const SubstList& discrete_state,
           << "\nRight Placeholder of OR (P): " << *place << std::endl;
     }
 
-    /* Note: <= >= Not clearly working if empty DBMs; should be resolved in the
-     *  implementation of <=; */
-    if (placeholder_left.emptiness() || placeholder_left <= *place) {
-      // the result is the right placeholder. Already established.
-    } else if (place->emptiness() || *place <= placeholder_left) {
-      *place = placeholder_left; // roll back
-    } else {
-      // corner case, union of DBMs
-      place->addDBMList(placeholder_left);
-    }
+    place->union_(placeholder_left);
+    place->cf();
 
     cpplog(cpplogging::debug)
         << "Final Placeholder of OR (P): " << *place << std::endl
@@ -2230,20 +2215,9 @@ inline void prover::do_proof_place_forall_rel(const SubstList& discrete_state,
         }
       }
 
-      /* Last, we do an "or" check on the two placeholders */
-      bool forallEmpty = placeholder_forall.emptiness();
-      bool existsEmpty = placeholder_exists.emptiness();
-      if (forallEmpty && existsEmpty) {
-        place->makeEmpty();
-      } else if (forallEmpty || placeholder_forall <= placeholder_exists) {
         *place = placeholder_exists;
-      } else if (existsEmpty || placeholder_exists <= placeholder_forall) {
-        *place = placeholder_forall;
-      } else {
-        *place = placeholder_exists;
-        /* This case requires us to union the two placeholders. */
-        place->addDBMList(placeholder_forall);
-      }
+      place->union_(placeholder_forall);
+      place->cf();
     }
 
     cpplog(cpplogging::debug)
