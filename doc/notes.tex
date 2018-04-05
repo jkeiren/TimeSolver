@@ -1950,10 +1950,36 @@ Fontana and Cleaveland \cite{FC:14report} given the following alternative for ti
 (\loc_n, \region \land g_n) \vdash \phi{[\lambda_n := 0][\vec{x}_n := \vec{y}_n]}
 }
 \]
-where $\bigcup_i \{ (g_i,\lambda_i,\loc_i) \} = \{ (\loc', g', \lambda') \mid (\loc, a, g', \lambda', \loc') \in E \}$
+where $\bigcup_i \{ (g_i,\lambda_i,\loc_i) \} = \{ (\loc', g', \lambda') \mid (\loc, a, g', \lambda', \loc') \in E \}$.
 
+This rule ignores the invariant of the target location, so should be modified to read:
+\[
+\proofrule[{[a]_{\mathit{Act}}}]
+{(\loc, \region) \vdash [a]\phi}
+{
+\begin{array}{c}
+  (\loc_1, \region \land g_1) \vdash (\inv(\loc_1) \implies \phi){[\lambda_1 := 0][\vec{x}_1 := \vec{y}_1]} \\
+ \cdots \\
+(\loc_n, \region \land g_n) \vdash (\inv(\loc_n) \implies \phi){[\lambda_n := 0][\vec{x}_n := \vec{y}_n]}
+\end{array}
+}
+\]
+where $\bigcup_i \{ (g_i,\lambda_i,\loc_i) \} = \{ (\loc', g', \lambda') \mid (\loc, a, g', \lambda', \loc') \in E \}$. 
+Note that we can carry the weakest precondition over to the left hand side, and obtain:
+\[
+\proofrule[{[a]_{\mathit{Act}}}]
+{(\loc, \region) \vdash [a]\phi}
+{
+\begin{array}{c}
+ (\loc_1, \region \land g_1 \land \inv(\loc_1)[\lambda_1 := 0][\vec{x}_1 := \vec{y}_1]) \vdash \phi{[\lambda_1 := 0][\vec{x}_1 := \vec{y}_1]} \\
+\cdots \\
+(\loc_n, \region \land g_n \land \inv(\loc_n)[\lambda_n := 0][\vec{x}_n := \vec{y}_n]) \vdash \phi{[\lambda_n := 0][\vec{x}_n := \vec{y}_n]}
+\end{array}
+}
+\]
+where $\bigcup_i \{ (g_i,\lambda_i,\loc_i) \} = \{ (\loc', g', \lambda') \mid (\loc, a, g', \lambda', \loc') \in E \}$.
 
-For timed automata, these two are equivalent. This can be seen from the following derivation.
+For timed automata, the rules are equivalent. This can be seen from the following derivation.
 \begin{align*}
   & \post(\region \land g, \lambda := 0, \vec{x} := \vec{y}) \land \inv(\loc') \subseteq \phi \\
 \iff & \post(\region \land g, \lambda := 0, \vec{x} := \vec{y}) \subseteq \inv(\loc') \implies \phi \\
@@ -2004,11 +2030,12 @@ We can, however, easily derive an algorithm from the proof rule without placehol
 \[
 \proofrule
 {(\loc, \region), \placeholder \vdash [a] \phi}
-{(\loc_1, (\region \land \placeholder \land g_1)[\lambda_1 := 0][\vec{x}_1 := \vec{y}_1] \land \inv(\loc_1) \vdash \phi
-\quad
-\cdots
-\quad
+{
+\begin{array}{c}
+(\loc_1, (\region \land \placeholder \land g_1)[\lambda_1 := 0][\vec{x}_1 := \vec{y}_1] \land \inv(\loc_1) \vdash \phi\\
+\cdots\\
 (\loc_n, (\region \land \placeholder \land g_n)[\lambda_n := 0][\vec{x}_n := \vec{y}_n] \land \inv(\loc_n) \vdash \phi
+\end{array}
 }
 \]
 The subgoal, for an arbitrary $i$, here corresponds with
@@ -2028,14 +2055,30 @@ For the sake of completeness, we write the proof rule with individual placeholde
 \[
 \proofrule
 {(\loc, \region), \placeholder \vdash [a] \phi}
-{(\loc_1, (\region \land \placeholder[1] \land g_1)[\lambda_1 := 0][\vec{x}_1 := \vec{y}_1] \land \inv(\loc_1) \vdash \phi
-\quad
-\cdots
-\quad
+{\begin{array}{c}
+(\loc_1, (\region \land \placeholder[1] \land g_1)[\lambda_1 := 0][\vec{x}_1 := \vec{y}_1] \land \inv(\loc_1) \vdash \phi \\
+\cdots \\
 (\loc_n, (\region \land \placeholder[n] \land g_n)[\lambda_n := 0][\vec{x}_n := \vec{y}_n] \land \inv(\loc_n) \vdash \phi
+\end{array}
 }
+\placeholder \implies \bigwedge_{i=1}^n \placeholder[n]
 \]
-with sidecondition $\placeholder \implies \bigwedge_{i=1}^n \placeholder[n]$.
+where $\bigcup_i \{ (g_i,\lambda_i,\loc_i) \} = \{ (\loc', g', \lambda') \mid (\loc, a, g', \lambda', \loc') \in E \}$.
+
+Also, the alternative in the style of Fontana and Cleaveland is the following.
+\[
+\proofrule[{[a]_{\mathit{Act}}}]
+{(\loc, \region) \vdash [a]\phi}
+{
+\begin{array}{c}
+ (\loc_1, \region \land g_1 \land \inv(\loc_1)[\lambda_1 := 0][\vec{x}_1 := \vec{y}_1]), \placeholder[1] \vdash \phi{[\lambda_1 := 0][\vec{x}_1 := \vec{y}_1]} \\
+\cdots \\
+(\loc_n, \region \land g_n \land \inv(\loc_n)[\lambda_n := 0][\vec{x}_n := \vec{y}_n]), \placeholder[n] \vdash \phi{[\lambda_n := 0][\vec{x}_n := \vec{y}_n]}
+\end{array}
+}
+\placeholder \implies \bigwedge_{i=1}^n \placeholder[i]
+\]
+where $\bigcup_i \{ (g_i,\lambda_i,\loc_i) \} = \{ (\loc', g', \lambda') \mid (\loc, a, g', \lambda', \loc') \in E \}$.
 
 Using this idea, the algorithm becomes the following.
 
@@ -2062,23 +2105,119 @@ Using this idea, the algorithm becomes the following.
 
 
 \subsection{Diamond modality}
-The following rules for $\langle \rangle$ are incomplete, and need to be fixed
-\[
-\proofrule[\langle a \rangle_{\mathit{Act}}]
-{(\loc, \region) \vdash \langle a \rangle \phi}
-{(\loc', \region \land g) \vdash \phi[\lambda := 0]}
-\begin{array}{l}
-(\loc, a, g, \lambda, \loc') \in E\\
-\region \land g \text{ is satisfiable}
-\end{array}
-\]
+
+\subsubsection{Without placeholder}
+For the diamond modality, the proof rules listed in~\cite{FC:14report} are incomplete. We here formulate a rule which is a generalisation of $\lor_s$, and a variation of the rule for $[a]$.
 
 \[
-\proofrule[\langle - \rangle_{\mathit{Act}}]
-{(\loc, \region) \vdash \langle - \rangle \phi}
-{(\loc, \region) \vdash \langle a_i \rangle \phi}
-a_i \in \Sigma
+\proofrule
+{(\loc, \region) \vdash \langle a \rangle \phi}
+{
+\begin{array}{c}
+(\loc_1, (\region \land \placeholder[1] \land g_1)[\lambda_1 := 0][\vec{x}_1 := \vec{y}_1] \land \inv(\loc_1) \vdash \phi \\
+\cdots \\
+(\loc_n, (\region \land \placeholder[n] \land g_n)[\lambda_n := 0][\vec{x}_n := \vec{y}_n] \land \inv(\loc_n) \vdash \phi
+\end{array}
+}
+\region \implies \bigvee_{i=1}^n (\region \land g_i \land \placeholder[i])
 \]
+where $\bigcup_i \{ (g_i,\lambda_i,\loc_i) \} = \{ (\loc', g', \lambda') \mid (\loc, a, g', \lambda', \loc') \in E \}$.
+
+We can again give the rule in the style of Fontana and Cleaveland as follows.
+\[
+\proofrule[{\langle a \rangle_{\mathit{Act}}}]
+{(\loc, \region) \vdash \langle a \rangle \phi}
+{
+\begin{array}{c}
+ (\loc_1, \region \land g_1 \land \inv(\loc_1)[\lambda_1 := 0][\vec{x}_1 := \vec{y}_1]), \placeholder[1] \vdash \phi{[\lambda_1 := 0][\vec{x}_1 := \vec{y}_1]} \\
+\cdots \\
+(\loc_n, \region \land g_n \land \inv(\loc_n)[\lambda_n := 0][\vec{x}_n := \vec{y}_n]), \placeholder[n] \vdash \phi{[\lambda_n := 0][\vec{x}_n := \vec{y}_n]}
+\end{array}
+}
+\region \implies \bigvee_{i=1}^n (\region \land g_i \land \placeholder[i])
+\]
+where $\bigcup_i \{ (g_i,\lambda_i,\loc_i) \} = \{ (\loc', g', \lambda') \mid (\loc, a, g', \lambda', \loc') \in E \}$.
+
+This generalises to $\langle - \rangle$ in the obvious way.
+
+We get the following pseudocode.
+\begin{algorithm}[H]
+  \caption{$\method{do\_proof\_existact}(\loc, \region, \langle - \rangle \phi$}
+  \begin{algorithmic}
+  \STATE $\placeholder[\langle \rangle] \gets \emptyset$
+  \FOR{$(\loc, a, g, \lambda, \loc') \in E$}
+    \STATE $\region_g \gets \region \cap g$
+    \STATE $\placeholder[g] \gets g$    
+    \IF[Check this is the correct guard]{$\region_g \neq \emptyset \land \placeholder[g] \neq \emptyset$}
+      \STATE $\var{inv} \gets \inv(\loc')$
+      \IF{$\inv(\loc') \neq \emptyset$}
+        \STATE $\var{inv} \gets \mathit{pre}(\var{inv}, \lambda := 0)$
+        \FOR{$x_i := y_1 \text{ in } \sigma$}
+          \STATE $\var{inv} \gets \mathit{pre}(\var{inv}, x_i := y_i)$
+        \ENDFOR
+      \ENDIF
+      \STATE $\placeholder[g] \gets \placeholder[g] \cap \var{inv}$
+      \STATE $\method{do\_proof\_place}(\loc, \region_g \cap \var{inv}, \placeholder[g], \phi)$
+      \STATE $\placeholder[\langle \rangle] \gets \placeholder[\langle \rangle] \cup \placeholder[g]$
+    \ENDIF
+  \ENDFOR
+  \RETURN $\region \subseteq \placeholder[\langle \rangle]$
+  \end{algorithmic}
+  \end{algorithm}
+
+\subsubsection{With placeholder}
+\[
+\proofrule
+{(\loc, \region), \placeholder \vdash \langle a \rangle \phi}
+{
+\begin{array}{c}
+(\loc_1, (\region \land \placeholder[1] \land g_1)[\lambda_1 := 0][\vec{x}_1 := \vec{y}_1] \land \inv(\loc_1) \vdash \phi \\
+\cdots \\
+(\loc_n, (\region \land \placeholder[n] \land g_n)[\lambda_n := 0][\vec{x}_n := \vec{y}_n] \land \inv(\loc_n) \vdash \phi
+\end{array}
+}
+\region \land \placeholder \implies \bigvee_{i=1}^n (\region \land g_i \land \placeholder[i])
+\]
+where $\bigcup_i \{ (g_i,\lambda_i,\loc_i) \} = \{ (\loc', g', \lambda') \mid (\loc, a, g', \lambda', \loc') \in E \}$.
+
+Again, in the alternative style from Fontana and Cleaveland, we get the following rule.
+\[
+\proofrule[{\langle a \rangle_{\mathit{Act}}}]
+{(\loc, \region), \placeholder \vdash \langle a \rangle \phi}
+{
+\begin{array}{c}
+ (\loc_1, \region \land g_1 \land \inv(\loc_1)[\lambda_1 := 0][\vec{x}_1 := \vec{y}_1]), \placeholder[1] \vdash \phi{[\lambda_1 := 0][\vec{x}_1 := \vec{y}_1]} \\
+\cdots \\
+(\loc_n, \region \land g_n \land \inv(\loc_n)[\lambda_n := 0][\vec{x}_n := \vec{y}_n]), \placeholder[n] \vdash \phi{[\lambda_n := 0][\vec{x}_n := \vec{y}_n]}
+\end{array}
+}
+\region \land \placeholder \implies \bigvee_{i=1}^n (\region \land g_i \land \placeholder[i])
+\]
+where $\bigcup_i \{ (g_i,\lambda_i,\loc_i) \} = \{ (\loc', g', \lambda') \mid (\loc, a, g', \lambda', \loc') \in E \}$.
+
+\begin{algorithm}[H]
+  \caption{$\method{do\_proof\_place\_existact}(\loc, \region, \placeholder, \langle - \rangle \phi$}
+  \begin{algorithmic}
+  \STATE $\placeholder[\langle \rangle] \gets \emptyset$
+  \FOR{$(\loc, a, g, \lambda, \loc') \in E$}
+    \STATE $\region_g \gets \region \cap g$
+    \STATE $\placeholder[g] \gets \placeholder \cap g$    
+    \IF[Check this is the correct guard]{$\region_g \neq \emptyset \land \placeholder[g] \neq \emptyset$}
+      \STATE $\var{inv} \gets \inv(\loc')$
+      \IF{$\inv(\loc') \neq \emptyset$}
+        \STATE $\var{inv} \gets \mathit{pre}(\var{inv}, \lambda := 0)$
+        \FOR{$x_i := y_1 \text{ in } \sigma$}
+          \STATE $\var{inv} \gets \mathit{pre}(\var{inv}, x_i := y_i)$
+        \ENDFOR
+      \ENDIF
+      \STATE $\placeholder[g] \gets \placeholder[g] \cap \var{inv}$
+      \STATE $\method{do\_proof\_place}(\loc, \region_g \cap \var{inv}, \placeholder[g], \phi)$
+      \STATE $\placeholder[\langle \rangle] \gets \placeholder[\langle \rangle] \cup \placeholder[g]$
+    \ENDIF
+  \ENDFOR
+  \STATE $\placeholder \gets \placeholder \cap \placeholder[\langle \rangle]$
+  \end{algorithmic}
+  \end{algorithm}
 
 \subsection{Ablewaitinf}
 
