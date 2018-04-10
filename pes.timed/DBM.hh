@@ -902,76 +902,56 @@ public:
    * @note This implementation is the Floyd-Warshall Algorithm
    * for all pairs shortest paths.*/
   void cf() {
-    /* Check that the DBM is in Canonical Form, and
-     * do nothing if it is */
-    if (isCf) {
-      return;
-    }
+    if(!isCf) {
+      /* Don't you need to initialize all D(i,i) to (0, \leq) (?)
+       * Answer:  For this method, yes.  However, if matrices
+       * are initialized properly to $(0, \leq)$, those
+       * diagonal cells may never be changed and hence
+       * this algorithm will still work correctly. */
 
-    /* Don't you need to initialize all D(i,i) to (0, \leq) (?)
-     * Answer:  For this method, yes.  However, if matrices
-     * are initialized properly to $(0, \leq)$, those
-     * diagonal cells may never be changed and hence
-     * this algorithm will still work correctly. */
+      for (size_type k = 0; k < nClocks; ++k) {
+        /* Deal with overflow in cf() rather than emptiness() */
+        if (k == 2 && this->emptiness()) {
+          isCf = true;
+          // Make empty DBM
+          for (size_type i = 0; i < nClocks; i++) {
+            for (size_type j = 0; j < nClocks; j++) {
+              this->operatorWrite(i, j) = 0;
+            }
+          }
+          return;
+        }
+        for (size_type i = 0; i < nClocks; ++i) {
+          for (size_type j = 0; j < nClocks; ++j) {
+            const clock_value_t wholeVal_ik = operatorRead(i, k);
+            const clock_value_t wholeVal_kj = operatorRead(k, j);
+            const clock_value_t wholeVal_ij = operatorRead(i, j);
+            /* Postive overflow potential here:
+             * how to we deal with it?
+             * One option: check for >= 0xFFF instead
+             * of 0xFFF, but that fixes nothing. */
+            clock_value_t val = 0xFFF;
+            if ((wholeVal_ik >> 1) != 0xFFF && (wholeVal_kj >> 1) != 0xFFF)
+              val = (wholeVal_ik >> 1) + (wholeVal_kj >> 1);
 
-    int val;
-    clock_value_t origVal;
-    clock_value_t wholeVal_ik;
-    clock_value_t wholeVal_kj;
-    clock_value_t wholeVal_ij;
-    for (size_type k = 0; k < nClocks; k++) {
-      /* Deal with overflow in cf() rather than emptiness() */
-      if (k == 2 && this->emptiness()) {
-        isCf = true;
-        // Make empty DBM
-        for (size_type i = 0; i < nClocks; i++) {
-          for (size_type j = 0; j < nClocks; j++) {
-            this->operatorWrite(i, j) = 0;
+            const clock_value_t origVal = wholeVal_ij >> 1;
+            /* Correction by Peter Fontana to check for negative overflow */
+            if (val < origVal) {
+              // Make D(i,j) = D(i, k) + D(k, j)
+              // Gets the < or <= operator correct
+              operatorWrite(i, j) = (val << 1) + ((wholeVal_ik & 0x1) & (wholeVal_kj & 0x1));
+            } else if (val == origVal && val != 0xFFF) {
+                /* Take out infinity comparison and see what happens ...  * Note:
+                 * it slows performance, so keep non-overflow check in. */
+              operatorWrite(i, j) = (val << 1) + ((wholeVal_ik & 0x1) & (wholeVal_kj & 0x1) &
+                                                  (wholeVal_ij & 0x1));
+            } // value stays d(i,j) otherwise
           }
         }
-        return;
       }
-      for (size_type i = 0; i < nClocks; i++) {
-        for (size_type j = 0; j < nClocks; j++) {
-          wholeVal_ik = this->operatorRead(i, k);
-          wholeVal_kj = this->operatorRead(k, j);
-          wholeVal_ij = this->operatorRead(i, j);
-          /* Postive overflow potential here:
-           * how to we deal with it?
-           * One option: check for >= 0xFFF instead
-           * of 0xFFF, but that fixes nothing. */
-          if ((wholeVal_ik >> 1) == 0xFFF || (wholeVal_kj >> 1) == 0xFFF)
-            val = 0xFFF;
-          else
-            val = (wholeVal_ik >> 1) + (wholeVal_kj >> 1);
-          // Changed code to fix operator when value == added
-          // with a possible change in constraint
-          origVal = wholeVal_ij >> 1;
-          if (val <= origVal) {
-            /* Correction by Peter Fontana to check for negative overflow */
-            if (val < origVal) { // val < so take only those operators
-              // Make D(i,j) = D(i, k) + D(k, j)
-              this->operatorWrite(i, j) =
-                  (val << 1)
-                  // Gets the < or <= operator correct
-                  + ((wholeVal_ik & 0x1) & (wholeVal_kj & 0x1));
-            }
-            /* Correction by Peter Fontana to improve
-             * performance */
-            else if (val != 0xFFF) {
-              /* Take out infinity comparison and see what happens ...  * Note:
-               * it slows performance, so keep non-overflow check in. */
-              this->operatorWrite(i, j) =
-                  (val << 1) + ((wholeVal_ik & 0x1) & (wholeVal_kj & 0x1) &
-                                (wholeVal_ij & 0x1));
-            } // value stays d(i,j) otherwise
 
-          } // value stays d(i,j) otherwise
-        }
-      }
+      isCf = true; // the DBM is now in Canonical Form
     }
-
-    isCf = true; // the DBM is now in Canonical Form
   }
 
   /** This method changes this DBM to the empty DBM. This is used for
@@ -982,7 +962,7 @@ public:
   void makeEmpty() {
     for (size_type i = 0; i < nClocks; i++) {
       for (size_type j = 0; j < nClocks; j++) {
-        this->operatorWrite(i, j) = 0x0;
+        operatorWrite(i, j) = 0x0;
       }
     }
     isCf = true;
