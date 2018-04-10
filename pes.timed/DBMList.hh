@@ -110,16 +110,12 @@ private:
   /* Always keep at least one DBM in the list */
   void remove_empty_dbms()
   {
-    for (std::vector<DBM*>::iterator it = dbmListVec->begin();
-         it != dbmListVec->end(); /* ++it omitted, happens in loop */)
-    {
-      if ((*it)->emptiness() && dbmListVec->size() > 1) {
-        delete *it;
-        dbmListVec->erase(it);
-      } else {
-        ++it;
-      }
+    std::vector<DBM*>::iterator last = std::remove_if(dbmListVec->begin(), dbmListVec->end(), [](const DBM* dbm) { return dbm->emptiness(); });
+    if(last == dbmListVec->begin()) {
+      ++last;
     }
+    dbmListVec->erase(last, dbmListVec->end());
+    assert(!dbmListVec->empty());
   }
 
   /* Eliminate any DBM contained within another */
