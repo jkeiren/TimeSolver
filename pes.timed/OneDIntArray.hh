@@ -34,6 +34,9 @@ public:
    * @return [Constructor]. */
   OneDIntArray(const OneDIntArray& Y) : Generic1DArray(Y){}
 
+  /** Move constructor */
+  OneDIntArray(OneDIntArray&&) noexcept = default;
+
 public:
   /** Retrieves a reference for the element specified at the given index.
    * The reference returned is a reference to the actual copy, not a deep copy.

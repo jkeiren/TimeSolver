@@ -117,6 +117,15 @@ public:
     memcpy(cc_, Y.cc_, size_ * sizeof(unsigned int));
   }
 
+  /** Move Constructor. */
+  ClockSet(ClockSet&& other) noexcept
+    : num_clocks_(std::move(other.num_clocks_)),
+      size_(std::move(other.size_)),
+      cc_(std::move(other.cc_))
+  {
+    other.cc_ = nullptr;
+  }
+
   /** Destructor.  Does nothing.
    * @return [Destructor]. */
   ~ClockSet() { delete[] cc_; }
@@ -341,6 +350,8 @@ public:
         isCf(Y.isCf),
         nClocks(Y.nClocks),
         declared_clocks_(Y.declared_clocks_) {}
+
+  DBM(DBM&&) noexcept = default;
 
   size_type clocks_size() const { return nClocks; }
 
@@ -914,9 +925,9 @@ public:
         if (k == 2 && this->emptiness()) {
           isCf = true;
           // Make empty DBM
-          for (size_type i = 0; i < nClocks; i++) {
-            for (size_type j = 0; j < nClocks; j++) {
-              this->operatorWrite(i, j) = 0;
+          for (size_type i = 0; i < nClocks; ++i) {
+            for (size_type j = 0; j < nClocks; ++j) {
+              operatorWrite(i, j) = 0;
             }
           }
           return;

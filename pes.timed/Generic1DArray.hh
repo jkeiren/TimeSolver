@@ -59,6 +59,15 @@ public:
     memcpy(storage, Y.storage, quantity * Y.eltSize);
   }
 
+  /** Move constructor */
+  Generic1DArray(Generic1DArray &&other) noexcept :
+    storage(std::move(other.storage)),
+    quantity(std::move(other.quantity)),
+    eltSize(std::move(other.eltSize))
+  {
+    other.storage = nullptr;
+  }
+
   /** Destructor of Generic1DArray.
    * @return [Destructor]. */
   ~Generic1DArray() {
