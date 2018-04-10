@@ -13,19 +13,13 @@
 template<typename T>
 void delete_vector_elements(std::vector<T*>& vec)
 {
-  for (typename std::vector<T*>::iterator it = vec.begin(); it != vec.end();
-       ++it){
-    delete *it;
-  }
+  std::for_each(vec.begin(), vec.end(), [](T* t) { delete t; });
 }
 
 template<typename T>
 void deep_copy(std::vector<T*>& out, const std::vector<T*>& in)
 {
-  for(typename std::vector<T*>::const_iterator it = in.begin(); it != in.end(); ++it)
-  {
-    out.push_back(new T(**it));
-  }
+  std::for_each(in.begin(), in.end(), [&](T* t) { out.push_back(new T(*t)); });
 }
 
 #endif // UTILITIES_HH

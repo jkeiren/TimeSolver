@@ -351,8 +351,8 @@ public:
       cf();
       for (const DBMList* const dbms: dbmVec) {
         intersect(*dbms);
-        cf();
       }
+      cf();
 
       /* Delete dbmVec */
       delete_vector_elements(dbmVec);
