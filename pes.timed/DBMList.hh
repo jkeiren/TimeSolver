@@ -113,9 +113,11 @@ private:
     std::vector<DBM*>::iterator last = std::remove_if(dbmListVec->begin(), dbmListVec->end(), [](const DBM* dbm) { return dbm->emptiness(); });
     if(last == dbmListVec->begin()) {
       ++last;
+      assert(dbmListVec->front()->emptiness());
     }
     dbmListVec->erase(last, dbmListVec->end());
     assert(!dbmListVec->empty());
+    assert(!dbmListVec->front()->emptiness()||dbmListVec->size()==1);
   }
 
   void remove_contained_dbms()
@@ -129,12 +131,13 @@ private:
       {
         // remove first element
         --last;
-        delete *first;
-        *first = std::move(*last);
+        std::swap(*first, *last);
       } else {
         ++first;
       }
     }
+
+    std::for_each(last, dbmListVec->end(), [](DBM* dbm) { delete dbm; });
     dbmListVec->erase(last, dbmListVec->end());
   }
 
@@ -447,13 +450,11 @@ public:
    * @param Y (&) The right DBM.
    * @return true: *this <= Y; false: otherwise. */
   bool operator<=(const DBM &Y) const {
-    if(emptiness()) return true;
-    for (const DBM* const dbm: *dbmListVec) {
-      if (!(*dbm <= Y)) {
-        return false;
-      }
-    }
+    if(emptiness()) {
     return true;
+    } else {
+      return std::all_of(dbmListVec->begin(), dbmListVec->end(), [&](const DBM* dbm) { return *dbm <= Y; });
+    }
   }
 
   /** Performs subset checks;
@@ -466,25 +467,26 @@ public:
    * @param Y (&) The right DBMList.
    * @return true: *this <= Y; false: otherwise. */
   bool operator<=(const DBMList &Y) const {
-    if(emptiness()) return true;
-    if (dbmListVec->size() == 1) {
+    if(emptiness()) {
+      return true;
+    } else if (dbmListVec->size() == 1) {
       return Y >= *dbmListVec->front();
-    }
-
+    } else {
     // !Y
-    DBMList temp(Y);
-    !temp;
-    temp.cf();
+      DBMList complement(Y);
+      !complement;
+      complement.cf();
 
     // !Y empty, hence X && !Y empty
-    if (temp.emptiness()) {
+      if (complement.emptiness()) {
       return true;
-    }
-
+      } else {
     // X && !Y
-    temp.intersect(*this);
-    temp.cf();
-    return temp.emptiness();
+        complement.intersect(*this);
+        complement.cf();
+        return complement.emptiness();
+      }
+    }
   }
 
   /** Performs superset checks;
@@ -756,14 +758,10 @@ public:
    * is in canonical form.
    * @return [None] */
   void makeEmpty() {
-    while (dbmListVec->size() > 1) {
-      DBM *tempDBM = dbmListVec->back();
-      dbmListVec->pop_back();
-      delete tempDBM;
-    }
+    std::for_each(++dbmListVec->begin(), dbmListVec->end(), [](DBM* d) { delete d; });
+    dbmListVec->erase(++dbmListVec->begin(), dbmListVec->end());
     dbmListVec->front()->makeEmpty();
     isCf = true;
-    return;
   }
 
   /** This checks if DBMList represents an empty region
