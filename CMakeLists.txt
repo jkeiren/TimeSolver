@@ -9,6 +9,7 @@ add_definitions("-DEXAMPLES_DIR=${CMAKE_SOURCE_DIR}/examples")
 
 # Recursively build the tool
 add_subdirectory("pes.timed")
+add_subdirectory("examples/ExampleGenerators")
 
 # Add tool tests, running all examples
 # First, let's find all examples

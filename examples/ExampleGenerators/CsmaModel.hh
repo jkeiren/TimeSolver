@@ -17,7 +17,7 @@ using namespace std;
 #define sender_transm 1
 #define sender_retry 2
 
-enum channel {begin, end, cd, busy};
+enum channel {c_begin, c_end, cd, busy};
 enum IO {input, output};
 
 class Trans{
@@ -137,10 +137,10 @@ private:
     string reset = "";
     string replace = "";
   
-    Trans *bus_begin1= new Trans(0, 1, input, begin, "", "y", bus_idle, bus_active);
-    Trans *bus_end1= new Trans(0, 1, input, end, "", "y", bus_active, bus_idle);
+    Trans *bus_begin1= new Trans(0, 1, input, c_begin, "", "y", bus_idle, bus_active);
+    Trans *bus_end1= new Trans(0, 1, input, c_end, "", "y", bus_active, bus_idle);
     Trans *bus_busy1= new Trans(0, 1, output, busy, "y >= CA", "", bus_active, bus_active);
-    Trans *bus_begin2= new Trans(0, 1, input, begin, "y < CA", "y", bus_active, bus_collision);
+    Trans *bus_begin2= new Trans(0, 1, input, c_begin, "y < CA", "y", bus_active, bus_collision);
     Trans *bus_cd= new Trans(0, 2, output, cd, "y < CA", "y", bus_collision, bus_idle);
     transTableBus.push_back(bus_begin1);
     transTableBus.push_back(bus_end1);
@@ -156,13 +156,13 @@ private:
       sprintf(line, "x%d", i);
       reset = string(line);
       Trans *sender_cd2 = new Trans(i, 1, input, cd, enable, reset, sender_wait, sender_retry);
-      Trans *sender_begin1 = new Trans(i, 1, output, begin, enable, reset, sender_wait, sender_transm);
+      Trans *sender_begin1 = new Trans(i, 1, output, c_begin, enable, reset, sender_wait, sender_transm);
       Trans *sender_busy1 = new Trans(i, 1, input, busy, enable, reset, sender_wait, sender_retry);
     
       // Was "x%d <= CLAMBDA": Should be "x%d == CLAMBDA"
       sprintf(line, "x%d == CLAMBDA", i);
       enable = string(line);
-      Trans *sender_end1 = new Trans(i, 1, output, end, enable, reset, sender_transm, sender_wait);
+      Trans *sender_end1 = new Trans(i, 1, output, c_end, enable, reset, sender_transm, sender_wait);
     
       /* Originally, this was "x%d < CB", but was corrected for "x%d < CA"
        * to match model in KRONOS */;
@@ -172,7 +172,7 @@ private:
       /* Copied Enable here to allow for different invariants for previous statement */
       sprintf(line, "x%d < CB", i);
       enable = string(line);
-      Trans *sender_begin2 = new Trans(i, 1, output, begin, enable, reset, sender_retry, sender_transm);
+      Trans *sender_begin2 = new Trans(i, 1, output, c_begin, enable, reset, sender_retry, sender_transm);
     
       enable = "";
       Trans *sender_busy2 = new Trans(i, 1, input, busy, enable, reset, sender_retry, sender_retry);
