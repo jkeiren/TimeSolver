@@ -589,7 +589,7 @@ protected:
     DBMList placeholder(placeholder2);
     DBMList invariant_region(*INFTYDBM);
     bool nonempty_invariant = restrict_to_invariant(
-        input_pes.invariants(), &invariant_region, discrete_state);
+        input_pes.invariants(), invariant_region, discrete_state);
     if (nonempty_invariant) {
       !invariant_region;
       invariant_region.cf();
@@ -937,7 +937,7 @@ inline bool prover::do_proof_forall(const SubstList& discrete_state,
    * allowing multiple branches of AND and OR to have the same zone. */
   DBM succ_lhs(zone);
   succ_lhs.suc();
-  restrict_to_invariant(input_pes.invariants(), &succ_lhs, discrete_state);
+  restrict_to_invariant(input_pes.invariants(), succ_lhs, discrete_state);
   succ_lhs.cf();
 
   return do_proof(discrete_state, succ_lhs, *formula.getQuant());
@@ -966,7 +966,7 @@ inline bool prover::do_proof_forall_rel(const SubstList& discrete_state,
   // Make sure lhs_succ is not modified; we reuse it for the sake of efficiency.
 
   DBMList placeholder1(*INFTYDBM); // phi_{s1}
-  restrict_to_invariant(input_pes.invariants(), &placeholder1, discrete_state);
+  restrict_to_invariant(input_pes.invariants(), placeholder1, discrete_state);
   do_proof_place(discrete_state, lhs_succ, &placeholder1, *formula.getLeft());
   placeholder1.cf();
 
@@ -992,7 +992,7 @@ inline bool prover::do_proof_forall_rel(const SubstList& discrete_state,
      * allowing multiple branches of AND and OR to have the same zone. */
     DBM lhs_succ_invariant(lhs_succ); // that part of lhs_succ that satisfies
                                       // the location invariant
-    restrict_to_invariant(input_pes.invariants(), &lhs_succ_invariant, discrete_state);
+    restrict_to_invariant(input_pes.invariants(), lhs_succ_invariant, discrete_state);
     lhs_succ_invariant.cf();
     retVal = do_proof(discrete_state, lhs_succ_invariant, *formula.getRight());
   } else if (placeholder1 >= zone) {
@@ -1029,7 +1029,7 @@ inline bool prover::do_proof_forall_rel(const SubstList& discrete_state,
     /* We omit the check that we can elapse to the placeholder;
      * We will check that once at the end */
     DBMList placeholder2(*INFTYDBM);
-    restrict_to_invariant(input_pes.invariants(), &placeholder2, discrete_state);
+    restrict_to_invariant(input_pes.invariants(), placeholder2, discrete_state);
     placeholder2.cf();
     do_proof_place(discrete_state, lhs_succ, &placeholder2, *formula.getRight());
     placeholder2.cf();
@@ -1139,7 +1139,7 @@ inline bool prover::do_proof_exists(const SubstList& discrete_state,
   /* The proper derivation for EXISTS is to incorporate the invariant
    * in the placeholder, and not the LHS. */
   DBMList placeholder(*INFTYDBM);
-  restrict_to_invariant(input_pes.invariants(), &placeholder, discrete_state);
+  restrict_to_invariant(input_pes.invariants(), placeholder, discrete_state);
 
   DBMList placeholder_dbg_copy(placeholder); // Check assumption on do_proof_place
   do_proof_place(discrete_state, lhs_succ, &placeholder, *formula.getQuant());
@@ -1184,7 +1184,7 @@ inline bool prover::do_proof_exists_rel(const SubstList& discrete_state,
   zone_succ.suc();
 
   DBMList placeholder2(*INFTYDBM);
-  restrict_to_invariant(input_pes.invariants(), &placeholder2, discrete_state);
+  restrict_to_invariant(input_pes.invariants(), placeholder2, discrete_state);
 
   do_proof_place(discrete_state, zone_succ, &placeholder2, *formula.getRight());
   // Reset place parent to nullptr
@@ -1368,7 +1368,7 @@ inline bool prover::do_proof_allact(const SubstList& discrete_state,
     DBM guard_zone(zone);
 
     bool guard_satisfied =
-        comp_ph(&guard_zone, *(transition->guard()), discrete_state);
+        comp_ph(guard_zone, *(transition->guard()), discrete_state);
     if (!guard_satisfied) {
       cpplog(cpplogging::debug)
           << "Transition: " << transition << " cannot be taken." << std::endl;
@@ -1380,14 +1380,14 @@ inline bool prover::do_proof_allact(const SubstList& discrete_state,
        location invariant. */
     DBM invariant_zone(*INFTYDBM);
     bool invariant_satisfiable = restrict_to_invariant(
-        input_pes.invariants(), &invariant_zone, transition->destination_location(&discrete_state));
+        input_pes.invariants(), invariant_zone, transition->destination_location(&discrete_state));
 
     if (invariant_satisfiable) { // The transition exists
       invariant_zone.cf();
       // Some clocks are reset on this transition
       const ClockSet* reset_clocks = transition->reset_clocks();
       if (reset_clocks != nullptr) {
-        invariant_zone.preset(reset_clocks);
+        invariant_zone.preset(*reset_clocks);
       }
       invariant_zone.cf();
       /* Now perform clock assignments sequentially: perform the
@@ -1472,7 +1472,7 @@ inline bool prover::do_proof_existact(const SubstList& discrete_state,
     DBMList guard_placeholder(*INFTYDBM);
     DBM guard_zone(zone);
     bool guard_satisfied = comp_ph_exist_place(
-        &guard_zone, &guard_placeholder, *(transition->guard()), discrete_state);
+        guard_zone, guard_placeholder, *(transition->guard()), discrete_state);
     if (!guard_satisfied) {
       cpplog(cpplogging::debug)
           << "Transition: " << transition << " cannot be taken." << std::endl;
@@ -1482,12 +1482,12 @@ inline bool prover::do_proof_existact(const SubstList& discrete_state,
     /* Now check the invariant */
     DBM invariant_zone(*INFTYDBM);
     bool invariant_satisfiable = restrict_to_invariant(
-        input_pes.invariants(), &invariant_zone, transition->destination_location(&discrete_state));
+        input_pes.invariants(), invariant_zone, transition->destination_location(&discrete_state));
     if (invariant_satisfiable) {
       invariant_zone.cf();
       const ClockSet* reset_clocks = transition->reset_clocks();
       if (reset_clocks != nullptr) {
-        invariant_zone.preset(reset_clocks);
+        invariant_zone.preset(*reset_clocks);
       }
       invariant_zone.cf();
       /* Now perform clock assignments sequentially: perform the
@@ -1563,7 +1563,7 @@ inline bool prover::do_proof_imply(const SubstList& discrete_state,
   bool retVal = false;
   /* Here is the one call to comp_ph(...) outside of comp_ph(...) */
   DBM zone_lhs(zone);
-  if (comp_ph(&zone_lhs, *(formula.getLeft()), discrete_state)) {
+  if (comp_ph(zone_lhs, *(formula.getLeft()), discrete_state)) {
     /* Constraints are bounded by input_pes.max_constant() */
     /* This is to extend the LHS to make sure that
      * the RHS is satisfied by any zone that satisfies
@@ -1606,7 +1606,7 @@ inline bool prover::do_proof_sublist(const SubstList& discrete_state,
 inline bool prover::do_proof_reset(const SubstList& discrete_state,
                                    const DBM& zone, const ExprNode& formula) {
   DBM lhs_reset(zone);
-  lhs_reset.reset(formula.getClockSet());
+  lhs_reset.reset(*formula.getClockSet());
   lhs_reset.cf();
   return do_proof(discrete_state, lhs_reset, *formula.getExpr());
 }
@@ -2029,7 +2029,7 @@ inline void prover::do_proof_place_forall_rel(const SubstList& discrete_state,
   lhs_succ.suc();
 
   DBMList placeholder1(*INFTYDBM);
-  restrict_to_invariant(input_pes.invariants(), &placeholder1, discrete_state);
+  restrict_to_invariant(input_pes.invariants(), placeholder1, discrete_state);
   do_proof_place(discrete_state, lhs_succ, &placeholder1, *formula.getLeft());
   placeholder1.cf();
 
@@ -2134,7 +2134,7 @@ inline void prover::do_proof_place_forall_rel(const SubstList& discrete_state,
     /* We omit the check that we can elapse to the placeholder;
      * We will check that once at the end */
     DBMList placeholder2(*INFTYDBM);
-    restrict_to_invariant(input_pes.invariants(), &placeholder2, discrete_state);
+    restrict_to_invariant(input_pes.invariants(), placeholder2, discrete_state);
     placeholder2.cf();
     do_proof_place(discrete_state, lhs_succ, &placeholder2, *formula.getRight());
     placeholder2.cf();
@@ -2228,7 +2228,7 @@ inline void prover::do_proof_place_exists(const SubstList& discrete_state,
 
   // The invariant goes into the placeholder, not the left hand side
   DBMList placeholder(*INFTYDBM);
-  restrict_to_invariant(input_pes.invariants(), &placeholder, discrete_state);
+  restrict_to_invariant(input_pes.invariants(), placeholder, discrete_state);
 
   do_proof_place(discrete_state, lhs_succ, &placeholder, *formula.getQuant());
   placeholder.cf();
@@ -2280,7 +2280,7 @@ inline void prover::do_proof_place_exists_rel(const SubstList& discrete_state,
   zone_succ.suc();
 
   DBMList placeholder2(*INFTYDBM);
-  restrict_to_invariant(input_pes.invariants(), &placeholder2, discrete_state);
+  restrict_to_invariant(input_pes.invariants(), placeholder2, discrete_state);
 
   do_proof_place(discrete_state, zone_succ, &placeholder2, *formula.getRight());
   // Reset place parent to nullptr
@@ -2448,7 +2448,7 @@ inline void prover::do_proof_place_allact(const SubstList& discrete_state,
     DBM guard_zone(zone);
     DBMList guard_placeholder(*place);
     bool guard_satisfied =
-        comp_ph_all_place(&guard_zone, &guard_placeholder, *(transition->guard()),
+        comp_ph_all_place(guard_zone, guard_placeholder, *(transition->guard()),
                           discrete_state);
 
     if (guard_satisfied) {
@@ -2457,14 +2457,14 @@ inline void prover::do_proof_place_allact(const SubstList& discrete_state,
       DBMList transition_placeholder(*place);
       DBM invariant_zone(*INFTYDBM);
       bool invariant_satisfiable = restrict_to_invariant(input_pes.invariants(),
-                                                         &invariant_zone,
+                                                         invariant_zone,
                                                          transition->destination_location(&discrete_state));
 
       if (invariant_satisfiable) {
         invariant_zone.cf();
         const ClockSet* reset_clocks = transition->reset_clocks();
         if (reset_clocks != nullptr) {
-          invariant_zone.preset(reset_clocks);
+          invariant_zone.preset(*reset_clocks);
         }
         invariant_zone.cf();
         /* Now perform clock assignments sequentially: perform the
@@ -2558,7 +2558,7 @@ inline void prover::do_proof_place_existact(const SubstList& discrete_state,
     DBM guard_zone(zone);
     // Method tightens zone and place to those subsets satisfying the guard
     // (leftExpr).
-    bool guard_satisfied = comp_ph_exist_place(&guard_zone, &guard_placeholder,
+    bool guard_satisfied = comp_ph_exist_place(guard_zone, guard_placeholder,
                                         *(transition->guard()), discrete_state);
     if (!guard_satisfied) {
       cpplog(cpplogging::debug)
@@ -2570,13 +2570,13 @@ inline void prover::do_proof_place_existact(const SubstList& discrete_state,
        the destination location of the transition */
     DBM invariant_region(*INFTYDBM);
     bool invariant_satisfiable = restrict_to_invariant(
-        input_pes.invariants(), &invariant_region, transition->destination_location(&discrete_state));
+        input_pes.invariants(), invariant_region, transition->destination_location(&discrete_state));
 
     if (invariant_satisfiable) { // the invariant does not hold vacuously.
       invariant_region.cf();
       const ClockSet* reset_clocks = transition->reset_clocks();
       if (reset_clocks != nullptr) {
-        invariant_region.preset(reset_clocks);
+        invariant_region.preset(*reset_clocks);
       }
       invariant_region.cf();
       /* Now perform clock assignments sequentially: perform the
@@ -2647,7 +2647,7 @@ inline void prover::do_proof_place_imply(const SubstList& discrete_state,
                                              const ExprNode& formula) {
   DBM zone_copy(zone);
   /* call comp_ph() for efficient proving of IMPLY's left. */
-  if (comp_ph(&zone_copy, *(formula.getLeft()), discrete_state)) {
+  if (comp_ph(zone_copy, *(formula.getLeft()), discrete_state)) {
     /* Constraints are bounded by input_pes.max_constant() */
     /* This is to extend the LHS to make sure that
      * the RHS is satisfied by any zone that satisfies
@@ -2826,7 +2826,7 @@ inline void prover::do_proof_place_reset(const SubstList& discrete_state,
 // JK: It does not become clear why this is necessary here
 //  lhs_reset.bound(input_pes.max_constant());
 //  lhs_reset.cf();
-  lhs_reset.reset(formula.getClockSet());
+  lhs_reset.reset(*formula.getClockSet());
   lhs_reset.cf();
 
   DBMList placeholder1(*INFTYDBM);
@@ -2836,7 +2836,7 @@ inline void prover::do_proof_place_reset(const SubstList& discrete_state,
     *place = placeholder1;
   } else {
     // Apply the preset (weakest precondition operator)
-    placeholder1.preset(formula.getClockSet());
+    placeholder1.preset(*formula.getClockSet());
 
     // Use the rule to compute what the old place holder should be
     place->intersect(placeholder1);
@@ -2920,7 +2920,7 @@ inline bool prover::do_proof_place_ablewaitinf(const SubstList& discrete_state,
   }
   ph.cf();
   ph.suc();
-  restrict_to_invariant(input_pes.invariants(), &ph, discrete_state);
+  restrict_to_invariant(input_pes.invariants(), ph, discrete_state);
   ph.cf();
   /* Time can diverge if and only if there are no upper bound
    * constraints in the successor. By design of succ() and invariants,
@@ -2953,7 +2953,7 @@ inline bool prover::do_proof_place_unablewaitinf(const SubstList& discrete_state
   }
   ph.cf();
   ph.suc();
-  restrict_to_invariant(input_pes.invariants(), &ph, discrete_state);
+  restrict_to_invariant(input_pes.invariants(), ph, discrete_state);
   ph.cf();
   /* Time cannot diverge if and only if there is an upper bound
    * constraint in the successor. By design of succ() and invariants,

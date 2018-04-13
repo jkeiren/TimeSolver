@@ -44,7 +44,7 @@ clock_value_t zero(bool strict)
 inline
 clock_value_t clock_value(clock_value_t val, bool strict)
 {
-  clock_value_t result = val << 1;
+  clock_value_t result = val << (clock_value_t)1;
   if(!strict) {
     ++result;
   }
@@ -100,7 +100,7 @@ public:
   {
     /* Correction: Initialize elements in ClockSet to 0
      * (empty Clock Set). */
-    for (size_type i = 0; i < size_; i++) {
+    for (size_type i = 0; i < size_; ++i) {
       cc_[i] = 0;
     }
     cc_[index(bit)] = (0x1 << shift_amount(bit));
@@ -149,7 +149,7 @@ public:
   void print(std::ostream &os) const {
     bool end = false;
     os << "[";
-    for (size_type i = 1; i <= num_clocks_; i++) {
+    for (size_type i = 1; i <= num_clocks_; ++i) {
       size_type b = shift_amount(i);
       if ((cc_[index(i)] >> b) & 0x1) {
         if (end) {
@@ -270,7 +270,7 @@ private:
     assert(nClocks == other.nClocks);
     for (size_type i = 0; i < nClocks; ++i) {
       for (size_type j = 0; j < nClocks; ++j) {
-        if (cmp(this->operatorRead(i, j), other.operatorRead(i, j))) {
+        if (cmp(operatorRead(i, j), other.operatorRead(i, j))) {
           return false;
         }
       }
@@ -293,14 +293,11 @@ public:
         nClocks(numClocks),
         declared_clocks_(cs) {
     assert(nClocks >= 1);
-    for (size_type i = 0; i < nClocks; i++) {
-      for (size_type j = 0; j < nClocks; j++) {
-        this->operatorWrite(i, j) = infinity(true);
-        if (i == 0) {
-          this->operatorWrite(i, j) = zero(false);
-        }
-        if (i == j) {
-          this->operatorWrite(i, j) = zero(false);
+    for (size_type i = 0; i < nClocks; ++i) {
+      for (size_type j = 0; j < nClocks; ++j) {
+        operatorWrite(i, j) = infinity(true);
+        if (i == 0 || i == j) {
+          operatorWrite(i, j) = zero(false);
         }
       }
     }
@@ -324,19 +321,17 @@ public:
         nClocks(numClocks),
         declared_clocks_(cs) {
     assert(nClocks >= 1);
-    for (size_type i = 0; i < nClocks; i++) {
-      for (size_type j = 0; j < nClocks; j++) {
-        if (i == 0) {
-          this->operatorWrite(i, j) = zero(false);
-        } else if (i == j) {
-          this->operatorWrite(i, j) = zero(false);
+    for (size_type i = 0; i < nClocks; ++i) {
+      for (size_type j = 0; j < nClocks; ++j) {
+        if (i == 0 || i == j) {
+          operatorWrite(i, j) = zero(false);
         } else {
-          this->operatorWrite(i, j) = infinity(true);
+          operatorWrite(i, j) = infinity(true);
         }
       }
     }
     /* Input in the single constraint */
-    this->operatorWrite(row, col) = val;
+    operatorWrite(row, col) = val;
 
     // Set isCf to false to prevent breaking parser code
     isCf = false;
@@ -413,7 +408,6 @@ public:
     *p = val;
 
     isCf = false;
-    return;
   }
 
   /* Returns if the constraint row - col is implicit.
@@ -429,9 +423,9 @@ public:
     assert(row < nClocks);
     assert(col < nClocks);
     if (row == 0 || row == col) {
-      return (this->operatorRead(row, col)) == zero(false);
+      return (operatorRead(row, col)) == zero(false);
     } else {
-      return (this->operatorRead(row, col)) == infinity(true);
+      return (operatorRead(row, col)) == infinity(true);
     }
   }
 
@@ -458,12 +452,9 @@ public:
     assert(nClocks == Y.nClocks);
     /* Should we check for same number of clocks (?)
      * Currently, the code does not. */
-    for (size_type i = 0; i < nClocks; i++) {
-      for (size_type j = 0; j < nClocks; j++) {
-        this->operatorWrite(i, j) =
-            (this->operatorRead(i, j) < Y.operatorRead(i, j))
-                ? this->operatorRead(i, j)
-                : Y.operatorRead(i, j);
+    for (size_type i = 0; i < nClocks; ++i) {
+      for (size_type j = 0; j < nClocks; ++j) {
+        operatorWrite(i, j) = std::min(operatorRead(i,j), Y.operatorRead(i,j));
       }
     }
     isCf = false;
@@ -520,10 +511,10 @@ public:
      * Currently, the code does not. */
     bool gt = true;
     bool lt = true;
-    for (size_type i = 0; i < nClocks; i++) {
-      for (size_type j = 0; j < nClocks; j++) {
-        gt = gt && (this->operatorRead(i, j) >= Y.operatorRead(i, j));
-        lt = lt && (this->operatorRead(i, j) <= Y.operatorRead(i, j));
+    for (size_type i = 0; i < nClocks; ++i) {
+      for (size_type j = 0; j < nClocks; ++j) {
+        gt = gt && (operatorRead(i, j) >= Y.operatorRead(i, j));
+        lt = lt && (operatorRead(i, j) <= Y.operatorRead(i, j));
       }
     }
     if (gt && lt) return 3;
@@ -539,8 +530,8 @@ public:
    * @return The reference to the changed calling DBM. */
   DBM &suc() {
     // We start i at 1 because (0,0) isn't a clock
-    for (size_type i = 1; i < nClocks; i++) {
-      this->operatorWrite(i, 0) = infinity(true);
+    for (size_type i = 1; i < nClocks; ++i) {
+      operatorWrite(i, 0) = infinity(true);
     }
     return *this;
   }
@@ -556,8 +547,8 @@ public:
     /* This version, the version that does not preserve canonical form
      * is used due to a typo in a paper describing a version that does
      * preserve canonical form. */
-    for (size_type i = 0; i < nClocks; i++) {
-      this->operatorWrite(0, i) = zero(false);
+    for (size_type i = 0; i < nClocks; ++i) {
+      operatorWrite(0, i) = zero(false);
     }
     isCf = false;
     return *this;
@@ -574,14 +565,14 @@ public:
       std::cerr << "reset(x) clock index out of bounds" << std::endl;
       exit(-1);
     }
-    for (size_type i = 0; i < nClocks; i++) {
+    for (size_type i = 0; i < nClocks; ++i) {
       /* Code Fix: do not change (x,x), since
        * that seemed to be a typo in the algorithm of the paper */
       if (i != x) {
         /* Since (0,0) is usually zero(false) (<= 0), this method
          * works without having to first set (x,0) and (0,x) to 0*/
-        this->operatorWrite(x, i) = this->operatorRead(0, i);
-        this->operatorWrite(i, x) = this->operatorRead(i, 0);
+        operatorWrite(x, i) = operatorRead(0, i);
+        operatorWrite(i, x) = operatorRead(i, 0);
       }
     }
     return *this;
@@ -591,13 +582,13 @@ public:
    * The final DBM is in canonical form.
    * @param rs (*) The set of clocks to reset to 0.
    * @return The reference to the changed, calling resulting DBM. */
-  DBM &reset(const ClockSet *const rs) {
+  DBM &reset(const ClockSet& rs) {
     /* This for loop takes the DBM and resets
      * all the specified clocks to reset to
      * 0. */
-    for (size_type i = 1; i < nClocks; i++) {
-      if (rs->getc(i)) {
-        this->reset(i);
+    for (size_type i = 1; i < nClocks; ++i) {
+      if (rs.getc(i)) {
+        reset(i);
       }
     }
     return *this;
@@ -616,14 +607,14 @@ public:
       std::cerr << "reset(x,y) clock indices out of bounds" << std::endl;
       exit(-1);
     }
-    for (size_type i = 0; i < nClocks; i++)
+    for (size_type i = 0; i < nClocks; ++i)
       if (i != x) {
-        this->operatorWrite(x, i) = this->operatorRead(y, i);
-        this->operatorWrite(i, x) = this->operatorRead(i, y);
+        operatorWrite(x, i) = operatorRead(y, i);
+        operatorWrite(i, x) = operatorRead(i, y);
       }
     /* The following two lines are not needed:
-     * 	this->operatorWrite(x,y) = zero(false);
-     * 	this->operatorWrite(y,x) = zero(false);
+     * 	operatorWrite(x,y) = zero(false);
+     * 	operatorWrite(y,x) = zero(false);
      * since they are performed when i = y
      * and i = x is ignored so no need to do first. */
     isCf = false;
@@ -650,23 +641,23 @@ public:
      * then return the emptyset.
      * Assumption made: for single clocks, there is never a negative
      * constant used*/
-    int tempIntG = this->operatorRead(0, x);
+    int tempIntG = operatorRead(0, x);
     if ((tempIntG >> 1) < 0 ||
         ((tempIntG >> 1) == 0 && (tempIntG & 0x1) == 0)) {
       // Make an empty DBM
-      this->operatorWrite(x, 0) = 0;
-      this->operatorWrite(0, x) = 0;
-      this->operatorWrite(0, 0) = 0;
+      operatorWrite(x, 0) = 0;
+      operatorWrite(0, x) = 0;
+      operatorWrite(0, 0) = 0;
       isCf = false;
       return *this;
     }
-    int tempIntL = this->operatorRead(x, 0);
+    int tempIntL = operatorRead(x, 0);
     if ((tempIntL >> 1) < 0 ||
         ((tempIntL >> 1) == 0 && (tempIntL & 0x1) == 0)) {
       // Make an empty DBM
-      this->operatorWrite(x, 0) = 0;
-      this->operatorWrite(0, x) = 0;
-      this->operatorWrite(0, 0) = 0;
+      operatorWrite(x, 0) = 0;
+      operatorWrite(0, x) = 0;
+      operatorWrite(0, 0) = 0;
       isCf = false;
       return *this;
     }
@@ -675,15 +666,15 @@ public:
 
     // Now flush out difference constraints since they
     // are reset by x
-    for (size_type i = 1; i < nClocks; i++) {
+    for (size_type i = 1; i < nClocks; ++i) {
       if (i == x) {
         continue;
       }
-      this->operatorWrite(x, i) = infinity(true);
-      this->operatorWrite(i, x) = this->operatorRead(i, 0);
+      operatorWrite(x, i) = infinity(true);
+      operatorWrite(i, x) = operatorRead(i, 0);
     }
-    this->operatorWrite(x, 0) = infinity(true);
-    this->operatorWrite(0, x) = zero(false);
+    operatorWrite(x, 0) = infinity(true);
+    operatorWrite(0, x) = zero(false);
     isCf = false;
     return *this;
   }
@@ -697,73 +688,73 @@ public:
    * after this operation.
    * @param prs (*) The set of clocks just reset (after the predecessor zone).
    * @return The reference to the modified DBM. */
-  DBM &preset(const ClockSet *const prs) {
+  DBM &preset(const ClockSet& prs) {
     /* Handle clock difference constraints first. This
      * allows us to use the single-clock constraints
      * already in the DBM */
-    for (size_type i = 1; i < nClocks; i++) {
-      for (size_type j = 1; j < nClocks; j++) {
+    for (size_type i = 1; i < nClocks; ++i) {
+      for (size_type j = 1; j < nClocks; ++j) {
         if (i == j) {
           continue;
         }
         /* In all conditions, handle constraint (i,j) here.
          * Constraint (j,i) is handled later. */
-        if (prs->getc(i) && prs->getc(j)) {
+        if (prs.getc(i) && prs.getc(j)) {
           /* Note that if we are here for constraint (i,j),
            * we will get here in constraint (j,i) */
 
-          clock_value_t tempInt = this->operatorRead(i, j);
+          clock_value_t tempInt = operatorRead(i, j);
           if ((tempInt >> 1) < 0 ||
               ((tempInt >> 1) == 0 && (tempInt & 0x1) == 0)) {
             // Make an empty DBM
-            this->operatorWrite(i, 0) = 0;
-            this->operatorWrite(0, i) = 0;
-            this->operatorWrite(0, 0) = 0;
+            operatorWrite(i, 0) = 0;
+            operatorWrite(0, i) = 0;
+            operatorWrite(0, 0) = 0;
             isCf = false;
             return *this;
           }
           // If both clocks are reset then their difference does not matter
-          this->operatorWrite(i, j) = infinity(true);
-        } else if (prs->getc(i)) {
-          if (this->operatorRead(0, j) > this->operatorRead(i, j)) {
-            this->operatorWrite(0, j) = this->operatorRead(i, j);
+          operatorWrite(i, j) = infinity(true);
+        } else if (prs.getc(i)) {
+          if (operatorRead(0, j) > operatorRead(i, j)) {
+            operatorWrite(0, j) = operatorRead(i, j);
           }
-          this->operatorWrite(i, j) = infinity(true);
-        } else if (prs->getc(j)) {
-          if (this->operatorRead(i, 0) > this->operatorRead(i, j)) {
-            this->operatorWrite(i, 0) = this->operatorRead(i, j);
+          operatorWrite(i, j) = infinity(true);
+        } else if (prs.getc(j)) {
+          if (operatorRead(i, 0) > operatorRead(i, j)) {
+            operatorWrite(i, 0) = operatorRead(i, j);
           }
-          this->operatorWrite(i, j) = infinity(true);
+          operatorWrite(i, j) = infinity(true);
         }
         // Do nothing if neither clock is reset
       }
     }
     /* Handle Single clock constraints last. */
-    for (size_type i = 1; i < nClocks; i++) {
-      if (prs->getc(i)) {
-        clock_value_t tempIntG = this->operatorRead(0, i);
+    for (size_type i = 1; i < nClocks; ++i) {
+      if (prs.getc(i)) {
+        clock_value_t tempIntG = operatorRead(0, i);
         // For upper bound constraints, only invalidate if strictly
         // less than 0
         if ((tempIntG >> 1) < 0) {
           // Make an empty DBM
-          this->operatorWrite(i, 0) = 0;
-          this->operatorWrite(0, i) = 0;
-          this->operatorWrite(0, 0) = 0;
+          operatorWrite(i, 0) = 0;
+          operatorWrite(0, i) = 0;
+          operatorWrite(0, 0) = 0;
           isCf = false;
           return *this;
         }
-        clock_value_t tempIntL = this->operatorRead(i, 0);
+        clock_value_t tempIntL = operatorRead(i, 0);
         if ((tempIntL >> 1) < 0) {
           // Make an empty DBM
-          this->operatorWrite(i, 0) = 0;
-          this->operatorWrite(0, i) = 0;
-          this->operatorWrite(0, 0) = 0;
+          operatorWrite(i, 0) = 0;
+          operatorWrite(0, i) = 0;
+          operatorWrite(0, 0) = 0;
           isCf = false;
           return *this;
         }
 
-        this->operatorWrite(i, 0) = infinity(true);
-        this->operatorWrite(0, i) = zero(false);
+        operatorWrite(i, 0) = infinity(true);
+        operatorWrite(0, i) = zero(false);
       }
     }
     isCf = false;
@@ -793,36 +784,36 @@ public:
     // Now flush out difference constraints since they
     // are reset by x
     /* First check that it is a valid assignment, and make empty otherwise */
-    for (size_type i = 0; i < nClocks; i++) {
+    for (size_type i = 0; i < nClocks; ++i) {
       if (i == y || i == x) {
         continue;
       }
-      if (this->operatorRead(i, x) < this->operatorRead(i, y)) {
+      if (operatorRead(i, x) < operatorRead(i, y)) {
         // Make an empty DBM
-        this->operatorWrite(i, 0) = 0;
-        this->operatorWrite(0, i) = 0;
-        this->operatorWrite(0, 0) = 0;
+        operatorWrite(i, 0) = 0;
+        operatorWrite(0, i) = 0;
+        operatorWrite(0, 0) = 0;
         isCf = false;
         return *this;
       }
-      if (this->operatorRead(x, i) < this->operatorRead(y, i)) {
+      if (operatorRead(x, i) < operatorRead(y, i)) {
         // Make an empty DBM
-        this->operatorWrite(i, 0) = 0;
-        this->operatorWrite(0, i) = 0;
-        this->operatorWrite(0, 0) = 0;
+        operatorWrite(i, 0) = 0;
+        operatorWrite(0, i) = 0;
+        operatorWrite(0, 0) = 0;
         isCf = false;
         return *this;
       }
     }
-    for (size_type i = 1; i < nClocks; i++) {
+    for (size_type i = 1; i < nClocks; ++i) {
       if (i == x) {
         continue;
       }
-      this->operatorWrite(x, i) = infinity(true);
-      this->operatorWrite(i, x) = this->operatorRead(i, 0);
+      operatorWrite(x, i) = infinity(true);
+      operatorWrite(i, x) = operatorRead(i, 0);
     }
-    this->operatorWrite(x, 0) = infinity(true);
-    this->operatorWrite(0, x) = zero(false);
+    operatorWrite(x, 0) = infinity(true);
+    operatorWrite(0, x) = zero(false);
     isCf = false;
     return *this;
   }
@@ -844,17 +835,17 @@ public:
   void bound(const clock_value_t maxc) {
     // Is this method correct (?) Should it also be loosening
     // clock differences based on single clock constraints?
-    for (size_type i = 1; i < nClocks; i++) {
-      clock_value_t iRow = (this->operatorRead(i, 0) >> 1);
+    for (size_type i = 1; i < nClocks; ++i) {
+      clock_value_t iRow = (operatorRead(i, 0) >> 1);
       /* Sets any individual upper bound clock constraint
        * that exceeds the const maxc
        * to infinity, and sets all clock differences involving
        * that clock as the higher clock to infinity */
       if (iRow != 0xFFF && iRow > maxc) {
-        this->operatorWrite(i, 0) = infinity(true);
-        for (size_type j = 1; j < nClocks; j++) {
+        operatorWrite(i, 0) = infinity(true);
+        for (size_type j = 1; j < nClocks; ++j) {
           if (i != j) {
-            this->operatorWrite(i, j) = infinity(true);
+            operatorWrite(i, j) = infinity(true);
           }
         }
       }
@@ -863,15 +854,15 @@ public:
        * has a max value less than -maxc) to maxc (if not
        * already loosened by an upper-bound constraint) and
        * loosens the relevant clock-difference constraints */
-      if (-(this->operatorRead(0, i) >> 1) > maxc) {
-        for (size_type j = 0; j < nClocks; j++) {
+      if (-(operatorRead(0, i) >> 1) > maxc) {
+        for (size_type j = 0; j < nClocks; ++j) {
           if (j != i) {
-            if (this->operatorRead(j, 0) >> 1 == 0xFFF) {
-              this->operatorWrite(j, i) = infinity(true);
+            if (operatorRead(j, 0) >> 1 == 0xFFF) {
+              operatorWrite(j, i) = infinity(true);
 
             } else {
-              this->operatorWrite(j, i) =
-                  ((this->operatorRead(j, 0) >> 1) - maxc) << 1;
+              operatorWrite(j, i) =
+                  ((operatorRead(j, 0) >> 1) - maxc) << 1;
             }
           }
         }
@@ -884,20 +875,20 @@ public:
      * looser than the largest clock constant and bounds them
      * with the maximum constraint maxc in both directions,
      * relaxing the bounds. */
-    for (size_type i = 1; i < nClocks; i++) {
-      for (size_type j = 1; j < nClocks; j++) {
-        if ((i != j) && ((this->operatorRead(i, j) >> 1) != 0xFFF)) {
-          if ((this->operatorRead(i, j) >> 1) > maxc)
-            this->operatorWrite(i, j) = (maxc << 1);
-          if (-(this->operatorRead(i, j) >> 1) > maxc)
+    for (size_type i = 1; i < nClocks; ++i) {
+      for (size_type j = 1; j < nClocks; ++j) {
+        if ((i != j) && ((operatorRead(i, j) >> 1) != 0xFFF)) {
+          if ((operatorRead(i, j) >> 1) > maxc)
+            operatorWrite(i, j) = (maxc << 1);
+          if (-(operatorRead(i, j) >> 1) > maxc)
             /* Considered correction to
-             *  this->operatorWrite(i,j) = ((-maxc) << 1);
+             *  operatorWrite(i,j) = ((-maxc) << 1);
              * but they seem to be equivalent
              * (via 2's complement implementation
              * of negative binary numbers) and due
              * to potentially losing the sign bit,
              * this remains unchanged. */
-            this->operatorWrite(i, j) = -((maxc) << 1);
+            operatorWrite(i, j) = -((maxc) << 1);
         }
       }
     }
@@ -971,8 +962,8 @@ public:
    * is in canonical form.
    * @return [None] */
   void makeEmpty() {
-    for (size_type i = 0; i < nClocks; i++) {
-      for (size_type j = 0; j < nClocks; j++) {
+    for (size_type i = 0; i < nClocks; ++i) {
+      for (size_type j = 0; j < nClocks; ++j) {
         operatorWrite(i, j) = 0x0;
       }
     }
@@ -988,8 +979,8 @@ public:
     /* O(n) version. This assumes that the DBM is in canonical form.
      * an O(n^2) version was previously used to handle overflow possibilities
      * from a model with different semantics. */
-    for (size_type i = 0; i < nClocks; i++) {
-      clock_value_t rv = this->operatorRead(i, i);
+    for (size_type i = 0; i < nClocks; ++i) {
+      clock_value_t rv = operatorRead(i, i);
       if (((rv >> 1) < 0) || (((rv >> 1) == 0) && ((rv & zero(false)) == 0))) {
         return true;
       }
@@ -1004,8 +995,8 @@ public:
    * @return true: the DBM has a single-clock upper bound constraint, false:
    * otherwise. */
   bool hasUpperConstraint() const {
-    for (size_type i = 1; i < nClocks; i++) {
-      clock_value_t cons = this->operatorRead(i, 0);
+    for (size_type i = 1; i < nClocks; ++i) {
+      clock_value_t cons = operatorRead(i, 0);
       if ((cons >> 1) != 0xFFF) {
         return true;
       }
@@ -1019,14 +1010,14 @@ public:
    * The DBM calling this method is changed.
    * @return None*/
   void closure() {
-    for (size_type i = 0; i < nClocks; i++)
-      for (size_type j = 0; j < nClocks; j++) {
+    for (size_type i = 0; i < nClocks; ++i)
+      for (size_type j = 0; j < nClocks; ++j) {
         if (i == j) {
           continue;
         }
-        if ((this->operatorRead(i, j) >> 1) != 0xFFF) { // if not infinity
-          this->operatorWrite(i, j) =
-              ((this->operatorRead(i, j) >> 1) << 1) + 1;
+        if ((operatorRead(i, j) >> 1) != 0xFFF) { // if not infinity
+          operatorWrite(i, j) =
+              ((operatorRead(i, j) >> 1) << 1) + 1;
         }
       }
   }
@@ -1037,14 +1028,14 @@ public:
    * The DBM calling this method is changed.
    * @return None*/
   void closureRev() {
-    for (size_type i = 0; i < nClocks; i++)
-      for (size_type j = 0; j < nClocks; j++) {
+    for (size_type i = 0; i < nClocks; ++i)
+      for (size_type j = 0; j < nClocks; ++j) {
         if (i == j) {
           continue;
         }
-        if ((this->operatorRead(i, j) >> 1) != 0xFFF) { // if not infinity
-          this->operatorWrite(i, j) =
-              ((this->operatorRead(i, j) >> 1) << 1) + 0;
+        if ((operatorRead(i, j) >> 1) != 0xFFF) { // if not infinity
+          operatorWrite(i, j) =
+              ((operatorRead(i, j) >> 1) << 1) + 0;
         }
       }
   }
@@ -1055,14 +1046,14 @@ public:
    * The DBM calling this method is changed.
    * @return None*/
   void predClosureRev() {
-    for (size_type i = 1; i < nClocks; i++)
-      for (size_type j = 0; j < nClocks; j++) {
+    for (size_type i = 1; i < nClocks; ++i)
+      for (size_type j = 0; j < nClocks; ++j) {
         if (i == j) {
           continue;
         }
-        if ((this->operatorRead(i, j) >> 1) != 0xFFF) { // if not infinity
-          this->operatorWrite(i, j) =
-              ((this->operatorRead(i, j) >> 1) << 1) + 0;
+        if ((operatorRead(i, j) >> 1) != 0xFFF) { // if not infinity
+          operatorWrite(i, j) =
+              ((operatorRead(i, j) >> 1) << 1) + 0;
         }
       }
   }
@@ -1077,16 +1068,16 @@ public:
       os << "EMPTY";
       return;
     }
-    for (size_type i = 0; i < nClocks; i++) {
-      for (size_type j = 0; j < nClocks; j++) {
+    for (size_type i = 0; i < nClocks; ++i) {
+      for (size_type j = 0; j < nClocks; ++j) {
         if (i == j) {
           continue;
         }
-        clock_value_t val = this->operatorRead(i, j) >> 1;
+        clock_value_t val = operatorRead(i, j) >> 1;
         if (val == 0xFFF) {
           continue;
         }
-        clock_value_t type = this->operatorRead(i, j) & 0x1;
+        clock_value_t type = operatorRead(i, j) & 0x1;
         if (i == 0 && val == 0 && type == 1) {
           continue;
         }
