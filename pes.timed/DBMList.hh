@@ -13,6 +13,7 @@
 #ifndef DBMLIST_H
 #define DBMLIST_H
 
+#include <algorithm>
 #include <iostream>
 #include <vector>
 #include "utilities.hh"

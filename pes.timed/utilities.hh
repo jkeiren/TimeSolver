@@ -8,6 +8,7 @@
 #ifndef UTILITIES_HH
 #define UTILITIES_HH
 
+#include <algorithm>
 #include <vector>
 
 template<typename T>
