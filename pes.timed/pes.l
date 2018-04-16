@@ -13,6 +13,7 @@
 %option yylineno
 
 %{
+#include "pes.hh"
 #include "ExprNode.hh"
 #include "transition.hh"
 #include <string>
