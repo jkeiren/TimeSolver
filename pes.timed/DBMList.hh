@@ -38,21 +38,16 @@
  * @date November 2, 2013 */
 class DBMList {
 private:
-  /** True if the DBM is still in canonical form (cf()), false otherwise.
-   * This provides a quick a 1-bit check that avoids needless
-   * work to convert something already in cf() to cf(). */
-  bool isCf;
-
   /** The list of DBMs; the set of valuations represented is
    * dbmListVec[0] || dbmListVec[1] || ... || dbmListVec[listSize-1]. */
   std::vector<DBM *> *dbmListVec;
 
   const bidirectional_map<std::string, int> &declared_clocks;
 
-  /** The Number of clocks in the space for the DBMList. This
-   * number includes the "zero clock." This number is also
-   * the same for all DBMs in the DBMList. */
-  DBM::size_type nClocks;
+  /** True if the DBM is still in canonical form (cf()), false otherwise.
+   * This provides a quick a 1-bit check that avoids needless
+   * work to convert something already in cf() to cf(). */
+  bool isCf;
 
   /** Private method that returns the complement of a DBM. This uses
    * the (simple) method of performing a DBM that is the union of all
@@ -63,7 +58,7 @@ private:
    * @return The complemented DBM, given as a DBMList. */
   DBMList *complementDBM(const DBM &Y) {
     if (Y.emptiness()) {
-      return new DBMList(Y.clocks_size(), Y.declared_clocks());
+      return new DBMList(Y.declared_clocks());
     }
     /* Check for infinity DBM */
     bool hasAConstraint = false;
@@ -78,7 +73,7 @@ private:
             tempCons = 0;
           }
           short int constraintVal = ((-(tempVal >> 1)) << 1) + tempCons;
-          DBM tempDBM(nClocks, j, i, constraintVal, declared_clocks);
+          DBM tempDBM(j, i, constraintVal, declared_clocks);
           if (myList == nullptr) {
             myList = new DBMList(tempDBM);
           } else {
@@ -92,7 +87,7 @@ private:
       myList->setIsCfFalse();
     } else {
       // Set to Empty DBM
-      DBM emptyDBM(Y.clocks_size(), Y.declared_clocks());
+      DBM emptyDBM(Y.declared_clocks());
 
       for (DBM::size_type i = 1; i < Y.clocks_size(); i++) {
         emptyDBM.addConstraint(i, 0, 0);
@@ -143,6 +138,8 @@ private:
   }
 
 public:
+  std::size_t clocks_size() const { return declared_clocks.size()+1; }
+
   /** Return the number of DBMs in the DBMList. This is used to
    * determine how many zones are unioned. Knowing if the size
    * is 1 or larger than 1 is critical, since many methods are
@@ -161,18 +158,13 @@ public:
    * representing no constraint: the diagonal and the top row are
    * (0, <=), and the rest of the entries are (infinity, <).
    * This is the loosest possible DBM.
-   * @param numClocks The number of clocks, including the one "dummy" \
-   * "zero clock". Hence, there are numClocks - 1 actual clocks
-   * with 1 "zero" clock.
    * @return [Constructor] */
-  DBMList(const DBM::size_type numClocks,
-          const bidirectional_map<std::string, int> &cs)
-      : isCf(false),
-        dbmListVec(new std::vector<DBM*>),
+  DBMList(const bidirectional_map<std::string, int> &cs)
+      : dbmListVec(new std::vector<DBM*>),
         declared_clocks(cs),
-        nClocks(numClocks)
+        isCf(false)
   {
-    dbmListVec->push_back(new DBM(numClocks, cs));
+    dbmListVec->push_back(new DBM(cs));
   }
 
   /** Copy Constructor for DBMList, making a DBMList representing the
@@ -180,10 +172,9 @@ public:
    * @param Y (&) The object to copy.
    * @return [Constructor] */
   DBMList(const DBM &Y)
-      : isCf(Y.isInCf()),
-        dbmListVec(new std::vector<DBM*>),
+      : dbmListVec(new std::vector<DBM*>),
         declared_clocks(Y.declared_clocks()),
-        nClocks(Y.clocks_size()) {
+        isCf(Y.isInCf()) {
     dbmListVec->push_back(new DBM(Y));
   }
 
@@ -191,20 +182,18 @@ public:
    * @param Y (&) The object to copy.
    * @return [Constructor] */
   DBMList(const DBMList &Y)
-      : isCf(Y.isCf),
-        dbmListVec(new std::vector<DBM*>),
+      : dbmListVec(new std::vector<DBM*>),
         declared_clocks(Y.declared_clocks),
-        nClocks(Y.nClocks) {
+        isCf(Y.isCf) {
     // Vector constructor makes a deep copy of the pointers (not of the objects
     // that the pointers point to). Make a deep copy of the DBM objects here
     deep_copy(*dbmListVec, *(Y.getDBMList()));
   }
 
   DBMList(DBMList&& other) noexcept
-    : isCf(std::move(other.isCf)),
-      dbmListVec(std::move(other.dbmListVec)),
+    : dbmListVec(std::move(other.dbmListVec)),
       declared_clocks(std::move(other.declared_clocks)),
-      nClocks(std::move(other.nClocks)) {
+      isCf(std::move(other.isCf)) {
     other.dbmListVec = nullptr;
   }
 
@@ -281,7 +270,6 @@ public:
    * @param Y (&) The object to copy.
    * @return A reference to the copied object, which is the LHS object. */
   DBMList &operator=(const DBMList &Y) {
-    nClocks = Y.nClocks;
     if (dbmListVec->size() == 1 && Y.numDBMs() == 1) {
       *dbmListVec->front() = *Y.getDBMList()->front();
     } else if (Y.numDBMs() == 1) {
@@ -314,7 +302,6 @@ public:
    * @param Y (&) The object to copy.
    * @return A reference to the copied object, which is the LHS object. */
   DBMList &operator=(const DBM &Y) {
-    nClocks = Y.clocks_size();
     while (dbmListVec->size() > 1) {
       DBM *tempDBM = dbmListVec->back();
       delete tempDBM;

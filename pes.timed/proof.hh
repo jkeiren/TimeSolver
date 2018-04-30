@@ -69,7 +69,7 @@ public:
     /* This is initialized to be the largest (loosest)
      * possible DBM
      * @see DBM Constructor (Default Constructor). */
-    INFTYDBM = new DBM(input_pes.spaceDimension(), input_pes.clocks());
+    INFTYDBM = new DBM(input_pes.clocks());
     INFTYDBM->cf();
   }
 
@@ -957,7 +957,7 @@ inline bool prover::do_proof_forall_rel(const SubstList& discrete_state,
    * If this is not satisfactory, then do a regular FORALL proof
    * without a placeholder. */
 
-  bool retVal = false;
+  bool retVal;
 
   /* First, see if \exists(phi_1) is true. The common case is that it
    * will not be. */
@@ -976,7 +976,7 @@ inline bool prover::do_proof_forall_rel(const SubstList& discrete_state,
   if (placeholder1.emptiness()) { // Here, \forall phi_2 needs to hold.
     // [FC14] derived rule? of \forall_{ro1} TODO
     if (cpplogEnabled(cpplogging::debug)) {
-      print_sequentCheck(std::cerr, step - 1, retVal, zone, placeholder1,
+      print_sequentCheck(std::cerr, step - 1, false, zone, placeholder1,
                          discrete_state, formula.getOpType());
       cpplog(cpplogging::debug)
           << "----() Empty Relativization Placeholder: phi1 is never true -----"
@@ -1000,10 +1000,9 @@ inline bool prover::do_proof_forall_rel(const SubstList& discrete_state,
     /* First check for the simplest case: no time elapse is needed */
     /* For improved performance, first ask if the formula
      * is true with no time elapse. */
-    retVal = true;
     // [FC14] proof rule \forall_{ro2};
     if (cpplogEnabled(cpplogging::debug)) {
-      print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal, zone,
+      print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, true, zone,
                          placeholder1, discrete_state, formula.getOpType());
       cpplog(cpplogging::debug) << "----(Valid) Placeholder indicates no time "
                                    "elapse is needed (Check Only)-----"
@@ -1016,7 +1015,6 @@ inline bool prover::do_proof_forall_rel(const SubstList& discrete_state,
     // If here, we neither need a placeholder nor to elapse time
     retVal = do_proof(discrete_state, zone, *formula.getRight());
   } else {
-    retVal = true;
     // This is the more complicated case that requires a placeholder
     // for the FORALL
     /* Now check that we can elapse to the placeholder. */
@@ -1059,7 +1057,7 @@ inline bool prover::do_proof_forall_rel(const SubstList& discrete_state,
       placeholder_forall.cf();
 
       if (cpplogEnabled(cpplogging::debug)) {
-        print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal,
+        print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, true,
                            lhs_succ, placeholder2, discrete_state, formula.getOpType());
         cpplog(cpplogging::debug)
             << "----() FORALL (of FORALL_REL) Placeholder Check obtained  FA "
@@ -1094,7 +1092,7 @@ inline bool prover::do_proof_forall_rel(const SubstList& discrete_state,
         placeholder_exists.cf();
 
         if (cpplogEnabled(cpplogging::debug)) {
-          print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, retVal,
+          print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, true,
                              zone, placeholder_exists, discrete_state, formula.getOpType());
           cpplog(cpplogging::debug)
               << "----() FORALL Rel Exists placeholder after time elapse check "
@@ -1367,9 +1365,7 @@ inline bool prover::do_proof_allact(const SubstList& discrete_state,
     /* Obtain the entire ExprNode and prove it */
     DBM guard_zone(zone);
 
-    bool guard_satisfied =
-        comp_ph(guard_zone, *(transition->guard()), discrete_state);
-    if (!guard_satisfied) {
+    if (!comp_ph(guard_zone, *(transition->guard()), discrete_state)) {
       cpplog(cpplogging::debug)
           << "Transition: " << transition << " cannot be taken." << std::endl;
       continue;
@@ -1433,8 +1429,8 @@ inline bool prover::do_proof_allact(const SubstList& discrete_state,
         << "Executing transition (with destination) " << transition << std::endl
         << "\tExtra invariant condition: " << invariant_zone << std::endl;
 
-    numLocations++;
-    // Recursively proof that the weakest precondition of the body of allact
+    ++numLocations;
+    // Recursively prove that the weakest precondition of the body of allact
     // is satisfied. See the remark about getNewTrans above.
     retVal = do_proof(discrete_state, guard_zone, *transition->getRightExpr());
     if (!retVal) {

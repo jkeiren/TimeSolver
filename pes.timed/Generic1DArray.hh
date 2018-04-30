@@ -71,7 +71,7 @@ public:
   /** Destructor of Generic1DArray.
    * @return [Destructor]. */
   ~Generic1DArray() {
-    if (storage != 0) delete[] storage;
+    delete[] storage;
   }
 
   /** Performs a deep copy (not aliased) of the array, making the
@@ -112,7 +112,7 @@ public:
    * @return A pointer to the specified element in the array. */
   void *fetch(const size_type index) const {
     if (index >= quantity) {
-      return 0;
+      return nullptr;
     }
     // Return address of desired element:
     return &(storage[index * eltSize]);

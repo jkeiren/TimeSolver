@@ -962,7 +962,7 @@ TOK_TRUE { $$ = new ExprNode(BOOL, true, input_pes.clocks(), input_pes.atomic())
 constraints:
 TOK_ID_CLOCK TOK_GE TOK_INT
 {
-  $$ = new DBM(input_pes.spaceDimension(), input_pes.clocks());
+  $$ = new DBM(input_pes.clocks());
   input_pes.update_max_constant($3);
   int x = input_pes.lookup_clock($1);
   if ( x!= -1){
@@ -975,7 +975,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_GE TOK_ID_CONST
 {
-  $$ = new DBM(input_pes.spaceDimension(), input_pes.clocks());
+  $$ = new DBM(input_pes.clocks());
   map<string, int>::iterator it = defcons.find($3);
   if (it == defcons.end()) {
     errPrtExit("macro not defined");
@@ -994,7 +994,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_GT TOK_INT
 {
-  $$ = new DBM(input_pes.spaceDimension(), input_pes.clocks());
+  $$ = new DBM(input_pes.clocks());
   input_pes.update_max_constant($3);
   int x = input_pes.lookup_clock($1);;
   if ( x!= -1){
@@ -1007,7 +1007,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_GT TOK_ID_CONST
 {
-  $$ = new DBM(input_pes.spaceDimension(), input_pes.clocks());
+  $$ = new DBM(input_pes.clocks());
   map<string, int>::iterator it = defcons.find($3);
   if (it == defcons.end()) {
     errPrtExit("macro not defined");
@@ -1026,7 +1026,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_LE TOK_INT
 {
-  $$ = new DBM(input_pes.spaceDimension(), input_pes.clocks());
+  $$ = new DBM( input_pes.clocks());
   input_pes.update_max_constant($3);
   int x = input_pes.lookup_clock($1);
   if ( x!= -1){
@@ -1039,7 +1039,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_LE TOK_ID_CONST
 {
-  $$ = new DBM(input_pes.spaceDimension(), input_pes.clocks());
+  $$ = new DBM(input_pes.clocks());
   map<string, int>::iterator it = defcons.find($3);
   if (it == defcons.end()) {
     errPrtExit("macro not defined");
@@ -1058,7 +1058,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_LT TOK_INT
 {
-  $$ = new DBM(input_pes.spaceDimension(), input_pes.clocks());
+  $$ = new DBM(input_pes.clocks());
   input_pes.update_max_constant($3);
   int x = input_pes.lookup_clock($1);;
   if ( x!= -1){
@@ -1071,7 +1071,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_LT TOK_ID_CONST
 {
-  $$ = new DBM(input_pes.spaceDimension(), input_pes.clocks());
+  $$ = new DBM(input_pes.clocks());
   map<string, int>::iterator it = defcons.find($3);
   if (it == defcons.end()) {
     errPrtExit("macro not defined");
@@ -1090,7 +1090,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_EQ TOK_INT
 {
-  $$ = new DBM(input_pes.spaceDimension(), input_pes.clocks());
+  $$ = new DBM(input_pes.clocks());
   input_pes.update_max_constant($3);
   int x = input_pes.lookup_clock($1);;
   if ( x!= -1){
@@ -1104,7 +1104,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_EQ TOK_ID_CONST
 {
-  $$ = new DBM(input_pes.spaceDimension(), input_pes.clocks());
+  $$ = new DBM(input_pes.clocks());
   map<string, int>::iterator it = defcons.find($3);
   if (it == defcons.end()) {
     errPrtExit("macro not defined");
@@ -1124,7 +1124,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_MINUS TOK_ID_CLOCK TOK_GE TOK_INT
 {
-  $$ = new DBM(input_pes.spaceDimension(), input_pes.clocks());
+  $$ = new DBM(input_pes.clocks());
   input_pes.update_max_constant($5);
   int x = input_pes.lookup_clock($1);;
   int y = input_pes.lookup_clock($3);;
@@ -1139,7 +1139,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_MINUS TOK_ID_CLOCK TOK_GT TOK_INT
 {
-  $$ = new DBM(input_pes.spaceDimension(), input_pes.clocks());
+  $$ = new DBM(input_pes.clocks());
   input_pes.update_max_constant($5);
   int x = input_pes.lookup_clock($1);
   int y = input_pes.lookup_clock($3);
@@ -1154,7 +1154,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_MINUS TOK_ID_CLOCK TOK_LE TOK_INT
 {
-  $$ = new DBM(input_pes.spaceDimension(), input_pes.clocks());
+  $$ = new DBM(input_pes.clocks());
   input_pes.update_max_constant($5);
   int x = input_pes.lookup_clock($1);;
   int y = input_pes.lookup_clock($3);;
@@ -1169,7 +1169,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_MINUS TOK_ID_CLOCK TOK_LT TOK_INT
 {
-  $$ = new DBM(input_pes.spaceDimension(), input_pes.clocks());
+  $$ = new DBM(input_pes.clocks());
   input_pes.update_max_constant($5);
   int x = input_pes.lookup_clock($1);;
   int y = input_pes.lookup_clock($3);;
@@ -1184,7 +1184,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_MINUS TOK_ID_CLOCK TOK_EQ TOK_INT
 {
-  $$ = new DBM(input_pes.spaceDimension(), input_pes.clocks());
+  $$ = new DBM(input_pes.clocks());
   input_pes.update_max_constant($5);
   int x = input_pes.lookup_clock($1);;
   int y = input_pes.lookup_clock($3);;

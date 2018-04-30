@@ -43,7 +43,7 @@ TEST(ProofTest, AllActBugTestPlace)
 
   prover_options options;
   prover pr(p, options);
-  DBMList placeholder(DBM(p.initial_clock_zone()->clocks_size(), p.clocks()));
+  DBMList placeholder(DBM(p.clocks()));
   EXPECT_FALSE(pr.do_proof_init(p, &placeholder));
 }
 
@@ -93,21 +93,21 @@ TEST(ProofTest, ExistsRelTestFalse)
   prover_options options;
   prover pr(p, options);
 
-  DBMList placeholder(DBM(p.initial_clock_zone()->clocks_size(), p.clocks()));
+  DBMList placeholder(DBM(p.clocks()));
 
   EXPECT_FALSE(pr.do_proof_init(p, &placeholder));
   placeholder.cf();
 
-  DBM minimum_region(p.initial_clock_zone()->clocks_size(), p.clocks());
+  DBM minimum_region(p.clocks());
   minimum_region.addConstraint(1,0, clock_value(2, false));
   minimum_region.addConstraint(2,0, clock_value(1, false));
   minimum_region.addConstraint(1,2, clock_value(0, false));
 
-  DBM maximum_region1(p.initial_clock_zone()->clocks_size(), p.clocks());
+  DBM maximum_region1(p.clocks());
   maximum_region1.addConstraint(2,0, clock_value(3, false));
   maximum_region1.addConstraint(1,2, clock_value(0, false));
 
-  DBM maximum_region2(p.initial_clock_zone()->clocks_size(), p.clocks());
+  DBM maximum_region2(p.clocks());
   maximum_region2.addConstraint(2,0, clock_value(3, false));
   maximum_region2.addConstraint(2,1, clock_value(-2, false));
 
@@ -153,17 +153,17 @@ TEST(ProofTest, ExistsRelTestTrue)
   prover_options options;
   prover pr(p, options);
 
-  DBMList placeholder(DBM(p.initial_clock_zone()->clocks_size(), p.clocks()));
+  DBMList placeholder(DBM(p.clocks()));
 
   EXPECT_TRUE(pr.do_proof_init(p, &placeholder));
   placeholder.cf();
 
-  DBM minimum_region(p.initial_clock_zone()->clocks_size(), p.clocks());
+  DBM minimum_region(p.clocks());
   minimum_region.addConstraint(1,0, clock_value(2, false));
   minimum_region.addConstraint(2,0, clock_value(1, false));
   minimum_region.addConstraint(1,2, clock_value(0, false));
 
-  DBM maximum_region(p.initial_clock_zone()->clocks_size(), p.clocks());
+  DBM maximum_region(p.clocks());
   maximum_region.addConstraint(2,0, clock_value(3, false));
 
   DBMList minimum_placeholder(minimum_region);
@@ -209,7 +209,7 @@ TEST(ProofTest, ExistsRelTestTrueDueToOr)
   prover_options options;
   prover pr(p, options);
 
-  DBMList placeholder(DBM(p.initial_clock_zone()->clocks_size(), p.clocks()));
+  DBMList placeholder(DBM(p.clocks()));
 
   EXPECT_TRUE(pr.do_proof_init(p, &placeholder));
   placeholder.cf();
@@ -237,7 +237,7 @@ TEST(ProofTest, RelSplit3Test)
   prover_options options;
   prover pr(p, options);
 
-  DBMList placeholder(DBM(p.initial_clock_zone()->clocks_size(), p.clocks()));
+  DBMList placeholder(DBM(p.clocks()));
 
   EXPECT_TRUE(pr.do_proof_init(p, &placeholder));
   placeholder.cf();
@@ -263,7 +263,7 @@ TEST(ProofTest, ExistsRelFalseFirstSubformulaTest)
   prover_options options;
   prover pr(p, options);
 
-  DBMList placeholder(DBM(p.initial_clock_zone()->clocks_size(), p.clocks()));
+  DBMList placeholder(DBM(p.clocks()));
 
   EXPECT_TRUE(pr.do_proof_init(p, &placeholder));
   placeholder.cf();

@@ -19,7 +19,7 @@
  * @date November 2, 2013 */
 class OneDIntArray : public Generic1DArray {
 public:
-  /** OneDIntArray stores elements of type short it */
+  /** OneDIntArray stores elements of type short int */
   typedef short int element_type;
 
   /** Default Contructor.

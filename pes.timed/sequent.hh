@@ -528,7 +528,7 @@ public:
      * the proper number of clocks and initialized
      * so that it represents the empty region
      * (for all clocks x_i, 0 <= x_i <= 0). */
-    DBM EMPTY(lhs.clocks_size(), lhs.declared_clocks());
+    DBM EMPTY(lhs.declared_clocks());
     for (DBM::size_type i = 1; i < EMPTY.clocks_size(); i++) {
       EMPTY.addConstraint(i, 0, 0);
       EMPTY.addConstraint(0, i, 0);

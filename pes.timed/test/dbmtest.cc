@@ -68,7 +68,7 @@ DBM testDBM2()
 DBM testDBM3()
 {
     // Make a third test DBM
-    DBM testDBM3(3, make_c3());
+    DBM testDBM3(make_c2());
     testDBM3.addConstraint(0,0, clock_value(0, false));
     testDBM3.addConstraint(0,1, clock_value(-3, false));
     testDBM3.addConstraint(0,2, infinity(true));
@@ -86,7 +86,7 @@ DBM testDBM4()
     // Make a fourth test DBM - empty
     // This is only empty because the (0, <=) becomes (0,<)
     // and illustrates a bug in cf()
-    DBM testDBM4(3, make_c3());
+    DBM testDBM4(make_c2());
     testDBM4.addConstraint(0,0, zero(false));
     testDBM4.addConstraint(0,1, clock_value(-3, false));
     testDBM4.addConstraint(0,2, infinity(true));
@@ -102,7 +102,7 @@ DBM testDBM4()
 DBM testDBM5()
 {
     // Make a fifth test DBM - empty
-    DBM testDBM5(3, make_c3());
+    DBM testDBM5(make_c2());
     testDBM5.addConstraint(0,0, zero(false));
     testDBM5.addConstraint(0,1, clock_value(-4, false));
     testDBM5.addConstraint(0,2, infinity(true));
@@ -118,7 +118,7 @@ DBM testDBM5()
 DBM testDBM6()
 {
     // Make a sixth test DBM - empty
-    DBM testDBM6(3, make_c3());
+    DBM testDBM6(make_c2());
     testDBM6.addConstraint(0,0, zero(false));
     testDBM6.addConstraint(0,1, clock_value(-1, false));
     testDBM6.addConstraint(0,2, clock_value(-1, false));
@@ -134,7 +134,7 @@ DBM testDBM6()
 DBM testDBM7()
 {
     // Make a seventh test DBM - empty
-    DBM testDBM7(3, make_c3());
+    DBM testDBM7(make_c2());
     testDBM7.addConstraint(0,0, zero(false));
     testDBM7.addConstraint(0,1, clock_value(-3, false));
     testDBM7.addConstraint(0,2, clock_value(-1, false));
@@ -149,7 +149,7 @@ DBM testDBM7()
 
 DBM testDBM8()
 {
-    DBM testDBM8(4, make_c4());
+    DBM testDBM8(make_c3());
     testDBM8.addConstraint(0,1, clock_value(-1, false));
     testDBM8.addConstraint(3,1, clock_value(6, false));
     testDBM8.addConstraint(3,2, clock_value(4, false));
@@ -158,7 +158,7 @@ DBM testDBM8()
 
 DBM testDBM9()
 {
-    DBM testDBM9(4, make_c4());
+    DBM testDBM9(make_c3());
     testDBM9.addConstraint(0,1, clock_value(-1, false));
     testDBM9.addConstraint(3,2, clock_value(4, false));
     return testDBM9;
@@ -166,7 +166,7 @@ DBM testDBM9()
 
 DBM testDBM10()
 {
-    DBM testDBM10(4, make_c4());
+    DBM testDBM10(make_c3());
     testDBM10.addConstraint(3,1, clock_value(6, false));
     testDBM10.addConstraint(3,2, clock_value(4, false));
     return testDBM10;
@@ -174,16 +174,16 @@ DBM testDBM10()
 
 DBM testDBM11()
 {
-    DBM testDBM11(4, make_c4());
+    DBM testDBM11(make_c3());
     testDBM11.addConstraint(2,0,clock_value(3, false));
     return testDBM11;
 }
 
 TEST(DBMTest, DefaultIsInfty)
 {
-  DBM INFTYDBM(3, make_c3());
-  for(size_t i = 0; i < make_c3().size();i++) {
-    for(size_t j = 0; j < make_c3().size(); j++){
+  DBM INFTYDBM(make_c2());
+  for(size_t i = 0; i <= make_c2().size();i++) {
+    for(size_t j = 0; j < make_c2().size(); j++){
       if(i == j || i == 0){
         INFTYDBM.addConstraint(i,j, zero(false));
       }
@@ -192,7 +192,7 @@ TEST(DBMTest, DefaultIsInfty)
       }
     }
   }
-  DBM defaultDBM(3, make_c3());
+  DBM defaultDBM(make_c2());
   EXPECT_EQ(INFTYDBM, defaultDBM);
 }
 
@@ -212,7 +212,7 @@ TEST(DBMTest, Emptiness)
     EXPECT_FALSE(testDBM5().emptiness());
     EXPECT_FALSE(testDBM6().emptiness());
     EXPECT_FALSE(testDBM7().emptiness());
-    EXPECT_FALSE(DBM(3, make_c3()).emptiness());
+    EXPECT_FALSE(DBM(make_c2()).emptiness());
 }
 
 TEST(DBMTest, PreEmptyIsEmpty)
@@ -254,7 +254,7 @@ TEST(DBMTest, CanonicalDBM3)
     EXPECT_FALSE(canonical.emptiness());
 
     // DBM in canonical form (expected result)
-    DBM expected(3, make_c3());
+    DBM expected(make_c2());
     expected.addConstraint(0,0, zero(false));
     expected.addConstraint(0,1, clock_value(-3, false));
     expected.addConstraint(0,2, clock_value(-8, false));
@@ -291,7 +291,7 @@ TEST(DBMTest, CanonicalDBM6)
     EXPECT_FALSE(canonical.emptiness());
 
     // DBM in canonical form (expected result)
-    DBM expected(3, make_c3());
+    DBM expected(make_c2());
     expected.addConstraint(0,0, zero(false));
     expected.addConstraint(0,1, clock_value(-1, false));
     expected.addConstraint(0,2, clock_value(-1, false));
@@ -312,7 +312,7 @@ TEST(DBMTest, CanonicalDBM7)
     EXPECT_FALSE(canonical.emptiness());
 
     // DBM in canonical form (expected result)
-    DBM expected(3, make_c3());
+    DBM expected(make_c2());
     expected.addConstraint(0,0, zero(false));
     expected.addConstraint(0,1, clock_value(-3, false));
     expected.addConstraint(0,2, clock_value(-1, false));
@@ -349,7 +349,7 @@ TEST(DBMTest, PreCanonicalStrictDBM1)
   strict_pred.predClosureRev();
 
   // DBM in canonical form (expected result)
-  DBM expected(3, make_c3());
+  DBM expected(make_c2());
   expected.addConstraint(0,0, zero(false));
   expected.addConstraint(0,1, zero(false));
   expected.addConstraint(0,2, zero(false));
@@ -368,7 +368,7 @@ TEST(DBMTest, AddDBM1)
     DBM add(testDBM1());
     add.addConstraint(0,1, clock_value(-2, false));
 
-    DBM expected(3, make_c3());
+    DBM expected(make_c2());
     expected.addConstraint(0,0, zero(false));
     expected.addConstraint(0,1, clock_value(-2, false));
     expected.addConstraint(0,2, clock_value(-5, false));
@@ -388,7 +388,7 @@ TEST(DBMTest, AddCanonicalDBM1)
     add_canonical.addConstraint(0,1, clock_value(-2, false));
     add_canonical.cf();
 
-    DBM expected(3, make_c3());
+    DBM expected(make_c2());
     expected.addConstraint(0,0, zero(false));
     expected.addConstraint(0,1, clock_value(-2, false));
     expected.addConstraint(0,2, clock_value(-5, false));
@@ -424,7 +424,7 @@ TEST(DBMTest, IntersectDBM7DBM6)
     left.intersect(right);
     EXPECT_FALSE(left.emptiness());
 
-    DBM expected(3, make_c3());
+    DBM expected(make_c2());
     expected.addConstraint(0,0, zero(false));
     expected.addConstraint(0,1, clock_value(-3, false));
     expected.addConstraint(0,2, clock_value(-1, false));
@@ -449,7 +449,7 @@ TEST(DBMTest, IntersectDBM8DBM6)
     left.intersect(right);
     EXPECT_FALSE(left.emptiness());
 
-    DBM expected(3, make_c3());
+    DBM expected(make_c2());
     expected.addConstraint(0,0, zero(false));
     expected.addConstraint(0,1, clock_value(-3, false));
     expected.addConstraint(0,2, clock_value(-1, false));
@@ -476,7 +476,7 @@ TEST(DBMTest, IntersectDBM8DBM6heap)
     left->intersect(right);
     EXPECT_FALSE(left->emptiness());
 
-    DBM expected(3, make_c3());
+    DBM expected(make_c2());
     expected.addConstraint(0,0, zero(false));
     expected.addConstraint(0,1, clock_value(-3, false));
     expected.addConstraint(0,2, clock_value(-1, false));
@@ -505,7 +505,7 @@ TEST(DBMTest, IntersectDBM8DBM6reference)
     left->intersect(right);
     EXPECT_FALSE(left->emptiness());
 
-    DBM expected(3, make_c3());
+    DBM expected(make_c2());
     expected.addConstraint(0,0, zero(false));
     expected.addConstraint(0,1, clock_value(-3, false));
     expected.addConstraint(0,2, clock_value(-1, false));
@@ -524,7 +524,7 @@ TEST(DBMTest, IntersectDBM8DBM6reference)
 
 TEST(DBMTest, ccrepA)
 {
-  DBM ccrepA(5, make_c5());
+  DBM ccrepA(make_c4());
   for (int i=0; i<5; i++) {
     ccrepA.addConstraint(i,0, zero(false));
   }
@@ -533,7 +533,7 @@ TEST(DBMTest, ccrepA)
   ccrepA.cf();
   EXPECT_FALSE(ccrepA.emptiness());
 
-  DBM expected(5, make_c5());
+  DBM expected(make_c4());
   for (int i=0; i < 5; i++) {
       for (int j=0; j < 5; j++) {
           expected.addConstraint(i,j, zero(false));
@@ -545,7 +545,7 @@ TEST(DBMTest, ccrepA)
 
 TEST(DBMTest, empty)
 {
-    DBM expected(3, make_c3());
+    DBM expected(make_c2());
     for (int i=0; i < 3; i++) {
         for (int j=0; j < 3; j++) {
             expected.addConstraint(i,j, (0x0));
@@ -557,7 +557,7 @@ TEST(DBMTest, empty)
 // Extra tests
 TEST(DBMTest, tDBM5)
 {
-    DBM test(3, make_c3());
+    DBM test(make_c2());
     test.addConstraint(0,2, clock_value(-3, false));
     test.addConstraint(1,0, clock_value(2, false));
     test.addConstraint(2,0, clock_value(2, false));
@@ -571,7 +571,7 @@ TEST(DBMTest, tDBM5)
 TEST(DBMTest, Bound1)
 {
     /* Make DBM to try to test the correctnes of bound(maxc) */
-    DBM test(3, make_c3());
+    DBM test(make_c2());
     test.addConstraint(0,0, zero(false));
     test.addConstraint(0,1, clock_value(-3, false));
     test.addConstraint(0,2, infinity(true));
@@ -591,7 +591,7 @@ TEST(DBMTest, Bound1)
     test.bound(2);
     EXPECT_FALSE(test.emptiness());
 
-    DBM expected(3, make_c3());
+    DBM expected(make_c2());
     expected.addConstraint(0,0, zero(false));
     expected.addConstraint(0,1, clock_value(-2, true));
     expected.addConstraint(0,2, infinity(true));
@@ -608,7 +608,7 @@ TEST(DBMTest, Bound1)
 TEST(DBMTest, Bound2)
 {
     /* Make DBM to try to test the correctnes of bound(maxc) */
-    DBM test(3, make_c3());
+    DBM test(make_c2());
     test.addConstraint(0,0, zero(false));
     test.addConstraint(0,1, clock_value(-5, false));
     test.addConstraint(0,2, infinity(true));
@@ -628,7 +628,7 @@ TEST(DBMTest, Bound2)
     test.bound(4);
     EXPECT_FALSE(test.emptiness());
 
-    DBM expected(3, make_c3());
+    DBM expected(make_c2());
     expected.addConstraint(0,0, zero(false));
     expected.addConstraint(0,1, clock_value(-4, true));
     expected.addConstraint(0,2, infinity(true));
@@ -645,7 +645,7 @@ TEST(DBMTest, Bound2)
 TEST(DBMTest, Bound3)
 {
     /* Make DBM to try to test the correctnes of bound(maxc) */
-    DBM test(3, make_c3());
+    DBM test(make_c2());
     test.addConstraint(0,0, zero(false));
     test.addConstraint(0,1, clock_value(-5, false));
     test.addConstraint(0,2, infinity(true));
@@ -659,7 +659,7 @@ TEST(DBMTest, Bound3)
     EXPECT_FALSE(test.emptiness());
 
     // DBM in canonical form, test canonisation works for this instance.
-    DBM canonical(3, make_c3());
+    DBM canonical(make_c2());
     canonical.addConstraint(0,0, zero(false));
     canonical.addConstraint(0,1, clock_value(-5, false));
     canonical.addConstraint(0,2, infinity(true));
@@ -675,7 +675,7 @@ TEST(DBMTest, Bound3)
     EXPECT_FALSE(canonical.emptiness());
 
     // Finally test bounding.
-    DBM expected(3, make_c3());
+    DBM expected(make_c2());
     expected.addConstraint(0,0, zero(false));
     expected.addConstraint(0,1, clock_value(-4, true));
     expected.addConstraint(0,2, infinity(true));
@@ -694,7 +694,7 @@ TEST(DBMTest, Bound3)
 TEST(DBMTest, Bound4)
 {
     /* Make DBM to try to test the correctnes of bound(maxc) */
-    DBM test(3, make_c3());
+    DBM test(make_c2());
     test.addConstraint(0,0, zero(false));
     test.addConstraint(0,1, clock_value(-5, false));
     test.addConstraint(0,2, infinity(true));
@@ -708,7 +708,7 @@ TEST(DBMTest, Bound4)
     EXPECT_FALSE(test.emptiness());
 
     // DBM in canonical form, test canonisation works for this instance.
-    DBM canonical(3, make_c3());
+    DBM canonical(make_c2());
     canonical.addConstraint(0,0, zero(false));
     canonical.addConstraint(0,1, clock_value(-5, false));
     canonical.addConstraint(0,2, infinity(true));
@@ -724,7 +724,7 @@ TEST(DBMTest, Bound4)
     EXPECT_FALSE(canonical.emptiness());
 
     // Finally test bounding.
-    DBM expected(3, make_c3());
+    DBM expected(make_c2());
     expected.addConstraint(0,0, zero(false));
     expected.addConstraint(0,1, clock_value(-4, true));
     expected.addConstraint(0,2, infinity(true));
@@ -743,7 +743,7 @@ TEST(DBMTest, Bound4)
 TEST(DBMTest, Bound5)
 {
     /* Make DBM to try to test the correctnes of bound(maxc) */
-    DBM test(3, make_c3());
+    DBM test(make_c2());
     test.addConstraint(0,0, zero(false));
     test.addConstraint(0,1, clock_value(-5, false));
     test.addConstraint(0,2, infinity(true));
@@ -757,7 +757,7 @@ TEST(DBMTest, Bound5)
     EXPECT_FALSE(test.emptiness());
 
     // DBM in canonical form, test canonisation works for this instance.
-    DBM canonical(3, make_c3());
+    DBM canonical(make_c2());
     canonical.addConstraint(0,0, zero(false));
     canonical.addConstraint(0,1, clock_value(-5, false));
     canonical.addConstraint(0,2, infinity(true));
@@ -773,7 +773,7 @@ TEST(DBMTest, Bound5)
     EXPECT_FALSE(canonical.emptiness());
 
     // Finally test bounding.
-    DBM expected(3, make_c3());
+    DBM expected(make_c2());
     expected.addConstraint(0,0, zero(false));
     expected.addConstraint(0,1, clock_value(-4, true));
     expected.addConstraint(0,2, infinity(true));
@@ -792,7 +792,7 @@ TEST(DBMTest, Bound5)
 TEST(DBMTest, Bound6)
 {
     /* Make DBM to try to test the correctnes of bound(maxc) */
-    DBM test(3, make_c3());
+    DBM test(make_c2());
     test.addConstraint(0,0, zero(false));
     test.addConstraint(0,1, clock_value(-2, false));
     test.addConstraint(0,2, infinity(true));
@@ -806,7 +806,7 @@ TEST(DBMTest, Bound6)
     EXPECT_FALSE(test.emptiness());
 
     // DBM in canonical form, test canonisation works for this instance.
-    DBM canonical(3, make_c3());
+    DBM canonical(make_c2());
     canonical.addConstraint(0,0, zero(false));
     canonical.addConstraint(0,1, clock_value(-2, false));
     canonical.addConstraint(0,2, clock_value(-1, true));
@@ -822,7 +822,7 @@ TEST(DBMTest, Bound6)
     EXPECT_FALSE(canonical.emptiness());
 
     // Finally test bounding.
-    DBM expected(3, make_c3());
+    DBM expected(make_c2());
     expected.addConstraint(0,0, zero(false));
     expected.addConstraint(0,1, clock_value(-1, true));
     expected.addConstraint(0,2, clock_value(-1, true));
@@ -843,7 +843,7 @@ TEST(DBMTest, Bound6)
 
 TEST(DBMTest, Empty1)
 {
-    DBM test(3, make_c3());
+    DBM test(make_c2());
     test.addConstraint(0,0, zero(false));
     test.addConstraint(0,1, clock_value(-5, false));
     test.addConstraint(0,2, infinity(true));
@@ -862,7 +862,7 @@ TEST(DBMTest, Empty1)
     EXPECT_EQ(test, canonical);
 
     // Normalize
-    DBM expected(3, make_c3());
+    DBM expected(make_c2());
     expected.addConstraint(0,0, zero(false));
     expected.addConstraint(0,1, clock_value(-4, true));
     expected.addConstraint(0,2, infinity(true));
@@ -923,7 +923,7 @@ TEST(DBMTest, Empty5)
     DBM test(testDBM11());
     EXPECT_FALSE(test.emptiness());
 
-    DBM canonical(4, make_c4());
+    DBM canonical(make_c3());
     canonical.addConstraint(0,0, zero(false));
     canonical.addConstraint(0,1, zero(false));
     canonical.addConstraint(0,2, zero(false));
@@ -953,7 +953,7 @@ TEST(DBMTest, IntersectDBM11DBM8)
   DBM right(testDBM8());
   left.intersect(right);
 
-  DBM expected(4, make_c4());
+  DBM expected(make_c3());
   expected.addConstraint(0,0, zero(false));
   expected.addConstraint(0,1, clock_value(-1, false));
   expected.addConstraint(0,2, zero(false));
@@ -973,7 +973,7 @@ TEST(DBMTest, IntersectDBM11DBM8)
 
   EXPECT_EQ(expected, left);
 
-  DBM canonical(4, make_c4());
+  DBM canonical(make_c3());
   canonical.addConstraint(0,0, zero(false));
   canonical.addConstraint(0,1, clock_value(-1, false));
   canonical.addConstraint(0,2, zero(false));
@@ -1001,7 +1001,7 @@ TEST(DBMTest, IntersectDBM11DBM9)
   DBM right(testDBM9());
   left.intersect(right);
 
-  DBM expected(4, make_c4());
+  DBM expected(make_c3());
   expected.addConstraint(0,0, zero(false));
   expected.addConstraint(0,1, clock_value(-1, false));
   expected.addConstraint(0,2, zero(false));
@@ -1020,7 +1020,7 @@ TEST(DBMTest, IntersectDBM11DBM9)
   expected.addConstraint(3,3, zero(false));
   EXPECT_EQ(expected, left);
 
-  DBM canonical(4, make_c4());
+  DBM canonical(make_c3());
   canonical.addConstraint(0,0, zero(false));
   canonical.addConstraint(0,1, clock_value(-1, false));
   canonical.addConstraint(0,2, zero(false));
@@ -1048,7 +1048,7 @@ TEST(DBMTest, IntersectDBM11DBM10)
   DBM right(testDBM10());
   left.intersect(right);
 
-  DBM expected(4, make_c4());
+  DBM expected(make_c3());
   expected.addConstraint(0,0, zero(false));
   expected.addConstraint(0,1, zero(false));
   expected.addConstraint(0,2, zero(false));
@@ -1067,7 +1067,7 @@ TEST(DBMTest, IntersectDBM11DBM10)
   expected.addConstraint(3,3, zero(false));
   EXPECT_EQ(expected, left);
 
-  DBM canonical(4, make_c4());
+  DBM canonical(make_c3());
   canonical.addConstraint(0,0, zero(false));
   canonical.addConstraint(0,1, zero(false));
   canonical.addConstraint(0,2, zero(false));

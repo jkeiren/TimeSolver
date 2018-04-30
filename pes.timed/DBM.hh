@@ -197,29 +197,25 @@ private:
    * work to convert something already in cf() to cf(). */
   bool isCf;
 
-  /** The Number of clocks in the space for the DBM. This
-   * number includes the "zero clock." */
-  const size_type nClocks;
-
   /** Pointer to the globally declared clocks */
   const bidirectional_map<std::string, int> &declared_clocks_;
 
   size_type offset(const size_type row, const size_type col) const {
-    assert(row < nClocks);
-    assert(col < nClocks);
-    const size_type index = (row * nClocks) + col;
+    assert(row < clocks_size());
+    assert(col < clocks_size());
+    const size_type index = (row * clocks_size()) + col;
     return index * sizeof(clock_value_t);
   }
 
   const clock_value_t* cell(const size_type row, const size_type col) const {
-    assert(row < nClocks);
-    assert(col < nClocks);
+    assert(row < clocks_size());
+    assert(col < clocks_size());
     return (clock_value_t*)&(storage[offset(row,col)]);
   }
 
   clock_value_t* cell(const size_type row, const size_type col) {
-    assert(row < nClocks);
-    assert(col < nClocks);
+    assert(row < clocks_size());
+    assert(col < clocks_size());
     return (clock_value_t *)&(storage[offset(row,col)]);
   }
 
@@ -233,8 +229,8 @@ private:
    * with 0 being the first column.
    * @return The value of the upper bound constraint on row - col. */
   clock_value_t operatorRead(const size_type row, const size_type col) const {
-    assert(row < nClocks);
-    assert(col < nClocks);
+    assert(row < clocks_size());
+    assert(col < clocks_size());
     return *cell(row,col);
   }
 
@@ -251,8 +247,8 @@ private:
    * @return A reference to the element indexed at the row "row" and column
    * "col". A reference is returned to allow the constraint to be changed. */
   clock_value_t &operatorWrite(const size_type row, const size_type col) {
-    assert(row < nClocks);
-    assert(col < nClocks);
+    assert(row < clocks_size());
+    assert(col < clocks_size());
     /* Indexes are zero based */
     return *cell(row, col);
   }
@@ -267,9 +263,9 @@ private:
   template<class BinaryPredicate>
   bool compare(const DBM& other, BinaryPredicate cmp) const
   {
-    assert(nClocks == other.nClocks);
-    for (size_type i = 0; i < nClocks; ++i) {
-      for (size_type j = 0; j < nClocks; ++j) {
+    assert(clocks_size() == other.clocks_size());
+    for (size_type i = 0; i < clocks_size(); ++i) {
+      for (size_type j = 0; j < clocks_size(); ++j) {
         if (cmp(operatorRead(i, j), other.operatorRead(i, j))) {
           return false;
         }
@@ -288,13 +284,11 @@ public:
    * "zero clock". Hence, there are numClocks - 1 actual clocks
    * with 1 "zero" clock.
    * @return [Constructor] */
-  DBM(const size_type numClocks, const bidirectional_map<std::string, int> &cs)
-      : OneDIntArray(numClocks * numClocks),
-        nClocks(numClocks),
+  DBM(const bidirectional_map<std::string, int> &cs)
+      : OneDIntArray((cs.size()+1) * (cs.size()+1)),
         declared_clocks_(cs) {
-    assert(nClocks >= 1);
-    for (size_type i = 0; i < nClocks; ++i) {
-      for (size_type j = 0; j < nClocks; ++j) {
+    for (size_type i = 0; i < clocks_size(); ++i) {
+      for (size_type j = 0; j < clocks_size(); ++j) {
         operatorWrite(i, j) = infinity(true);
         if (i == 0 || i == j) {
           operatorWrite(i, j) = zero(false);
@@ -315,14 +309,12 @@ public:
    * @param col The second clock in constraint.
    * @param val The value constraining the upper bound of row - col.
    * @return [Constructor] */
-  DBM(const size_type numClocks, const size_type row, const size_type col,
+  DBM(const size_type row, const size_type col,
       const clock_value_t val, const bidirectional_map<std::string, int> &cs)
-      : OneDIntArray(numClocks * numClocks),
-        nClocks(numClocks),
+      : OneDIntArray((cs.size()+1) * (cs.size()+1)),
         declared_clocks_(cs) {
-    assert(nClocks >= 1);
-    for (size_type i = 0; i < nClocks; ++i) {
-      for (size_type j = 0; j < nClocks; ++j) {
+    for (size_type i = 0; i < clocks_size(); ++i) {
+      for (size_type j = 0; j < clocks_size(); ++j) {
         if (i == 0 || i == j) {
           operatorWrite(i, j) = zero(false);
         } else {
@@ -343,12 +335,12 @@ public:
   DBM(const DBM &Y)
       : OneDIntArray(Y),
         isCf(Y.isCf),
-        nClocks(Y.nClocks),
-        declared_clocks_(Y.declared_clocks_) {}
+        declared_clocks_(Y.declared_clocks_) {
+  }
 
   DBM(DBM&&) noexcept = default;
 
-  size_type clocks_size() const { return nClocks; }
+  size_type clocks_size() const { return declared_clocks_.size() + 1; }
 
   const bidirectional_map<std::string, int>& declared_clocks() const {
     return declared_clocks_;
@@ -374,9 +366,9 @@ public:
   clock_value_t operator()(const size_type row, const size_type col) const {
     // Indexes are zero based
     /* Give out of bounds check for public method */
-    if (row >= nClocks || col >= nClocks) {
+    if (row >= clocks_size() || col >= clocks_size()) {
       // I added that col < 0 to check for the third bound.
-      std::cerr << "nClocks : " << nClocks << " row : " << row
+      std::cerr << "clocks_size() : " << clocks_size() << " row : " << row
                 << " col : " << col << std::endl;
       std::cerr << "operator() index out of bounds" << std::endl;
       exit(-1);
@@ -396,8 +388,8 @@ public:
   void addConstraint(const size_type row, const size_type col,
                      const clock_value_t val) {
     /* Give out of bounds check for public method */
-    if (row >= nClocks || col >= nClocks) {
-      std::cerr << "nClocks : " << nClocks << " row : " << row
+    if (row >= clocks_size() || col >= clocks_size()) {
+      std::cerr << "clocks_size() : " << clocks_size() << " row : " << row
                 << " col : " << col << std::endl;
       std::cerr << "addConstraint index out of bounds" << std::endl;
       exit(-1);
@@ -420,8 +412,8 @@ public:
    * @return true: the constraint is implicit (no constraint),
    * false: otherwise */
   bool isConstraintImplicit(const size_type row, const size_type col) const {
-    assert(row < nClocks);
-    assert(col < nClocks);
+    assert(row < clocks_size());
+    assert(col < clocks_size());
     if (row == 0 || row == col) {
       return (operatorRead(row, col)) == zero(false);
     } else {
@@ -434,7 +426,7 @@ public:
    * @param Y (&) The object to copy.
    * @return A reference to the copied object, which is the LHS object. */
   DBM& operator=(const DBM &Y) {
-    assert(nClocks == Y.nClocks);
+    assert(clocks_size() == Y.clocks_size());
     assert(declared_clocks() == Y.declared_clocks());
     quantity = Y.quantity;
     memcpy(storage, Y.storage, quantity * sizeof(clock_value_t));
@@ -449,11 +441,11 @@ public:
    * calling DBM is changed.
    * @param Y (&) The DBM to intersect */
   DBM& intersect(const DBM& Y) {
-    assert(nClocks == Y.nClocks);
+    assert(clocks_size() == Y.clocks_size());
     /* Should we check for same number of clocks (?)
      * Currently, the code does not. */
-    for (size_type i = 0; i < nClocks; ++i) {
-      for (size_type j = 0; j < nClocks; ++j) {
+    for (size_type i = 0; i < clocks_size(); ++i) {
+      for (size_type j = 0; j < clocks_size(); ++j) {
         operatorWrite(i, j) = std::min(operatorRead(i,j), Y.operatorRead(i,j));
       }
     }
@@ -506,13 +498,13 @@ public:
    * @note This method assumes that the calling DBM and Y have the same
    * number of clocks. */
   int relation(const DBM &Y) {
-    assert(nClocks == Y.nClocks);
+    assert(clocks_size() == Y.clocks_size());
     /* Should we check for same number of clocks (?)
      * Currently, the code does not. */
     bool gt = true;
     bool lt = true;
-    for (size_type i = 0; i < nClocks; ++i) {
-      for (size_type j = 0; j < nClocks; ++j) {
+    for (size_type i = 0; i < clocks_size(); ++i) {
+      for (size_type j = 0; j < clocks_size(); ++j) {
         gt = gt && (operatorRead(i, j) >= Y.operatorRead(i, j));
         lt = lt && (operatorRead(i, j) <= Y.operatorRead(i, j));
       }
@@ -530,7 +522,7 @@ public:
    * @return The reference to the changed calling DBM. */
   DBM &suc() {
     // We start i at 1 because (0,0) isn't a clock
-    for (size_type i = 1; i < nClocks; ++i) {
+    for (size_type i = 1; i < clocks_size(); ++i) {
       operatorWrite(i, 0) = infinity(true);
     }
     return *this;
@@ -547,7 +539,7 @@ public:
     /* This version, the version that does not preserve canonical form
      * is used due to a typo in a paper describing a version that does
      * preserve canonical form. */
-    for (size_type i = 0; i < nClocks; ++i) {
+    for (size_type i = 0; i < clocks_size(); ++i) {
       operatorWrite(0, i) = zero(false);
     }
     isCf = false;
@@ -560,12 +552,12 @@ public:
    * @return The reference to the changed, calling resulting DBM. */
   DBM &reset(const size_type x) {
     /* Do out of bounds checking now instead of in methods */
-    if (x >= nClocks) {
-      std::cerr << "nClocks : " << nClocks << " x : " << x << std::endl;
+    if (x >= clocks_size()) {
+      std::cerr << "clocks_size() : " << clocks_size() << " x : " << x << std::endl;
       std::cerr << "reset(x) clock index out of bounds" << std::endl;
       exit(-1);
     }
-    for (size_type i = 0; i < nClocks; ++i) {
+    for (size_type i = 0; i < clocks_size(); ++i) {
       /* Code Fix: do not change (x,x), since
        * that seemed to be a typo in the algorithm of the paper */
       if (i != x) {
@@ -586,7 +578,7 @@ public:
     /* This for loop takes the DBM and resets
      * all the specified clocks to reset to
      * 0. */
-    for (size_type i = 1; i < nClocks; ++i) {
+    for (size_type i = 1; i < clocks_size(); ++i) {
       if (rs.getc(i)) {
         reset(i);
       }
@@ -601,13 +593,13 @@ public:
    * @return The reference to the changed, calling resulting DBM. */
   DBM &reset(const size_type x, const size_type y) {
     /* Do out of bounds checking now instead of in methods */
-    if (x >= nClocks || y >= nClocks) {
-      std::cerr << "nClocks : " << nClocks << " x : " << x << " y : " << y
+    if (x >= clocks_size() || y >= clocks_size()) {
+      std::cerr << "clocks_size() : " << clocks_size() << " x : " << x << " y : " << y
                 << std::endl;
       std::cerr << "reset(x,y) clock indices out of bounds" << std::endl;
       exit(-1);
     }
-    for (size_type i = 0; i < nClocks; ++i)
+    for (size_type i = 0; i < clocks_size(); ++i)
       if (i != x) {
         operatorWrite(x, i) = operatorRead(y, i);
         operatorWrite(i, x) = operatorRead(i, y);
@@ -631,8 +623,8 @@ public:
    * @return The reference to the modified DBM. */
   DBM &preset(const size_type x) {
     /* Do out of bounds checking now instead of in methods */
-    if (x >= nClocks) {
-      std::cerr << "nClocks : " << nClocks << " x : " << x << std::endl;
+    if (x >= clocks_size()) {
+      std::cerr << "clocks_size() : " << clocks_size() << " x : " << x << std::endl;
       std::cerr << "reset(x) clock index out of bounds" << std::endl;
       exit(-1);
     }
@@ -666,12 +658,11 @@ public:
 
     // Now flush out difference constraints since they
     // are reset by x
-    for (size_type i = 1; i < nClocks; ++i) {
-      if (i == x) {
-        continue;
+    for (size_type i = 1; i < clocks_size(); ++i) {
+      if (i != x) {
+        operatorWrite(x, i) = infinity(true);
+        operatorWrite(i, x) = operatorRead(i, 0);
       }
-      operatorWrite(x, i) = infinity(true);
-      operatorWrite(i, x) = operatorRead(i, 0);
     }
     operatorWrite(x, 0) = infinity(true);
     operatorWrite(0, x) = zero(false);
@@ -692,45 +683,40 @@ public:
     /* Handle clock difference constraints first. This
      * allows us to use the single-clock constraints
      * already in the DBM */
-    for (size_type i = 1; i < nClocks; ++i) {
-      for (size_type j = 1; j < nClocks; ++j) {
-        if (i == j) {
-          continue;
-        }
-        /* In all conditions, handle constraint (i,j) here.
-         * Constraint (j,i) is handled later. */
-        if (prs.getc(i) && prs.getc(j)) {
-          /* Note that if we are here for constraint (i,j),
-           * we will get here in constraint (j,i) */
+    for (size_type i = 1; i < clocks_size(); ++i) {
+      for (size_type j = 1; j < clocks_size(); ++j) {
+        if (i != j) {
+          /* In all conditions, handle constraint (i,j) here.
+           * Constraint (j,i) is handled later. */
+          if (prs.getc(i) && prs.getc(j)) {
+            /* Note that if we are here for constraint (i,j),
+             * we will get here in constraint (j,i) */
 
-          clock_value_t tempInt = operatorRead(i, j);
-          if ((tempInt >> 1) < 0 ||
-              ((tempInt >> 1) == 0 && (tempInt & 0x1) == 0)) {
-            // Make an empty DBM
-            operatorWrite(i, 0) = 0;
-            operatorWrite(0, i) = 0;
-            operatorWrite(0, 0) = 0;
-            isCf = false;
-            return *this;
-          }
-          // If both clocks are reset then their difference does not matter
-          operatorWrite(i, j) = infinity(true);
-        } else if (prs.getc(i)) {
-          if (operatorRead(0, j) > operatorRead(i, j)) {
-            operatorWrite(0, j) = operatorRead(i, j);
-          }
-          operatorWrite(i, j) = infinity(true);
-        } else if (prs.getc(j)) {
-          if (operatorRead(i, 0) > operatorRead(i, j)) {
-            operatorWrite(i, 0) = operatorRead(i, j);
-          }
-          operatorWrite(i, j) = infinity(true);
+            clock_value_t tempInt = operatorRead(i, j);
+            if ((tempInt >> 1) < 0 ||
+                ((tempInt >> 1) == 0 && (tempInt & 0x1) == 0)) {
+              // Make an empty DBM
+              operatorWrite(i, 0) = 0;
+              operatorWrite(0, i) = 0;
+              operatorWrite(0, 0) = 0;
+              isCf = false;
+              return *this;
+            }
+            // If both clocks are reset then their difference does not matter
+            operatorWrite(i, j) = infinity(true);
+          } else if (prs.getc(i)) {
+            operatorWrite(0, j) = std::min(operatorRead(0, j), operatorRead(i, j));
+            operatorWrite(i, j) = infinity(true);
+          } else if (prs.getc(j)) {
+            operatorWrite(i, 0) = std::min(operatorRead(i, 0), operatorRead(i, j));
+            operatorWrite(i, j) = infinity(true);
+          } // Do nothing if neither clock is reset
         }
-        // Do nothing if neither clock is reset
+
       }
     }
     /* Handle Single clock constraints last. */
-    for (size_type i = 1; i < nClocks; ++i) {
+    for (size_type i = 1; i < clocks_size(); ++i) {
       if (prs.getc(i)) {
         clock_value_t tempIntG = operatorRead(0, i);
         // For upper bound constraints, only invalidate if strictly
@@ -774,8 +760,8 @@ public:
    * @return The reference to the modified DBM. */
   DBM &preset(const size_type x, const size_type y) {
     /* Do out of bounds checking now instead of in methods */
-    if (x >= nClocks || y >= nClocks) {
-      std::cerr << "nClocks : " << nClocks << " x : " << x << " y : " << y
+    if (x >= clocks_size() || y >= clocks_size()) {
+      std::cerr << "clocks_size() : " << clocks_size() << " x : " << x << " y : " << y
                 << std::endl;
       std::cerr << "reset(x,y) clock indices out of bounds" << std::endl;
       exit(-1);
@@ -784,7 +770,7 @@ public:
     // Now flush out difference constraints since they
     // are reset by x
     /* First check that it is a valid assignment, and make empty otherwise */
-    for (size_type i = 0; i < nClocks; ++i) {
+    for (size_type i = 0; i < clocks_size(); ++i) {
       if (i == y || i == x) {
         continue;
       }
@@ -805,7 +791,7 @@ public:
         return *this;
       }
     }
-    for (size_type i = 1; i < nClocks; ++i) {
+    for (size_type i = 1; i < clocks_size(); ++i) {
       if (i == x) {
         continue;
       }
@@ -835,7 +821,7 @@ public:
   void bound(const clock_value_t maxc) {
     // Is this method correct (?) Should it also be loosening
     // clock differences based on single clock constraints?
-    for (size_type i = 1; i < nClocks; ++i) {
+    for (size_type i = 1; i < clocks_size(); ++i) {
       clock_value_t iRow = (operatorRead(i, 0) >> 1);
       /* Sets any individual upper bound clock constraint
        * that exceeds the const maxc
@@ -843,7 +829,7 @@ public:
        * that clock as the higher clock to infinity */
       if (iRow != 0xFFF && iRow > maxc) {
         operatorWrite(i, 0) = infinity(true);
-        for (size_type j = 1; j < nClocks; ++j) {
+        for (size_type j = 1; j < clocks_size(); ++j) {
           if (i != j) {
             operatorWrite(i, j) = infinity(true);
           }
@@ -855,7 +841,7 @@ public:
        * already loosened by an upper-bound constraint) and
        * loosens the relevant clock-difference constraints */
       if (-(operatorRead(0, i) >> 1) > maxc) {
-        for (size_type j = 0; j < nClocks; ++j) {
+        for (size_type j = 0; j < clocks_size(); ++j) {
           if (j != i) {
             if (operatorRead(j, 0) >> 1 == 0xFFF) {
               operatorWrite(j, i) = infinity(true);
@@ -875,8 +861,8 @@ public:
      * looser than the largest clock constant and bounds them
      * with the maximum constraint maxc in both directions,
      * relaxing the bounds. */
-    for (size_type i = 1; i < nClocks; ++i) {
-      for (size_type j = 1; j < nClocks; ++j) {
+    for (size_type i = 1; i < clocks_size(); ++i) {
+      for (size_type j = 1; j < clocks_size(); ++j) {
         if ((i != j) && ((operatorRead(i, j) >> 1) != 0xFFF)) {
           if ((operatorRead(i, j) >> 1) > maxc)
             operatorWrite(i, j) = (maxc << 1);
@@ -911,20 +897,14 @@ public:
        * diagonal cells may never be changed and hence
        * this algorithm will still work correctly. */
 
-      for (size_type k = 0; k < nClocks; ++k) {
+      for (size_type k = 0; k < clocks_size(); ++k) {
         /* Deal with overflow in cf() rather than emptiness() */
         if (k == 2 && this->emptiness()) {
-          isCf = true;
-          // Make empty DBM
-          for (size_type i = 0; i < nClocks; ++i) {
-            for (size_type j = 0; j < nClocks; ++j) {
-              operatorWrite(i, j) = 0;
-            }
-          }
+          makeEmpty();
           return;
         }
-        for (size_type i = 0; i < nClocks; ++i) {
-          for (size_type j = 0; j < nClocks; ++j) {
+        for (size_type i = 0; i < clocks_size(); ++i) {
+          for (size_type j = 0; j < clocks_size(); ++j) {
             const clock_value_t wholeVal_ik = operatorRead(i, k);
             const clock_value_t wholeVal_kj = operatorRead(k, j);
             const clock_value_t wholeVal_ij = operatorRead(i, j);
@@ -962,8 +942,8 @@ public:
    * is in canonical form.
    * @return [None] */
   void makeEmpty() {
-    for (size_type i = 0; i < nClocks; ++i) {
-      for (size_type j = 0; j < nClocks; ++j) {
+    for (size_type i = 0; i < clocks_size(); ++i) {
+      for (size_type j = 0; j < clocks_size(); ++j) {
         operatorWrite(i, j) = 0x0;
       }
     }
@@ -979,8 +959,8 @@ public:
     /* O(n) version. This assumes that the DBM is in canonical form.
      * an O(n^2) version was previously used to handle overflow possibilities
      * from a model with different semantics. */
-    for (size_type i = 0; i < nClocks; ++i) {
-      clock_value_t rv = operatorRead(i, i);
+    for (size_type i = 0; i < clocks_size(); ++i) {
+      const clock_value_t rv = operatorRead(i, i);
       if (((rv >> 1) < 0) || (((rv >> 1) == 0) && ((rv & zero(false)) == 0))) {
         return true;
       }
@@ -995,7 +975,7 @@ public:
    * @return true: the DBM has a single-clock upper bound constraint, false:
    * otherwise. */
   bool hasUpperConstraint() const {
-    for (size_type i = 1; i < nClocks; ++i) {
+    for (size_type i = 1; i < clocks_size(); ++i) {
       clock_value_t cons = operatorRead(i, 0);
       if ((cons >> 1) != 0xFFF) {
         return true;
@@ -1010,16 +990,13 @@ public:
    * The DBM calling this method is changed.
    * @return None*/
   void closure() {
-    for (size_type i = 0; i < nClocks; ++i)
-      for (size_type j = 0; j < nClocks; ++j) {
-        if (i == j) {
-          continue;
-        }
-        if ((operatorRead(i, j) >> 1) != 0xFFF) { // if not infinity
-          operatorWrite(i, j) =
-              ((operatorRead(i, j) >> 1) << 1) + 1;
+    for (size_type i = 0; i < clocks_size(); ++i) {
+      for (size_type j = 0; j < clocks_size(); ++j) {
+        if (i != j && (operatorRead(i, j) >> 1) != 0xFFF) {
+          operatorWrite(i, j) = operatorRead(i, j) | 0x1;
         }
       }
+    }
   }
 
   /** This converts all finite constraints
@@ -1028,14 +1005,10 @@ public:
    * The DBM calling this method is changed.
    * @return None*/
   void closureRev() {
-    for (size_type i = 0; i < nClocks; ++i)
-      for (size_type j = 0; j < nClocks; ++j) {
-        if (i == j) {
-          continue;
-        }
-        if ((operatorRead(i, j) >> 1) != 0xFFF) { // if not infinity
-          operatorWrite(i, j) =
-              ((operatorRead(i, j) >> 1) << 1) + 0;
+    for (size_type i = 0; i < clocks_size(); ++i)
+      for (size_type j = 0; j < clocks_size(); ++j) {
+        if (i != j && (operatorRead(i, j) >> 1) != 0xFFF) {
+          operatorWrite(i, j) = ((operatorRead(i, j) >> 1) << 1);
         }
       }
   }
@@ -1046,14 +1019,10 @@ public:
    * The DBM calling this method is changed.
    * @return None*/
   void predClosureRev() {
-    for (size_type i = 1; i < nClocks; ++i)
-      for (size_type j = 0; j < nClocks; ++j) {
-        if (i == j) {
-          continue;
-        }
-        if ((operatorRead(i, j) >> 1) != 0xFFF) { // if not infinity
-          operatorWrite(i, j) =
-              ((operatorRead(i, j) >> 1) << 1) + 0;
+    for (size_type i = 1; i < clocks_size(); ++i) // difference with predClosure: start at 1
+      for (size_type j = 0; j < clocks_size(); ++j) {
+        if (i != j && (operatorRead(i, j) >> 1) != 0xFFF) {
+          operatorWrite(i, j) = ((operatorRead(i, j) >> 1) << 1);
         }
       }
   }
@@ -1064,12 +1033,12 @@ public:
   void print_constraint(std::ostream &os) const {
     bool end = false;
     bool isAllImplicit = true;
-    if (this->emptiness()) {
+    if (emptiness()) {
       os << "EMPTY";
       return;
     }
-    for (size_type i = 0; i < nClocks; ++i) {
-      for (size_type j = 0; j < nClocks; ++j) {
+    for (size_type i = 0; i < clocks_size(); ++i) {
+      for (size_type j = 0; j < clocks_size(); ++j) {
         if (i == j) {
           continue;
         }
