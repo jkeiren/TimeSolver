@@ -1963,7 +1963,7 @@ inline void prover::do_proof_place_forall(const SubstList& discrete_state,
 
   /* Per proof rules with the placeholder,
    * do not incorporate the invariant into the FORALL here */
-  *place = *INFTYDBM;
+  //*place = *INFTYDBM;
 
   do_proof_place(discrete_state, lhs_succ, place, *formula.getQuant());
   place->cf();
@@ -2590,18 +2590,18 @@ inline void prover::do_proof_place_existact(const SubstList& discrete_state,
        * If not, tighten the placeholder */
       // For performace reasons, also tighten the left hand side
       if (!(guard_zone <= invariant_region)) {
-        guard_placeholder.intersect(invariant_region);
-        guard_placeholder.cf();
-        if (guard_placeholder.emptiness()) {
-          cpplog(cpplogging::debug)
-              << "Transition: " << transition
-              << " cannot be taken; entering invariant is false." << std::endl
-              << "\tExtra invariant condition: " << invariant_region << std::endl;
+      guard_placeholder.intersect(invariant_region);
+      guard_placeholder.cf();
+      if (guard_placeholder.emptiness()) {
+        cpplog(cpplogging::debug)
+            << "Transition: " << transition
+            << " cannot be taken; entering invariant is false." << std::endl
+            << "\tExtra invariant condition: " << invariant_region << std::endl;
 
-          continue;
-        }
-        guard_zone.intersect(invariant_region);
-        guard_zone.cf();
+        continue;
+      }
+      guard_zone.intersect(invariant_region);
+      guard_zone.cf();
       }
     }
 
@@ -2626,9 +2626,9 @@ inline void prover::do_proof_place_existact(const SubstList& discrete_state,
 
     result.union_(guard_placeholder);
     result.cf();
-    if(result >= *place || result >= zone) {
+    /*if(result >= *place || result >= zone) {
       break;
-    }
+    }*/
   }
 
   cpplog(cpplogging::debug)
@@ -2815,9 +2815,9 @@ inline void prover::do_proof_place_sublist(const SubstList& discrete_state,
 }
 
 inline void prover::do_proof_place_reset(const SubstList& discrete_state,
-                                             const DBM& zone,
-                                             DBMList* place,
-                                             const ExprNode& formula) {
+                                         const DBM& zone,
+                                         DBMList* place,
+                                         const ExprNode& formula) {
   DBM lhs_reset(zone);
 // JK: It does not become clear why this is necessary here
 //  lhs_reset.bound(input_pes.max_constant());
