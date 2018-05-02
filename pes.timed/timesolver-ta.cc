@@ -18,6 +18,7 @@
  * @copyright MIT Licence, see the accompanying LICENCE.txt
  */
 
+#include <getopt.h>
 #include <iostream>
 #include <string.h>
 #include <stdio.h>
@@ -38,6 +39,7 @@
 #include "errno.h"
 #include "pes.hh"
 #include "parse.hh"
+#include "version.hh"
 
 #ifndef DEBUG
 #define DEBUG true
@@ -50,25 +52,44 @@
  * user does not give or format the argument properly.
  * @return none.*/
 void printUsage() {
-  std::cerr << "usage: demo options input_file_name" << std::endl;
-  std::cerr
-      << "\t option: -d  print debug information which includes the proof tree"
+  std::cerr << "usage: timesolver-ta options input_file_name" << std::endl;
+  std::cerr << "\t option: --debug/-d  print debug information which includes the proof tree"
       << std::endl;
-  std::cerr << "\t option: -t print out the end caches of sequents" << std::endl;
-  std::cerr << "\t option: -h  this help info" << std::endl;
-  std::cerr << "\t option: -n (no caching) disables performance-optimizing "
+  std::cerr << "\t option: --tabled/-t print out the end caches of sequents" << std::endl;
+  std::cerr << "\t option: --help/-h   this help info" << std::endl;
+  std::cerr << "\t option: --version   print the version of the tool" << std::endl;
+  std::cerr << "\t option: --no-caching/-n disables performance-optimizing "
                "known true and known false caches. Circularity stack caching "
                "still used."
             << std::endl;
 }
 
+void printVersion() {
+  std::cerr << version() << std::endl;
+}
+
 /** Parsers the command line */
 void parse_command_line(int argc, char** argv, prover_options& opt) {
   /* Sets parameters and looks for inputs from the command line. */
-  char c;
+  const char* const short_opts = "dhntH:";
+  const option long_opts[] {
+    {"debug", 0, nullptr, 'd'},
+    {"help", 0, nullptr, 'h'},
+    {"no-caching", 0, nullptr, 'n'},
+    {"tabled-output", 0, nullptr, 't'},
+    {"hash", 1, nullptr, 'H'},
+    {"version", 0, nullptr, 'v'},
+    {nullptr, 0, nullptr, 0}
+  };
 
-  while ((c = getopt(argc, argv, "dhntH:")) != -1) {
-    switch (c) {
+  while(true) {
+    const auto g_opt = getopt_long(argc, argv, short_opts, long_opts, nullptr);
+
+    if (-1 == g_opt) {
+      break;
+    }
+
+    switch (g_opt) {
       case 'd':
         opt.debug = true; // Turn on Debug Mode
         break;
@@ -88,13 +109,20 @@ void parse_command_line(int argc, char** argv, prover_options& opt) {
       case 'n':
         opt.useCaching = false;
         break;
+      case 'v':
+        printVersion();
+        exit(1);
       case 'h': // Help: print the Usage.
         printUsage();
         exit(1);
+      case '?': // Unrecognised option
+        printUsage();
+        exit(-1);
     }
   }
+
   if (argc < 2) {
-    fprintf(stderr, "Must have an input file argument.\n");
+    std::cerr << "Must have an input file argument." << std::endl;
     printUsage();
     exit(-1);
   }

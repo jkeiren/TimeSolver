@@ -17,6 +17,8 @@ if(APPLE)
   set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-stack_size,${TIMESOLVER_OSX_STACK_SIZE}")
 endif()
 
+include(version_string.cmake)
+
 # Include the logging library
 add_subdirectory(external/cpplogging)
 
