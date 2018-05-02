@@ -27,7 +27,7 @@ int spaceDimension;
 map <string, int> clocks;
 /** A Hash table of Atomic values used to store predicate
  * and/or control variable ids */
-map <string, int> atomic;
+map <string, int> atomic_;
 /** A Hash table of ints storing integer 
  * substituations for atomic variables. 
  * This maps atomic ids to atomic values.  0 is the default value.
@@ -112,8 +112,8 @@ int print_clocks()
 int add_atomic(char *s)
 {
   string name(s);
-  int idx = atomic.size();
-  atomic.insert(make_pair(name, idx));
+  int idx = atomic_.size();
+  atomic_.insert(make_pair(name, idx));
   InitSub.insert(make_pair(idx, 0));
   return 1;
 }
@@ -127,8 +127,8 @@ int add_atomic(char *s)
 int add_atomicv(char *s, int v)
 {
   string name(s);
-  int idx = atomic.size();
-  atomic.insert(make_pair(name, idx));
+  int idx = atomic_.size();
+  atomic_.insert(make_pair(name, idx));
   InitSub.insert(make_pair(idx, v));
   return 1;
 }
@@ -141,8 +141,8 @@ int add_atomicv(char *s, int v)
 int lookup_atomic(char *s)
 {
   string name(s);
-  map<string, int>::iterator it = atomic.find(name);
-  if (it != atomic.end())
+  map<string, int>::iterator it = atomic_.find(name);
+  if (it != atomic_.end())
     return (*it).second;
   else
     return -1;
@@ -154,7 +154,7 @@ int lookup_atomic(char *s)
 int print_atomic()
 {
   map <string, int>::iterator it;
-  for (it = atomic.begin(); it != atomic.end(); it++)
+  for (it = atomic_.begin(); it != atomic_.end(); it++)
     cout << (*it).first << ":" << (*it).second << "  ";
   return 1;	
 }

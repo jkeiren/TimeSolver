@@ -67,7 +67,7 @@ extern map <string, int > clocks;
 /** A Hash table of Atomic values used to store discrete state
  * variables, mapping string names to id values. 
  * @see ExprNode.cc. */
-extern map <string, int > atomic;
+extern map <string, int > atomic_;
 /** A Hash table of ints storing integer 
  * substituations for atomic variables. 
  * This maps atomic ids to atomic values, representing
@@ -5116,7 +5116,7 @@ int main(int argc, char** argv){
     cout << "Interested predicate is not properly given." << endl;
     exit(-1);}
   
-  aSize = atomic.size();
+  aSize = atomic_.size();
   
   // get the current parity of Start and Initialize the proper parities
   currParityGfp = start->get_Parity();
@@ -5392,7 +5392,7 @@ int main(int argc, char** argv){
   delete transList;
 
   // Clear Maps to free up dynamic memory
-  atomic.clear();
+  atomic_.clear();
   clocks.clear();
   InitSub.clear();
   

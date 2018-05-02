@@ -58,7 +58,7 @@
   extern int print_predicates();
   
   extern map <string, int> clocks;
-  extern map <string, int> atomic;
+  extern map <string, int> atomic_;
   vector <ExprNode *> invs;
   map <string, int> defcons;
   extern int MAXC;
@@ -486,7 +486,7 @@ TOK_ID_ATOMIC TOK_ASSIGN TOK_INT
 { 
   int x = lookup_atomic($1);
   if (x != -1) {
-    $$ = new SubstList(x, $3, atomic.size());
+    $$ = new SubstList(x, $3, atomic_.size());
   }
   else {
     errPrtExit("control variable not defined");
@@ -1241,7 +1241,7 @@ sublist:   TOK_ID_ATOMIC TOK_ASSIGN TOK_INT
 { 
   int x = lookup_atomic($1);
   if (x != -1) {
-    $$ = new SubstList(x, $3, atomic.size());
+    $$ = new SubstList(x, $3, atomic_.size());
   }
   else {
     errPrtExit("control variable not defined");
