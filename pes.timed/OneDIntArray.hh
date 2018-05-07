@@ -47,7 +47,7 @@ public:
    * @return A reference to the element in the array. */
   element_type& operator[](const size_type index) {
     // re-use the const version of this function.
-    return const_cast<element_type&>(at(index));
+    return operatorAccess(index);
   }
 
   /** Retrieves a const reference for the element specified at the given index.
@@ -62,8 +62,7 @@ public:
     /* We might want a private method that does not use bounds checks
      * In order to improve performance. */
     if (index >= quantity) {
-      std::cerr << "OneDIntArray operator[] - out of bounds." << std::endl;
-      exit(-1);
+      throw std::runtime_error("OneDIntArray at - index out of bounds.");
     }
     return operatorAccess(index);
   }
