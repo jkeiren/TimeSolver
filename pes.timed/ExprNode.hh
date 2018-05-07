@@ -14,11 +14,8 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <fstream>
 #include <map>
 #include <vector>
-#include <deque>
-#include <list>
 #include <utility>
 #include <string>
 #include "DBM.hh"
@@ -530,13 +527,6 @@ public:
     /* Note: since predicates are shallow-copied, they are not deleted
      * here. */
   }
-
-  /** Method that deletes the predicate string. Since predicate strings are
-   * assigned as shallow copies (multiple ExprNode objects are given the same
-   * predicate for performance reasons), the user should call this method
-   * sparingly to delete predicate strings in order to prevent memory leaks.
-   * @return [None]. */
-  void deletePredicate() { delete predicate; }
 
   /** Returns the opType of the expression, which labels/categorizes
    * the expression.
