@@ -72,9 +72,7 @@ public:
   ~Sequent() {
     delete _discrete_state;
     // Iterate Through and Delete every element of ds
-    for (std::vector<DBM *>::iterator it = ds.begin(); it != ds.end(); it++) {
-      delete *it;
-    }
+    delete_vector_elements(ds);
     ds.clear();
     // Do not delete e since it is a pointer to the overall ExprNode.
     // Do not delete parent sequent upon deletion

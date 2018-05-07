@@ -13,6 +13,7 @@
 #ifndef SEQUENT_CACHE_HH
 #define SEQUENT_CACHE_HH
 
+#include <deque>
 #include "pes.hh"
 #include "sequent_stack.hh"
 
