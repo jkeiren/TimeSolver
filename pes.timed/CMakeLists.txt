@@ -18,6 +18,7 @@ if(APPLE)
 endif()
 
 include(version_string.cmake)
+include(AddSanitizer.cmake)
 
 # Include the logging library
 add_subdirectory(external/cpplogging)
