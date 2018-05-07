@@ -36,7 +36,7 @@ protected:
   /** This DBM is a copy of a DBM initially
    * that represents the unconstrained DBM in
    * canonical form. */
-  DBM* INFTYDBM;
+  DBM INFTYDBM;
 
   /** Global variable that keeps track of the parent sequent
    * of the current sequent in the proof tree. Used for sequents
@@ -63,19 +63,17 @@ public:
         prevParityGfp(false),
         step(0),
         numLocations(1),
+        INFTYDBM(input_pes.clocks()),
         parentRef(nullptr),
         parentPlaceRef(nullptr),
         cache(input_pes, options.nbits, input_pes.predicates().size() * options.nHash, options.nHash) {
     /* This is initialized to be the largest (loosest)
      * possible DBM
      * @see DBM Constructor (Default Constructor). */
-    INFTYDBM = new DBM(input_pes.clocks());
-    INFTYDBM->cf();
+    INFTYDBM.cf();
   }
 
-  ~prover() {
-    delete INFTYDBM;
-  }
+  ~prover() {}
 
   size_t getNumLocations() const { return numLocations; }
 
@@ -587,7 +585,7 @@ protected:
     // establish placeholder = !inv(l) || placeholder2
     // this ensures satisfaction of first sidecondition.
     DBMList placeholder(placeholder2);
-    DBMList invariant_region(*INFTYDBM);
+    DBMList invariant_region(INFTYDBM);
     bool nonempty_invariant = restrict_to_invariant(
         input_pes.invariants(), invariant_region, discrete_state);
     if (nonempty_invariant) {
@@ -874,7 +872,7 @@ inline bool prover::do_proof_or(const SubstList& discrete_state,
   bool retVal = false;
 
   /* Use two placeholders to provide split here */
-  DBMList placeholder1(*INFTYDBM);
+  DBMList placeholder1(INFTYDBM);
   do_proof_place(discrete_state, zone, &placeholder1, *formula.getLeft());
   placeholder1.cf();
 
@@ -893,7 +891,7 @@ inline bool prover::do_proof_or(const SubstList& discrete_state,
     /* Here we get the corner case where we have to use the
      * OR Split rule, so we try to establish whether part of zone is covered by
      * l, and the other part is covered by formula. */
-    DBMList placeholder2(*INFTYDBM);
+    DBMList placeholder2(INFTYDBM);
     do_proof_place(discrete_state, zone, &placeholder2, *formula.getRight());
     placeholder2.cf();
 
@@ -965,7 +963,7 @@ inline bool prover::do_proof_forall_rel(const SubstList& discrete_state,
   lhs_succ.suc();
   // Make sure lhs_succ is not modified; we reuse it for the sake of efficiency.
 
-  DBMList placeholder1(*INFTYDBM); // phi_{s1}
+  DBMList placeholder1(INFTYDBM); // phi_{s1}
   restrict_to_invariant(input_pes.invariants(), placeholder1, discrete_state);
   do_proof_place(discrete_state, lhs_succ, &placeholder1, *formula.getLeft());
   placeholder1.cf();
@@ -1026,7 +1024,7 @@ inline bool prover::do_proof_forall_rel(const SubstList& discrete_state,
 
     /* We omit the check that we can elapse to the placeholder;
      * We will check that once at the end */
-    DBMList placeholder2(*INFTYDBM);
+    DBMList placeholder2(INFTYDBM);
     restrict_to_invariant(input_pes.invariants(), placeholder2, discrete_state);
     placeholder2.cf();
     do_proof_place(discrete_state, lhs_succ, &placeholder2, *formula.getRight());
@@ -1052,7 +1050,7 @@ inline bool prover::do_proof_forall_rel(const SubstList& discrete_state,
        * (the relativization formula condition) are neither empty
        * nor everything. */
 
-      DBMList placeholder_forall(*INFTYDBM);
+      DBMList placeholder_forall(INFTYDBM);
       establish_forall_place_sidecondition(&placeholder_forall, discrete_state, zone, placeholder2);
       placeholder_forall.cf();
 
@@ -1073,7 +1071,7 @@ inline bool prover::do_proof_forall_rel(const SubstList& discrete_state,
        * \phi_1 (the left) is the formula. By using the placeholders
        * computed previously, we save time by not having to recompute
        * the formulas. */
-      DBMList placeholder_exists(*INFTYDBM);
+      DBMList placeholder_exists(INFTYDBM);
       /*--- PredCheck code----*/
       DBMList placeholder_and(placeholder2);
       placeholder_and.intersect(placeholder1);
@@ -1136,7 +1134,7 @@ inline bool prover::do_proof_exists(const SubstList& discrete_state,
 
   /* The proper derivation for EXISTS is to incorporate the invariant
    * in the placeholder, and not the LHS. */
-  DBMList placeholder(*INFTYDBM);
+  DBMList placeholder(INFTYDBM);
   restrict_to_invariant(input_pes.invariants(), placeholder, discrete_state);
 
   DBMList placeholder_dbg_copy(placeholder); // Check assumption on do_proof_place
@@ -1181,7 +1179,7 @@ inline bool prover::do_proof_exists_rel(const SubstList& discrete_state,
   DBM zone_succ(zone);
   zone_succ.suc();
 
-  DBMList placeholder2(*INFTYDBM);
+  DBMList placeholder2(INFTYDBM);
   restrict_to_invariant(input_pes.invariants(), placeholder2, discrete_state);
 
   do_proof_place(discrete_state, zone_succ, &placeholder2, *formula.getRight());
@@ -1203,7 +1201,7 @@ inline bool prover::do_proof_exists_rel(const SubstList& discrete_state,
 
     /* We find all the times that satisfy phi_1, and then intersect it
      * with the time predecessor of the phi_2 placeholders. */
-    DBMList placeholder1(*INFTYDBM);
+    DBMList placeholder1(INFTYDBM);
     // Since invariants are past closed, we do not need to intersect
     // this placeholder with the invariant.
     do_proof_place(discrete_state, zone_succ, &placeholder1, *formula.getLeft());
@@ -1365,81 +1363,82 @@ inline bool prover::do_proof_allact(const SubstList& discrete_state,
     /* Obtain the entire ExprNode and prove it */
     DBM guard_zone(zone);
 
-    if (!comp_ph(guard_zone, *(transition->guard()), discrete_state)) {
+    if (comp_ph(guard_zone, *(transition->guard()), discrete_state)) {
+      // guard is satisfiable
+      /* Now check the invariant; if the invariant is satisfiable, we update the
+         left hand side to be the part of the left hand side that satisfies the
+         location invariant. */
+      DBM invariant_zone(INFTYDBM);
+      bool has_nonvacuous_invariant = restrict_to_invariant(
+          input_pes.invariants(), invariant_zone, transition->destination_location(&discrete_state));
+
+      // If he invariant of the target location is non-vacuous, compute the weakest precondition
+      // and intersect with the guard.
+      if (has_nonvacuous_invariant) {
+        invariant_zone.cf();
+        // Some clocks are reset on this transition
+        const ClockSet* reset_clocks = transition->reset_clocks();
+        if (reset_clocks != nullptr) {
+          invariant_zone.preset(*reset_clocks);
+        }
+        invariant_zone.cf();
+        /* Now perform clock assignments sequentially: perform the
+         * front assignments first */
+        const std::vector<std::pair<DBM::size_type, clock_value_t>>* clock_assignments =
+            transition->clock_assignments();
+        if (clock_assignments != nullptr) {
+          // Iterate over the vector and print it
+          for (const std::pair<DBM::size_type, clock_value_t>& clock_assignment: *clock_assignments) {
+            invariant_zone.preset(clock_assignment.first, clock_assignment.second);
+            invariant_zone.cf();
+          }
+        }
+
+        guard_zone.intersect(invariant_zone);
+        guard_zone.cf();
+        if (guard_zone.emptiness()) {
+          cpplog(cpplogging::debug)
+              << "Transition: " << transition
+              << " cannot be taken; entering invariant is false." << std::endl
+              << "\tExtra invariant condition: " << invariant_zone << std::endl;
+          continue;
+        }
+      } // end if has_nonvacuous_invariant
+
+      // We add the body of the allact to the formula that holds after the transition.
+      // Note that this formula after the transition already contains the resets and assignments,
+      // so, when we call getRightExpr() later, we in fact look at the weakest precondition of
+      // formula.getQuant with respect to this transition.
+      transition->getNewTrans(formula.getQuant());
+
+      /* Constraints are bounded by input_pes.max_constant() */
+      /* This is to extend the LHS to make sure that
+       * the RHS is satisfied by any zone that satisfies
+       * the LHS by expanding the zone so it contains
+       * all the proper regions where the clocks
+       * exceed a certain constant value. */
+      guard_zone.bound(input_pes.max_constant());
+      guard_zone.cf();
+
+      cpplog(cpplogging::debug)
+          << "Executing transition (with destination) " << transition << std::endl
+          << "\tExtra invariant condition: " << invariant_zone << std::endl;
+
+      ++numLocations;
+      // Recursively prove that the weakest precondition of the body of allact
+      // is satisfied. See the remark about getNewTrans above.
+      retVal = do_proof(discrete_state, guard_zone, *transition->getRightExpr());
+      if (!retVal) {
+        cpplog(cpplogging::debug)
+            << "Trainsition: " << transition << std::endl
+            << "\tinvalidates property and breaks transition executions. "
+            << std::endl;
+
+        break;
+      }
+    } else {
       cpplog(cpplogging::debug)
           << "Transition: " << transition << " cannot be taken." << std::endl;
-      continue;
-    }
-
-    /* Now check the invariant; if the invariant is satisfiable, we update the
-       left hand side to be the part of the left hand side that satisfies the
-       location invariant. */
-    DBM invariant_zone(*INFTYDBM);
-    bool invariant_satisfiable = restrict_to_invariant(
-        input_pes.invariants(), invariant_zone, transition->destination_location(&discrete_state));
-
-    if (invariant_satisfiable) { // The transition exists
-      invariant_zone.cf();
-      // Some clocks are reset on this transition
-      const ClockSet* reset_clocks = transition->reset_clocks();
-      if (reset_clocks != nullptr) {
-        invariant_zone.preset(*reset_clocks);
-      }
-      invariant_zone.cf();
-      /* Now perform clock assignments sequentially: perform the
-       * front assignments first */
-      const std::vector<std::pair<DBM::size_type, clock_value_t>>* clock_assignments =
-          transition->clock_assignments();
-      if (clock_assignments != nullptr) {
-        // Iterate over the vector and print it
-        for (const std::pair<DBM::size_type, clock_value_t>& clock_assignment: *clock_assignments) {
-          invariant_zone.preset(clock_assignment.first, clock_assignment.second);
-          invariant_zone.cf();
-        }
-      }
-
-      guard_zone.intersect(invariant_zone);
-      guard_zone.cf();
-      if (guard_zone.emptiness()) {
-        cpplog(cpplogging::debug)
-            << "Transition: " << transition
-            << " cannot be taken; entering invariant is false." << std::endl
-            << "\tExtra invariant condition: " << invariant_zone << std::endl;
-        continue;
-      }
-    } // end if invariant_satisfiable
-
-    // We add the body of the allact to the formula that holds after the transition.
-    // Note that this formula after the transition already contains the resets and assignments,
-    // so, when we call getRightExpr() later, we in fact look at the weakest precondition of
-    // formula.getQuant with respect to this transition.
-    transition->getNewTrans(formula.getQuant());
-
-    /* Constraints are bounded by input_pes.max_constant() */
-    /* This is to extend the LHS to make sure that
-     * the RHS is satisfied by any zone that satisfies
-     * the LHS by expanding the zone so it contains
-     * all the proper regions where the clocks
-     * exceed a certain constant value. */
-    guard_zone.cf();
-    guard_zone.bound(input_pes.max_constant());
-    guard_zone.cf();
-
-    cpplog(cpplogging::debug)
-        << "Executing transition (with destination) " << transition << std::endl
-        << "\tExtra invariant condition: " << invariant_zone << std::endl;
-
-    ++numLocations;
-    // Recursively prove that the weakest precondition of the body of allact
-    // is satisfied. See the remark about getNewTrans above.
-    retVal = do_proof(discrete_state, guard_zone, *transition->getRightExpr());
-    if (!retVal) {
-      cpplog(cpplogging::debug)
-          << "Trainsition: " << transition << std::endl
-          << "\tinvalidates property and breaks transition executions. "
-          << std::endl;
-
-      break;
     }
   }
   cpplog(cpplogging::debug) << "\t --- end of ALLACT." << std::endl;
@@ -1456,7 +1455,7 @@ inline bool prover::do_proof_existact(const SubstList& discrete_state,
                             << std::endl;
 
   /* Use placeholders to split rules */
-  DBMList placeholder(*INFTYDBM);
+  DBMList placeholder(INFTYDBM);
   placeholder.makeEmpty();
 
   for (Transition* const transition: input_pes.transitions()) {
@@ -1465,7 +1464,7 @@ inline bool prover::do_proof_existact(const SubstList& discrete_state,
     // Make a similar comp function for exists so
     // because the entire zone must be able to transition
     // or split by placeholders
-    DBMList guard_placeholder(*INFTYDBM);
+    DBMList guard_placeholder(INFTYDBM);
     DBM guard_zone(zone);
     bool guard_satisfied = comp_ph_exist_place(
         guard_zone, guard_placeholder, *(transition->guard()), discrete_state);
@@ -1476,7 +1475,7 @@ inline bool prover::do_proof_existact(const SubstList& discrete_state,
     }
 
     /* Now check the invariant */
-    DBM invariant_zone(*INFTYDBM);
+    DBM invariant_zone(INFTYDBM);
     bool invariant_satisfiable = restrict_to_invariant(
         input_pes.invariants(), invariant_zone, transition->destination_location(&discrete_state));
     if (invariant_satisfiable) {
@@ -1669,7 +1668,7 @@ inline void prover::do_proof_place_predicate(const SubstList& discrete_state,
     { // restricted block for known true sequents
       SequentPlace* cached_sequent =
           cache.Xlist_true_ph.look_for_sequent(&discrete_state, predicate_index);
-      DBMList cached_placeholder(*INFTYDBM);
+      DBMList cached_placeholder(INFTYDBM);
       /* Note: tempPlace is changed by tabled_sequentPlace() */
       if (cached_sequent != nullptr &&
           cached_sequent->tabled_sequent(zone, &cached_placeholder)) {
@@ -1963,7 +1962,7 @@ inline void prover::do_proof_place_forall(const SubstList& discrete_state,
 
   /* Per proof rules with the placeholder,
    * do not incorporate the invariant into the FORALL here */
-  //*place = *INFTYDBM;
+  //*place = INFTYDBM;
 
   do_proof_place(discrete_state, lhs_succ, place, *formula.getQuant());
   place->cf();
@@ -2024,7 +2023,7 @@ inline void prover::do_proof_place_forall_rel(const SubstList& discrete_state,
   DBM lhs_succ(zone);
   lhs_succ.suc();
 
-  DBMList placeholder1(*INFTYDBM);
+  DBMList placeholder1(INFTYDBM);
   restrict_to_invariant(input_pes.invariants(), placeholder1, discrete_state);
   do_proof_place(discrete_state, lhs_succ, &placeholder1, *formula.getLeft());
   placeholder1.cf();
@@ -2084,9 +2083,9 @@ inline void prover::do_proof_place_forall_rel(const SubstList& discrete_state,
         }
       }
     }
-  } else if (placeholder1 == *INFTYDBM) {
+  } else if (placeholder1 == INFTYDBM) {
   // First check for the simplest case: no time elapse is needed
-  /* Perhaps we can reduce *INFTYDBM to be *place
+  /* Perhaps we can reduce INFTYDBM to be *place
    * given the proof rules. */
 
     if (cpplogEnabled(cpplogging::debug)) {
@@ -2129,7 +2128,7 @@ inline void prover::do_proof_place_forall_rel(const SubstList& discrete_state,
 
     /* We omit the check that we can elapse to the placeholder;
      * We will check that once at the end */
-    DBMList placeholder2(*INFTYDBM);
+    DBMList placeholder2(INFTYDBM);
     restrict_to_invariant(input_pes.invariants(), placeholder2, discrete_state);
     placeholder2.cf();
     do_proof_place(discrete_state, lhs_succ, &placeholder2, *formula.getRight());
@@ -2155,7 +2154,7 @@ inline void prover::do_proof_place_forall_rel(const SubstList& discrete_state,
        * (the relativization formula condition) are neither empty
        * nor everything. */
 
-      DBMList placeholder_forall(*INFTYDBM);
+      DBMList placeholder_forall(INFTYDBM);
       establish_forall_place_sidecondition(&placeholder_forall, discrete_state, zone, placeholder2);
       placeholder_forall.cf();
 
@@ -2170,7 +2169,7 @@ inline void prover::do_proof_place_forall_rel(const SubstList& discrete_state,
       }
 
 
-      DBMList placeholder_exists(*INFTYDBM);
+      DBMList placeholder_exists(INFTYDBM);
       DBMList placeholder_and(placeholder2);
       placeholder_and.intersect(placeholder1);
       placeholder_and.cf();
@@ -2223,7 +2222,7 @@ inline void prover::do_proof_place_exists(const SubstList& discrete_state,
   lhs_succ.suc();
 
   // The invariant goes into the placeholder, not the left hand side
-  DBMList placeholder(*INFTYDBM);
+  DBMList placeholder(INFTYDBM);
   restrict_to_invariant(input_pes.invariants(), placeholder, discrete_state);
 
   do_proof_place(discrete_state, lhs_succ, &placeholder, *formula.getQuant());
@@ -2275,7 +2274,7 @@ inline void prover::do_proof_place_exists_rel(const SubstList& discrete_state,
   DBM zone_succ(zone);
   zone_succ.suc();
 
-  DBMList placeholder2(*INFTYDBM);
+  DBMList placeholder2(INFTYDBM);
   restrict_to_invariant(input_pes.invariants(), placeholder2, discrete_state);
 
   do_proof_place(discrete_state, zone_succ, &placeholder2, *formula.getRight());
@@ -2310,7 +2309,7 @@ inline void prover::do_proof_place_exists_rel(const SubstList& discrete_state,
 
     /* We find all the times that satisfy phi_1, and then intersect it
      * with the time predecessor of the phi_2 placeholders. */
-    DBMList placeholder1(*INFTYDBM);
+    DBMList placeholder1(INFTYDBM);
     do_proof_place(discrete_state, zone_succ, &placeholder1, *formula.getLeft());
     /* Second step: tighten and check the predecessor */
     // Must check for emptiness to handle the corner case when it is empty
@@ -2451,7 +2450,7 @@ inline void prover::do_proof_place_allact(const SubstList& discrete_state,
       // guard_placeholder is the largest placeholder that satisfies the guard.
 
       DBMList transition_placeholder(*place);
-      DBM invariant_zone(*INFTYDBM);
+      DBM invariant_zone(INFTYDBM);
       bool invariant_satisfiable = restrict_to_invariant(input_pes.invariants(),
                                                          invariant_zone,
                                                          transition->destination_location(&discrete_state));
@@ -2540,7 +2539,7 @@ inline void prover::do_proof_place_existact(const SubstList& discrete_state,
                                                 const DBM& zone,
                                                 DBMList* place,
                                                 const ExprNode& formula) {
-  DBMList result(*INFTYDBM); // DBM to accumulate the result.
+  DBMList result(INFTYDBM); // DBM to accumulate the result.
   result.makeEmpty();
 
   /* Enumerate through all transitions */
@@ -2564,7 +2563,7 @@ inline void prover::do_proof_place_existact(const SubstList& discrete_state,
 
     /* Now check the invariant of the target location (getEnteringLocation gives
        the destination location of the transition */
-    DBM invariant_region(*INFTYDBM);
+    DBM invariant_region(INFTYDBM);
     bool invariant_satisfiable = restrict_to_invariant(
         input_pes.invariants(), invariant_region, transition->destination_location(&discrete_state));
 
@@ -2825,7 +2824,7 @@ inline void prover::do_proof_place_reset(const SubstList& discrete_state,
   lhs_reset.reset(*formula.getClockSet());
   lhs_reset.cf();
 
-  DBMList placeholder1(*INFTYDBM);
+  DBMList placeholder1(INFTYDBM);
   do_proof_place(discrete_state, lhs_reset, &placeholder1, *formula.getExpr());
   placeholder1.cf();
   if (placeholder1.emptiness()) {
@@ -2867,7 +2866,7 @@ inline void prover::do_proof_place_assign(const SubstList& discrete_state,
   short int cY = formula.getcY();
   lhs_assign.reset(cX, cY);
   lhs_assign.cf();
-  DBMList placeB(*INFTYDBM);
+  DBMList placeB(INFTYDBM);
   do_proof_place(discrete_state, lhs_assign, &placeB, *formula.getExpr());
   placeB.cf();
   if (placeB.emptiness()) {
