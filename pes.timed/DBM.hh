@@ -913,8 +913,9 @@ public:
              * One option: check for >= 0xFFF instead
              * of 0xFFF, but that fixes nothing. */
             clock_value_t val = 0xFFF;
-            if ((wholeVal_ik >> 1) != 0xFFF && (wholeVal_kj >> 1) != 0xFFF)
+            if ((wholeVal_ik >> 1) != 0xFFF && (wholeVal_kj >> 1) != 0xFFF) {
               val = (wholeVal_ik >> 1) + (wholeVal_kj >> 1);
+            }
 
             const clock_value_t origVal = wholeVal_ij >> 1;
             /* Correction by Peter Fontana to check for negative overflow */
