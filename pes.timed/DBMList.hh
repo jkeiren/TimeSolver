@@ -56,49 +56,33 @@ private:
    * Does not preserve canonical form.
    * @param Y (&) The DBM to complement.
    * @return The complemented DBM, given as a DBMList. */
-  DBMList *complementDBM(const DBM &Y) {
-    if (Y.emptiness()) {
-      return new DBMList(Y.declared_clocks());
-    }
+  void complementDBM(DBMList& out, const DBM &Y) {
+    assert(out.emptiness());
+    if(Y.emptiness())
+    {
+      out = DBMList(Y.declared_clocks());
+    } else {
+      bool first = true;
+      if(!Y.emptiness()) {
     /* Check for infinity DBM */
-    bool hasAConstraint = false;
-    DBMList *myList = nullptr;
     for (DBM::size_type i = 0; i < Y.clocks_size(); i++) {
       for (DBM::size_type j = 0; j < Y.clocks_size(); j++) {
         if (!(Y.isConstraintImplicit(i, j))) {
-          hasAConstraint = true;
-          int tempVal = Y(i, j);
-          int tempCons = 0x1;
-          if ((tempVal & 0x1) == 0x1) {
-            tempCons = 0;
-          }
-          short int constraintVal = ((-(tempVal >> 1)) << 1) + tempCons;
-          DBM tempDBM(j, i, constraintVal, declared_clocks);
-          if (myList == nullptr) {
-            myList = new DBMList(tempDBM);
+              const clock_value_t raw_constraint = Y(i, j);
+              const clock_value_t sign = (raw_constraint & 0x1) ^ 0x1; // sign of new constraint
+              const clock_value_t negated_raw_constraint = ((-(raw_constraint >> 1)) << 1)|sign;
+              const DBM negated_dbm(j, i, negated_raw_constraint, declared_clocks);
+              if(first) {
+                *out.dbms->front() = negated_dbm;
+                first = false;
           } else {
-            myList->addDBM(tempDBM);
+                out.addDBM(negated_dbm);
           }
         }
       }
     }
-
-    if(hasAConstraint) {
-      myList->setIsCfFalse();
-    } else {
-      // Set to Empty DBM
-      DBM emptyDBM(Y.declared_clocks());
-
-      for (DBM::size_type i = 1; i < Y.clocks_size(); i++) {
-        emptyDBM.addConstraint(i, 0, 0);
-        emptyDBM.addConstraint(0, i, 0);
-        emptyDBM.addConstraint(0, 0, 0);
       }
-      emptyDBM.cf();
-      myList = new DBMList(emptyDBM);
     }
-
-    return myList;
   }
 
   /* Now eliminate some redundant unions */
@@ -123,7 +107,7 @@ private:
 
     while (first != last) {
       // if first not included in any other DBM, keep it.
-      if(std::any_of(dbms->begin(), last, [&](const DBM* other) { return *first != other && **first <= *other; } ))
+      if(std::any_of(dbms->begin(), last, [&first](const DBM* const other) { return *first != other && **first <= *other; } ))
       {
         // remove first element
         --last;
@@ -324,47 +308,35 @@ public:
     std::vector<DBM *> *old_dbms = dbms;
 
     if (dbms->size() == 1) {
-      DBMList *complement_dbms = complementDBM(*dbms->front());
-      dbms = complement_dbms->getDBMList();
-      // The vector was a shallow copy, so delete the rest of the list
-      complement_dbms->dbms = nullptr;
-      delete complement_dbms;
+      DBMList complement_dbms((DBM(declared_clocks)));
+      complement_dbms.makeEmpty();
+      complementDBM(complement_dbms, *dbms->front());
+      dbms = complement_dbms.getDBMList();
+      complement_dbms.dbms = nullptr;
+      isCf = complement_dbms.isInCf();
     } else {
       // First compute all complements
-      std::vector<DBMList *> dbm_complements;
-      dbm_complements.reserve(dbms->size());
-      for (const DBM* const dbm: *dbms) {
-        dbm_complements.push_back(complementDBM(*dbm));
+      std::vector<DBM*>::const_iterator dbm_it = old_dbms->begin();
+      DBMList first_complement_dbms((DBM(declared_clocks)));
+      first_complement_dbms.makeEmpty();
+      complementDBM(first_complement_dbms, **dbm_it);
+      dbms = first_complement_dbms.getDBMList();
+      first_complement_dbms.dbms = nullptr;
+      isCf = first_complement_dbms.isInCf();
+
+      DBMList complement_dbms((DBM(declared_clocks)));
+      while(++dbm_it != old_dbms->end()) {
+        complement_dbms.makeEmpty();
+        complementDBM(complement_dbms, **dbm_it);
+        intersect(complement_dbms);
       }
-
-      // Make a deep copy of the DBM objects of the last complement in the vector.
-      // and store that as new dbmlist.
-      std::vector<DBM *> *last_dbm_complement = dbm_complements.back()->getDBMList();
-      dbms = new std::vector<DBM *>;
-      deep_copy(*dbms, *last_dbm_complement);
-
-      // the last DBM in the vector is now not needed anymore, and can be deleted.
-      delete last_dbm_complement;
-      last_dbm_complement = nullptr;
-      dbm_complements.pop_back();
-
-      cf();
-      // Intersect this last complement (now stored in dbms) with all remaining complements in the vector
-      for (const DBMList* const dbms: dbm_complements) {
-        intersect(*dbms);
-      }
-      cf();
-
-      /* Delete dbm_complements */
-      delete_vector_elements(dbm_complements);
-      dbm_complements.clear();
+      cf(true);
     }
     // Now clean up DBMs used
     delete_vector_elements(*old_dbms);
     old_dbms->clear();
     delete old_dbms;
 
-    isCf = false;
     return *this;
   }
 
@@ -444,6 +416,9 @@ public:
   bool operator<=(const DBM &Y) const {
     if(emptiness()) {
     return true;
+    } else if (Y.emptiness()) {
+      assert(!emptiness());
+      return false;
     } else {
       return std::all_of(dbms->begin(), dbms->end(), [&](const DBM* dbm) { return *dbm <= Y; });
     }
@@ -461,8 +436,13 @@ public:
   bool operator<=(const DBMList &Y) const {
     if(emptiness()) {
       return true;
+    } else if (Y.emptiness()) {
+      assert(!emptiness());
+      return false;
     } else if (dbms->size() == 1) {
       return Y >= *dbms->front();
+    } else if (Y.dbms->size() == 1) {
+      return (*this) <= *Y.dbms->front();
     } else {
     // !Y
       DBMList complement(Y);
@@ -495,6 +475,9 @@ public:
   bool operator>=(const DBM &Y) const {
     if (Y.emptiness()) {
       return true;
+    } else if (emptiness()) {
+      assert(!Y.emptiness());
+      return false;
     } else if (dbms->size() == 1) {
       return *dbms->front() >= Y;
     } else {
@@ -729,7 +712,7 @@ public:
    * @note This implementation is the Floyd-Warshall Algorithm
    * for all pairs shortest paths on each of the DBMs in the DBMList,
    * followed by some simplifications.*/
-  void cf() {
+  void cf(bool no_remove_contained_dbms = false) {
     /* Check that the DBM is in Canonical Form, and
      * do nothing if it is */
     if (!isCf) {
@@ -737,9 +720,11 @@ public:
           [](DBM* d){ d->cf(); });
 
       remove_empty_dbms();
+      if(!no_remove_contained_dbms) {
       remove_contained_dbms();
+      }
 
-      isCf = true; // the DBM is now in Canonical Form
+      isCf = true; // the DBMList is now in Canonical Form
     }
   }
 
@@ -750,8 +735,9 @@ public:
    * is in canonical form.
    * @return [None] */
   void makeEmpty() {
-    std::for_each(++dbms->begin(), dbms->end(), [](DBM* d) { delete d; });
-    dbms->erase(++dbms->begin(), dbms->end());
+    assert(dbms->begin() != dbms->end());
+    std::for_each(++(dbms->begin()), dbms->end(), [](DBM* d) { delete d; });
+    dbms->erase(++(dbms->begin()), dbms->end());
     dbms->front()->makeEmpty();
     isCf = true;
   }

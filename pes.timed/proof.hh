@@ -897,17 +897,10 @@ inline bool prover::do_proof_or(const SubstList& discrete_state,
 
     // Reset place parent to nullptr
     parentPlaceRef = nullptr;
-    if (placeholder2.emptiness()) {
-      retVal = false;
-    } else if (placeholder2 >= zone) {
-      retVal = true;
-    } else {
-      placeholder2.addDBMList(placeholder1); // here placeholder2 is placeholder
-                                             // \phi_{\lor} from [FC14]
+    placeholder2.union_(placeholder1);
       retVal = placeholder2 >= zone; // if the union of both placeholders covers
                                      // the set of states, we are still happy
     }
-  }
   return retVal;
 }
 
@@ -1145,7 +1138,7 @@ inline bool prover::do_proof_exists(const SubstList& discrete_state,
   assert(placeholder <= placeholder_dbg_copy);
 
   placeholder.pre();
-  placeholder.cf();
+  placeholder.cf(true);
   bool retVal = placeholder >= zone;
 
   if (cpplogEnabled(cpplogging::debug)) {
@@ -1537,7 +1530,7 @@ inline bool prover::do_proof_existact(const SubstList& discrete_state,
 
     // Reset place parent to nullptr
     parentPlaceRef = nullptr;
-    placeholder.union_(guard_placeholder);
+    placeholder.union_(guard_placeholder); // union more efficient than addDBMList here in general.
     placeholder.cf();
     if(placeholder >= zone) {
       // The entire left hand side side is covered, we're done.
@@ -1545,6 +1538,7 @@ inline bool prover::do_proof_existact(const SubstList& discrete_state,
       break;
     }
   }
+  placeholder.cf();
 
   retVal = retVal || placeholder >= zone;
 
@@ -2520,8 +2514,8 @@ inline void prover::do_proof_place_allact(const SubstList& discrete_state,
         place->makeEmpty();
         break;
       } else {
-        transition_placeholder.union_(not_invariant_zone);
-        transition_placeholder.union_(guard_placeholder);
+        transition_placeholder.addDBMList(not_invariant_zone); // no need to perform union_ since we intersect anyway
+        transition_placeholder.addDBMList(guard_placeholder);
         place->intersect(transition_placeholder);
       }
     } else { // !guard_satisfied
@@ -2623,12 +2617,13 @@ inline void prover::do_proof_place_existact(const SubstList& discrete_state,
     do_proof_place(discrete_state, guard_zone, &guard_placeholder, *transition->getRightExpr());
     guard_placeholder.cf();
 
-    result.union_(guard_placeholder);
-    result.cf();
+    result.addDBMList(guard_placeholder); // no union here, it is inefficient; also, no need to make a cf()
+    //result.cf();
     /*if(result >= *place || result >= zone) {
       break;
     }*/
   }
+  result.cf();
 
   cpplog(cpplogging::debug)
       << "\t --- end of EXISTACT. Returned plhold: " << result
