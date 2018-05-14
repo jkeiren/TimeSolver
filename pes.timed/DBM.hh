@@ -174,7 +174,7 @@ public:
  * For performance reasons, each clock is represented as a
  * clock_value_t of 13 bits, (#, op). # is the 12-bit non-negative
  * integer value and op is in {<,<=}. For the last (rightmost) bit:
- * 0: <. 1: <=. For the 12-bit integer value, Infinity is represented as 0xFFF.
+ * 0: <. 1: <=. For the 12-bit integer value, Infinity is represented as infinity_bound.
  * @author Peter Fontana, Dezhuang Zhang, and Rance Cleaveland.
  * @version 1.1
  * @note Many functions are inlined for better performance.
@@ -193,19 +193,19 @@ private:
     assert(row < clocks_size());
     assert(col < clocks_size());
     const size_type index = (row * clocks_size()) + col;
-    return index * sizeof(clock_value_t);
+    return index * sizeof(raw_constraint_t);
   }
 
-  const clock_value_t* cell(const size_type row, const size_type col) const {
+  const raw_constraint_t* cell(const size_type row, const size_type col) const {
     assert(row < clocks_size());
     assert(col < clocks_size());
-    return (clock_value_t*)&(storage[offset(row,col)]);
+    return (raw_constraint_t*)&(storage[offset(row,col)]);
   }
 
-  clock_value_t* cell(const size_type row, const size_type col) {
+  raw_constraint_t* cell(const size_type row, const size_type col) {
     assert(row < clocks_size());
     assert(col < clocks_size());
-    return (clock_value_t *)&(storage[offset(row,col)]);
+    return (raw_constraint_t*)&(storage[offset(row,col)]);
   }
 
   /** The private method is used to read a value of a
@@ -217,7 +217,7 @@ private:
    * @param col The second clock, or the column clock,
    * with 0 being the first column.
    * @return The value of the upper bound constraint on row - col. */
-  clock_value_t operatorRead(const size_type row, const size_type col) const {
+  raw_constraint_t operatorRead(const size_type row, const size_type col) const {
     assert(row < clocks_size());
     assert(col < clocks_size());
     return *cell(row,col);
@@ -235,7 +235,7 @@ private:
    * with 0 being the first column.
    * @return A reference to the element indexed at the row "row" and column
    * "col". A reference is returned to allow the constraint to be changed. */
-  clock_value_t &operatorWrite(const size_type row, const size_type col) {
+  raw_constraint_t &operatorWrite(const size_type row, const size_type col) {
     assert(row < clocks_size());
     assert(col < clocks_size());
     /* Indexes are zero based */
@@ -299,7 +299,7 @@ public:
    * @param val The value constraining the upper bound of row - col.
    * @return [Constructor] */
   DBM(const size_type row, const size_type col,
-      const clock_value_t val, const bidirectional_map<std::string, int> &cs)
+      const raw_constraint_t val, const bidirectional_map<std::string, int> &cs)
       : OneDIntArray((cs.size()+1) * (cs.size()+1)),
         declared_clocks_(cs) {
     for (size_type i = 0; i < clocks_size(); ++i) {
@@ -352,7 +352,7 @@ public:
    * @param col The second clock, or the column clock,
    * with 0 being the first column.
    * @return The value of the upper bound constraint on row - col. */
-  clock_value_t operator()(const size_type row, const size_type col) const {
+  raw_constraint_t operator()(const size_type row, const size_type col) const {
     // Indexes are zero based
     /* Give out of bounds check for public method */
     if (row >= clocks_size() || col >= clocks_size()) {
@@ -375,7 +375,7 @@ public:
    * @param val The new 13-bit value for the upper bound of row - col.
    * @return None*/
   void addConstraint(const size_type row, const size_type col,
-                     const clock_value_t val) {
+                     const raw_constraint_t val) {
     /* Give out of bounds check for public method */
     if (row >= clocks_size() || col >= clocks_size()) {
       std::cerr << "clocks_size() : " << clocks_size() << " row : " << row
@@ -384,7 +384,7 @@ public:
       exit(-1);
     }
 
-    clock_value_t *p = cell(row, col);
+    raw_constraint_t *p = cell(row, col);
     // Dereference p and make assignment
     *p = val;
 
@@ -418,7 +418,7 @@ public:
     assert(clocks_size() == Y.clocks_size());
     assert(declared_clocks() == Y.declared_clocks());
     quantity = Y.quantity;
-    memcpy(storage, Y.storage, quantity * sizeof(clock_value_t));
+    memcpy(storage, Y.storage, quantity * sizeof(raw_constraint_t));
 
     isCf = Y.isCf;
     return *this;
@@ -453,7 +453,7 @@ public:
    * @param Y (&) The right DBM.
    * @return true: *this <= Y; false: otherwise. */
   bool operator<=(const DBM &Y) const {
-    return compare(Y, std::greater<clock_value_t>());
+    return compare(Y, std::greater<raw_constraint_t>());
   }
 
   /** Performs superset checks; X >= Y if and only
@@ -463,7 +463,7 @@ public:
    * @return true: the calling DBM is a superset of Y,
    * false: otherwise */
   bool operator>=(const DBM &Y) const {
-    return compare(Y, std::less<clock_value_t>());
+    return compare(Y, std::less<raw_constraint_t>());
   }
 
   /** Performs equality checks;
@@ -475,7 +475,7 @@ public:
    * @param Y (&) The right DBM
    * @return true: the calling DBM equals Y, false: otherwise. */
   bool operator==(const DBM &Y) const {
-    return compare(Y, std::not_equal_to<clock_value_t>());
+    return compare(Y, std::not_equal_to<raw_constraint_t>());
   }
 
   /** Checks and returns the relation comparing the calling DBM
@@ -681,7 +681,7 @@ public:
             /* Note that if we are here for constraint (i,j),
              * we will get here in constraint (j,i) */
 
-            clock_value_t tempInt = operatorRead(i, j);
+            raw_constraint_t tempInt = operatorRead(i, j);
             if ((tempInt >> 1) < 0 ||
                 ((tempInt >> 1) == 0 && (tempInt & 0x1) == 0)) {
               // Make an empty DBM
@@ -707,7 +707,7 @@ public:
     /* Handle Single clock constraints last. */
     for (size_type i = 1; i < clocks_size(); ++i) {
       if (prs.getc(i)) {
-        clock_value_t tempIntG = operatorRead(0, i);
+        raw_constraint_t tempIntG = operatorRead(0, i);
         // For upper bound constraints, only invalidate if strictly
         // less than 0
         if ((tempIntG >> 1) < 0) {
@@ -718,7 +718,7 @@ public:
           isCf = false;
           return *this;
         }
-        clock_value_t tempIntL = operatorRead(i, 0);
+        raw_constraint_t tempIntL = operatorRead(i, 0);
         if ((tempIntL >> 1) < 0) {
           // Make an empty DBM
           operatorWrite(i, 0) = 0;
@@ -807,11 +807,11 @@ public:
    * @return none
    * @note This only works when the timed automaton is "diagonal-free,"
    * or does not have any clock difference constraints in the automaton. */
-  void bound(const clock_value_t maxc) {
+  void bound(const bound_t maxc) {
     // Is this method correct (?) Should it also be loosening
     // clock differences based on single clock constraints?
     for (size_type i = 1; i < clocks_size(); ++i) {
-      clock_value_t iRow = (operatorRead(i, 0) >> 1);
+      bound_t iRow = (operatorRead(i, 0) >> 1);
       /* Sets any individual upper bound clock constraint
        * that exceeds the const maxc
        * to infinity, and sets all clock differences involving
@@ -894,19 +894,19 @@ public:
         }
         for (size_type i = 0; i < clocks_size(); ++i) {
           for (size_type j = 0; j < clocks_size(); ++j) {
-            const clock_value_t wholeVal_ik = operatorRead(i, k);
-            const clock_value_t wholeVal_kj = operatorRead(k, j);
-            const clock_value_t wholeVal_ij = operatorRead(i, j);
+            const raw_constraint_t wholeVal_ik = operatorRead(i, k);
+            const raw_constraint_t wholeVal_kj = operatorRead(k, j);
+            const raw_constraint_t wholeVal_ij = operatorRead(i, j);
             /* Postive overflow potential here:
              * how to we deal with it?
              * One option: check for >= 0xFFF instead
              * of 0xFFF, but that fixes nothing. */
-            clock_value_t val = 0xFFF;
+            bound_t val = 0xFFF;
             if ((wholeVal_ik >> 1) != 0xFFF && (wholeVal_kj >> 1) != 0xFFF) {
               val = (wholeVal_ik >> 1) + (wholeVal_kj >> 1);
             }
 
-            const clock_value_t origVal = wholeVal_ij >> 1;
+            const bound_t origVal = wholeVal_ij >> 1;
             /* Correction by Peter Fontana to check for negative overflow */
             if (val < origVal) {
               // Make D(i,j) = D(i, k) + D(k, j)
@@ -950,7 +950,7 @@ public:
      * an O(n^2) version was previously used to handle overflow possibilities
      * from a model with different semantics. */
     for (size_type i = 0; i < clocks_size(); ++i) {
-      const clock_value_t rv = operatorRead(i, i);
+      const raw_constraint_t rv = operatorRead(i, i);
       if (((rv >> 1) < 0) || (((rv >> 1) == 0) && ((rv & zero(false)) == 0))) {
         return true;
       }
@@ -966,7 +966,7 @@ public:
    * otherwise. */
   bool hasUpperConstraint() const {
     for (size_type i = 1; i < clocks_size(); ++i) {
-      clock_value_t cons = operatorRead(i, 0);
+      raw_constraint_t cons = operatorRead(i, 0);
       if ((cons >> 1) != 0xFFF) {
         return true;
       }
@@ -982,7 +982,7 @@ public:
   void closure() {
     for (size_type i = 0; i < clocks_size(); ++i) {
       for (size_type j = 0; j < clocks_size(); ++j) {
-        if (i != j && (operatorRead(i, j) >> 1) != 0xFFF) {
+        if (i != j && (operatorRead(i, j) >> 1) != infinity_bound) {
           operatorWrite(i, j) = operatorRead(i, j) | 0x1;
         }
       }
@@ -997,7 +997,7 @@ public:
   void closureRev() {
     for (size_type i = 0; i < clocks_size(); ++i)
       for (size_type j = 0; j < clocks_size(); ++j) {
-        if (i != j && (operatorRead(i, j) >> 1) != 0xFFF) {
+        if (i != j && (operatorRead(i, j) >> 1) != infinity_bound) {
           operatorWrite(i, j) = ((operatorRead(i, j) >> 1) << 1);
         }
       }
@@ -1011,7 +1011,7 @@ public:
   void predClosureRev() {
     for (size_type i = 1; i < clocks_size(); ++i) // difference with predClosure: start at 1
       for (size_type j = 0; j < clocks_size(); ++j) {
-        if (i != j && (operatorRead(i, j) >> 1) != 0xFFF) {
+        if (i != j && (operatorRead(i, j) >> 1) != infinity_bound) {
           operatorWrite(i, j) = ((operatorRead(i, j) >> 1) << 1);
         }
       }
@@ -1032,12 +1032,12 @@ public:
         if (i == j) {
           continue;
         }
-        clock_value_t val = operatorRead(i, j) >> 1;
-        if (val == 0xFFF) {
+        bound_t val = constraint_to_bound(operatorRead(i, j));
+        if (val == infinity_bound) {
           continue;
         }
-        clock_value_t type = operatorRead(i, j) & 0x1;
-        if (i == 0 && val == 0 && type == 1) {
+        strictness_t type = constraint_to_strictness(operatorRead(i, j));
+        if (i == 0 && val == 0 && type == weak) {
           continue;
         }
         isAllImplicit = false;
