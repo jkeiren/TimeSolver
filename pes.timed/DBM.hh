@@ -892,22 +892,22 @@ public:
              * how to we deal with it?
              * One option: check for >= 0xFFF instead
              * of 0xFFF, but that fixes nothing. */
-            bound_t bound_i_j_k = infinity_bound;
-            if (raw_i_k != infinity && raw_k_j != infinity) {
-              bound_i_j_k = constraint_to_bound(raw_i_k) + constraint_to_bound(raw_k_j);
-            }
+            const bound_t bound_i_j_k = (raw_i_k == infinity || raw_k_j == infinity)
+                ? infinity_bound
+                : constraint_to_bound(raw_i_k) + constraint_to_bound(raw_k_j);
 
             const bound_t bound_i_j = constraint_to_bound(raw_i_j);
             /* Correction by Peter Fontana to check for negative overflow */
             if (bound_i_j_k < bound_i_j) {
               // Make D(i,j) = D(i, k) + D(k, j)
               // Gets the < or <= operator correct
-              operatorWrite(i, j) = (bound_i_j_k << 1) + ((raw_i_k & 0x1) & (raw_k_j & 0x1));
-            } else if (bound_i_j_k == bound_i_j && bound_i_j_k != 0xFFF) {
+              const strictness_t strict_i_j_k = add_constraint_strictness(raw_i_k, raw_k_j);
+              operatorWrite(i, j) = bound_to_constraint(bound_i_j_k, strict_i_j_k);
+            } else if (bound_i_j_k == bound_i_j && bound_i_j_k != infinity_bound) {
                 /* Take out infinity comparison and see what happens ...  * Note:
                  * it slows performance, so keep non-overflow check in. */
-              operatorWrite(i, j) = (bound_i_j_k << 1) + ((raw_i_k & 0x1) & (raw_k_j & 0x1) &
-                                                  (raw_i_j & 0x1));
+              const strictness_t strictness = add_constraint_strictness(raw_i_k, raw_k_j, raw_i_j);
+              operatorWrite(i, j) = bound_to_constraint(bound_i_j_k, strictness);
             } // value stays d(i,j) otherwise
           }
         }
