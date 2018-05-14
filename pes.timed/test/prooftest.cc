@@ -99,17 +99,17 @@ TEST(ProofTest, ExistsRelTestFalse)
   placeholder.cf();
 
   DBM minimum_region(p.clocks());
-  minimum_region.addConstraint(1,0, clock_value(2, false));
-  minimum_region.addConstraint(2,0, clock_value(1, false));
-  minimum_region.addConstraint(1,2, clock_value(0, false));
+  minimum_region.addConstraint(1,0, bound_to_constraint(2, weak));
+  minimum_region.addConstraint(2,0, bound_to_constraint(1, weak));
+  minimum_region.addConstraint(1,2, bound_to_constraint(0, weak));
 
   DBM maximum_region1(p.clocks());
-  maximum_region1.addConstraint(2,0, clock_value(3, false));
-  maximum_region1.addConstraint(1,2, clock_value(0, false));
+  maximum_region1.addConstraint(2,0, bound_to_constraint(3, weak));
+  maximum_region1.addConstraint(1,2, bound_to_constraint(0, weak));
 
   DBM maximum_region2(p.clocks());
-  maximum_region2.addConstraint(2,0, clock_value(3, false));
-  maximum_region2.addConstraint(2,1, clock_value(-2, false));
+  maximum_region2.addConstraint(2,0, bound_to_constraint(3, weak));
+  maximum_region2.addConstraint(2,1, bound_to_constraint(-2, weak));
 
   DBMList minimum_placeholder(minimum_region);
   minimum_placeholder.cf();
@@ -159,12 +159,12 @@ TEST(ProofTest, ExistsRelTestTrue)
   placeholder.cf();
 
   DBM minimum_region(p.clocks());
-  minimum_region.addConstraint(1,0, clock_value(2, false));
-  minimum_region.addConstraint(2,0, clock_value(1, false));
-  minimum_region.addConstraint(1,2, clock_value(0, false));
+  minimum_region.addConstraint(1,0, bound_to_constraint(2, weak));
+  minimum_region.addConstraint(2,0, bound_to_constraint(1, weak));
+  minimum_region.addConstraint(1,2, bound_to_constraint(0, weak));
 
   DBM maximum_region(p.clocks());
-  maximum_region.addConstraint(2,0, clock_value(3, false));
+  maximum_region.addConstraint(2,0, bound_to_constraint(3, weak));
 
   DBMList minimum_placeholder(minimum_region);
   minimum_placeholder.cf();

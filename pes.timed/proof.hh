@@ -1368,7 +1368,7 @@ inline bool prover::do_proof_allact(const SubstList& discrete_state,
       // If he invariant of the target location is non-vacuous, compute the weakest precondition
       // and intersect with the guard.
       if (has_nonvacuous_invariant) {
-        assert(invariant_zone.IsInCf());
+        invariant_zone.cf();
         // Some clocks are reset on this transition
         const ClockSet* reset_clocks = transition->reset_clocks();
         if (reset_clocks != nullptr) {

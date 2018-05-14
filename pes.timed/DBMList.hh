@@ -64,23 +64,20 @@ private:
     } else {
       bool first = true;
       if(!Y.emptiness()) {
-    /* Check for infinity DBM */
-    for (DBM::size_type i = 0; i < Y.clocks_size(); i++) {
-      for (DBM::size_type j = 0; j < Y.clocks_size(); j++) {
-        if (!(Y.isConstraintImplicit(i, j))) {
-              const clock_value_t raw_constraint = Y(i, j);
-              const clock_value_t sign = (raw_constraint & 0x1) ^ 0x1; // sign of new constraint
-              const clock_value_t negated_raw_constraint = ((-(raw_constraint >> 1)) << 1)|sign;
-              const DBM negated_dbm(j, i, negated_raw_constraint, declared_clocks);
+        /* Check for infinity DBM */
+        for (DBM::size_type i = 0; i < Y.clocks_size(); i++) {
+          for (DBM::size_type j = 0; j < Y.clocks_size(); j++) {
+            if (!(Y.isConstraintImplicit(i, j))) {
+              const DBM negated_dbm(j, i, negate_constraint(Y(i,j)), declared_clocks);
               if(first) {
                 *out.dbms->front() = negated_dbm;
                 first = false;
-          } else {
+              } else {
                 out.addDBM(negated_dbm);
+              }
+            }
           }
         }
-      }
-    }
       }
     }
   }
@@ -686,7 +683,7 @@ public:
    * @return none
    * @note This only works when the timed automaton is "diagonal-free,"
    * or does not have any clock difference constraints in the automaton. */
-  void bound(const clock_value_t maxc) {
+  void bound(const bound_t maxc) {
     std::for_each(dbms->begin(), dbms->end(),
         [&](DBM* d){ d->bound(maxc); });
     isCf = false;

@@ -51,15 +51,15 @@ inline
 DBM testDBM1()
 {
     DBM testDBM1(make_c2());
-    testDBM1.addConstraint(0,0, zero(false));
-    testDBM1.addConstraint(0,1, clock_value(-1, false));
-    testDBM1.addConstraint(0,2, clock_value(-5, false));
-    testDBM1.addConstraint(1,0, clock_value(3, false));
-    testDBM1.addConstraint(1,1, zero(false));
-    testDBM1.addConstraint(1,2, infinity(true));
-    testDBM1.addConstraint(2,0, clock_value(7, false));
-    testDBM1.addConstraint(2,1, infinity(true));
-    testDBM1.addConstraint(2,2, zero(false));
+    testDBM1.addConstraint(0,0, zero_le);
+    testDBM1.addConstraint(0,1, bound_to_constraint(-1, weak));
+    testDBM1.addConstraint(0,2, bound_to_constraint(-5, weak));
+    testDBM1.addConstraint(1,0, bound_to_constraint(3, weak));
+    testDBM1.addConstraint(1,1, zero_le);
+    testDBM1.addConstraint(1,2, infinity);
+    testDBM1.addConstraint(2,0, bound_to_constraint(7, weak));
+    testDBM1.addConstraint(2,1, infinity);
+    testDBM1.addConstraint(2,2, zero_le);
     return testDBM1;
 }
 
@@ -68,15 +68,15 @@ DBM testDBM1cf()
 {
     // DBM in canonical form (expected result)
     DBM expected(make_c2());
-    expected.addConstraint(0,0, zero(false));
-    expected.addConstraint(0,1, clock_value(-1, false));
-    expected.addConstraint(0,2, clock_value(-5, false));
-    expected.addConstraint(1,0, clock_value(3, false));
-    expected.addConstraint(1,1, zero(false));
-    expected.addConstraint(1,2, clock_value(-2, false));
-    expected.addConstraint(2,0, clock_value(7, false));
-    expected.addConstraint(2,1, clock_value(6, false));
-    expected.addConstraint(2,2, zero(false));
+    expected.addConstraint(0,0, zero_le);
+    expected.addConstraint(0,1, bound_to_constraint(-1, weak));
+    expected.addConstraint(0,2, bound_to_constraint(-5, weak));
+    expected.addConstraint(1,0, bound_to_constraint(3, weak));
+    expected.addConstraint(1,1, zero_le);
+    expected.addConstraint(1,2, bound_to_constraint(-2, weak));
+    expected.addConstraint(2,0, bound_to_constraint(7, weak));
+    expected.addConstraint(2,1, bound_to_constraint(6, weak));
+    expected.addConstraint(2,2, zero_le);
     return expected;
 }
 
@@ -84,15 +84,15 @@ inline
 DBM testDBM1pre()
 {
     DBM expected(make_c2());
-    expected.addConstraint(0,0, zero(false));
-    expected.addConstraint(0,1, zero(false));
-    expected.addConstraint(0,2, zero(false));
-    expected.addConstraint(1,0, clock_value(3, false));
-    expected.addConstraint(1,1, zero(false));
-    expected.addConstraint(1,2, infinity(true));
-    expected.addConstraint(2,0, clock_value(7, false));
-    expected.addConstraint(2,1, infinity(true));
-    expected.addConstraint(2,2, zero(false));
+    expected.addConstraint(0,0, zero_le);
+    expected.addConstraint(0,1, zero_le);
+    expected.addConstraint(0,2, zero_le);
+    expected.addConstraint(1,0, bound_to_constraint(3, weak));
+    expected.addConstraint(1,1, zero_le);
+    expected.addConstraint(1,2, infinity);
+    expected.addConstraint(2,0, bound_to_constraint(7, weak));
+    expected.addConstraint(2,1, infinity);
+    expected.addConstraint(2,2, zero_le);
     return expected;
 }
 
@@ -100,15 +100,15 @@ inline
 DBM testDBM1precf()
 {
     DBM expected(make_c2());
-    expected.addConstraint(0,0, zero(false));
-    expected.addConstraint(0,1, zero(false));
-    expected.addConstraint(0,2, zero(false));
-    expected.addConstraint(1,0, clock_value(3, false));
-    expected.addConstraint(1,1, zero(false));
-    expected.addConstraint(1,2, clock_value(3, false));
-    expected.addConstraint(2,0, clock_value(7, false));
-    expected.addConstraint(2,1, clock_value(7, false));
-    expected.addConstraint(2,2, zero(false));
+    expected.addConstraint(0,0, zero_le);
+    expected.addConstraint(0,1, zero_le);
+    expected.addConstraint(0,2, zero_le);
+    expected.addConstraint(1,0, bound_to_constraint(3, weak));
+    expected.addConstraint(1,1, zero_le);
+    expected.addConstraint(1,2, bound_to_constraint(3, weak));
+    expected.addConstraint(2,0, bound_to_constraint(7, weak));
+    expected.addConstraint(2,1, bound_to_constraint(7, weak));
+    expected.addConstraint(2,2, zero_le);
     return expected;
 }
 
