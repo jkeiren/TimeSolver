@@ -18,18 +18,7 @@
 #include <vector>
 #include "OneDIntArray.hh"
 #include "bidirectional_map.hh"
-
-typedef short int clock_value_t;
-
-inline
-clock_value_t infinity(bool strict)
-{
-  if(strict) {
-    return 0xFFF << 1;
-  } else {
-    return (0XFFF << 1) + 1;
-  }
-}
+#include "constraints.hh"
 
 inline
 clock_value_t zero(bool strict)
@@ -289,7 +278,7 @@ public:
         declared_clocks_(cs) {
     for (size_type i = 0; i < clocks_size(); ++i) {
       for (size_type j = 0; j < clocks_size(); ++j) {
-        operatorWrite(i, j) = infinity(true);
+        operatorWrite(i, j) = infinity;
         if (i == 0 || i == j) {
           operatorWrite(i, j) = zero(false);
         }
@@ -318,7 +307,7 @@ public:
         if (i == 0 || i == j) {
           operatorWrite(i, j) = zero(false);
         } else {
-          operatorWrite(i, j) = infinity(true);
+          operatorWrite(i, j) = infinity;
         }
       }
     }
@@ -417,7 +406,7 @@ public:
     if (row == 0 || row == col) {
       return (operatorRead(row, col)) == zero(false);
     } else {
-      return (operatorRead(row, col)) == infinity(true);
+      return (operatorRead(row, col)) == infinity;
     }
   }
 
@@ -523,7 +512,7 @@ public:
   DBM &suc() {
     // We start i at 1 because (0,0) isn't a clock
     for (size_type i = 1; i < clocks_size(); ++i) {
-      operatorWrite(i, 0) = infinity(true);
+      operatorWrite(i, 0) = infinity;
     }
     return *this;
   }
@@ -660,11 +649,11 @@ public:
     // are reset by x
     for (size_type i = 1; i < clocks_size(); ++i) {
       if (i != x) {
-        operatorWrite(x, i) = infinity(true);
+        operatorWrite(x, i) = infinity;
         operatorWrite(i, x) = operatorRead(i, 0);
       }
     }
-    operatorWrite(x, 0) = infinity(true);
+    operatorWrite(x, 0) = infinity;
     operatorWrite(0, x) = zero(false);
     isCf = false;
     return *this;
@@ -703,13 +692,13 @@ public:
               return *this;
             }
             // If both clocks are reset then their difference does not matter
-            operatorWrite(i, j) = infinity(true);
+            operatorWrite(i, j) = infinity;
           } else if (prs.getc(i)) {
             operatorWrite(0, j) = std::min(operatorRead(0, j), operatorRead(i, j));
-            operatorWrite(i, j) = infinity(true);
+            operatorWrite(i, j) = infinity;
           } else if (prs.getc(j)) {
             operatorWrite(i, 0) = std::min(operatorRead(i, 0), operatorRead(i, j));
-            operatorWrite(i, j) = infinity(true);
+            operatorWrite(i, j) = infinity;
           } // Do nothing if neither clock is reset
         }
 
@@ -739,7 +728,7 @@ public:
           return *this;
         }
 
-        operatorWrite(i, 0) = infinity(true);
+        operatorWrite(i, 0) = infinity;
         operatorWrite(0, i) = zero(false);
       }
     }
@@ -795,10 +784,10 @@ public:
       if (i == x) {
         continue;
       }
-      operatorWrite(x, i) = infinity(true);
+      operatorWrite(x, i) = infinity;
       operatorWrite(i, x) = operatorRead(i, 0);
     }
-    operatorWrite(x, 0) = infinity(true);
+    operatorWrite(x, 0) = infinity;
     operatorWrite(0, x) = zero(false);
     isCf = false;
     return *this;
@@ -828,10 +817,10 @@ public:
        * to infinity, and sets all clock differences involving
        * that clock as the higher clock to infinity */
       if (iRow != 0xFFF && iRow > maxc) {
-        operatorWrite(i, 0) = infinity(true);
+        operatorWrite(i, 0) = infinity;
         for (size_type j = 1; j < clocks_size(); ++j) {
           if (i != j) {
-            operatorWrite(i, j) = infinity(true);
+            operatorWrite(i, j) = infinity;
           }
         }
       }
@@ -844,7 +833,7 @@ public:
         for (size_type j = 0; j < clocks_size(); ++j) {
           if (j != i) {
             if (operatorRead(j, 0) >> 1 == 0xFFF) {
-              operatorWrite(j, i) = infinity(true);
+              operatorWrite(j, i) = infinity;
 
             } else {
               operatorWrite(j, i) =

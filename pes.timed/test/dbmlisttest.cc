@@ -194,10 +194,10 @@ TEST(DBMListTest, CanonicalDBMList5)
     testDBM6cf.addConstraint(0,0, zero(false));
     testDBM6cf.addConstraint(0,1, zero(true));
     testDBM6cf.addConstraint(0,2, zero(false));
-    testDBM6cf.addConstraint(1,0, infinity(true));
+    testDBM6cf.addConstraint(1,0, infinity);
     testDBM6cf.addConstraint(1,1, zero(false));
-    testDBM6cf.addConstraint(1,2, infinity(true));
-    testDBM6cf.addConstraint(2,0, infinity(true));
+    testDBM6cf.addConstraint(1,2, infinity);
+    testDBM6cf.addConstraint(2,0, infinity);
     testDBM6cf.addConstraint(2,1, zero(true));
     testDBM6cf.addConstraint(2,2, zero(false));
 

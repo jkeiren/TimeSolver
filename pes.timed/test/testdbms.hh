@@ -56,9 +56,9 @@ DBM testDBM1()
     testDBM1.addConstraint(0,2, clock_value(-5, false));
     testDBM1.addConstraint(1,0, clock_value(3, false));
     testDBM1.addConstraint(1,1, zero(false));
-    testDBM1.addConstraint(1,2, infinity(true));
+    testDBM1.addConstraint(1,2, infinity);
     testDBM1.addConstraint(2,0, clock_value(7, false));
-    testDBM1.addConstraint(2,1, infinity(true));
+    testDBM1.addConstraint(2,1, infinity);
     testDBM1.addConstraint(2,2, zero(false));
     return testDBM1;
 }
@@ -89,9 +89,9 @@ DBM testDBM1pre()
     expected.addConstraint(0,2, zero(false));
     expected.addConstraint(1,0, clock_value(3, false));
     expected.addConstraint(1,1, zero(false));
-    expected.addConstraint(1,2, infinity(true));
+    expected.addConstraint(1,2, infinity);
     expected.addConstraint(2,0, clock_value(7, false));
-    expected.addConstraint(2,1, infinity(true));
+    expected.addConstraint(2,1, infinity);
     expected.addConstraint(2,2, zero(false));
     return expected;
 }
