@@ -672,13 +672,12 @@ public:
             /* Note that if we are here for constraint (i,j),
              * we will get here in constraint (j,i) */
 
-            raw_constraint_t tempInt = operatorRead(i, j);
-            if ((tempInt >> 1) < 0 ||
-                ((tempInt >> 1) == 0 && (tempInt & 0x1) == 0)) {
+            const raw_constraint_t raw_i_j = operatorRead(i, j);
+            if (constraint_to_bound(raw_i_j) < 0 || raw_i_j == zero_less) {
               // Make an empty DBM
-              operatorWrite(i, 0) = 0;
-              operatorWrite(0, i) = 0;
-              operatorWrite(0, 0) = 0;
+              operatorWrite(i, 0) = zero_less;
+              operatorWrite(0, i) = zero_less;
+              operatorWrite(0, 0) = zero_less;
               isCf = false;
               return *this;
             }
@@ -698,23 +697,23 @@ public:
     /* Handle Single clock constraints last. */
     for (size_type i = 1; i < clocks_size(); ++i) {
       if (prs.getc(i)) {
-        raw_constraint_t tempIntG = operatorRead(0, i);
+        const raw_constraint_t raw_0_i = operatorRead(0, i);
         // For upper bound constraints, only invalidate if strictly
         // less than 0
-        if ((tempIntG >> 1) < 0) {
+        if (constraint_to_bound(raw_0_i) < 0) {
           // Make an empty DBM
-          operatorWrite(i, 0) = 0;
-          operatorWrite(0, i) = 0;
-          operatorWrite(0, 0) = 0;
+          operatorWrite(i, 0) = zero_less;
+          operatorWrite(0, i) = zero_less;
+          operatorWrite(0, 0) = zero_less;
           isCf = false;
           return *this;
         }
-        raw_constraint_t tempIntL = operatorRead(i, 0);
-        if ((tempIntL >> 1) < 0) {
+        const raw_constraint_t raw_i_0 = operatorRead(i, 0);
+        if (constraint_to_bound(raw_i_0) < 0) {
           // Make an empty DBM
-          operatorWrite(i, 0) = 0;
-          operatorWrite(0, i) = 0;
-          operatorWrite(0, 0) = 0;
+          operatorWrite(i, 0) = zero_less;
+          operatorWrite(0, i) = zero_less;
+          operatorWrite(0, 0) = zero_less;
           isCf = false;
           return *this;
         }
