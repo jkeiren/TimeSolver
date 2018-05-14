@@ -908,7 +908,7 @@ public:
   void makeEmpty() {
     for (size_type i = 0; i < clocks_size(); ++i) {
       for (size_type j = 0; j < clocks_size(); ++j) {
-        operatorWrite(i, j) = 0x0;
+        operatorWrite(i, j) = zero_less;
       }
     }
     isCf = true;
@@ -924,8 +924,8 @@ public:
      * an O(n^2) version was previously used to handle overflow possibilities
      * from a model with different semantics. */
     for (size_type i = 0; i < clocks_size(); ++i) {
-      const raw_constraint_t rv = operatorRead(i, i);
-      if (((rv >> 1) < 0) || (((rv >> 1) == 0) && ((rv & zero_le) == 0))) {
+      const raw_constraint_t raw_i_i = operatorRead(i, i);
+      if (constraint_to_bound(raw_i_i) < 0 || raw_i_i == zero_less) {
         return true;
       }
     }
@@ -940,8 +940,7 @@ public:
    * otherwise. */
   bool hasUpperConstraint() const {
     for (size_type i = 1; i < clocks_size(); ++i) {
-      raw_constraint_t cons = operatorRead(i, 0);
-      if ((cons >> 1) != 0xFFF) {
+      if (operatorRead(i,0) != infinity) {
         return true;
       }
     }
@@ -956,8 +955,9 @@ public:
   void closure() {
     for (size_type i = 0; i < clocks_size(); ++i) {
       for (size_type j = 0; j < clocks_size(); ++j) {
-        if (i != j && (operatorRead(i, j) >> 1) != infinity_bound) {
-          operatorWrite(i, j) = operatorRead(i, j) | 0x1;
+        const raw_constraint_t raw_i_j = operatorRead(i, j);
+        if (i != j && raw_i_j != infinity) {
+          operatorWrite(i, j) = make_constraint_weak(raw_i_j);
         }
       }
     }
@@ -971,8 +971,9 @@ public:
   void closureRev() {
     for (size_type i = 0; i < clocks_size(); ++i)
       for (size_type j = 0; j < clocks_size(); ++j) {
-        if (i != j && (operatorRead(i, j) >> 1) != infinity_bound) {
-          operatorWrite(i, j) = ((operatorRead(i, j) >> 1) << 1);
+        const raw_constraint_t raw_i_j = operatorRead(i, j);
+        if (i != j && raw_i_j != infinity) {
+          operatorWrite(i, j) = make_constraint_strict(raw_i_j);
         }
       }
   }
@@ -985,8 +986,9 @@ public:
   void predClosureRev() {
     for (size_type i = 1; i < clocks_size(); ++i) // difference with predClosure: start at 1
       for (size_type j = 0; j < clocks_size(); ++j) {
-        if (i != j && (operatorRead(i, j) >> 1) != infinity_bound) {
-          operatorWrite(i, j) = ((operatorRead(i, j) >> 1) << 1);
+        const raw_constraint_t raw_i_j = operatorRead(i, j);
+        if (i != j && raw_i_j != infinity) {
+          operatorWrite(i, j) = make_constraint_strict(raw_i_j);
         }
       }
   }

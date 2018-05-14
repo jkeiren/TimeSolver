@@ -42,6 +42,11 @@ strictness_t add_strictness(const strictness_t x, const strictness_t y, const st
   return static_cast<strictness_t>(x&y&z);
 }
 
+inline
+strictness_t negate_strictness(const strictness_t x)
+{
+  return static_cast<strictness_t>(x ^ weak);
+}
 
 inline
 strictness_t bool_to_strictness(const bool is_strict)
@@ -83,6 +88,24 @@ inline
 strictness_t add_constraint_strictness(const raw_constraint_t x, const raw_constraint_t y, const raw_constraint_t z)
 {
   return static_cast<strictness_t>(add_strictness(constraint_to_strictness(x),constraint_to_strictness(y), constraint_to_strictness(z)));
+}
+
+inline
+raw_constraint_t make_constraint_weak(const raw_constraint_t x)
+{
+  return x | weak;
+}
+
+inline
+raw_constraint_t make_constraint_strict(const raw_constraint_t x)
+{
+  return x & ~weak;
+}
+
+inline
+raw_constraint_t negate_constraint(const raw_constraint_t x)
+{
+  return bound_to_constraint(-constraint_to_bound(x), negate_strictness(constraint_to_strictness(x)));
 }
 
 inline

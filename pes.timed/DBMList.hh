@@ -56,24 +56,18 @@ private:
    * Does not preserve canonical form.
    * @param Y (&) The DBM to complement.
    * @return The complemented DBM, given as a DBMList. */
-  DBMList *complementDBM(const DBM &Y) {
-    if (Y.emptiness()) {
-      return new DBMList(Y.declared_clocks());
+  DBMList *complementDBM(const DBM &dbm) {
+    if (dbm.emptiness()) {
+      return new DBMList(dbm.declared_clocks());
     }
     /* Check for infinity DBM */
     bool hasAConstraint = false;
     DBMList *myList = nullptr;
-    for (DBM::size_type i = 0; i < Y.clocks_size(); i++) {
-      for (DBM::size_type j = 0; j < Y.clocks_size(); j++) {
-        if (!(Y.isConstraintImplicit(i, j))) {
+    for (DBM::size_type i = 0; i < dbm.clocks_size(); ++i) {
+      for (DBM::size_type j = 0; j < dbm.clocks_size(); ++j) {
+        if (!(dbm.isConstraintImplicit(i, j))) {
           hasAConstraint = true;
-          int tempVal = Y(i, j);
-          int tempCons = 0x1;
-          if ((tempVal & 0x1) == 0x1) {
-            tempCons = 0;
-          }
-          short int constraintVal = ((-(tempVal >> 1)) << 1) + tempCons;
-          DBM tempDBM(j, i, constraintVal, declared_clocks);
+          DBM tempDBM(j, i, negate_constraint(dbm(i,j)), declared_clocks);
           if (myList == nullptr) {
             myList = new DBMList(tempDBM);
           } else {
@@ -87,9 +81,9 @@ private:
       myList->setIsCfFalse();
     } else {
       // Set to Empty DBM
-      DBM emptyDBM(Y.declared_clocks());
+      DBM emptyDBM(dbm.declared_clocks());
 
-      for (DBM::size_type i = 1; i < Y.clocks_size(); i++) {
+      for (DBM::size_type i = 1; i < dbm.clocks_size(); i++) {
         emptyDBM.addConstraint(i, 0, 0);
         emptyDBM.addConstraint(0, i, 0);
         emptyDBM.addConstraint(0, 0, 0);
@@ -703,7 +697,7 @@ public:
    * @return none
    * @note This only works when the timed automaton is "diagonal-free,"
    * or does not have any clock difference constraints in the automaton. */
-  void bound(const clock_value_t maxc) {
+  void bound(const bound_t maxc) {
     std::for_each(dbms->begin(), dbms->end(),
         [&](DBM* d){ d->bound(maxc); });
     isCf = false;
