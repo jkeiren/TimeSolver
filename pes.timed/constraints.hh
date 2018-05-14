@@ -23,6 +23,8 @@ constexpr raw_constraint_t infinity = 0xFFF << 1;
 constexpr raw_constraint_t zero_less = 0;
 constexpr raw_constraint_t zero_le = 1;
 
+constexpr bound_t infinity_bound = 0xFFF;
+
 typedef enum {
   strict = 0,
   weak = 1
@@ -50,6 +52,12 @@ inline
 raw_constraint_t bound_to_constraint(const bound_t x, bool is_strict)
 {
   return (x << 1) & bool_to_strictness(is_strict);
+}
+
+inline
+raw_constraint_t bound_to_constraint(const bound_t x, strictness_t strictness)
+{
+  return (x << 1) & strictness;
 }
 
 inline
