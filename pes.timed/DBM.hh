@@ -774,9 +774,9 @@ public:
       if (i == x) {
         continue;
       }
-      operatorWrite(x, i) = infinity;
-      operatorWrite(i, x) = operatorRead(i, 0);
-    }
+        operatorWrite(x, i) = infinity;
+        operatorWrite(i, x) = operatorRead(i, 0);
+      }
     operatorWrite(x, 0) = infinity;
     operatorWrite(0, x) = zero_le;
     isCf = false;
@@ -801,12 +801,12 @@ public:
     // Is this method correct (?) Should it also be loosening
     // clock differences based on single clock constraints?
     for (size_type i = 1; i < clocks_size(); ++i) {
-      bound_t iRow = (operatorRead(i, 0) >> 1);
+      const bound_t bound_i_0 = constraint_to_bound(operatorRead(i, 0));
       /* Sets any individual upper bound clock constraint
        * that exceeds the const maxc
        * to infinity, and sets all clock differences involving
        * that clock as the higher clock to infinity */
-      if (iRow != 0xFFF && iRow > maxc) {
+      if (bound_i_0 != infinity_bound && bound_i_0 > maxc) {
         operatorWrite(i, 0) = infinity;
         for (size_type j = 1; j < clocks_size(); ++j) {
           if (i != j) {
@@ -819,16 +819,14 @@ public:
        * has a max value less than -maxc) to maxc (if not
        * already loosened by an upper-bound constraint) and
        * loosens the relevant clock-difference constraints */
-      if (-(operatorRead(0, i) >> 1) > maxc) {
+      const bound_t bound_0_i = constraint_to_bound(operatorRead(0, i));
+      if (-bound_0_i > maxc) {
         for (size_type j = 0; j < clocks_size(); ++j) {
           if (j != i) {
-            if (operatorRead(j, 0) >> 1 == 0xFFF) {
-              operatorWrite(j, i) = infinity;
-
-            } else {
-              operatorWrite(j, i) =
-                  ((operatorRead(j, 0) >> 1) - maxc) << 1;
-            }
+            const raw_constraint_t raw_j_0 = operatorRead(j,0);
+            operatorWrite(j, i) = (raw_j_0 == infinity)
+                ? infinity
+                : bound_to_constraint(constraint_to_bound(raw_j_0) - maxc, strict);
           }
         }
       }
@@ -842,10 +840,11 @@ public:
      * relaxing the bounds. */
     for (size_type i = 1; i < clocks_size(); ++i) {
       for (size_type j = 1; j < clocks_size(); ++j) {
-        if ((i != j) && ((operatorRead(i, j) >> 1) != 0xFFF)) {
-          if ((operatorRead(i, j) >> 1) > maxc)
-            operatorWrite(i, j) = (maxc << 1);
-          if (-(operatorRead(i, j) >> 1) > maxc)
+        const bound_t bound_i_j = constraint_to_bound(operatorRead(i, j));
+        if (i != j && bound_i_j != infinity_bound) {
+          if (bound_i_j > maxc) {
+            operatorWrite(i, j) = bound_to_constraint(maxc, strict);
+          } else if (-bound_i_j > maxc) {
             /* Considered correction to
              *  operatorWrite(i,j) = ((-maxc) << 1);
              * but they seem to be equivalent
@@ -853,7 +852,8 @@ public:
              * of negative binary numbers) and due
              * to potentially losing the sign bit,
              * this remains unchanged. */
-            operatorWrite(i, j) = -((maxc) << 1);
+            operatorWrite(i, j) = bound_to_constraint(-maxc, strict);
+          }
         }
       }
     }
