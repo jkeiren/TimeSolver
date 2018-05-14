@@ -21,12 +21,7 @@
 #include "constraints.hh"
 
 class ClockSet {
-public:
-  typedef std::size_t size_type;
-
 protected:
-  size_type num_clocks_;
-
   std::vector<bool> _data;
 
 public:
@@ -35,24 +30,20 @@ public:
    * is considered to be the first index, index 0.
    * @param bit The number (index) of the clock to initialize
    * in the set.
-   * @param numClocks The number of clocks in the set of clocks. This
+   * @param num_clocks The number of clocks in the set of clocks. This
    * number does not include the dummy "zero clock".
    * @return [Constructor]. */
-  ClockSet(const size_type bit, const size_type numClocks)
-    : num_clocks_(numClocks),
-      _data(num_clocks_ + 1, false)
+  ClockSet(const std::size_t bit, const std::size_t num_clocks)
+    : _data(num_clocks + 1, false)
   {
     assert(bit < _data.size());
     _data[bit] = true;
   }
 
   /** Copy Constructor.
-   * @param Y (&) The object to copy.
+   * @param other (&) The object to copy.
    * @return [Constructor]. */
-  ClockSet(const ClockSet &other)
-    : num_clocks_(other.num_clocks_),
-      _data(other._data)
-  {}
+  ClockSet(const ClockSet &other) = default;
 
   /** Move Constructor. */
   ClockSet(ClockSet&& other) noexcept = default;
@@ -64,7 +55,7 @@ public:
   /** This adds a clock to the clock set.
    * @param bit The index of the clock to add.
    * @return The changed ClockSet object. */
-  ClockSet *addclock(const size_type bit) {
+  ClockSet *addclock(const std::size_t bit) {
     _data[bit] = true;
     return this;
   }
@@ -79,7 +70,7 @@ public:
   void print(std::ostream &os) const {
     bool end = false;
     os << "[";
-    for (size_type i = 1; i <= num_clocks_; ++i) {
+    for (std::size_t i = 1; i < _data.size(); ++i) {
       if (_data[i]) {
         if (end) {
           os << ",";
@@ -98,7 +89,7 @@ public:
    * @param bit The index of the clock to see if it is in the
    * ClockSet.
    * @return 1: the clock bit is in the ClockSet; 0: otherwise. */
-  bool getc(const size_type bit) const {
+  bool getc(const std::size_t bit) const {
     assert(bit < _data.size());
     return _data[bit];
   }
