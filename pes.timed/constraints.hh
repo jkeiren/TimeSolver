@@ -19,11 +19,11 @@ typedef short int raw_constraint_t; // encoding of an upper bound in the TA/DBM:
 typedef short int bound_t; // integer constant, being a bound or a clock_value in the TA/DBM
 typedef bound_t clock_value_t; // values that can be attained by a clock; == bound_t
 
-constexpr raw_constraint_t infinity = 0xFFF << 1;
-constexpr raw_constraint_t zero_less = 0;
-constexpr raw_constraint_t zero_le = 1;
+const     bound_t infinity_bound = 0xFFF;
 
-constexpr bound_t infinity_bound = 0xFFF;
+constexpr raw_constraint_t infinity = infinity_bound << 1;
+const     raw_constraint_t zero_less = 0;
+const     raw_constraint_t zero_le = 1;
 
 typedef enum {
   strict = 0,
@@ -49,15 +49,9 @@ strictness_t constraint_to_strictness(const raw_constraint_t x)
 }
 
 inline
-raw_constraint_t bound_to_constraint(const bound_t x, bool is_strict)
+raw_constraint_t bound_to_constraint(const bound_t x, const strictness_t strictness)
 {
-  return (x << 1) & bool_to_strictness(is_strict);
-}
-
-inline
-raw_constraint_t bound_to_constraint(const bound_t x, strictness_t strictness)
-{
-  return (x << 1) & strictness;
+  return (x << 1) | strictness;
 }
 
 inline
