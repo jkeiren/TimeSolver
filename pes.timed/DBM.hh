@@ -612,23 +612,24 @@ public:
      * then return the emptyset.
      * Assumption made: for single clocks, there is never a negative
      * constant used*/
-    int tempIntG = operatorRead(0, x);
-    if ((tempIntG >> 1) < 0 ||
-        ((tempIntG >> 1) == 0 && (tempIntG & 0x1) == 0)) {
+    const raw_constraint_t raw_0_x = operatorRead(0, x);
+    const bound_t bound_0_x = constraint_to_bound(raw_0_x);
+    if (bound_0_x < 0 || (bound_0_x == 0 && constraint_to_strictness(raw_0_x) == strict)) {
       // Make an empty DBM
-      operatorWrite(x, 0) = 0;
-      operatorWrite(0, x) = 0;
-      operatorWrite(0, 0) = 0;
+      operatorWrite(x, 0) = zero_less;
+      operatorWrite(0, x) = zero_less;
+      operatorWrite(0, 0) = zero_less;
       isCf = false;
       return *this;
     }
-    int tempIntL = operatorRead(x, 0);
-    if ((tempIntL >> 1) < 0 ||
-        ((tempIntL >> 1) == 0 && (tempIntL & 0x1) == 0)) {
+
+    const raw_constraint_t raw_x_0 = operatorRead(x, 0);
+    const bound_t bound_x_0 = constraint_to_bound(raw_x_0);
+    if (bound_x_0 < 0 || (bound_x_0 == 0 && constraint_to_strictness(raw_x_0) == strict)) {
       // Make an empty DBM
-      operatorWrite(x, 0) = 0;
-      operatorWrite(0, x) = 0;
-      operatorWrite(0, 0) = 0;
+      operatorWrite(x, 0) = zero_less;
+      operatorWrite(0, x) = zero_less;
+      operatorWrite(0, 0) = zero_less;
       isCf = false;
       return *this;
     }
