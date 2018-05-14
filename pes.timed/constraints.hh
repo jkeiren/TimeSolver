@@ -31,6 +31,12 @@ typedef enum {
 } strictness_t;
 
 inline
+strictness_t add_strictness(const strictness_t x, const strictness_t y)
+{
+  return static_cast<strictness_t>(x|y);
+}
+
+inline
 strictness_t bool_to_strictness(const bool is_strict)
 {
   return static_cast<strictness_t>(is_strict?0:1);
@@ -63,7 +69,7 @@ bound_t add_constraint_bounds(const raw_constraint_t x, const raw_constraint_t y
 inline
 strictness_t add_constraint_strictness(const raw_constraint_t x, const raw_constraint_t y)
 {
-  return static_cast<strictness_t>(constraint_to_strictness(x)|constraint_to_strictness(y));
+  return static_cast<strictness_t>(add_strictness(constraint_to_strictness(x),constraint_to_strictness(y)));
 }
 
 inline

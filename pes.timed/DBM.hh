@@ -884,29 +884,30 @@ public:
         }
         for (size_type i = 0; i < clocks_size(); ++i) {
           for (size_type j = 0; j < clocks_size(); ++j) {
-            const raw_constraint_t wholeVal_ik = operatorRead(i, k);
-            const raw_constraint_t wholeVal_kj = operatorRead(k, j);
-            const raw_constraint_t wholeVal_ij = operatorRead(i, j);
+            const raw_constraint_t raw_i_k = operatorRead(i, k);
+            const raw_constraint_t raw_k_j = operatorRead(k, j);
+            const raw_constraint_t raw_i_j = operatorRead(i, j);
+
             /* Postive overflow potential here:
              * how to we deal with it?
              * One option: check for >= 0xFFF instead
              * of 0xFFF, but that fixes nothing. */
-            bound_t val = 0xFFF;
-            if ((wholeVal_ik >> 1) != 0xFFF && (wholeVal_kj >> 1) != 0xFFF) {
-              val = (wholeVal_ik >> 1) + (wholeVal_kj >> 1);
+            bound_t bound_i_j_k = infinity_bound;
+            if (raw_i_k != infinity && raw_k_j != infinity) {
+              bound_i_j_k = constraint_to_bound(raw_i_k) + constraint_to_bound(raw_k_j);
             }
 
-            const bound_t origVal = wholeVal_ij >> 1;
+            const bound_t bound_i_j = constraint_to_bound(raw_i_j);
             /* Correction by Peter Fontana to check for negative overflow */
-            if (val < origVal) {
+            if (bound_i_j_k < bound_i_j) {
               // Make D(i,j) = D(i, k) + D(k, j)
               // Gets the < or <= operator correct
-              operatorWrite(i, j) = (val << 1) + ((wholeVal_ik & 0x1) & (wholeVal_kj & 0x1));
-            } else if (val == origVal && val != 0xFFF) {
+              operatorWrite(i, j) = (bound_i_j_k << 1) + ((raw_i_k & 0x1) & (raw_k_j & 0x1));
+            } else if (bound_i_j_k == bound_i_j && bound_i_j_k != 0xFFF) {
                 /* Take out infinity comparison and see what happens ...  * Note:
                  * it slows performance, so keep non-overflow check in. */
-              operatorWrite(i, j) = (val << 1) + ((wholeVal_ik & 0x1) & (wholeVal_kj & 0x1) &
-                                                  (wholeVal_ij & 0x1));
+              operatorWrite(i, j) = (bound_i_j_k << 1) + ((raw_i_k & 0x1) & (raw_k_j & 0x1) &
+                                                  (raw_i_j & 0x1));
             } // value stays d(i,j) otherwise
           }
         }
