@@ -8,6 +8,12 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -Wno-gnu-zero-
 set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG") #  -march=native -mtune=native
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DTIMESOLVER_DEBUG")
 
+if (NOT DEFINED TIMESOLVER_MAX_LOG_LEVEL)
+  set (TIMESOLVER_MAX_LOG_LEVEL "debug")
+endif()
+
+add_definitions("-DCPPLOG_MAX_LOG_LEVEL=cpplogging::${TIMESOLVER_MAX_LOG_LEVEL}")
+
 if(APPLE)
   if (NOT DEFINED TIMESOLVER_OSX_STACK_SIZE)
     # Stack size set to 4GB for Mac, since terminal hard limit is 64MB

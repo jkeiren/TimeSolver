@@ -446,7 +446,9 @@ public:
      * Currently, the code does not. */
     for (size_type i = 0; i < clocks_size(); ++i) {
       for (size_type j = 0; j < clocks_size(); ++j) {
-        operatorWrite(i, j) = std::min(operatorRead(i,j), Y.operatorRead(i,j));
+        if(Y.operatorRead(i,j) < operatorRead(i,j)) {
+          operatorWrite(i,j) = Y.operatorRead(i,j);
+        }
       }
     }
     isCf = false;
@@ -771,32 +773,23 @@ public:
     // are reset by x
     /* First check that it is a valid assignment, and make empty otherwise */
     for (size_type i = 0; i < clocks_size(); ++i) {
-      if (i == y || i == x) {
-        continue;
-      }
-      if (operatorRead(i, x) < operatorRead(i, y)) {
-        // Make an empty DBM
-        operatorWrite(i, 0) = 0;
-        operatorWrite(0, i) = 0;
-        operatorWrite(0, 0) = 0;
-        isCf = false;
-        return *this;
-      }
-      if (operatorRead(x, i) < operatorRead(y, i)) {
-        // Make an empty DBM
-        operatorWrite(i, 0) = 0;
-        operatorWrite(0, i) = 0;
-        operatorWrite(0, 0) = 0;
-        isCf = false;
-        return *this;
+      if (i != y && i != x) {
+        if (operatorRead(i, x) < operatorRead(i, y) ||
+            operatorRead(x, i) < operatorRead(y, i)) {
+          // Make an empty DBM
+          operatorWrite(i, 0) = 0;
+          operatorWrite(0, i) = 0;
+          operatorWrite(0, 0) = 0;
+          isCf = false;
+          return *this;
+        }
       }
     }
     for (size_type i = 1; i < clocks_size(); ++i) {
-      if (i == x) {
-        continue;
+      if (i != x) {
+        operatorWrite(x, i) = infinity(true);
+        operatorWrite(i, x) = operatorRead(i, 0);
       }
-      operatorWrite(x, i) = infinity(true);
-      operatorWrite(i, x) = operatorRead(i, 0);
     }
     operatorWrite(x, 0) = infinity(true);
     operatorWrite(0, x) = zero(false);

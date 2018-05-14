@@ -1368,7 +1368,7 @@ inline bool prover::do_proof_allact(const SubstList& discrete_state,
       // If he invariant of the target location is non-vacuous, compute the weakest precondition
       // and intersect with the guard.
       if (has_nonvacuous_invariant) {
-        invariant_zone.cf();
+        assert(invariant_zone.IsInCf());
         // Some clocks are reset on this transition
         const ClockSet* reset_clocks = transition->reset_clocks();
         if (reset_clocks != nullptr) {
@@ -1559,7 +1559,6 @@ inline bool prover::do_proof_imply(const SubstList& discrete_state,
      * the LHS by expanding the zone so it contains
      * all the proper regions where the clocks
      * exceed a certain constant value. */
-    zone_lhs.cf();
     zone_lhs.bound(input_pes.max_constant());
     zone_lhs.cf();
 
