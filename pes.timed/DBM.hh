@@ -21,16 +21,6 @@
 #include "constraints.hh"
 
 inline
-clock_value_t zero(bool strict)
-{
-  if(strict) {
-    return 0x0;
-  } else {
-    return 0x1;
-  }
-}
-
-inline
 clock_value_t clock_value(clock_value_t val, bool strict)
 {
   clock_value_t result = val << (clock_value_t)1;
@@ -280,7 +270,7 @@ public:
       for (size_type j = 0; j < clocks_size(); ++j) {
         operatorWrite(i, j) = infinity;
         if (i == 0 || i == j) {
-          operatorWrite(i, j) = zero(false);
+          operatorWrite(i, j) = zero_le;
         }
       }
     }
@@ -305,7 +295,7 @@ public:
     for (size_type i = 0; i < clocks_size(); ++i) {
       for (size_type j = 0; j < clocks_size(); ++j) {
         if (i == 0 || i == j) {
-          operatorWrite(i, j) = zero(false);
+          operatorWrite(i, j) = zero_le;
         } else {
           operatorWrite(i, j) = infinity;
         }
@@ -404,7 +394,7 @@ public:
     assert(row < clocks_size());
     assert(col < clocks_size());
     if (row == 0 || row == col) {
-      return (operatorRead(row, col)) == zero(false);
+      return (operatorRead(row, col)) == zero_le;
     } else {
       return (operatorRead(row, col)) == infinity;
     }
@@ -529,7 +519,7 @@ public:
      * is used due to a typo in a paper describing a version that does
      * preserve canonical form. */
     for (size_type i = 0; i < clocks_size(); ++i) {
-      operatorWrite(0, i) = zero(false);
+      operatorWrite(0, i) = zero_le;
     }
     isCf = false;
     return *this;
@@ -550,7 +540,7 @@ public:
       /* Code Fix: do not change (x,x), since
        * that seemed to be a typo in the algorithm of the paper */
       if (i != x) {
-        /* Since (0,0) is usually zero(false) (<= 0), this method
+        /* Since (0,0) is usually zero_le (<= 0), this method
          * works without having to first set (x,0) and (0,x) to 0*/
         operatorWrite(x, i) = operatorRead(0, i);
         operatorWrite(i, x) = operatorRead(i, 0);
@@ -594,8 +584,8 @@ public:
         operatorWrite(i, x) = operatorRead(i, y);
       }
     /* The following two lines are not needed:
-     * 	operatorWrite(x,y) = zero(false);
-     * 	operatorWrite(y,x) = zero(false);
+     * 	operatorWrite(x,y) = zero_le;
+     * 	operatorWrite(y,x) = zero_le;
      * since they are performed when i = y
      * and i = x is ignored so no need to do first. */
     isCf = false;
@@ -654,7 +644,7 @@ public:
       }
     }
     operatorWrite(x, 0) = infinity;
-    operatorWrite(0, x) = zero(false);
+    operatorWrite(0, x) = zero_le;
     isCf = false;
     return *this;
   }
@@ -729,7 +719,7 @@ public:
         }
 
         operatorWrite(i, 0) = infinity;
-        operatorWrite(0, i) = zero(false);
+        operatorWrite(0, i) = zero_le;
       }
     }
     isCf = false;
@@ -788,7 +778,7 @@ public:
       operatorWrite(i, x) = operatorRead(i, 0);
     }
     operatorWrite(x, 0) = infinity;
-    operatorWrite(0, x) = zero(false);
+    operatorWrite(0, x) = zero_le;
     isCf = false;
     return *this;
   }
@@ -951,7 +941,7 @@ public:
      * from a model with different semantics. */
     for (size_type i = 0; i < clocks_size(); ++i) {
       const raw_constraint_t rv = operatorRead(i, i);
-      if (((rv >> 1) < 0) || (((rv >> 1) == 0) && ((rv & zero(false)) == 0))) {
+      if (((rv >> 1) < 0) || (((rv >> 1) == 0) && ((rv & zero_le) == 0))) {
         return true;
       }
     }

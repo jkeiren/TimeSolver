@@ -43,7 +43,7 @@ DBM testDBM5()
 DBM testDBM6()
 {
     DBM testDBM6(make_c2());
-    testDBM6.addConstraint(2, 1, zero(true));
+    testDBM6.addConstraint(2, 1, zero_less);
     return testDBM6;
 }
 
@@ -171,35 +171,35 @@ TEST(DBMListTest, CanonicalDBMList5)
     canonical.cf();
 
     DBM testDBM4cf(make_c2());
-    testDBM4cf.addConstraint(0,0, zero(false));
-    testDBM4cf.addConstraint(0,1, zero(false));
-    testDBM4cf.addConstraint(0,2, zero(false));
+    testDBM4cf.addConstraint(0,0, zero_le);
+    testDBM4cf.addConstraint(0,1, zero_le);
+    testDBM4cf.addConstraint(0,2, zero_le);
     testDBM4cf.addConstraint(1,0, clock_value(3, false));
-    testDBM4cf.addConstraint(1,1, zero(false));
+    testDBM4cf.addConstraint(1,1, zero_le);
     testDBM4cf.addConstraint(1,2, clock_value(3, false));
     testDBM4cf.addConstraint(2,0, clock_value(3, false));
     testDBM4cf.addConstraint(2,1, clock_value(3, false));
-    testDBM4cf.addConstraint(2,2, zero(false));
+    testDBM4cf.addConstraint(2,2, zero_le);
     DBM testDBM5cf(make_c2());
-    testDBM5cf.addConstraint(0,0, zero(false));
+    testDBM5cf.addConstraint(0,0, zero_le);
     testDBM5cf.addConstraint(0,1, clock_value(-2, false));
     testDBM5cf.addConstraint(0,2, clock_value(-2, false));
     testDBM5cf.addConstraint(1,0, clock_value(4, false));
-    testDBM5cf.addConstraint(1,1, zero(false));
+    testDBM5cf.addConstraint(1,1, zero_le);
     testDBM5cf.addConstraint(1,2, clock_value(2, false));
     testDBM5cf.addConstraint(2,0, clock_value(4, true));
     testDBM5cf.addConstraint(2,1, clock_value(2, true));
-    testDBM5cf.addConstraint(2,2, zero(false));
+    testDBM5cf.addConstraint(2,2, zero_le);
     DBM testDBM6cf(make_c2());
-    testDBM6cf.addConstraint(0,0, zero(false));
-    testDBM6cf.addConstraint(0,1, zero(true));
-    testDBM6cf.addConstraint(0,2, zero(false));
+    testDBM6cf.addConstraint(0,0, zero_le);
+    testDBM6cf.addConstraint(0,1, zero_less);
+    testDBM6cf.addConstraint(0,2, zero_le);
     testDBM6cf.addConstraint(1,0, infinity);
-    testDBM6cf.addConstraint(1,1, zero(false));
+    testDBM6cf.addConstraint(1,1, zero_le);
     testDBM6cf.addConstraint(1,2, infinity);
     testDBM6cf.addConstraint(2,0, infinity);
-    testDBM6cf.addConstraint(2,1, zero(true));
-    testDBM6cf.addConstraint(2,2, zero(false));
+    testDBM6cf.addConstraint(2,1, zero_less);
+    testDBM6cf.addConstraint(2,2, zero_le);
 
     DBMList expected(testDBM4cf);
     expected.addDBM(testDBM5cf);
