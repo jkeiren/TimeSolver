@@ -139,9 +139,7 @@ public:
    * @return true: lhs <= some sequent in s
    * (consequently, the sequent is true), false: otherwise.*/
    bool tabled_sequent(const DBM& lhs) const {
-    return std::find_if(ds.begin(), ds.end(), [&](const DBM* x) {
-             return *x >= lhs;
-           }) != ds.end();
+    return std::any_of(ds.begin(), ds.end(), [&lhs](const DBM* x) { return *x >= lhs; });
   }
 
   /** Using that a Sequent object is a set of sequents with matching rhs and
@@ -159,9 +157,7 @@ public:
    * @return true: lhs >= some sequent in s
    * (consequently, the sequent is false), false: otherwise.*/
   bool tabled_false_sequent(const DBM& lhs) const {
-    return std::find_if(ds.begin(), ds.end(), [&](const DBM* x) {
-             return *x <= lhs;
-           }) != ds.end();
+    return std::any_of(ds.begin(), ds.end(), [&lhs](const DBM* x) { return *x <= lhs; });
   }
 
   /** Using that a Sequent object is a set of sequents with matching rhs and
@@ -176,9 +172,7 @@ public:
    * @param lhs (*) The DBM to compare the sequent's DBMs to.
    * @return true: lhs == some sequent in s, false: otherwise.*/
   bool tabled_sequent_lfp(const DBM& lhs) {
-    return std::find_if(ds.begin(), ds.end(), [&](const DBM* x) {
-             return *x == lhs;
-           }) != ds.end();
+    return std::any_of(ds.begin(), ds.end(), [&lhs](const DBM* x) { return *x == lhs; });
   }
 
   /** Takes in set of known true sequents (s) with a newly
@@ -193,7 +187,7 @@ public:
    * @param s (*) The set of known sequents to update.
    * @param lhs (*) The DBM of the newly-established clock state. */
   void update_sequent(const DBM& lhs) {
-    DBMset::iterator it = std::find_if(ds.begin(), ds.end(), [&](const DBM*x) {
+    DBMset::iterator it = std::find_if(ds.begin(), ds.end(), [&lhs](const DBM*x) {
       return *x <= lhs;
     });
     if(it == ds.end()) {
@@ -216,7 +210,7 @@ public:
    * @param s (*) The set of known sequents to update.
    * @param lhs (*) The DBM of the newly-established clock state. */
   void update_false_sequent(const DBM& lhs) {
-    DBMset::iterator it = std::find_if(ds.begin(), ds.end(), [&](const DBM*x) {
+    DBMset::iterator it = std::find_if(ds.begin(), ds.end(), [&lhs](const DBM*x) {
       return *x >= lhs;
     });
     if(it == ds.end()) {
