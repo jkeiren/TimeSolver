@@ -215,12 +215,12 @@ inline bool comp_ph_exist_place(DBM& zone, DBMList& place,
     }
     case CONSTRAINT: {
       zone.cf();
-      bool res = zone <= (*e.dbm());
+      if (zone <= (*e.dbm())) {
+        return true;
+      } else {
       zone.intersect(*e.dbm());
       zone.cf(); // Calls Canonical Form Here.
-      if (res) {
-        return true;
-      } else if (zone.emptiness()) {
+        if (zone.emptiness()) {
         // We can only tighten if the constraint is not empty
         return false;
       } else {
@@ -232,6 +232,7 @@ inline bool comp_ph_exist_place(DBM& zone, DBMList& place,
         place.cf();
         return !place.emptiness();
       }
+    }
     }
     default: {
       return eval_atomic(e, discrete_state);
@@ -274,10 +275,11 @@ inline bool comp_ph_all_place(DBM& zone, DBMList& place,
       zone.cf(); // Calls Canonical Form Here.
       if (zone.emptiness()) {
         return false;
-      }
+      } else {
       place.intersect(*e.dbm());
       place.cf();
       return !place.emptiness();
+    }
     }
     default: {
       return eval_atomic(e, discrete_state);
