@@ -373,17 +373,21 @@ public:
    * @param Y (&) The DBM to intersect */
   DBM& intersect(const DBM& Y) {
     assert(clocks_size() == Y.clocks_size());
-    /* Should we check for same number of clocks (?)
-     * Currently, the code does not. */
-    for (size_type i = 0; i < clocks_size(); ++i) {
-      for (size_type j = 0; j < clocks_size(); ++j) {
-        if(Y.operatorRead(i,j) < operatorRead(i,j)) {
-          operatorWrite(i,j) = Y.operatorRead(i,j);
+    if(isCf && emptiness()) {
+      return *this;
+    } else {
+      /* Should we check for same number of clocks (?)
+       * Currently, the code does not. */
+      for (size_type i = 0; i < clocks_size(); ++i) {
+        for (size_type j = 0; j < clocks_size(); ++j) {
+          if(Y.operatorRead(i,j) < operatorRead(i,j)) {
+            operatorWrite(i,j) = Y.operatorRead(i,j);
+            isCf = false;
+          }
         }
       }
+      return *this;
     }
-    isCf = false;
-    return *this;
   }
 
 
@@ -533,15 +537,12 @@ public:
       exit(-1);
     }
     for (size_type i = 0; i < clocks_size(); ++i)
+    {
       if (i != x) {
         operatorWrite(x, i) = operatorRead(y, i);
         operatorWrite(i, x) = operatorRead(i, y);
       }
-    /* The following two lines are not needed:
-     * 	operatorWrite(x,y) = zero_le;
-     * 	operatorWrite(y,x) = zero_le;
-     * since they are performed when i = y
-     * and i = x is ignored so no need to do first. */
+    }
     isCf = false;
     return *this;
   }
@@ -829,12 +830,8 @@ public:
         }
         for (size_type i = 0; i < clocks_size(); ++i) {
           for (size_type j = 0; j < clocks_size(); ++j) {
-            const raw_constraint_t raw_i_k = operatorRead(i, k);
-            const raw_constraint_t raw_k_j = operatorRead(k, j);
-            const raw_constraint_t raw_i_j = operatorRead(i, j);
-
-            const raw_constraint_t raw_i_k_j = add_constraints(raw_i_k, raw_k_j);
-            if (raw_i_k_j < raw_i_j) {
+            const raw_constraint_t raw_i_k_j = add_constraints(operatorRead(i, k), operatorRead(k, j));
+            if (raw_i_k_j < operatorRead(i, j)) {
               operatorWrite(i,j) = raw_i_k_j;
             }
           }
