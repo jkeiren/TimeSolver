@@ -111,7 +111,7 @@ public:
  * @version 1.1
  * @note Many functions are inlined for better performance.
  * @date December 3, 2012. */
-class DBM : public OneDIntArray {
+class DBM : public Array<raw_constraint_t> {
 private:
   /** True if the DBM is still in canonical form (cf()), false otherwise.
    * This provides a quick a 1-bit check that avoids needless
@@ -125,19 +125,19 @@ private:
     assert(row < clocks_size());
     assert(col < clocks_size());
     const size_type index = (row * clocks_size()) + col;
-    return index * sizeof(raw_constraint_t);
+    return index; // * sizeof(raw_constraint_t);
   }
 
   const raw_constraint_t* cell(const size_type row, const size_type col) const {
     assert(row < clocks_size());
     assert(col < clocks_size());
-    return (raw_constraint_t*)&(storage[offset(row,col)]);
+    return &at(offset(row,col));
   }
 
   raw_constraint_t* cell(const size_type row, const size_type col) {
     assert(row < clocks_size());
     assert(col < clocks_size());
-    return (raw_constraint_t*)&(storage[offset(row,col)]);
+    return &(*this)[offset(row,col)];
   }
 
   /** The private method is used to read a value of a
@@ -206,7 +206,7 @@ public:
    * with 1 "zero" clock.
    * @return [Constructor] */
   DBM(const bidirectional_map<std::string, int> &cs)
-      : OneDIntArray((cs.size()+1) * (cs.size()+1)),
+      : Array((cs.size()+1) * (cs.size()+1)),
         declared_clocks_(cs) {
     for (size_type i = 0; i < clocks_size(); ++i) {
       for (size_type j = 0; j < clocks_size(); ++j) {
@@ -232,7 +232,7 @@ public:
    * @return [Constructor] */
   DBM(const size_type row, const size_type col,
       const raw_constraint_t val, const bidirectional_map<std::string, int> &cs)
-      : OneDIntArray((cs.size()+1) * (cs.size()+1)),
+      : Array((cs.size()+1) * (cs.size()+1)),
         declared_clocks_(cs) {
     for (size_type i = 0; i < clocks_size(); ++i) {
       for (size_type j = 0; j < clocks_size(); ++j) {
@@ -254,12 +254,16 @@ public:
    * @param Y (&) The object to copy.
    * @return [Constructor] */
   DBM(const DBM &Y)
-      : OneDIntArray(Y),
+      : Array(Y),
         isCf(Y.isCf),
         declared_clocks_(Y.declared_clocks_) {
   }
 
-  DBM(DBM&&) noexcept = default;
+  DBM(DBM&& other)
+    : Array(std::move(other)),
+      isCf(std::move(other.isCf)),
+      declared_clocks_(std::move(other.declared_clocks_))
+  {}
 
   size_type clocks_size() const { return declared_clocks_.size() + 1; }
 
@@ -349,10 +353,16 @@ public:
   DBM& operator=(const DBM &Y) {
     assert(clocks_size() == Y.clocks_size());
     assert(declared_clocks() == Y.declared_clocks());
-    quantity = Y.quantity;
-    memcpy(storage, Y.storage, quantity * sizeof(raw_constraint_t));
+    Array<raw_constraint_t>::operator=(Y);
 
     isCf = Y.isCf;
+    return *this;
+  }
+
+  DBM& operator=(DBM&& other) {
+    assert(declared_clocks_ == other.declared_clocks_);
+    Array<raw_constraint_t>::operator=(other);
+    isCf = std::move(other.isCf);
     return *this;
   }
 
