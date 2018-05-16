@@ -48,7 +48,7 @@ public:
 
   /** Constructor
    *
-   * @note All elements of the array get value @v
+   * @note All elements of the array get value v
    */
   Array(const std::size_t size, const value_type& v) :
     m_size(size),
@@ -107,15 +107,15 @@ public:
 
   // iterator support
   iterator begin() { return m_data; }
-  const_iterator cbegin() const { return m_data; }
+  const_iterator begin() const { return m_data; }
   iterator end() { return m_data + m_size; }
-  const_iterator cend() const { return m_data + m_size; }
+  const_iterator end() const { return m_data + m_size; }
 
   // reverse iterator support
   reverse_iterator rbegin() { return m_data + m_size - 1; }
-  const_reverse_iterator crbegin() const { return m_data + m_size - 1; }
+  const_reverse_iterator rbegin() const { return m_data + m_size - 1; }
   reverse_iterator rend() { return m_data - 1; }
-  const_reverse_iterator crend() const { return m_data - 1; }
+  const_reverse_iterator rend() const { return m_data - 1; }
 
   // capacity
   size_type size() const { return m_size; }
@@ -172,7 +172,7 @@ public:
    */
   bool operator==(const Array<T>& other) const
   {
-    return std::equal(cbegin(), cend(), other.cbegin());
+    return std::equal(begin(), end(), other.begin());
   }
 };
 

@@ -100,7 +100,8 @@ public:
    * @return [Constructor]. */
   SubstList(const size_type index, const atomic_value_t val, const size_type size,
             const bidirectional_map<std::string, int>& as)
-      : Array(size, -1), declared_atomic(as) {
+      : Array(size, -1), declared_atomic(as)
+  {
    (*this)[index] = val;
   }
 
@@ -127,11 +128,7 @@ public:
         declared_atomic(st1->declared_atomic) {
     assert(st1->size() == st2->size());
     for (size_type i = 0; i < size(); ++i) {
-      if (st1->at(i) != -1) {
-        (*this)[i] = st1->at(i);
-      } else {
-        (*this)[i] = st2->at(i);
-      }
+      (*this)[i] = (st1->at(i) != -1) ? st1->at(i) : st2->at(i);
     }
   }
 
