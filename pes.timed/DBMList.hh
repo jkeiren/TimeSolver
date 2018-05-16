@@ -145,7 +145,7 @@ public:
         declared_clocks(cs),
         isCf(false)
   {
-    dbms->push_back(new DBM(cs));
+    dbms->emplace_back(new DBM(cs));
   }
 
   /** Copy Constructor for DBMList, making a DBMList representing the
@@ -156,7 +156,7 @@ public:
       : dbms(new std::vector<DBM*>),
         declared_clocks(Y.declared_clocks()),
         isCf(Y.isInCf()) {
-    dbms->push_back(new DBM(Y));
+    dbms->emplace_back(new DBM(Y));
   }
 
   /** Copy Constructor for DBMLists, copying a DBMList.
@@ -211,7 +211,7 @@ public:
    * @param Y (&) The DBM to add to the list of DBMs.
    * @return None. */
   void addDBM(const DBM &Y) {
-    dbms->push_back(new DBM(Y));
+    dbms->emplace_back(new DBM(Y));
     isCf = false; // only set isCf to false; individual DBMs are still in Cf.
   }
 

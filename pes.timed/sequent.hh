@@ -191,7 +191,7 @@ public:
       return *x <= lhs;
     });
     if(it == ds.end()) {
-      ds.push_back(new DBM(lhs));
+      ds.emplace_back(new DBM(lhs));
     } else {
       **it = lhs;
     }
@@ -214,7 +214,7 @@ public:
       return *x >= lhs;
     });
     if(it == ds.end()) {
-      ds.push_back(new DBM(lhs));
+      ds.emplace_back(new DBM(lhs));
     } else {
       **it = lhs;
     }
@@ -491,7 +491,7 @@ public:
         return;
       }
     }
-    _dbms.push_back(std::make_pair(new DBM(lhs), new DBMList(*lhsPlace)));
+    _dbms.emplace_back(new DBM(lhs), new DBMList(*lhsPlace));
   }
 
   /** Assumes the current sequent is known to be true, and updates it with a
@@ -527,7 +527,7 @@ public:
     }
     EMPTY.cf();
 
-    _dbms.push_back(std::make_pair(new DBM(lhs), new DBMList(EMPTY)));
+    _dbms.emplace_back(new DBM(lhs), new DBMList(EMPTY));
   }
 
 protected:

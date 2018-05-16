@@ -837,7 +837,7 @@ inline
 void makeAssignmentList(const ExprNode& e,
                         std::vector<std::pair<atomic_size_type, atomic_value_t>>* av) {
   if (e.getOpType() == ASSIGN) {
-    av->push_back(std::make_pair(e.getAtomic(), e.getIntVal()));
+    av->emplace_back(e.getAtomic(), e.getIntVal());
     makeAssignmentList(*e.getExpr(), av);
   }
 }

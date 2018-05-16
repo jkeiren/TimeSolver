@@ -21,7 +21,7 @@ template<typename T>
 void deep_copy(std::vector<T*>& out, const std::vector<T*>& in)
 {
   out.reserve(out.size()+in.size());
-  std::for_each(in.begin(), in.end(), [&](T* t) { out.push_back(new T(*t)); });
+  std::for_each(in.begin(), in.end(), [&](T* t) { out.emplace_back(new T(*t)); });
 }
 
 #endif // UTILITIES_HH
