@@ -102,7 +102,7 @@ public:
             const bidirectional_map<std::string, int>& as)
       : Array(size, -1), declared_atomic(as)
   {
-   (*this)[index] = val;
+    (*this)[index] = val;
   }
 
   /** Constructor. Initializes all variables to 0, providing a specific initial
@@ -489,6 +489,33 @@ public:
     if (other.right != nullptr) {
       right = new ExprNode(*(other.right));
     }
+  }
+
+  /** Copy Constructor. This is used when an expression needs to be duplicated
+   * in the parser. Because this makes a deep copy of every item, use sparingly,
+   * and aim to make shallow copies when possible. This makes a deep copy of all
+   * descendants of the ExprNode E
+   * @param E (&) The ExprNode object to make a deep copy of
+   * @return [Constructor]. */
+  ExprNode(ExprNode&& other)
+      : predicate(std::move(other.predicate)),
+        left(std::move(other.left)),
+        right(std::move(other.right)),
+        constraint(std::move(other.constraint)),
+        cset(std::move(other.cset)),
+        subst(std::move(other.subst)),
+        op(std::move(other.op)),
+        atomic(std::move(other.atomic)),
+        intVal(std::move(other.intVal)),
+        b(std::move(other.b)),
+        declared_clocks(std::move(other.declared_clocks)),
+        declared_atomic(std::move(other.declared_atomic)) {
+    other.predicate = nullptr;
+    other.constraint = nullptr;
+    other.cset = nullptr;
+    other.subst = nullptr;
+    other.left = nullptr;
+    other.right = nullptr;
   }
 
   /** Destructor. Since predicates are allocated differently,
