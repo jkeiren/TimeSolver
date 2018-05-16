@@ -31,79 +31,79 @@ typedef enum {
 } strictness_t;
 
 inline
-strictness_t add_strictness(const strictness_t x, const strictness_t y)
+constexpr strictness_t add_strictness(const strictness_t x, const strictness_t y)
 {
   return static_cast<strictness_t>(x&y);
 }
 
 inline
-strictness_t add_strictness(const strictness_t x, const strictness_t y, const strictness_t z)
+constexpr strictness_t add_strictness(const strictness_t x, const strictness_t y, const strictness_t z)
 {
   return static_cast<strictness_t>(x&y&z);
 }
 
 inline
-strictness_t negate_strictness(const strictness_t x)
+constexpr strictness_t negate_strictness(const strictness_t x)
 {
   return static_cast<strictness_t>(x ^ weak);
 }
 
 inline
-strictness_t bool_to_strictness(const bool is_strict)
+constexpr strictness_t bool_to_strictness(const bool is_strict)
 {
   return static_cast<strictness_t>(is_strict?0:1);
 }
 
 inline
-bound_t constraint_to_bound(const raw_constraint_t x)
+constexpr bound_t constraint_to_bound(const raw_constraint_t x)
 {
   return x >> 1;
 }
 
 inline
-strictness_t constraint_to_strictness(const raw_constraint_t x)
+constexpr strictness_t constraint_to_strictness(const raw_constraint_t x)
 {
   return static_cast<strictness_t>(x & 0x1);
 }
 
 inline
-raw_constraint_t bound_to_constraint(const bound_t x, const strictness_t strictness)
+constexpr raw_constraint_t bound_to_constraint(const bound_t x, const strictness_t strictness)
 {
   return (x << 1) | strictness;
 }
 
 inline
-bound_t add_constraint_bounds(const raw_constraint_t x, const raw_constraint_t y)
+constexpr bound_t add_constraint_bounds(const raw_constraint_t x, const raw_constraint_t y)
 {
   return constraint_to_bound(x) + constraint_to_bound(y);
 }
 
 inline
-strictness_t add_constraint_strictness(const raw_constraint_t x, const raw_constraint_t y)
+constexpr strictness_t add_constraint_strictness(const raw_constraint_t x, const raw_constraint_t y)
 {
   return static_cast<strictness_t>(add_strictness(constraint_to_strictness(x),constraint_to_strictness(y)));
 }
 
 inline
-strictness_t add_constraint_strictness(const raw_constraint_t x, const raw_constraint_t y, const raw_constraint_t z)
+constexpr strictness_t add_constraint_strictness(const raw_constraint_t x, const raw_constraint_t y, const raw_constraint_t z)
 {
   return static_cast<strictness_t>(add_strictness(constraint_to_strictness(x),constraint_to_strictness(y), constraint_to_strictness(z)));
 }
 
 inline
-raw_constraint_t make_constraint_weak(const raw_constraint_t x)
+constexpr raw_constraint_t make_constraint_weak(const raw_constraint_t x)
 {
   return x | weak;
 }
 
 inline
-raw_constraint_t make_constraint_strict(const raw_constraint_t x)
+constexpr raw_constraint_t make_constraint_strict(const raw_constraint_t x)
 {
   return x & ~weak;
 }
 
 inline
-raw_constraint_t negate_constraint(const raw_constraint_t x)
+constexpr raw_constraint_t negate_constraint(const raw_constraint_t x)
 {
   return bound_to_constraint(-constraint_to_bound(x), negate_strictness(constraint_to_strictness(x)));
 }
