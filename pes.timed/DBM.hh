@@ -124,8 +124,7 @@ private:
   size_type offset(const size_type row, const size_type col) const {
     assert(row < clocks_size());
     assert(col < clocks_size());
-    const size_type index = (row * clocks_size()) + col;
-    return index; // * sizeof(raw_constraint_t);
+    return (row * clocks_size()) + col;
   }
 
   const raw_constraint_t* cell(const size_type row, const size_type col) const {
@@ -172,28 +171,6 @@ private:
     assert(col < clocks_size());
     /* Indexes are zero based */
     return *cell(row, col);
-  }
-
-  /** Performs comparison checks;
-   * This is done by doing an elementwise comparison.
-   * Only other is required to be in canonical form.
-   * @param other (&) The right DBM.
-   * @param cmp The elementwise comparison. If cmp fails for some element, the
-   * result is false.
-   * @return true: cmp succeeds for all elements in elementwise comparison. */
-  template<class BinaryPredicate>
-  bool compare(const DBM& other, BinaryPredicate cmp) const
-  {
-    assert(clocks_size() == other.clocks_size());
-    for (size_type i = 0; i < clocks_size(); ++i) {
-      for (size_type j = 0; j < clocks_size(); ++j) {
-        if (cmp(operatorRead(i, j), other.operatorRead(i, j))) {
-          return false;
-        }
-      }
-    }
-
-    return true;
   }
 
 public:
@@ -400,18 +377,18 @@ public:
    * only Y is required to be in canonical form.
    * @param Y (&) The right DBM.
    * @return true: *this <= Y; false: otherwise. */
-  bool operator<=(const DBM &Y) const {
-    return compare(Y, std::greater<raw_constraint_t>());
+  bool operator<=(const DBM &other) const {
+    return std::equal(cbegin(), cend(), other.cbegin(), std::less_equal<raw_constraint_t>());
   }
 
   /** Performs superset checks; X >= Y if and only
    * Y <= X.  This method requires that (*this), the calling DBM,
    * is in canonical form.
-   * @param Y (&) The right DBM.
+   * @param other (&) The right DBM.
    * @return true: the calling DBM is a superset of Y,
    * false: otherwise */
-  bool operator>=(const DBM &Y) const {
-    return compare(Y, std::less<raw_constraint_t>());
+  bool operator>=(const DBM &other) const {
+    return std::equal(cbegin(), cend(), other.cbegin(), std::greater_equal<raw_constraint_t>());
   }
 
   /** Performs equality checks;
@@ -422,8 +399,8 @@ public:
    * in canonical form.
    * @param Y (&) The right DBM
    * @return true: the calling DBM equals Y, false: otherwise. */
-  bool operator==(const DBM &Y) const {
-    return compare(Y, std::not_equal_to<raw_constraint_t>());
+  bool operator==(const DBM &other) const {
+    return std::equal(cbegin(), cend(), other.cbegin());
   }
 
   /** Checks and returns the relation comparing the calling DBM
@@ -825,13 +802,8 @@ public:
    * is in canonical form.
    * @return [None] */
   void makeEmpty() {
-    for (size_type i = 0; i < clocks_size(); ++i) {
-      for (size_type j = 0; j < clocks_size(); ++j) {
-        operatorWrite(i, j) = zero_less;
-      }
-    }
+    std::fill(begin(), end(), zero_less);
     isCf = true;
-    return;
   }
 
   /** This checks if DBM represents an empty region

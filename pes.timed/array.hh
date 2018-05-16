@@ -10,6 +10,7 @@
 #ifndef ARRAY_H
 #define ARRAY_H
 
+#include <algorithm>
 #include <iterator>
 #include <stdexcept>
 
@@ -20,12 +21,20 @@
 template<typename T>
 class Array {
 public:
-  typedef T element_type; //! Type of elements of the array
-  typedef std::size_t size_type; //! Size type
+  // types
+  typedef T                                     value_type;
+  typedef T*                                    iterator;
+  typedef const T*                              const_iterator;
+  typedef std::reverse_iterator<iterator>       reverse_iterator;
+  typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+  typedef T&                                    reference;
+  typedef const T&                              const_reference;
+  typedef std::size_t                           size_type;
+  typedef std::ptrdiff_t                        difference_type;
 
 private:
-  std::size_t m_size; //! Size of the array
-  element_type* storage; //! Heap allocated array (new[]'d)
+  size_type   m_size; //! Size of the array
+  value_type* m_data; //! Heap allocated array (new[]'d)
 
 public:
   /** Constructor
@@ -34,26 +43,26 @@ public:
    */
   Array(const std::size_t size) :
     m_size(size),
-    storage(new element_type[size])
+    m_data(new value_type[size])
   {}
 
   /** Constructor
    *
    * @note All elements of the array get value @v
    */
-  Array(const std::size_t size, const element_type& v) :
+  Array(const std::size_t size, const value_type& v) :
     m_size(size),
-    storage(new element_type[size])
+    m_data(new value_type[size])
   {
-    std::fill(storage, storage + m_size, v);
+    std::fill(m_data, m_data + m_size, v);
   }
 
   /** Copy constructor */
   Array(const Array<T>& other) :
     m_size(other.m_size),
-    storage(new element_type[other.m_size])
+    m_data(new value_type[other.m_size])
   {
-    std::memcpy(storage, other.storage, m_size * sizeof(element_type));
+    std::memcpy(m_data, other.m_data, m_size * sizeof(value_type));
   }
 
   /** Move constructor
@@ -62,16 +71,16 @@ public:
    */
   Array(Array<T>&& other) :
     m_size(std::move(other.m_size)),
-    storage(std::move(other.storage))
+    m_data(std::move(other.m_data))
   {
-    other.storage = nullptr;
+    other.m_data = nullptr;
   }
 
   /** Destructor
    */
   ~Array()
   {
-    delete[] storage;
+    delete[] m_data;
   }
 
   /** Copy assign
@@ -79,8 +88,8 @@ public:
   Array& operator=(const Array<T>& other)
   {
     m_size = other.m_size;
-    storage = new element_type[other.m_size];
-    std::memcpy(storage, other.storage, m_size * sizeof(element_type));
+    m_data = new value_type[other.m_size];
+    std::memcpy(m_data, other.m_data, m_size * sizeof(value_type));
     return *this;
   }
 
@@ -91,47 +100,80 @@ public:
   Array& operator=(Array<T>&& other)
   {
     m_size = std::move(other.m_size);
-    storage = std::move(other.storage);
-    other.storage = nullptr;
+    m_data = std::move(other.m_data);
+    other.m_data = nullptr;
     return *this;
   }
 
-  /** Comparison with another array
-   */
-  bool operator==(const Array<T>& other) const
-  {
-    return *storage == *other.storage;
-  }
+  // iterator support
+  iterator begin() { return m_data; }
+  const_iterator cbegin() const { return m_data; }
+  iterator end() { return m_data + m_size; }
+  const_iterator cend() const { return m_data + m_size; }
 
-  /** Get size of array
-   */
-  size_type size() const
-  {
-    return m_size;
-  }
+  // reverse iterator support
+  reverse_iterator rbegin() { return m_data + m_size - 1; }
+  const_reverse_iterator crbegin() const { return m_data + m_size - 1; }
+  reverse_iterator rend() { return m_data - 1; }
+  const_reverse_iterator crend() const { return m_data - 1; }
 
-  /** Access element @i of the array
+  // capacity
+  size_type size() const { return m_size; }
+  bool empty() const { return m_size == 0; }
+
+  // element access
+  /** Access element i of the array
    *
-   * Returns a reference to the object at position @i.
+   * Returns a reference to the object at position i.
    */
-  element_type& operator[](const std::size_t i)
+  reference operator[](const size_type i)
   {
     assert(i < m_size);
-    return storage[i];
+    return m_data[i];
+  }
+
+  const_reference operator[](const size_type i) const
+  {
+    assert(i < m_size);
+    return m_data[i];
   }
 
   /** Access element @i of the array
    *
    * Returns a const reference to the object at position @i.
    */
-  const element_type& at(const std::size_t i) const
+  reference at(const std::size_t i)
   {
     if(!(i < m_size)) {
       throw std::runtime_error("index out of bounds");
     }
-    return storage[i];
+    return m_data[i];
   }
 
+  reference front() { return m_data[0]; }
+  const_reference front() const { return m_data[0]; }
+  reference back() { return m_data[m_size-1]; }
+  const_reference back() const { return m_data[m_size-1]; }
+
+  /** Access element @i of the array
+   *
+   * Returns a const reference to the object at position @i.
+   */
+  const_reference at(const std::size_t i) const
+  {
+    if(!(i < m_size)) {
+      throw std::runtime_error("index out of bounds");
+    }
+    return m_data[i];
+  }
+
+
+  /** Comparison with another array
+   */
+  bool operator==(const Array<T>& other) const
+  {
+    return std::equal(cbegin(), cend(), other.cbegin());
+  }
 };
 
 #endif // ARRAY_H

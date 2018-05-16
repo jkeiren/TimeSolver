@@ -167,7 +167,7 @@ public:
    * @param index The location to change the value of
    * @param val The value to change the desired element to.
    * @return a pointer to the SubstList that was just changed. */
-  SubstList* addst(const size_type index, const element_type val) {
+  SubstList* addst(const size_type index, const atomic_value_t val) {
     assert(index < size());
     (*this)[index] = val;
     return this;
