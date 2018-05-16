@@ -26,7 +26,7 @@
   #include "pes.hh"
   #include "ExprNode.hh"
   #include "transition.hh"
-  #include "OneDIntArray.hh"
+  #include "array.hh"
   #include "DBM.hh"
   #include "pes.tab.hh"
   #include "pes.lex.hh"

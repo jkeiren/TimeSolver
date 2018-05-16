@@ -7,8 +7,8 @@
  * @note Many functions are inlined for better performance.
  */
 
-#ifndef ONEDINTARRAY_H
-#define ONEDINTARRAY_H
+#ifndef ARRAY_H
+#define ARRAY_H
 
 #include <iterator>
 #include <stdexcept>
@@ -134,4 +134,4 @@ public:
 
 };
 
-#endif // ONEDINTARRAY_H
+#endif // ARRAY_H

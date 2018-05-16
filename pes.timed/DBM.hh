@@ -16,7 +16,7 @@
 #include <functional>
 #include <iostream>
 #include <vector>
-#include "OneDIntArray.hh"
+#include "array.hh"
 #include "bidirectional_map.hh"
 #include "constraints.hh"
 

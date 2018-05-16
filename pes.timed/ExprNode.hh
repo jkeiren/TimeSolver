@@ -18,6 +18,7 @@
 #include <vector>
 #include <utility>
 #include <string>
+#include "array.hh"
 #include "DBM.hh"
 #include "DBMList.hh"
 
