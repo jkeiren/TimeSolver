@@ -85,7 +85,7 @@ inline std::ostream& operator<<(std::ostream& os, const opType& op) {
  * @note Many functions are inlined for better performance.
  * @version 1.2
  * @date November 2, 2013 */
-class SubstList : public OneDIntArray {
+class SubstList : public Array<atomic_value_t> {
 protected:
   const bidirectional_map<std::string, int>& declared_atomic;
 
@@ -97,24 +97,20 @@ public:
    * @param val The value to initialize the specified variable to.
    * @param numElements The number of variables (the size of the list).
    * @return [Constructor]. */
-  SubstList(const size_type index, const element_type val, const size_type numElements,
+  SubstList(const size_type index, const atomic_value_t val, const size_type size,
             const bidirectional_map<std::string, int>& as)
-      : OneDIntArray(numElements), declared_atomic(as) {
-    for (size_type i = 0; i < numElements; i++) {
-      this->operatorAccess(i) = -1;
-    }
-    this->operatorAccess(index) = val;
+      : Array(size, -1), declared_atomic(as) {
+   (*this)[index] = val;
   }
 
   /** Constructor. Initializes all variables to 0, providing a specific initial
    * state.
    * @param numElements The number of variables (the size of the list).
    * @return [Constructor]. */
-  SubstList(const size_type numElements,
+  SubstList(const size_type size,
             const bidirectional_map<std::string, int>& as)
-      : OneDIntArray(numElements), declared_atomic(as) {
-    for (size_type i = 0; i < numElements; i++) this->operatorAccess(i) = 0;
-  }
+      : Array(size, 0), declared_atomic(as)
+  {}
 
   /** 2-list Copy Constructor. Creates a substitution list
    * by assigning the values in the first substitution list into the second.
@@ -126,20 +122,23 @@ public:
    * @param st2 (*) The pointer to the second SubstList to get values from.
    * @return [Constructor]. */
   SubstList(const SubstList* const st1, const SubstList* const st2)
-      : OneDIntArray(st1->quantity), declared_atomic(st1->declared_atomic) {
-    for (size_type i = 0; i < quantity; i++) {
-      if (st1->operatorAccess(i) != -1)
-        this->operatorAccess(i) = st1->operatorAccess(i);
-      else
-        this->operatorAccess(i) = st2->operatorAccess(i);
+      : Array(st1->size()),
+        declared_atomic(st1->declared_atomic) {
+    assert(st1->size() == st2->size());
+    for (size_type i = 0; i < size(); ++i) {
+      if (st1->at(i) != -1) {
+        (*this)[i] = st1->at(i);
+      } else {
+        (*this)[i] = st2->at(i);
+      }
     }
   }
 
   /** Copy Constructor.
    * @param Y (&) The object to copy.
    * @return [Constructor]. */
-  SubstList(const SubstList& Y)
-      : OneDIntArray(Y), declared_atomic(Y.declared_atomic){}
+  SubstList(const SubstList& other)
+      : Array(other), declared_atomic(other.declared_atomic){}
 
   // Default move constructor.
   SubstList(SubstList&& other) = default;
@@ -148,23 +147,14 @@ public:
    * @return [Destructor]. */
   ~SubstList() {}
 
-  /** Deep-Copy equality of SubList structures: two SubstList objects are equal
-   * if and only if they both are the same size and they have the same values
-   * for each variable.
-   * @param Y (&) The reference to the RHS SubstList.
-   * @return true: the SubstList is equal to Y; false: otherwise. */
-  bool operator==(const SubstList& Y) const {
-    return (std::memcmp(storage, Y.storage, quantity * sizeof(element_type)) == 0);
-  }
-
   /** Element-wise equality of SubList elements */
-  bool equal_contents(const SubstList& Y) const {
-    if (quantity != Y.quantity) {
+  bool equal_contents(const SubstList& other) const {
+    if (size() != other.size()) {
       return false;
     }
 
-    for (size_type j = 0; j < quantity; j++) {
-      if (at(j) != Y.at(j)) {
+    for (size_type i = 0; i < size(); ++i) {
+      if (at(i) != other.at(i)) {
         return false;
       }
     }
@@ -177,16 +167,12 @@ public:
    * @param val The value to change the desired element to.
    * @return a pointer to the SubstList that was just changed. */
   SubstList* addst(const size_type index, const element_type val) {
-    assert(index < quantity);
-    this->operator[](index) = val;
+    assert(index < size());
+    (*this)[index] = val;
     return this;
   }
 
-  /** Returns the number of variables in this SubstList.
-   * @return the number of variables in the SubstList. */
-  size_type nElements() const { return quantity; }
-
-  /** Prints the contents of the SubstList.  A variable with
+    /** Prints the contents of the SubstList.  A variable with
    * value -1 is considered empty (the SubstList does not restrict
    * this variable).
    * @param os (&) The output stream to print the output to
@@ -194,7 +180,7 @@ public:
   void print(std::ostream& os) const {
     bool end = false;
     os << "[";
-    for (size_type i = 0; i < quantity; i++) {
+    for (size_type i = 0; i < size(); i++) {
       if (this->at(i) != -1) {
         if (end) os << ",";
         // os << "p" << i;
