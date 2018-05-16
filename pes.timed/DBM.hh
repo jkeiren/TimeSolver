@@ -570,22 +570,14 @@ public:
     const raw_constraint_t raw_0_x = operatorRead(0, x);
     const bound_t bound_0_x = constraint_to_bound(raw_0_x);
     if (bound_0_x < 0 || (bound_0_x == 0 && constraint_to_strictness(raw_0_x) == strict)) {
-      // Make an empty DBM
-      operatorWrite(x, 0) = zero_less;
-      operatorWrite(0, x) = zero_less;
-      operatorWrite(0, 0) = zero_less;
-      isCf = false;
+      makeEmpty();
       return *this;
     }
 
     const raw_constraint_t raw_x_0 = operatorRead(x, 0);
     const bound_t bound_x_0 = constraint_to_bound(raw_x_0);
     if (bound_x_0 < 0 || (bound_x_0 == 0 && constraint_to_strictness(raw_x_0) == strict)) {
-      // Make an empty DBM
-      operatorWrite(x, 0) = zero_less;
-      operatorWrite(0, x) = zero_less;
-      operatorWrite(0, 0) = zero_less;
-      isCf = false;
+      makeEmpty();
       return *this;
     }
 
@@ -629,11 +621,7 @@ public:
 
             const raw_constraint_t raw_i_j = operatorRead(i, j);
             if (constraint_to_bound(raw_i_j) < 0 || raw_i_j == zero_less) {
-              // Make an empty DBM
-              operatorWrite(i, 0) = zero_less;
-              operatorWrite(0, i) = zero_less;
-              operatorWrite(0, 0) = zero_less;
-              isCf = false;
+              makeEmpty();
               return *this;
             }
             // If both clocks are reset then their difference does not matter
@@ -657,19 +645,12 @@ public:
         // less than 0
         if (constraint_to_bound(raw_0_i) < 0) {
           // Make an empty DBM
-          operatorWrite(i, 0) = zero_less;
-          operatorWrite(0, i) = zero_less;
-          operatorWrite(0, 0) = zero_less;
-          isCf = false;
+          makeEmpty();
           return *this;
         }
         const raw_constraint_t raw_i_0 = operatorRead(i, 0);
         if (constraint_to_bound(raw_i_0) < 0) {
-          // Make an empty DBM
-          operatorWrite(i, 0) = zero_less;
-          operatorWrite(0, i) = zero_less;
-          operatorWrite(0, 0) = zero_less;
-          isCf = false;
+          makeEmpty();
           return *this;
         }
 
@@ -708,11 +689,7 @@ public:
       if (i != y && i != x) {
         if (operatorRead(i, x) < operatorRead(i, y) ||
             operatorRead(x, i) < operatorRead(y, i)) {
-          // Make an empty DBM
-          operatorWrite(i, 0) = 0;
-          operatorWrite(0, i) = 0;
-          operatorWrite(0, 0) = 0;
-          isCf = false;
+          makeEmpty();
           return *this;
         }
       }
