@@ -526,7 +526,7 @@ protected:
       cpplog(cpplogging::debug, "exists_rel_sidecondition") << "   !placeholder1 = " << placeholder1_complement << std::endl;
 
       // Process on a per-DBM basis
-      for (const DBM* const placeholder2_zone: *placeholder2.getDBMList())
+      for (const DBM* const placeholder2_zone: placeholder2)
       {
         cpplog(cpplogging::debug, "exists_rel_sidecondition") << "    placeholder2-part = " << *placeholder2_zone << std::endl;
 
@@ -898,9 +898,10 @@ inline bool prover::do_proof_or(const SubstList& discrete_state,
     // Reset place parent to nullptr
     parentPlaceRef = nullptr;
     placeholder2.union_(placeholder1);
-      retVal = placeholder2 >= zone; // if the union of both placeholders covers
-                                     // the set of states, we are still happy
-    }
+    placeholder2.cf();
+    retVal = placeholder2 >= zone; // if the union of both placeholders covers
+                                   // the set of states, we are still happy
+  }
   return retVal;
 }
 
@@ -1284,6 +1285,7 @@ inline bool prover::do_proof_exists_rel(const SubstList& discrete_state,
                                          // computation
       /*--- PredCheck code----*/
       establish_exists_rel_sidecondition(&placeholder, zone, placeholder1, placeholder2);
+      placeholder.cf();
       if (placeholder.emptiness()) {
         retVal = false;
 
@@ -2365,6 +2367,7 @@ inline void prover::do_proof_place_exists_rel(const SubstList& discrete_state,
       /*--- PredCheck code----*/
       DBMList placeholder(placeholder1);
       establish_exists_rel_sidecondition(&placeholder, zone, placeholder1, placeholder2);
+      placeholder.cf();
       if (placeholder.emptiness()) {
         cpplog(cpplogging::debug)
             << "----(Invalid) Relativization placeholder failed-----" << std::endl
@@ -2915,8 +2918,8 @@ inline bool prover::do_proof_place_ablewaitinf(const SubstList& discrete_state,
    * constraints in the successor. By design of succ() and invariants,
    * either all DBMs have an upper bound constraint, or none
    * of them do. Hence, checking the first is always good enough. */
-  assert(!ph.getDBMList()->empty());
-  DBM* firstDBM = *(ph.getDBMList()->begin());
+  assert(!ph.empty());
+  DBM* firstDBM = *(ph.begin());
 
   bool retVal = !firstDBM->hasUpperConstraint();
   if(!retVal && place != nullptr)
@@ -2948,9 +2951,9 @@ inline bool prover::do_proof_place_unablewaitinf(const SubstList& discrete_state
    * constraint in the successor. By design of succ() and invariants,
    * either all DBMs have an upper bound constraint, or none
    * of them do. Hence, checking the first is always good enough. */
-  assert(!ph.getDBMList()->empty());
+  assert(!ph.empty());
 
-  DBM* firstDBM = *(ph.getDBMList()->begin());
+  DBM* firstDBM = *(ph.begin());
   bool retVal = firstDBM->hasUpperConstraint();
   if(!retVal && place != nullptr) {
     place->makeEmpty();

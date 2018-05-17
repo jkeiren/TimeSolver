@@ -119,7 +119,7 @@ inline bool restrict_to_invariant(const std::vector<const ExprNode*>& invs,
                                   DBMList& dbms, const SubstList& discrete_state) {
   bool has_nonvacuous_invariant = false;
   if(!invs.empty()) {
-    for(DBM* dbm: *dbms.getDBMList()) {
+    for(DBM* dbm: dbms) {
       has_nonvacuous_invariant = restrict_to_invariant(invs, *dbm, discrete_state) || has_nonvacuous_invariant; // order is important
     }
   }

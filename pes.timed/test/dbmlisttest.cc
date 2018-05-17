@@ -12,6 +12,11 @@
 #include "testdbms.hh"
 #include "gtest/gtest.h"
 
+/** Use this function only for testing! */
+bool strictly_equal(const DBMList& xs, const DBMList& ys) {
+  return std::equal(xs.begin(), xs.end(), ys.begin(), [](const DBM* x, const DBM* y) { return *x == *y; });
+}
+
 // l1b
 DBM testDBM3()
 {
@@ -131,10 +136,19 @@ DBMList testDBMList7()
 
 TEST(DBMListTest, Empty)
 {
-    EXPECT_FALSE(testDBMList1().emptiness());
-    EXPECT_FALSE(testDBMList3().emptiness());
-    EXPECT_FALSE(testDBMList4().emptiness());
-    EXPECT_FALSE(testDBMList5().emptiness());
+    DBMList list1cf(testDBMList1());
+    DBMList list3cf(testDBMList3());
+    DBMList list4cf(testDBMList4());
+    DBMList list5cf(testDBMList5());
+    list1cf.cf();
+    list3cf.cf();
+    list4cf.cf();
+    list5cf.cf();
+
+    EXPECT_FALSE(list1cf.emptiness());
+    EXPECT_FALSE(list3cf.emptiness());
+    EXPECT_FALSE(list4cf.emptiness());
+    EXPECT_FALSE(list5cf.emptiness());
 }
 
 TEST(DBMListTest, CanonicalDBMList1)
@@ -204,6 +218,7 @@ TEST(DBMListTest, CanonicalDBMList5)
     DBMList expected(testDBM4cf);
     expected.addDBM(testDBM5cf);
     expected.addDBM(testDBM6cf);
+    expected.cf();
 
     EXPECT_EQ(expected, canonical);
 }
@@ -226,7 +241,7 @@ TEST(DBMListTest, CanonicalDBMList7)
     canonical.cf();
 
     DBMList expected = testDBMList7();
-    EXPECT_EQ(expected, canonical);
+    EXPECT_TRUE(strictly_equal(expected, canonical));
 }
 
 TEST(DBMListTest, PreDBMList1)
@@ -254,6 +269,8 @@ TEST(DBMListTest, Subset)
 {
     DBMList list3 = testDBMList3();
     DBMList list4 = testDBMList4();
+    list3.cf();
+    list4.cf();
     DBM infty(make_c2());
 
     EXPECT_TRUE(list3 <= infty);
@@ -267,6 +284,8 @@ TEST(DBMListTest, Superset)
 {
     DBMList list3 = testDBMList3();
     DBMList list4 = testDBMList4();
+    list3.cf();
+    list4.cf();
     DBM infty(make_c2());
 
     EXPECT_TRUE(list3 >= infty);
@@ -282,6 +301,8 @@ TEST(DBMListTest, Equal)
     DBMList empty = testDBMList3();
     empty.makeEmpty();
     DBM infty(make_c2());
+    list3.cf();
+    list4.cf();
 
     EXPECT_TRUE(list3 == infty);
     EXPECT_FALSE(list4 == infty);
@@ -296,24 +317,26 @@ TEST(DBMListTest, DBMList7Test)
     DBMList list7orig = testDBMList7();
     DBMList list7 = testDBMList7();
     DBMList* list7copy = new DBMList(list7);
+    list7.cf();
+    list7copy->cf();
 
-    EXPECT_FALSE(list7.emptiness());
-    EXPECT_FALSE(list7copy->emptiness());
     EXPECT_EQ(list7, *list7copy);
 
     list7.cf();
     list7copy->cf();
+    EXPECT_FALSE(list7.emptiness());
+    EXPECT_FALSE(list7copy->emptiness());
     EXPECT_EQ(list7, (*list7copy));
-    EXPECT_EQ(list7orig, list7);
-    EXPECT_EQ(list7orig, *list7copy);
+    EXPECT_TRUE(strictly_equal(list7orig, list7));
+    EXPECT_TRUE(strictly_equal(list7orig, *list7copy));
 
     DBM infty(make_c2());
     EXPECT_TRUE(list7 == infty);
-    EXPECT_EQ(list7, list7orig);
+    EXPECT_TRUE(strictly_equal(list7, list7orig));
     EXPECT_TRUE(list7 >= infty);
-    EXPECT_EQ(list7, list7orig);
+    EXPECT_TRUE(strictly_equal(list7, list7orig));
     EXPECT_TRUE(list7 <= infty);
-    EXPECT_EQ(list7, list7orig);
+    EXPECT_TRUE(strictly_equal(list7, list7orig));
 
     delete list7copy;
 }
@@ -321,6 +344,7 @@ TEST(DBMListTest, DBMList7Test)
 TEST(DBMListTest, CompareDBMList7Self)
 {
     DBMList list7 = testDBMList7();
+    list7.cf();
     EXPECT_TRUE(list7 <= list7);
     EXPECT_TRUE(list7 >= list7);
     EXPECT_TRUE(list7 == list7);
@@ -330,6 +354,7 @@ TEST(DBMListTest, CompareDBMList7DBM8)
 {
     DBMList list7 = testDBMList7();
     DBM dbm8(testDBM8());
+    list7.cf();
 
     EXPECT_TRUE(list7 >= dbm8);
     EXPECT_FALSE(list7 <= dbm8);
@@ -342,16 +367,18 @@ TEST(DBMListTest, Intersection)
     DBMList list7 = testDBMList7();
 
     list7.intersect(list7orig);
+    list7.cf();
     DBMList expected = list7orig;
     DBM test8(testDBM8());
     DBM test9(testDBM9());
     expected.addDBM(test8);
     expected.addDBM(test9);
+    expected.cf();
 
-    EXPECT_EQ(expected, list7);
+    EXPECT_TRUE(strictly_equal(expected, list7));
 
     list7.cf();
-    EXPECT_EQ(list7orig, list7);
+    EXPECT_TRUE(strictly_equal(list7orig, list7));
 }
 
 TEST(DBMListTest, CopyAndIntersectSelf)
@@ -360,6 +387,10 @@ TEST(DBMListTest, CopyAndIntersectSelf)
     DBMList list6 = testDBMList6();
     DBMList* list5copy = new DBMList(make_c2());
     *list5copy = list5;
+
+    EXPECT_TRUE(strictly_equal(list5, *list5copy));
+    list5.cf();
+    list5copy->cf();
 
     EXPECT_TRUE(list5 <= *list5copy);
     EXPECT_TRUE(list5 >= *list5copy);
@@ -377,6 +408,10 @@ TEST(DBMListTest, CopyAndIntersectSelf)
     list5.cf();
     EXPECT_EQ(*list5copy, list5);
 
+    EXPECT_FALSE(strictly_equal(list5, *list5copy));
+    EXPECT_FALSE(strictly_equal(list6, *list5copy));
+
+    list6.cf();
     EXPECT_TRUE(list5 <= *list5copy);
     EXPECT_TRUE(list5 >= *list5copy);
     EXPECT_TRUE(list5 == *list5copy);

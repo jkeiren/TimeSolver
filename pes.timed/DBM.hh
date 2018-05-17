@@ -790,7 +790,7 @@ public:
      * from a model with different semantics. */
     for (size_type i = 0; i < clocks_size(); ++i) {
       const raw_constraint_t raw_i_i = at(i, i);
-      if (constraint_to_bound(raw_i_i) < 0 || raw_i_i == zero_less) {
+      if (raw_i_i == zero_less || constraint_to_bound(raw_i_i) < 0) {
         return true;
       }
     }
