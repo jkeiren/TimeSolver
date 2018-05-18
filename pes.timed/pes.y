@@ -26,7 +26,7 @@
   #include "pes.hh"
   #include "ExprNode.hh"
   #include "transition.hh"
-  #include "OneDIntArray.hh"
+  #include "array.hh"
   #include "DBM.hh"
   #include "pes.tab.hh"
   #include "pes.lex.hh"
@@ -962,11 +962,11 @@ TOK_TRUE { $$ = new ExprNode(BOOL, true, input_pes.clocks(), input_pes.atomic())
 constraints:
 TOK_ID_CLOCK TOK_GE TOK_INT
 {
-  $$ = new DBM(input_pes.spaceDimension(), input_pes.clocks());
+  $$ = new DBM(input_pes.clocks());
   input_pes.update_max_constant($3);
   int x = input_pes.lookup_clock($1);
   if ( x!= -1){
-    $$->addConstraint(0, x, clock_value(-$3, false));
+    $$->addConstraint(0, x, bound_to_constraint(-$3, weak));
   }
   else {
     errPrtExit("clock variable not defined");
@@ -975,7 +975,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_GE TOK_ID_CONST
 {
-  $$ = new DBM(input_pes.spaceDimension(), input_pes.clocks());
+  $$ = new DBM(input_pes.clocks());
   map<string, int>::iterator it = defcons.find($3);
   if (it == defcons.end()) {
     errPrtExit("macro not defined");
@@ -984,7 +984,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
   input_pes.update_max_constant(v);
   int x = input_pes.lookup_clock($1);;
   if ( x!= -1){
-    $$->addConstraint(0, x, clock_value(-v, false));
+    $$->addConstraint(0, x, bound_to_constraint(-v, weak));
   }
   else {
     errPrtExit("clock variable not defined");
@@ -994,11 +994,11 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_GT TOK_INT
 {
-  $$ = new DBM(input_pes.spaceDimension(), input_pes.clocks());
+  $$ = new DBM(input_pes.clocks());
   input_pes.update_max_constant($3);
   int x = input_pes.lookup_clock($1);;
   if ( x!= -1){
-    $$->addConstraint(0, x, clock_value(-$3, true));
+    $$->addConstraint(0, x, bound_to_constraint(-$3, strict));
   }
   else {
     errPrtExit("clock variable not defined");
@@ -1007,7 +1007,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_GT TOK_ID_CONST
 {
-  $$ = new DBM(input_pes.spaceDimension(), input_pes.clocks());
+  $$ = new DBM(input_pes.clocks());
   map<string, int>::iterator it = defcons.find($3);
   if (it == defcons.end()) {
     errPrtExit("macro not defined");
@@ -1016,7 +1016,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
   input_pes.update_max_constant(v);
   int x = input_pes.lookup_clock($1);;
   if ( x!= -1){
-    $$->addConstraint(0, x, clock_value(-v, true));
+    $$->addConstraint(0, x, bound_to_constraint(-v, strict));
   }
   else {
     errPrtExit("clock variable not defined");
@@ -1026,11 +1026,11 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_LE TOK_INT
 {
-  $$ = new DBM(input_pes.spaceDimension(), input_pes.clocks());
+  $$ = new DBM( input_pes.clocks());
   input_pes.update_max_constant($3);
   int x = input_pes.lookup_clock($1);
   if ( x!= -1){
-    $$->addConstraint(x, 0, clock_value($3, false));
+    $$->addConstraint(x, 0, bound_to_constraint($3, weak));
   }
   else {
     errPrtExit("clock variable not defined");
@@ -1039,7 +1039,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_LE TOK_ID_CONST
 {
-  $$ = new DBM(input_pes.spaceDimension(), input_pes.clocks());
+  $$ = new DBM(input_pes.clocks());
   map<string, int>::iterator it = defcons.find($3);
   if (it == defcons.end()) {
     errPrtExit("macro not defined");
@@ -1048,7 +1048,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
   input_pes.update_max_constant(v);
   int x = input_pes.lookup_clock($1);;
   if ( x!= -1){
-    $$->addConstraint(x, 0, clock_value(v, false));
+    $$->addConstraint(x, 0, bound_to_constraint(v, weak));
   }
   else {
     errPrtExit("clock variable not defined");
@@ -1058,11 +1058,11 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_LT TOK_INT
 {
-  $$ = new DBM(input_pes.spaceDimension(), input_pes.clocks());
+  $$ = new DBM(input_pes.clocks());
   input_pes.update_max_constant($3);
   int x = input_pes.lookup_clock($1);;
   if ( x!= -1){
-    $$->addConstraint(x, 0, clock_value($3, true));
+    $$->addConstraint(x, 0, bound_to_constraint($3, strict));
   }
   else {
     errPrtExit("clock variable not defined");
@@ -1071,7 +1071,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_LT TOK_ID_CONST
 {
-  $$ = new DBM(input_pes.spaceDimension(), input_pes.clocks());
+  $$ = new DBM(input_pes.clocks());
   map<string, int>::iterator it = defcons.find($3);
   if (it == defcons.end()) {
     errPrtExit("macro not defined");
@@ -1080,7 +1080,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
   input_pes.update_max_constant(v);
   int x = input_pes.lookup_clock($1);;
   if ( x!= -1){
-    $$->addConstraint(x, 0, clock_value(v, true));
+    $$->addConstraint(x, 0, bound_to_constraint(v, strict));
   }
   else {
     errPrtExit("clock variable not defined");
@@ -1090,12 +1090,12 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_EQ TOK_INT
 {
-  $$ = new DBM(input_pes.spaceDimension(), input_pes.clocks());
+  $$ = new DBM(input_pes.clocks());
   input_pes.update_max_constant($3);
   int x = input_pes.lookup_clock($1);;
   if ( x!= -1){
-    $$->addConstraint(x, 0, clock_value($3, false));
-    $$->addConstraint(0, x, clock_value(-$3, false));
+    $$->addConstraint(x, 0, bound_to_constraint($3, weak));
+    $$->addConstraint(0, x, bound_to_constraint(-$3, weak));
   }
   else {
     errPrtExit("clock variable not defined");
@@ -1104,7 +1104,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_EQ TOK_ID_CONST
 {
-  $$ = new DBM(input_pes.spaceDimension(), input_pes.clocks());
+  $$ = new DBM(input_pes.clocks());
   map<string, int>::iterator it = defcons.find($3);
   if (it == defcons.end()) {
     errPrtExit("macro not defined");
@@ -1113,8 +1113,8 @@ TOK_ID_CLOCK TOK_GE TOK_INT
   input_pes.update_max_constant(v);
   int x = input_pes.lookup_clock($1);;
   if ( x!= -1){
-    $$->addConstraint(x, 0, clock_value(v, false));
-    $$->addConstraint(0, x, clock_value(-v, false));
+    $$->addConstraint(x, 0, bound_to_constraint(v, weak));
+    $$->addConstraint(0, x, bound_to_constraint(-v, weak));
   }
   else {
     errPrtExit("clock variable not defined");
@@ -1124,12 +1124,12 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_MINUS TOK_ID_CLOCK TOK_GE TOK_INT
 {
-  $$ = new DBM(input_pes.spaceDimension(), input_pes.clocks());
+  $$ = new DBM(input_pes.clocks());
   input_pes.update_max_constant($5);
   int x = input_pes.lookup_clock($1);;
   int y = input_pes.lookup_clock($3);;
   if ( x != -1 && y != -1) {
-    $$->addConstraint(y, x, clock_value(-$5, false));
+    $$->addConstraint(y, x, bound_to_constraint(-$5, weak));
   }
   else {
     errPrtExit("clock variable not defined");
@@ -1139,12 +1139,12 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_MINUS TOK_ID_CLOCK TOK_GT TOK_INT
 {
-  $$ = new DBM(input_pes.spaceDimension(), input_pes.clocks());
+  $$ = new DBM(input_pes.clocks());
   input_pes.update_max_constant($5);
   int x = input_pes.lookup_clock($1);
   int y = input_pes.lookup_clock($3);
   if ( x != -1 && y != -1) {
-    $$->addConstraint(y, x, clock_value(-$5, true));
+    $$->addConstraint(y, x, bound_to_constraint(-$5, strict));
   }
   else {
     errPrtExit("clock variable not defined");
@@ -1154,12 +1154,12 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_MINUS TOK_ID_CLOCK TOK_LE TOK_INT
 {
-  $$ = new DBM(input_pes.spaceDimension(), input_pes.clocks());
+  $$ = new DBM(input_pes.clocks());
   input_pes.update_max_constant($5);
   int x = input_pes.lookup_clock($1);;
   int y = input_pes.lookup_clock($3);;
   if ( x != -1 && y != -1) {
-    $$->addConstraint(x, y, clock_value($5, false));
+    $$->addConstraint(x, y, bound_to_constraint($5, weak));
   }
   else {
     errPrtExit("clock variable not defined");
@@ -1169,12 +1169,12 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_MINUS TOK_ID_CLOCK TOK_LT TOK_INT
 {
-  $$ = new DBM(input_pes.spaceDimension(), input_pes.clocks());
+  $$ = new DBM(input_pes.clocks());
   input_pes.update_max_constant($5);
   int x = input_pes.lookup_clock($1);;
   int y = input_pes.lookup_clock($3);;
   if ( x != -1 && y != -1) {
-    $$->addConstraint(x, y, clock_value($5, true));
+    $$->addConstraint(x, y, bound_to_constraint($5, strict));
   }
   else {
     errPrtExit("clock variable not defined");
@@ -1184,13 +1184,13 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 }
 |TOK_ID_CLOCK TOK_MINUS TOK_ID_CLOCK TOK_EQ TOK_INT
 {
-  $$ = new DBM(input_pes.spaceDimension(), input_pes.clocks());
+  $$ = new DBM(input_pes.clocks());
   input_pes.update_max_constant($5);
   int x = input_pes.lookup_clock($1);;
   int y = input_pes.lookup_clock($3);;
   if ( x != -1 && y != -1){
-    $$->addConstraint(x, y, clock_value($5, false));
-    $$->addConstraint(y, x, clock_value(-$5, false));
+    $$->addConstraint(x, y, bound_to_constraint($5, weak));
+    $$->addConstraint(y, x, bound_to_constraint(-$5, weak));
   }
   else {
     errPrtExit("clock variable not defined");

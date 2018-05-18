@@ -38,7 +38,7 @@ public:
       : destPar(destParent),
         isDestLeft(isDestOnLeft),
         clockAssignmentList(
-            clockAssignments == 0
+            clockAssignments == nullptr
                 ? nullptr
                 : new std::vector<std::pair<DBM::size_type, clock_value_t>>(
                       *clockAssignments)),

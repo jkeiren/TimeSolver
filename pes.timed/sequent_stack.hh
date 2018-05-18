@@ -136,9 +136,8 @@ public:
   SequentType* locate_sequent(SequentType* const sequent,
                               int predicate_index,
                               bool& newSequent) const {
-    SequentType* ls =
-        look_for_sequent(sequent->discrete_state(), predicate_index);
-    SequentType* result;
+    SequentType* ls = look_for_sequent(sequent->discrete_state(), predicate_index);
+    SequentType* result = nullptr;
     if (ls == nullptr) {
       /* Sequent not found; add it to the cache.
        * (This is why we must take in the entire Sequent s as a parameter
@@ -170,16 +169,12 @@ public:
   SequentType* look_for_sequent(const SubstList* const discrete_state,
                                 int predicate_index) const {
     const int index = get_index(discrete_state, predicate_index);
-    for (typename stack_t::const_iterator it = Xlist[index].begin();
-         it != Xlist[index].end(); it++) {
-      SequentType* ls = (*it);
-      if (discrete_state->equal_contents(*(ls->discrete_state()))) {
-        // Found the Sequent, return it
-        return ls;
-      }
-    }
-    // sequent not in structure, so return nullptr.
-    return nullptr;
+    typename stack_t::const_iterator it = std::find_if(
+          Xlist[index].begin(), Xlist[index].end(),
+          [&discrete_state](const SequentType* s) {
+            return discrete_state->equal_contents(*(s->discrete_state()));
+          });
+    return (it == Xlist[index].end()) ? nullptr : *it;
   }
 
   /** Given a sequent cache and using the clock state lhs and the

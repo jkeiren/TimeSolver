@@ -108,9 +108,6 @@ public:
   /** All clocks declared in this PES */
   const bidirectional_map<std::string, int>& clocks() const { return _clocks; }
 
-  /** Number of clocks, including the implicit 0 clock x0 */
-  DBM::size_type spaceDimension() const { return _clocks.size() + 1; }
-
   /** Add clock with name @name */
   int add_clock(const std::string& name) {
     int idx = _clocks.size() + 1;
@@ -321,8 +318,8 @@ public:
   DBM* initial_clock_zone() {
     if (initial_clock_zone_ == nullptr)
     {
-      initial_clock_zone_ = new DBM(spaceDimension(), clocks());
-      for (DBM::size_type i = 0; i < spaceDimension(); ++i) {
+      initial_clock_zone_ = new DBM(clocks());
+      for (DBM::size_type i = 0; i < initial_clock_zone_->clocks_size(); ++i) {
         initial_clock_zone_->addConstraint(i, 0, 0x1);
       }
       initial_clock_zone_->cf();

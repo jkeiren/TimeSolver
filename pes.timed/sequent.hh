@@ -72,9 +72,7 @@ public:
   ~Sequent() {
     delete _discrete_state;
     // Iterate Through and Delete every element of ds
-    for (std::vector<DBM *>::iterator it = ds.begin(); it != ds.end(); it++) {
-      delete *it;
-    }
+    delete_vector_elements(ds);
     ds.clear();
     // Do not delete e since it is a pointer to the overall ExprNode.
     // Do not delete parent sequent upon deletion
@@ -141,9 +139,7 @@ public:
    * @return true: lhs <= some sequent in s
    * (consequently, the sequent is true), false: otherwise.*/
    bool tabled_sequent(const DBM& lhs) const {
-    return std::find_if(ds.begin(), ds.end(), [&](const DBM* x) {
-             return *x >= lhs;
-           }) != ds.end();
+    return std::any_of(ds.begin(), ds.end(), [&lhs](const DBM* x) { return *x >= lhs; });
   }
 
   /** Using that a Sequent object is a set of sequents with matching rhs and
@@ -161,9 +157,7 @@ public:
    * @return true: lhs >= some sequent in s
    * (consequently, the sequent is false), false: otherwise.*/
   bool tabled_false_sequent(const DBM& lhs) const {
-    return std::find_if(ds.begin(), ds.end(), [&](const DBM* x) {
-             return *x <= lhs;
-           }) != ds.end();
+    return std::any_of(ds.begin(), ds.end(), [&lhs](const DBM* x) { return *x <= lhs; });
   }
 
   /** Using that a Sequent object is a set of sequents with matching rhs and
@@ -178,9 +172,7 @@ public:
    * @param lhs (*) The DBM to compare the sequent's DBMs to.
    * @return true: lhs == some sequent in s, false: otherwise.*/
   bool tabled_sequent_lfp(const DBM& lhs) {
-    return std::find_if(ds.begin(), ds.end(), [&](const DBM* x) {
-             return *x == lhs;
-           }) != ds.end();
+    return std::any_of(ds.begin(), ds.end(), [&lhs](const DBM* x) { return *x == lhs; });
   }
 
   /** Takes in set of known true sequents (s) with a newly
@@ -195,11 +187,11 @@ public:
    * @param s (*) The set of known sequents to update.
    * @param lhs (*) The DBM of the newly-established clock state. */
   void update_sequent(const DBM& lhs) {
-    DBMset::iterator it = std::find_if(ds.begin(), ds.end(), [&](const DBM*x) {
+    DBMset::iterator it = std::find_if(ds.begin(), ds.end(), [&lhs](const DBM*x) {
       return *x <= lhs;
     });
     if(it == ds.end()) {
-      ds.push_back(new DBM(lhs));
+      ds.emplace_back(new DBM(lhs));
     } else {
       **it = lhs;
     }
@@ -218,11 +210,11 @@ public:
    * @param s (*) The set of known sequents to update.
    * @param lhs (*) The DBM of the newly-established clock state. */
   void update_false_sequent(const DBM& lhs) {
-    DBMset::iterator it = std::find_if(ds.begin(), ds.end(), [&](const DBM*x) {
+    DBMset::iterator it = std::find_if(ds.begin(), ds.end(), [&lhs](const DBM*x) {
       return *x >= lhs;
     });
     if(it == ds.end()) {
-      ds.push_back(new DBM(lhs));
+      ds.emplace_back(new DBM(lhs));
     } else {
       **it = lhs;
     }
@@ -499,7 +491,7 @@ public:
         return;
       }
     }
-    _dbms.push_back(std::make_pair(new DBM(lhs), new DBMList(*lhsPlace)));
+    _dbms.emplace_back(new DBM(lhs), new DBMList(*lhsPlace));
   }
 
   /** Assumes the current sequent is known to be true, and updates it with a
@@ -528,14 +520,14 @@ public:
      * the proper number of clocks and initialized
      * so that it represents the empty region
      * (for all clocks x_i, 0 <= x_i <= 0). */
-    DBM EMPTY(lhs.clocks_size(), lhs.declared_clocks());
+    DBM EMPTY(lhs.declared_clocks());
     for (DBM::size_type i = 1; i < EMPTY.clocks_size(); i++) {
       EMPTY.addConstraint(i, 0, 0);
       EMPTY.addConstraint(0, i, 0);
     }
     EMPTY.cf();
 
-    _dbms.push_back(std::make_pair(new DBM(lhs), new DBMList(EMPTY)));
+    _dbms.emplace_back(new DBM(lhs), new DBMList(EMPTY));
   }
 
 protected:

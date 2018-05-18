@@ -12,30 +12,37 @@
 #include "DBM.hh"
 
 inline
-bidirectional_map<std::string, int> make_c3()
+const bidirectional_map<std::string, int>& make_c2()
 {
-  static bidirectional_map<std::string, int> c3 = { {"x1",1}, {"x2",2}, {"x3",3} };
+  static const bidirectional_map<std::string, int> c2 = { {"x1",1}, {"x2",2} };
+  return c2;
+}
+
+inline
+const bidirectional_map<std::string, int>& make_c3()
+{
+  static const bidirectional_map<std::string, int> c3 = { {"x1",1}, {"x2",2}, {"x3",3} };
   return c3;
 }
 
 inline
-bidirectional_map<std::string, int> make_c4()
+const bidirectional_map<std::string, int>& make_c4()
 {
-  static bidirectional_map<std::string, int> c4 = { {"x1",1}, {"x2",2}, {"x3",3}, {"x4",4} };
+  static const bidirectional_map<std::string, int> c4 = { {"x1",1}, {"x2",2}, {"x3",3}, {"x4",4} };
   return c4;
 }
 
 inline
-bidirectional_map<std::string, int> make_c5()
+const bidirectional_map<std::string, int>& make_c5()
 {
-  bidirectional_map<std::string, int> c5 = { {"x1",1}, {"x2",2}, {"x3",3}, {"x4",4}, {"x5",5} };
+  static const bidirectional_map<std::string, int> c5 = { {"x1",1}, {"x2",2}, {"x3",3}, {"x4",4}, {"x5",5} };
   return c5;
 }
 
 inline
 DBM emptyDBM3()
 {
-    DBM empty(3, make_c3());
+    DBM empty(make_c2());
     empty.makeEmpty();
     return empty;
 }
@@ -43,16 +50,16 @@ DBM emptyDBM3()
 inline
 DBM testDBM1()
 {
-    DBM testDBM1(3, make_c3());
-    testDBM1.addConstraint(0,0, zero(false));
-    testDBM1.addConstraint(0,1, clock_value(-1, false));
-    testDBM1.addConstraint(0,2, clock_value(-5, false));
-    testDBM1.addConstraint(1,0, clock_value(3, false));
-    testDBM1.addConstraint(1,1, zero(false));
-    testDBM1.addConstraint(1,2, infinity(true));
-    testDBM1.addConstraint(2,0, clock_value(7, false));
-    testDBM1.addConstraint(2,1, infinity(true));
-    testDBM1.addConstraint(2,2, zero(false));
+    DBM testDBM1(make_c2());
+    testDBM1.addConstraint(0,0, zero_le);
+    testDBM1.addConstraint(0,1, bound_to_constraint(-1, weak));
+    testDBM1.addConstraint(0,2, bound_to_constraint(-5, weak));
+    testDBM1.addConstraint(1,0, bound_to_constraint(3, weak));
+    testDBM1.addConstraint(1,1, zero_le);
+    testDBM1.addConstraint(1,2, infinity);
+    testDBM1.addConstraint(2,0, bound_to_constraint(7, weak));
+    testDBM1.addConstraint(2,1, infinity);
+    testDBM1.addConstraint(2,2, zero_le);
     return testDBM1;
 }
 
@@ -60,48 +67,48 @@ inline
 DBM testDBM1cf()
 {
     // DBM in canonical form (expected result)
-    DBM expected(3, make_c3());
-    expected.addConstraint(0,0, zero(false));
-    expected.addConstraint(0,1, clock_value(-1, false));
-    expected.addConstraint(0,2, clock_value(-5, false));
-    expected.addConstraint(1,0, clock_value(3, false));
-    expected.addConstraint(1,1, zero(false));
-    expected.addConstraint(1,2, clock_value(-2, false));
-    expected.addConstraint(2,0, clock_value(7, false));
-    expected.addConstraint(2,1, clock_value(6, false));
-    expected.addConstraint(2,2, zero(false));
+    DBM expected(make_c2());
+    expected.addConstraint(0,0, zero_le);
+    expected.addConstraint(0,1, bound_to_constraint(-1, weak));
+    expected.addConstraint(0,2, bound_to_constraint(-5, weak));
+    expected.addConstraint(1,0, bound_to_constraint(3, weak));
+    expected.addConstraint(1,1, zero_le);
+    expected.addConstraint(1,2, bound_to_constraint(-2, weak));
+    expected.addConstraint(2,0, bound_to_constraint(7, weak));
+    expected.addConstraint(2,1, bound_to_constraint(6, weak));
+    expected.addConstraint(2,2, zero_le);
     return expected;
 }
 
 inline
 DBM testDBM1pre()
 {
-    DBM expected(3, make_c3());
-    expected.addConstraint(0,0, zero(false));
-    expected.addConstraint(0,1, zero(false));
-    expected.addConstraint(0,2, zero(false));
-    expected.addConstraint(1,0, clock_value(3, false));
-    expected.addConstraint(1,1, zero(false));
-    expected.addConstraint(1,2, infinity(true));
-    expected.addConstraint(2,0, clock_value(7, false));
-    expected.addConstraint(2,1, infinity(true));
-    expected.addConstraint(2,2, zero(false));
+    DBM expected(make_c2());
+    expected.addConstraint(0,0, zero_le);
+    expected.addConstraint(0,1, zero_le);
+    expected.addConstraint(0,2, zero_le);
+    expected.addConstraint(1,0, bound_to_constraint(3, weak));
+    expected.addConstraint(1,1, zero_le);
+    expected.addConstraint(1,2, infinity);
+    expected.addConstraint(2,0, bound_to_constraint(7, weak));
+    expected.addConstraint(2,1, infinity);
+    expected.addConstraint(2,2, zero_le);
     return expected;
 }
 
 inline
 DBM testDBM1precf()
 {
-    DBM expected(3, make_c3());
-    expected.addConstraint(0,0, zero(false));
-    expected.addConstraint(0,1, zero(false));
-    expected.addConstraint(0,2, zero(false));
-    expected.addConstraint(1,0, clock_value(3, false));
-    expected.addConstraint(1,1, zero(false));
-    expected.addConstraint(1,2, clock_value(3, false));
-    expected.addConstraint(2,0, clock_value(7, false));
-    expected.addConstraint(2,1, clock_value(7, false));
-    expected.addConstraint(2,2, zero(false));
+    DBM expected(make_c2());
+    expected.addConstraint(0,0, zero_le);
+    expected.addConstraint(0,1, zero_le);
+    expected.addConstraint(0,2, zero_le);
+    expected.addConstraint(1,0, bound_to_constraint(3, weak));
+    expected.addConstraint(1,1, zero_le);
+    expected.addConstraint(1,2, bound_to_constraint(3, weak));
+    expected.addConstraint(2,0, bound_to_constraint(7, weak));
+    expected.addConstraint(2,1, bound_to_constraint(7, weak));
+    expected.addConstraint(2,2, zero_le);
     return expected;
 }
 

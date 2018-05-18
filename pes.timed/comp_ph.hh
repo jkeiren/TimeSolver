@@ -44,8 +44,7 @@ inline bool eval_atomic(const ExprNode& e, const SubstList& discrete_state)
       return (discrete_state.at(e.getAtomic()) >= e.getIntVal());
     }
     default: {
-      std::cerr << "Not a valid condition" << std::endl;
-      exit(1);
+      throw std::runtime_error("Not a valid condition");
     }
   }
 }
@@ -60,14 +59,14 @@ inline bool eval_atomic(const ExprNode& e, const SubstList& discrete_state)
  * the set of discrete and clock states satisfying the premise is empty).*/
 inline bool comp_ph_invs(const ExprNode& e, const SubstList& discrete_state) {
   switch (e.getOpType()) {
-    case AND: {
-      return (comp_ph_invs(*(e.getLeft()), discrete_state) &&
-              comp_ph_invs(*(e.getRight()), discrete_state));
-    }
     case OR:
     case OR_SIMPLE: {
       /* We only have atomic booleans so this simplified rule works. */
       return (comp_ph_invs(*(e.getLeft()), discrete_state) ||
+              comp_ph_invs(*(e.getRight()), discrete_state));
+    }
+    case AND: {
+      return (comp_ph_invs(*(e.getLeft()), discrete_state) &&
               comp_ph_invs(*(e.getRight()), discrete_state));
     }
     default: {
@@ -115,15 +114,16 @@ inline bool restrict_to_invariant(const std::vector<const ExprNode*>& invs,
  * @param lhs (*) The DBMList to alter.
  * @param discrete_state The discrete state (location variable assignment)
  * of the sequent.
- * @return true: the DBMList is changed; false: otherwise. */
+ * @return true: the DBMList is changed, so there is an invariant that is not vacuously satisfied in the context of the dbmlist. */
 inline bool restrict_to_invariant(const std::vector<const ExprNode*>& invs,
                                   DBMList& dbms, const SubstList& discrete_state) {
-  bool changed = false;
-  if (invs.empty()) return false;
-  for(DBM* dbm: *dbms.getDBMList()) {
-    changed = restrict_to_invariant(invs, *dbm, discrete_state) || changed; // order is important
+  bool has_nonvacuous_invariant = false;
+  if(!invs.empty()) {
+    for(DBM* dbm: dbms) {
+      has_nonvacuous_invariant = restrict_to_invariant(invs, *dbm, discrete_state) || has_nonvacuous_invariant; // order is important
+    }
   }
-  return changed;
+  return has_nonvacuous_invariant;
 }
 
 /** Simplified and performance-optimized proof engine for (AllAct) transitions
@@ -152,15 +152,6 @@ inline bool restrict_to_invariant(const std::vector<const ExprNode*>& invs,
 inline bool comp_ph(DBM& zone, const ExprNode& e,
                     const SubstList& discrete_state) {
   switch (e.getOpType()) {
-    case CONSTRAINT: {
-      zone.intersect(*(e.dbm()));
-      zone.cf(); // Calls Canonical Form Here.
-      return (!(zone.emptiness()));
-    }
-    case AND: {
-      return (comp_ph(zone, *(e.getLeft()), discrete_state) &&
-              comp_ph(zone, *(e.getRight()), discrete_state));
-    }
     case OR:
     case OR_SIMPLE: {
       /* This OR rule only works when there is at most one constraint.
@@ -170,6 +161,15 @@ inline bool comp_ph(DBM& zone, const ExprNode& e,
        * bad case will never occur. */
       return (comp_ph(zone, *(e.getLeft()), discrete_state) ||
               comp_ph(zone, *(e.getRight()), discrete_state));
+    }
+    case AND: {
+      return (comp_ph(zone, *(e.getLeft()), discrete_state) &&
+              comp_ph(zone, *(e.getRight()), discrete_state));
+    }
+    case CONSTRAINT: {
+      zone.intersect(*(e.dbm()));
+      zone.cf(); // Calls Canonical Form Here.
+      return !(zone.emptiness());
     }
     default: {
       return eval_atomic(e, discrete_state);
@@ -199,14 +199,28 @@ inline bool comp_ph(DBM& zone, const ExprNode& e,
 inline bool comp_ph_exist_place(DBM& zone, DBMList& place,
                                 const ExprNode& e, const SubstList& discrete_state) {
   switch (e.getOpType()) {
+    case OR:
+    case OR_SIMPLE: {
+      /* This OR rule only works when there is at most one constraint.
+       * By definition of its input, we have a discrete state (with
+       * && and || notes) conjuncted with an intersection of constraints.
+       * By construction of the fed input to this function, the above
+       * bad case will never occur. */
+      return (comp_ph_exist_place(zone, place, *(e.getLeft()), discrete_state) ||
+              comp_ph_exist_place(zone, place, *(e.getRight()), discrete_state));
+    }
+    case AND: {
+      return (comp_ph_exist_place(zone, place, *(e.getLeft()), discrete_state) &&
+              comp_ph_exist_place(zone, place, *(e.getRight()), discrete_state));
+    }
     case CONSTRAINT: {
       zone.cf();
-      bool res = zone <= (*e.dbm());
+      if (zone <= (*e.dbm())) {
+        return true;
+      } else {
       zone.intersect(*e.dbm());
       zone.cf(); // Calls Canonical Form Here.
-      if (res) {
-        return true;
-      } else if (zone.emptiness()) {
+        if (zone.emptiness()) {
         // We can only tighten if the constraint is not empty
         return false;
       } else {
@@ -219,19 +233,6 @@ inline bool comp_ph_exist_place(DBM& zone, DBMList& place,
         return !place.emptiness();
       }
     }
-    case AND: {
-      return (comp_ph_exist_place(zone, place, *(e.getLeft()), discrete_state) &&
-              comp_ph_exist_place(zone, place, *(e.getRight()), discrete_state));
-    }
-    case OR:
-    case OR_SIMPLE: {
-      /* This OR rule only works when there is at most one constraint.
-       * By definition of its input, we have a discrete state (with
-       * && and || notes) conjuncted with an intersection of constraints.
-       * By construction of the fed input to this function, the above
-       * bad case will never occur. */
-      return (comp_ph_exist_place(zone, place, *(e.getLeft()), discrete_state) ||
-              comp_ph_exist_place(zone, place, *(e.getRight()), discrete_state));
     }
     default: {
       return eval_atomic(e, discrete_state);
@@ -255,20 +256,6 @@ inline bool comp_ph_exist_place(DBM& zone, DBMList& place,
 inline bool comp_ph_all_place(DBM& zone, DBMList& place,
                               const ExprNode& e, const SubstList& discrete_state) {
   switch (e.getOpType()) {
-    case CONSTRAINT: {
-      zone.intersect(*e.dbm());
-      zone.cf(); // Calls Canonical Form Here.
-      if (zone.emptiness()) {
-        return false;
-      }
-      place.intersect(*e.dbm());
-      place.cf();
-      return !place.emptiness();
-    }
-    case AND: {
-      return (comp_ph_all_place(zone, place, *(e.getLeft()), discrete_state) &&
-              comp_ph_all_place(zone, place, *(e.getRight()), discrete_state));
-    }
     case OR:
     case OR_SIMPLE: {
       /* This OR rule only works when there is at most one constraint.
@@ -278,6 +265,21 @@ inline bool comp_ph_all_place(DBM& zone, DBMList& place,
        * bad case will never occur. */
       return (comp_ph_all_place(zone, place, *(e.getLeft()), discrete_state) ||
               comp_ph_all_place(zone, place, *(e.getRight()), discrete_state));
+    }
+    case AND: {
+      return (comp_ph_all_place(zone, place, *(e.getLeft()), discrete_state) &&
+              comp_ph_all_place(zone, place, *(e.getRight()), discrete_state));
+    }
+    case CONSTRAINT: {
+      zone.intersect(*e.dbm());
+      zone.cf(); // Calls Canonical Form Here.
+      if (zone.emptiness()) {
+        return false;
+      } else {
+      place.intersect(*e.dbm());
+      place.cf();
+      return !place.emptiness();
+    }
     }
     default: {
       return eval_atomic(e, discrete_state);
