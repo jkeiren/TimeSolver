@@ -1,10 +1,7 @@
-/** \file OneDIntArray.hh
- * An implementation of an array of short integers.
- * @author Peter Fontana
- * @author Dezhuang Zhang
+/** \file Array.hh
+ * Straightforward C++ interface wrapper around C-style array.
  * @author Jeroen Keiren
  * @copyright MIT Licence, see the accompanying LICENCE.txt
- * @note Many functions are inlined for better performance.
  */
 
 #ifndef ARRAY_H

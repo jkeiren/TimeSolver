@@ -172,7 +172,7 @@ public:
     typename stack_t::const_iterator it = std::find_if(
           Xlist[index].begin(), Xlist[index].end(),
           [&discrete_state](const SequentType* s) {
-            return discrete_state->equal_contents(*(s->discrete_state()));
+            return *discrete_state == *(s->discrete_state());
           });
     return (it == Xlist[index].end()) ? nullptr : *it;
   }
@@ -219,7 +219,7 @@ public:
        * that are in line with the proper "tabling"
        * or containment, which are specified by
        * the tableCheck Boolean */
-      if (sequent->discrete_state()->equal_contents(*(ls->discrete_state()))) {
+      if (*sequent->discrete_state() == *(ls->discrete_state())) {
         // Now Iterate on the Tabled Sequents
         /* Key Concept of Purging:
          * If Was True (tableCheck is true), discovered false, check that
@@ -287,7 +287,7 @@ public:
        * that are in line with the proper "tabling"
        * or containment, which are specified by
        * the tableCheck Boolean */
-      if (sequent->discrete_state()->equal_contents(*(ls->discrete_state()))) {
+      if (*sequent->discrete_state() == *(ls->discrete_state())) {
         /* Key Concept of Purging:
          * If Was True (tableCheck is true), discovered false, check that
          *		Z_now_false <= Z_cached_true | or | Z_cached_true >=

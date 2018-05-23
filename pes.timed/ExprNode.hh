@@ -145,20 +145,6 @@ public:
    * @return [Destructor]. */
   ~SubstList() {}
 
-  /** Element-wise equality of SubList elements */
-  bool equal_contents(const SubstList& other) const {
-    if (size() != other.size()) {
-      return false;
-    }
-
-    for (size_type i = 0; i < size(); ++i) {
-      if (at(i) != other.at(i)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
   /** Changes the list by changing the specified variable to
    * value val.  The SubstList calling this is changed.
    * @param index The location to change the value of
@@ -179,11 +165,11 @@ public:
     bool end = false;
     os << "[";
     for (size_type i = 0; i < size(); i++) {
-      if (this->at(i) != -1) {
+      if (at(i) != -1) {
         if (end) os << ",";
         // os << "p" << i;
         os << declared_atomic.reverse_at(i);
-        os << "=" << this->at(i);
+        os << "=" << at(i);
         end = true;
       }
     }
