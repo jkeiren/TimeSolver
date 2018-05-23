@@ -62,7 +62,7 @@ public:
     m_size(other.m_size),
     m_data(new value_type[other.m_size])
   {
-    std::memcpy(m_data, other.m_data, m_size * sizeof(value_type));
+    std::copy(other.begin(), other.end(), m_data);
   }
 
   /** Move constructor
@@ -87,9 +87,12 @@ public:
    */
   Array& operator=(const Array<T>& other)
   {
-    m_size = other.m_size;
-    m_data = new value_type[other.m_size];
-    std::memcpy(m_data, other.m_data, m_size * sizeof(value_type));
+    if(m_size != other.m_size) {
+      delete[] m_data;
+      m_size = other.m_size;
+      m_data = new value_type[m_size];
+    }
+    std::copy(other.begin(), other.end(), m_data);
     return *this;
   }
 
@@ -99,6 +102,7 @@ public:
    */
   Array& operator=(Array<T>&& other)
   {
+    delete[] m_data;
     m_size = std::move(other.m_size);
     m_data = std::move(other.m_data);
     other.m_data = nullptr;
@@ -138,9 +142,9 @@ public:
     return m_data[i];
   }
 
-  /** Access element @i of the array
+  /** Access element i of the array
    *
-   * Returns a const reference to the object at position @i.
+   * Returns a const reference to the object at position i.
    */
   reference at(const std::size_t i)
   {
@@ -155,9 +159,9 @@ public:
   reference back() { return m_data[m_size-1]; }
   const_reference back() const { return m_data[m_size-1]; }
 
-  /** Access element @i of the array
+  /** Access element i of the array
    *
-   * Returns a const reference to the object at position @i.
+   * Returns a const reference to the object at position i.
    */
   const_reference at(const std::size_t i) const
   {
