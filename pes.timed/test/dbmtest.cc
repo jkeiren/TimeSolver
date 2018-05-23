@@ -25,8 +25,7 @@ TEST(DBMTest, ClockZero)
 TEST(DBMTest, ClockInfty)
 {
   clock_value_t infty_strict = infinity;
-  EXPECT_EQ(0x1FFE, infty_strict);
-  EXPECT_EQ(infty_strict, bound_to_constraint(4095, strict));
+  EXPECT_EQ(infty_strict, std::numeric_limits<bound_t>::max() ^ 1);
 }
 
 TEST(DBMTest, ClockPositive)

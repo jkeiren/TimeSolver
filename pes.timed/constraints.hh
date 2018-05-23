@@ -19,9 +19,10 @@ typedef short int raw_constraint_t; // encoding of an upper bound in the TA/DBM:
 typedef short int bound_t; // integer constant, being a bound or a clock_value in the TA/DBM
 typedef bound_t clock_value_t; // values that can be attained by a clock; == bound_t
 
-const     bound_t infinity_bound = 0xFFF;
+const     bound_t infinity_bound = std::numeric_limits<bound_t>::max() >> 1; // first 4 bits unused
+static_assert (sizeof (bound_t) == 2, "sizeof (bound_t) != 2 bytes");
 
-constexpr raw_constraint_t infinity = infinity_bound << 1;
+constexpr raw_constraint_t infinity = infinity_bound << 1; // msb is sign bit. next 2 bits (14,13) unused;
 const     raw_constraint_t zero_less = 0;
 const     raw_constraint_t zero_le = 1;
 
