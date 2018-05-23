@@ -300,12 +300,9 @@ public:
   ~SequentPlace() {
     delete _discrete_state;
     // Iterate Through and Delete every element of ds
-    for (std::vector<std::pair<DBM *, DBMList *>>::iterator it = _dbms.begin();
-         it != _dbms.end(); it++) {
-      DBM *ls = (*it).first;
-      DBMList *lsList = (*it).second;
-      delete ls;
-      delete lsList;
+    for (std::pair<DBM*, DBMList*> p: _dbms) {
+      delete p.first;
+      delete p.second;
     }
     _dbms.clear();
     // Do not delete e since it is a pointer to the overall ExprNode.
@@ -344,9 +341,9 @@ public:
 
   /** Delete sequents and clear the vector */
   void delete_sequents() {
-    for (DBMPlaceSet::iterator it = _dbms.begin(); it != _dbms.end(); ++it) {
-      delete it->first;
-      delete it->second;
+    for (std::pair<DBM*, DBMList*> p: _dbms) {
+      delete p.first;
+      delete p.second;
     }
     _dbms.clear();
   }

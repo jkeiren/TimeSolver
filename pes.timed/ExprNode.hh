@@ -88,7 +88,7 @@ inline std::ostream& operator<<(std::ostream& os, const opType& op) {
  * @date November 2, 2013 */
 class SubstList : public Array<atomic_value_t> {
 protected:
-  const bidirectional_map<std::string, int>& declared_atomic;
+  const atomic_name_to_index_t& declared_atomic;
 
 public:
   /** Constructor. Initializes all variables to -1 except the specified
@@ -99,7 +99,7 @@ public:
    * @param numElements The number of variables (the size of the list).
    * @return [Constructor]. */
   SubstList(const size_type index, const atomic_value_t val, const size_type size,
-            const bidirectional_map<std::string, int>& as)
+            const atomic_name_to_index_t& as)
       : Array(size, -1), declared_atomic(as)
   {
     (*this)[index] = val;
@@ -110,7 +110,7 @@ public:
    * @param numElements The number of variables (the size of the list).
    * @return [Constructor]. */
   SubstList(const size_type size,
-            const bidirectional_map<std::string, int>& as)
+            const atomic_name_to_index_t& as)
       : Array(size, 0), declared_atomic(as)
   {}
 
@@ -233,8 +233,8 @@ public:
    * the values given above may result in program errors.
    * @return [Constructor]. */
   ExprNode(const opType o, ExprNode* q,
-           const bidirectional_map<std::string, int>& cs,
-           const bidirectional_map<std::string, int>& as)
+           const clock_name_to_index_t& cs,
+           const atomic_name_to_index_t& as)
       : left(q), op(o), declared_clocks(cs), declared_atomic(as) {
     right = nullptr;
     constraint = nullptr;
@@ -253,8 +253,8 @@ public:
    * the values given above may result in program errors.
    * @return [Constructor]. */
   ExprNode(const opType o, ExprNode* l, ExprNode* r,
-           const bidirectional_map<std::string, int>& cs,
-           const bidirectional_map<std::string, int>& as)
+           const clock_name_to_index_t& cs,
+           const atomic_name_to_index_t& as)
       : left(l), right(r), op(o), declared_clocks(cs), declared_atomic(as) {
     constraint = nullptr;
     predicate = nullptr;
@@ -272,8 +272,8 @@ public:
    * the values given above may result in program errors.
    * @return [Constructor]. */
   ExprNode(const opType o, DBM* c,
-           const bidirectional_map<std::string, int>& cs,
-           const bidirectional_map<std::string, int>& as)
+           const clock_name_to_index_t& cs,
+           const atomic_name_to_index_t& as)
       : op(o), declared_clocks(cs), declared_atomic(as) {
     assert(c != nullptr);
     left = nullptr;
@@ -295,8 +295,8 @@ public:
    * the values given above may result in program errors.
    * @return [Constructor]. */
   ExprNode(const opType o, const bool bv,
-           const bidirectional_map<std::string, int>& cs,
-           const bidirectional_map<std::string, int>& as)
+           const clock_name_to_index_t& cs,
+           const atomic_name_to_index_t& as)
       : op(o), b(bv), declared_clocks(cs), declared_atomic(as) {
     left = nullptr;
     right = nullptr;
@@ -322,8 +322,8 @@ public:
    * the values given above may result in program errors.
    * @return [Constructor]. */
   ExprNode(const opType o, const short a, const short i,
-           const bidirectional_map<std::string, int>& cs,
-           const bidirectional_map<std::string, int>& as)
+           const clock_name_to_index_t& cs,
+           const atomic_name_to_index_t& as)
       : op(o), atomic(a), intVal(i), declared_clocks(cs), declared_atomic(as) {
     left = nullptr;
     right = nullptr;
@@ -351,8 +351,8 @@ public:
    * the values given above may result in program errors.
    * @return [Constructor]. */
   ExprNode(const opType o, const short a, const short i, DBM* c,
-           const bidirectional_map<std::string, int>& cs,
-           const bidirectional_map<std::string, int>& as)
+           const clock_name_to_index_t& cs,
+           const atomic_name_to_index_t& as)
       : constraint(c),
         op(o),
         atomic(a),
@@ -374,8 +374,8 @@ public:
    * the values given above may result in program errors.
    * @return [Constructor]. */
   ExprNode(const opType o, const char* a, const short i,
-           const bidirectional_map<std::string, int>& cs,
-           const bidirectional_map<std::string, int>& as)
+           const clock_name_to_index_t& cs,
+           const atomic_name_to_index_t& as)
       : predicate(a),
         op(o),
         intVal(i),
@@ -398,8 +398,8 @@ public:
    * the values given above may result in program errors.
    * @return [Constructor]. */
   ExprNode(const opType o, ExprNode* l, ClockSet* s,
-           const bidirectional_map<std::string, int>& cs,
-           const bidirectional_map<std::string, int>& as)
+           const clock_name_to_index_t& cs,
+           const atomic_name_to_index_t& as)
       : left(l), cset(s), op(o), declared_clocks(cs), declared_atomic(as) {
     right = nullptr;
     predicate = nullptr;
@@ -420,8 +420,8 @@ public:
    * the values given above may result in program errors.
    * @return [Constructor]. */
   ExprNode(const opType o, ExprNode* l, SubstList* s,
-           const bidirectional_map<std::string, int>& cs,
-           const bidirectional_map<std::string, int>& as)
+           const clock_name_to_index_t& cs,
+           const atomic_name_to_index_t& as)
       : left(l), subst(s), op(o), declared_clocks(cs), declared_atomic(as) {
     right = nullptr;
     predicate = nullptr;
@@ -445,8 +445,8 @@ public:
    * the values given above may result in program errors.
    * @return [Constructor]. */
   ExprNode(const opType o, ExprNode* l, const DBM::size_type cx, const DBM::size_type cy,
-           const bidirectional_map<std::string, int>& cs,
-           const bidirectional_map<std::string, int>& as)
+           const clock_name_to_index_t& cs,
+           const atomic_name_to_index_t& as)
       : left(l),
         op(o),
         atomic(cx),
@@ -801,10 +801,10 @@ protected:
   // FIXME
 public:
   /** Pointer to the globally declared clocks */
-  const bidirectional_map<std::string, int>& declared_clocks;
+  const clock_name_to_index_t& declared_clocks;
 
   /** Pointer to the globally declared atomics*/
-  const bidirectional_map<std::string, int>& declared_atomic;
+  const atomic_name_to_index_t& declared_atomic;
 
   /** Prints out the expression to the desired output stream, labeling
    * the expression with its opType. The typical output stream is cout.

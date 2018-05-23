@@ -119,7 +119,7 @@ private:
   bool isCf;
 
   /** Pointer to the globally declared clocks */
-  const bidirectional_map<std::string, int> &declared_clocks_;
+  const clock_name_to_index_t& declared_clocks_;
 
   size_type offset(const size_type row, const size_type col) const {
     assert(row < clocks_size());
@@ -170,7 +170,7 @@ public:
    * "zero clock". Hence, there are numClocks - 1 actual clocks
    * with 1 "zero" clock.
    * @return [Constructor] */
-  DBM(const bidirectional_map<std::string, int> &cs)
+  DBM(const clock_name_to_index_t& cs)
       : Array((cs.size()+1) * (cs.size()+1)),
         declared_clocks_(cs) {
     for (size_type i = 0; i < clocks_size(); ++i) {
@@ -193,7 +193,7 @@ public:
    * @param val The value constraining the upper bound of row - col.
    * @return [Constructor] */
   DBM(const size_type row, const size_type col,
-      const raw_constraint_t val, const bidirectional_map<std::string, int> &cs)
+      const raw_constraint_t val, const clock_name_to_index_t& cs)
       : Array((cs.size()+1) * (cs.size()+1)),
         declared_clocks_(cs) {
     for (size_type i = 0; i < clocks_size(); ++i) {
@@ -225,7 +225,7 @@ public:
 
   size_type clocks_size() const { return declared_clocks_.size() + 1; }
 
-  const bidirectional_map<std::string, int>& declared_clocks() const {
+  const clock_name_to_index_t& declared_clocks() const {
     return declared_clocks_;
   }
 

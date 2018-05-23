@@ -73,4 +73,7 @@ public:
   }
 };
 
+typedef bidirectional_map<std::string, std::size_t> clock_name_to_index_t;
+typedef bidirectional_map<std::string, std::size_t> atomic_name_to_index_t;
+
 #endif // BIDIRECTIONAL_MAP_HH

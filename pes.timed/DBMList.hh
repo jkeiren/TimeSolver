@@ -56,7 +56,7 @@ private:
    * dbms[0] || dbms[1] || ... || dbms[dbms->size()-1]. */
   dbm_list_t *dbms;
 
-  const bidirectional_map<std::string, int> &declared_clocks;
+  const clock_name_to_index_t& declared_clocks;
 
   /** True if the DBM is still in canonical form (cf()), false otherwise.
    * This provides a quick a 1-bit check that avoids needless
@@ -141,7 +141,7 @@ public:
    * (0, <=), and the rest of the entries are (infinity, <).
    * This is the loosest possible DBM.
    * @return [Constructor] */
-  DBMList(const bidirectional_map<std::string, int> &cs)
+  DBMList(const clock_name_to_index_t& cs)
       : dbms(new std::vector<DBM*>),
         declared_clocks(cs),
         isCf(false)

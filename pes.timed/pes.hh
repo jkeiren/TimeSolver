@@ -31,12 +31,12 @@ class pes {
 protected:
   /** A Hash table of Clock variables, mapping string names to id values.
    * @see ExprNode.cc. */
-  bidirectional_map<std::string, int> _clocks;
+  bidirectional_map<std::string, std::size_t> _clocks;
 
   /** A Hash table of Atomic values used to store discrete state
    * variables, mapping string names to id values.
    * @see ExprNode.cc. */
-  bidirectional_map<std::string, int> _atomic;
+  bidirectional_map<std::string, std::size_t> _atomic;
 
   /** A Hash table of ints storing integer
    * substituations for atomic variables.
@@ -44,7 +44,7 @@ protected:
    * the "inital" state for each control (atomic) variable.
    * The map is represented as: (id, val).  0 is the default value.
    * @see ExprNode.cc */
-  std::map<int, int> _initially;
+  std::map<std::size_t, atomic_value_t> _initially;
 
   /** A Hash table storing the list of declared predicates,
    * matching their label with their expression. */
@@ -74,7 +74,7 @@ protected:
    * constant (in the clock constraints).  There
    * is one constant for all of the clocks
    * This is modified by the program and the parser. */
-  int max_constant_;
+  clock_value_t max_constant_;
 
   /** This DBM represents the initial DBM. */
   DBM* initial_clock_zone_;
@@ -106,17 +106,17 @@ public:
   }
 
   /** All clocks declared in this PES */
-  const bidirectional_map<std::string, int>& clocks() const { return _clocks; }
+  const clock_name_to_index_t& clocks() const { return _clocks; }
 
   /** Add clock with name @name */
-  int add_clock(const std::string& name) {
-    int idx = _clocks.size() + 1;
+  std::size_t add_clock(const std::string& name) {
+    std::size_t idx = _clocks.size() + 1;
     _clocks.insert(name, idx);
     return idx;
   }
 
   /** Find the index of clock with name @name */
-  int lookup_clock(const std::string& name) const {
+  std::size_t lookup_clock(const std::string& name) const {
     try {
       return _clocks.at(name);
     } catch (std::out_of_range&) {
@@ -126,15 +126,15 @@ public:
 
   /** Print all clocks to @os */
   void print_clocks(std::ostream& os) const {
-    const std::map<std::string, int> m(_clocks.left());
-    for (std::map<std::string, int>::const_iterator it = m.begin();
+    const std::map<std::string, std::size_t> m(_clocks.left());
+    for (std::map<std::string, std::size_t>::const_iterator it = m.begin();
          it != m.end(); ++it) {
       os << it->first << ":" << it->second << "  ";
     }
   }
 
   /** Getter for all atomic variables */
-  const bidirectional_map<std::string, int>& atomic() const { return _atomic; }
+  const bidirectional_map<std::string, size_t>& atomic() const { return _atomic; }
 
   /** Insert an atomic variable with label s and initial value
    * v into the list of atomic variables and give it an id.
@@ -142,16 +142,16 @@ public:
    * @param s The label for the atomic value.
    * @param v The value of the atomic variable labeled by name, default 0.
    * @return 1 when done. */
-  int add_atomic(const char* s, const int v = 0) {
+  int add_atomic(const char* s, const atomic_value_t v = 0) {
     std::string name(s);
-    int idx = _atomic.size();
+    std::size_t idx = _atomic.size();
     _atomic.insert(name, idx);
     _initially.insert(std::make_pair(idx, v));
     return 1;
   }
 
   /** Find the index of the atomic variable @name */
-  int lookup_atomic(const std::string& name) const {
+  std::size_t lookup_atomic(const std::string& name) const {
     try {
       return _atomic.at(name);
     } catch (std::out_of_range&) {
@@ -161,15 +161,15 @@ public:
 
   /** Print all atomic variables to @os */
   void print_atomic(std::ostream& os) const {
-    const std::map<std::string, int> m(_atomic.left());
-    for (std::map<std::string, int>::const_iterator it = m.begin();
+    const std::map<std::string, std::size_t> m(_atomic.left());
+    for (std::map<std::string, std::size_t>::const_iterator it = m.begin();
          it != m.end(); ++it) {
       os << it->first << ":" << it->second << "  ";
     }
   }
 
   /** Get the assignment of initial values */
-  const std::map<int, int>& initially() const { return _initially; }
+  const std::map<std::size_t, atomic_value_t>& initially() const { return _initially; }
 
   /** Get the declared predicates */
   const std::map<std::string, ExprNode*>& predicates() const {
@@ -187,7 +187,7 @@ public:
    * @return 1 when done. */
   int add_predicate(const char* s) {
     std::string name(s);
-    int i = _predicates.size();
+    std::size_t i = _predicates.size();
     ExprNode* pred = new ExprNode(PREDICATE, s, i, _clocks, _atomic);
     _predicates.insert(std::make_pair(name, pred));
     return 1;
@@ -301,7 +301,7 @@ public:
   clock_value_t max_constant() const { return max_constant_; }
 
   /** Update the largest constant in the system (if needed) */
-  void update_max_constant(const int v) { max_constant_ = std::max(max_constant_, v); }
+  void update_max_constant(const clock_value_t v) { max_constant_ = std::max(max_constant_, v); }
 
   /** Set the intial clock zone.
    *  @pre initial_clock_zone == nullptr */
@@ -320,7 +320,7 @@ public:
     {
       initial_clock_zone_ = new DBM(clocks());
       for (DBM::size_type i = 0; i < initial_clock_zone_->clocks_size(); ++i) {
-        initial_clock_zone_->addConstraint(i, 0, 0x1);
+        initial_clock_zone_->addConstraint(i, 0, zero_le);
       }
       initial_clock_zone_->cf();
     }
@@ -334,7 +334,7 @@ public:
   SubstList initial_state() const {
     SubstList sublist(atomic().size(), atomic());
     for (size_t i = 0; i < atomic().size(); ++i) {
-      std::map<int, int>::const_iterator it = initially().find(i);
+      std::map<std::size_t, atomic_value_t>::const_iterator it = initially().find(i);
       sublist[i] = (*it).second;
     }
     return sublist;

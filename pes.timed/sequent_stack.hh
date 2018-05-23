@@ -60,12 +60,12 @@ protected:
   }
 
   // Comparison for look_for_and_purge_rhs_sequent
-  bool match_for_purging_tabled(const DBM* fst, const DBM& snd) const {
+  constexpr bool match_for_purging_tabled(const DBM* fst, const DBM& snd) const {
     return *fst <= snd;
   }
 
   // Comparison for look_for_and_purge_rhs_sequent
-  bool match_for_purging_tabled(const std::pair<const DBM*, const DBMList*>& fst,
+  constexpr bool match_for_purging_tabled(const std::pair<const DBM*, const DBMList*>& fst,
                                 const DBM& snd) const {
     return *(fst.first) == snd;
   }
@@ -83,9 +83,9 @@ protected:
     delete p.second;
   }
 
-  DBM* getDBM(const std::pair<DBM*, DBMList*>& p) const { return p.first; }
+  constexpr DBM* getDBM(const std::pair<DBM*, DBMList*>& p) const { return p.first; }
 
-  const DBM* getDBM(const std::pair<const DBM*, const DBMList*>& p) const { return p.first; }
+  constexpr const DBM* getDBM(const std::pair<const DBM*, const DBMList*>& p) const { return p.first; }
 
   /** print the element pointed to by p */
   void print_DBMset_elt(std::ostream& os, const DBM* const p) const { os << p; }
@@ -93,9 +93,9 @@ protected:
   /** delete the element pointed to by p */
   void delete_DBMset_elt(DBM* p) { delete p; }
 
-  DBM* getDBM(DBM* p) const { return p; }
+  constexpr DBM* getDBM(DBM* p) const { return p; }
 
-  const DBM* getDBM(const DBM* p) const { return p; }
+  constexpr const DBM* getDBM(const DBM* p) const { return p; }
 
 public:
   sequentStackT(const std::size_t aSize, const int nbits, const int size,
