@@ -476,7 +476,7 @@ TOK_ID_ATOMIC TOK_ASSIGN TOK_INT
 {
   int x = input_pes.lookup_atomic($1);
   if (x != -1) {
-    $$ = new SubstList(x, $3, input_pes.atomic().size(), input_pes.atomic());
+    $$ = new SubstList(x, $3, input_pes.atomic()->size(), input_pes.atomic());
   }
   else {
     errPrtExit("control variable not defined");
@@ -504,7 +504,7 @@ TOK_ID_CLOCK
 {
   int x = input_pes.lookup_clock($1);
   if ( x != -1){
-    $$ = new ClockSet(x, input_pes.clocks().size());
+    $$ = new ClockSet(x, input_pes.clocks()->size());
   }
   else {
     errPrtExit("clock variable not defined");
@@ -1205,7 +1205,7 @@ reset:      TOK_ID_CLOCK
 {
   int x = input_pes.lookup_clock($1);;
   if ( x != -1){
-    $$ = new ClockSet(x, input_pes.clocks().size());
+    $$ = new ClockSet(x, input_pes.clocks()->size());
   }
   else {
     errPrtExit("clock variable not defined");
@@ -1229,7 +1229,7 @@ sublist:   TOK_ID_ATOMIC TOK_ASSIGN TOK_INT
 {
   int x = input_pes.lookup_atomic($1);
   if (x != -1) {
-    $$ = new SubstList(x, $3, input_pes.atomic().size(), input_pes.atomic());
+    $$ = new SubstList(x, $3, input_pes.atomic()->size(), input_pes.atomic());
   }
   else {
     errPrtExit("control variable not defined");

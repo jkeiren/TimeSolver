@@ -22,15 +22,15 @@ using namespace std;
 /** Lookup the name of the clock with id n */
 static inline const string& lookup_clock_name(
     const std::size_t n,
-    const clock_name_to_index_t& declared_clocks) {
-  return declared_clocks.reverse_at(n);
+    const clock_name_to_index_t* declared_clocks) {
+  return declared_clocks->reverse_at(n);
 }
 
 /** Lookup the name of the atomic with id n */
 static inline const string& lookup_atomic_name(
     const std::size_t n,
-    const atomic_name_to_index_t& declared_atomic) {
-  return declared_atomic.reverse_at(n);
+    const atomic_name_to_index_t* declared_atomic) {
+  return declared_atomic->reverse_at(n);
 }
 
 /** Prints out the expression to the desired output stream, labeling

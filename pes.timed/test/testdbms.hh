@@ -12,31 +12,31 @@
 #include "DBM.hh"
 
 inline
-const clock_name_to_index_t& make_c2()
+const clock_name_to_index_t* make_c2()
 {
   static const clock_name_to_index_t c2 = { {"x1",1}, {"x2",2} };
-  return c2;
+  return &c2;
 }
 
 inline
-const clock_name_to_index_t& make_c3()
+const clock_name_to_index_t* make_c3()
 {
   static const clock_name_to_index_t c3 = { {"x1",1}, {"x2",2}, {"x3",3} };
-  return c3;
+  return &c3;
 }
 
 inline
-const clock_name_to_index_t& make_c4()
+const clock_name_to_index_t* make_c4()
 {
   static const clock_name_to_index_t c4 = { {"x1",1}, {"x2",2}, {"x3",3}, {"x4",4} };
-  return c4;
+  return &c4;
 }
 
 inline
-const clock_name_to_index_t& make_c5()
+const clock_name_to_index_t* make_c5()
 {
   static const clock_name_to_index_t c5 = { {"x1",1}, {"x2",2}, {"x3",3}, {"x4",4}, {"x5",5} };
-  return c5;
+  return &c5;
 }
 
 inline

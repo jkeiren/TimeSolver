@@ -119,7 +119,7 @@ private:
   bool isCf;
 
   /** Pointer to the globally declared clocks */
-  const clock_name_to_index_t& declared_clocks_;
+  const clock_name_to_index_t* declared_clocks_;
 
   size_type offset(const size_type row, const size_type col) const {
     assert(row < clocks_size());
@@ -170,8 +170,8 @@ public:
    * "zero clock". Hence, there are numClocks - 1 actual clocks
    * with 1 "zero" clock.
    * @return [Constructor] */
-  DBM(const clock_name_to_index_t& cs)
-      : Array((cs.size()+1) * (cs.size()+1)),
+  DBM(const clock_name_to_index_t* cs)
+      : Array((cs->size()+1) * (cs->size()+1)),
         declared_clocks_(cs) {
     for (size_type i = 0; i < clocks_size(); ++i) {
       for (size_type j = 0; j < clocks_size(); ++j) {
@@ -193,8 +193,8 @@ public:
    * @param val The value constraining the upper bound of row - col.
    * @return [Constructor] */
   DBM(const size_type row, const size_type col,
-      const raw_constraint_t val, const clock_name_to_index_t& cs)
-      : Array((cs.size()+1) * (cs.size()+1)),
+      const raw_constraint_t val, const clock_name_to_index_t* cs)
+      : Array((cs->size()+1) * (cs->size()+1)),
         declared_clocks_(cs) {
     for (size_type i = 0; i < clocks_size(); ++i) {
       for (size_type j = 0; j < clocks_size(); ++j) {
@@ -223,9 +223,9 @@ public:
       declared_clocks_(std::move(other.declared_clocks_))
   {}
 
-  size_type clocks_size() const { return declared_clocks_.size() + 1; }
+  size_type clocks_size() const { return declared_clocks_->size() + 1; }
 
-  const clock_name_to_index_t& declared_clocks() const {
+  const clock_name_to_index_t* declared_clocks() const {
     return declared_clocks_;
   }
 
@@ -307,16 +307,16 @@ public:
    * @return A reference to the copied object, which is the LHS object. */
   DBM& operator=(const DBM &Y) {
     assert(clocks_size() == Y.clocks_size());
-    assert(declared_clocks() == Y.declared_clocks());
     Array<raw_constraint_t>::operator=(Y);
 
+    declared_clocks_ = Y.declared_clocks_;
     isCf = Y.isCf;
     return *this;
   }
 
   DBM& operator=(DBM&& other) {
-    assert(declared_clocks_ == other.declared_clocks_);
     Array<raw_constraint_t>::operator=(other);
+    declared_clocks_ = std::move(other.declared_clocks_);
     isCf = std::move(other.isCf);
     return *this;
   }
@@ -889,12 +889,12 @@ public:
         }
         if (i != 0 && j != 0) {
           // os << "x" << (i);
-          os << declared_clocks_.reverse_at(i);
+          os << declared_clocks_->reverse_at(i);
           os << "-";
           // os << "x" << (j);
-          os << declared_clocks_.reverse_at(j);
+          os << declared_clocks_->reverse_at(j);
         } else if (i == 0) {
-          os << declared_clocks_.reverse_at(j);
+          os << declared_clocks_->reverse_at(j);
           if (type == 1)
             os << ">=" << -val;
           else
@@ -902,7 +902,7 @@ public:
           end = true;
           continue;
         } else if (j == 0) {
-          os << declared_clocks_.reverse_at(i);
+          os << declared_clocks_->reverse_at(i);
         }
 
         if (type == 1) {

@@ -178,8 +178,8 @@ DBM testDBM11()
 TEST(DBMTest, DefaultIsInfty)
 {
   DBM INFTYDBM(make_c2());
-  for(size_t i = 0; i <= make_c2().size();i++) {
-    for(size_t j = 0; j < make_c2().size(); j++){
+  for(size_t i = 0; i <= make_c2()->size();i++) {
+    for(size_t j = 0; j < make_c2()->size(); j++){
       if(i == j || i == 0){
         INFTYDBM.addConstraint(i,j, zero_le);
       }

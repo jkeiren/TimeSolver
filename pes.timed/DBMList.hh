@@ -56,7 +56,7 @@ private:
    * dbms[0] || dbms[1] || ... || dbms[dbms->size()-1]. */
   dbm_list_t *dbms;
 
-  const clock_name_to_index_t& declared_clocks;
+  const clock_name_to_index_t* declared_clocks;
 
   /** True if the DBM is still in canonical form (cf()), false otherwise.
    * This provides a quick a 1-bit check that avoids needless
@@ -133,7 +133,7 @@ private:
   }
 
 public:
-  std::size_t clocks_size() const { return declared_clocks.size()+1; }
+  std::size_t clocks_size() const { return declared_clocks->size()+1; }
 
   /** Default Constructor for a DBMList; creates an initial DBMList
    * with one DBM,
@@ -141,7 +141,7 @@ public:
    * (0, <=), and the rest of the entries are (infinity, <).
    * This is the loosest possible DBM.
    * @return [Constructor] */
-  DBMList(const clock_name_to_index_t& cs)
+  DBMList(const clock_name_to_index_t* cs)
       : dbms(new std::vector<DBM*>),
         declared_clocks(cs),
         isCf(false)
@@ -303,7 +303,7 @@ public:
 
   /** Move assignment */
   DBMList& operator=(DBMList&& other) {
-    assert(declared_clocks == other.declared_clocks);
+    declared_clocks = std::move(other.declared_clocks);
     dbms = std::move(other.dbms);
     isCf = std::move(other.isCf);
     other.dbms = nullptr;

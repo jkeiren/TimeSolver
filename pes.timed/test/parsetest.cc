@@ -35,8 +35,8 @@ TEST(ParseTest, ParseFile)
   std::string filename(std::string(EXAMPLES_DIR_NAME) + "/CorrectnessTestSuite/Invalid/Liveness/AFSpecA1.in");
   ASSERT_NO_THROW(parse_pes(filename, false, p));
 
-  EXPECT_EQ(1, p.clocks().size());
-  EXPECT_EQ(1, p.atomic().size());
+  EXPECT_EQ(1, p.clocks()->size());
+  EXPECT_EQ(1, p.atomic()->size());
   EXPECT_EQ("X1", p.start_predicate());
 }
 
@@ -52,7 +52,7 @@ TEST(ParseTest, ParseString)
   pes p;
   ASSERT_NO_THROW(parse_pes_from_string(AFSpecA1String, false, p));
 
-  EXPECT_EQ(1, p.clocks().size());
-  EXPECT_EQ(1, p.atomic().size());
+  EXPECT_EQ(1, p.clocks()->size());
+  EXPECT_EQ(1, p.atomic()->size());
   EXPECT_EQ("X1", p.start_predicate());
 }
