@@ -123,6 +123,9 @@ inline bool restrict_to_invariant(const std::vector<const ExprNode*>& invs,
       has_nonvacuous_invariant = restrict_to_invariant(invs, *dbm, discrete_state) || has_nonvacuous_invariant; // order is important
     }
   }
+  if (has_nonvacuous_invariant) {
+    dbms.setIsCfFalse(false);
+  }
   return has_nonvacuous_invariant;
 }
 

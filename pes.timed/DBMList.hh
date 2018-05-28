@@ -224,11 +224,13 @@ public:
    * Call this method whenever changing the DBMList's value from the outside.
    * Otherwise, cf() will fail to convert the DBMList to canonical form.
    * @return None */
-  void setIsCfFalse() {
+  void setIsCfFalse(bool recursive) {
     isCf = false;
     /* Do I also need to set isCf = false for internal DBMs?
      * I believe I do. */
-    std::for_each(begin(), end(), [](DBM* d){ d->setIsCfFalse(); });
+    if(recursive) {
+      std::for_each(begin(), end(), [](DBM* d){ d->setIsCfFalse(); });
+    }
   }
 
   /** Returns whether this DBMList is in canonical form or not.

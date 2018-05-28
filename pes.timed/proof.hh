@@ -589,6 +589,7 @@ protected:
     bool nonempty_invariant = restrict_to_invariant(
         input_pes.invariants(), invariant_region, discrete_state);
     if (nonempty_invariant) {
+      invariant_region.cf();
       !invariant_region;
       invariant_region.cf();
       placeholder.addDBMList(invariant_region);
@@ -959,6 +960,7 @@ inline bool prover::do_proof_forall_rel(const SubstList& discrete_state,
 
   DBMList placeholder1(INFTYDBM); // phi_{s1}
   restrict_to_invariant(input_pes.invariants(), placeholder1, discrete_state);
+  placeholder1.cf();
   do_proof_place(discrete_state, lhs_succ, &placeholder1, *formula.getLeft());
   placeholder1.cf();
 
@@ -1130,6 +1132,7 @@ inline bool prover::do_proof_exists(const SubstList& discrete_state,
    * in the placeholder, and not the LHS. */
   DBMList placeholder(INFTYDBM);
   restrict_to_invariant(input_pes.invariants(), placeholder, discrete_state);
+  placeholder.cf();
 
   DBMList placeholder_dbg_copy(placeholder); // Check assumption on do_proof_place
   do_proof_place(discrete_state, lhs_succ, &placeholder, *formula.getQuant());
@@ -1175,6 +1178,7 @@ inline bool prover::do_proof_exists_rel(const SubstList& discrete_state,
 
   DBMList placeholder2(INFTYDBM);
   restrict_to_invariant(input_pes.invariants(), placeholder2, discrete_state);
+  placeholder2.cf();
 
   do_proof_place(discrete_state, zone_succ, &placeholder2, *formula.getRight());
   // Reset place parent to nullptr
@@ -2020,6 +2024,7 @@ inline void prover::do_proof_place_forall_rel(const SubstList& discrete_state,
 
   DBMList placeholder1(INFTYDBM);
   restrict_to_invariant(input_pes.invariants(), placeholder1, discrete_state);
+  placeholder1.cf();
   do_proof_place(discrete_state, lhs_succ, &placeholder1, *formula.getLeft());
   placeholder1.cf();
 
@@ -2219,6 +2224,7 @@ inline void prover::do_proof_place_exists(const SubstList& discrete_state,
   // The invariant goes into the placeholder, not the left hand side
   DBMList placeholder(INFTYDBM);
   restrict_to_invariant(input_pes.invariants(), placeholder, discrete_state);
+  placeholder.cf();
 
   do_proof_place(discrete_state, lhs_succ, &placeholder, *formula.getQuant());
   placeholder.cf();
@@ -2271,6 +2277,7 @@ inline void prover::do_proof_place_exists_rel(const SubstList& discrete_state,
 
   DBMList placeholder2(INFTYDBM);
   restrict_to_invariant(input_pes.invariants(), placeholder2, discrete_state);
+  placeholder2.cf();
 
   do_proof_place(discrete_state, zone_succ, &placeholder2, *formula.getRight());
   // Reset place parent to nullptr
