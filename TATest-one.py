@@ -18,9 +18,7 @@ EXECUTABLE = os.path.join("pes.timed", "timesolver-ta")
 def filterTimes(lines):
     """Filter times from the output. This data is variable, so should not be
        taken into account in the comparison."""
-    # FIXME: the "Number of locations" prefix should be re-added.
-    # Currently disabled to allow debugging using the encoding of relativised forall into forall and relativized exists.
-    invalid = re.compile(r"Number of locations|((running|Program|start|end) (t|T)(ime)|(input)|demo|timesolver)")
+    invalid = re.compile(r"((running|Program|start|end) (t|T)(ime)|(input)|demo|timesolver)")
     return list(filter(lambda x: invalid.search(x) is None, lines))
 
 
