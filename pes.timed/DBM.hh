@@ -834,13 +834,14 @@ public:
    * The DBM calling this method is changed.
    * @return None*/
   void closureRev() {
-    for (size_type i = 0; i < clocks_size(); ++i)
+    for (size_type i = 0; i < clocks_size(); ++i) {
       for (size_type j = 0; j < clocks_size(); ++j) {
         const raw_constraint_t raw_i_j = at(i, j);
         if (i != j && raw_i_j != infinity) {
           operatorWrite(i, j) = make_constraint_strict(raw_i_j);
         }
       }
+  }
   }
 
   /** This converts all finite upper-bound constraints
@@ -849,13 +850,14 @@ public:
    * The DBM calling this method is changed.
    * @return None*/
   void predClosureRev() {
-    for (size_type i = 1; i < clocks_size(); ++i) // difference with predClosure: start at 1
+    for (size_type i = 1; i < clocks_size(); ++i) { // difference with predClosure: start at 1
       for (size_type j = 0; j < clocks_size(); ++j) {
         const raw_constraint_t raw_i_j = at(i, j);
         if (i != j && raw_i_j != infinity) {
           operatorWrite(i, j) = make_constraint_strict(raw_i_j);
         }
       }
+  }
   }
 
   /** Print the DBM, more compactly, as a list of constraints. The constraints
