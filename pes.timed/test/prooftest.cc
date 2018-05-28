@@ -44,6 +44,7 @@ TEST(ProofTest, AllActBugTestPlace)
   prover_options options;
   prover pr(p, options);
   DBMList placeholder(DBM(p.clocks()));
+  placeholder.cf();
   EXPECT_FALSE(pr.do_proof_init(p, &placeholder));
 }
 
@@ -94,7 +95,7 @@ TEST(ProofTest, ExistsRelTestFalse)
   prover pr(p, options);
 
   DBMList placeholder(DBM(p.clocks()));
-
+  placeholder.cf();
   EXPECT_FALSE(pr.do_proof_init(p, &placeholder));
   placeholder.cf();
 
@@ -154,7 +155,7 @@ TEST(ProofTest, ExistsRelTestTrue)
   prover pr(p, options);
 
   DBMList placeholder(DBM(p.clocks()));
-
+  placeholder.cf();
   EXPECT_TRUE(pr.do_proof_init(p, &placeholder));
   placeholder.cf();
 
@@ -210,7 +211,7 @@ TEST(ProofTest, ExistsRelTestTrueDueToOr)
   prover pr(p, options);
 
   DBMList placeholder(DBM(p.clocks()));
-
+  placeholder.cf();
   EXPECT_TRUE(pr.do_proof_init(p, &placeholder));
   placeholder.cf();
 }
@@ -238,7 +239,7 @@ TEST(ProofTest, RelSplit3Test)
   prover pr(p, options);
 
   DBMList placeholder(DBM(p.clocks()));
-
+  placeholder.cf();
   EXPECT_TRUE(pr.do_proof_init(p, &placeholder));
   placeholder.cf();
 }
@@ -264,7 +265,7 @@ TEST(ProofTest, ExistsRelFalseFirstSubformulaTest)
   prover pr(p, options);
 
   DBMList placeholder(DBM(p.clocks()));
-
+  placeholder.cf();
   EXPECT_TRUE(pr.do_proof_init(p, &placeholder));
   placeholder.cf();
 }
