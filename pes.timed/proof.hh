@@ -1371,6 +1371,7 @@ inline bool prover::do_proof_allact(const SubstList& discrete_state,
       DBM invariant_zone(INFTYDBM);
       bool has_nonvacuous_invariant = restrict_to_invariant(
           input_pes.invariants(), invariant_zone, transition->destination_location(&discrete_state));
+      assert(has_nonvacuous_invariant || invariant_zone.isInCf());
 
       // If he invariant of the target location is non-vacuous, compute the weakest precondition
       // and intersect with the guard.
@@ -1380,8 +1381,8 @@ inline bool prover::do_proof_allact(const SubstList& discrete_state,
         const ClockSet* reset_clocks = transition->reset_clocks();
         if (reset_clocks != nullptr) {
           invariant_zone.preset(*reset_clocks);
+          invariant_zone.cf();
         }
-        invariant_zone.cf();
         /* Now perform clock assignments sequentially: perform the
          * front assignments first */
         const std::vector<std::pair<DBM::size_type, clock_value_t>>* clock_assignments =
@@ -1864,9 +1865,7 @@ inline void prover::do_proof_place_and(const SubstList& discrete_state,
   do_proof_place(discrete_state, zone, place, *formula.getLeft());
   place->cf();
   if (!place->emptiness()) {
-    DBMList placeholder_right(*place);
-    do_proof_place(discrete_state, zone, &placeholder_right, *formula.getRight());
-    place->intersect(placeholder_right);
+    do_proof_place(discrete_state, zone, place, *formula.getRight());
   }
 }
 
@@ -1879,7 +1878,7 @@ inline void prover::do_proof_place_or(const SubstList& discrete_state,
   do_proof_place(discrete_state, zone, &placeholder_left, *formula.getLeft());
   placeholder_left.cf();
 
-  if (!(placeholder_left >= *place))
+  if (!(placeholder_left >= zone) && !(placeholder_left >= *place))
   {
     // We use place here, since the result of the second call is likely to be
     // part of the result anyway. If not, we will roll back later.
@@ -2442,6 +2441,8 @@ inline void prover::do_proof_place_allact(const SubstList& discrete_state,
     bool guard_satisfied =
         comp_ph_all_place(guard_zone, guard_placeholder, *(transition->guard()),
                           discrete_state);
+    assert(guard_zone.isInCf());
+    assert(guard_placeholder.isInCf());
 
     if (guard_satisfied) {
       // guard_placeholder is the largest placeholder that satisfies the guard.
@@ -2452,6 +2453,7 @@ inline void prover::do_proof_place_allact(const SubstList& discrete_state,
                                                          invariant_zone,
                                                          transition->destination_location(&discrete_state));
 
+      assert(invariant_satisfiable || invariant_zone.isInCf());
       if (invariant_satisfiable) {
         invariant_zone.cf();
         const ClockSet* reset_clocks = transition->reset_clocks();
@@ -2488,6 +2490,7 @@ inline void prover::do_proof_place_allact(const SubstList& discrete_state,
         }
       }
 
+      assert(invariant_zone.isInCf());
       transition->getNewTrans(formula.getQuant());
 
       /* Constraints are bounded by input_pes.max_constant() */
@@ -2503,7 +2506,7 @@ inline void prover::do_proof_place_allact(const SubstList& discrete_state,
           << "Executing transition (with destination) " << transition << std::endl;
       // use phLHS since the zone is tightened to satisfy
       // the invariant
-      numLocations++;
+      ++numLocations;
       do_proof_place(discrete_state, guard_zone, &transition_placeholder, *transition->getRightExpr());
       transition_placeholder.cf();
 
@@ -2520,13 +2523,17 @@ inline void prover::do_proof_place_allact(const SubstList& discrete_state,
         transition_placeholder.addDBMList(not_invariant_zone); // no need to perform union_ since we intersect anyway
         transition_placeholder.addDBMList(guard_placeholder);
         place->intersect(transition_placeholder);
+        place->cf();
+        // If the placeholder is empty, the property cannot be satisfied
+        if(place->emptiness()) {
+          break;
+        }
       }
     } else { // !guard_satisfied
       cpplog(cpplogging::debug)
           << "Transition: " << transition << " cannot be taken." << std::endl;
     }
   }
-  place->cf();
 
   cpplog(cpplogging::debug)
       << "\t --- end of ALLACT. Returned plhold: " << *place << std::endl;
@@ -2586,18 +2593,18 @@ inline void prover::do_proof_place_existact(const SubstList& discrete_state,
        * If not, tighten the placeholder */
       // For performace reasons, also tighten the left hand side
       if (!(guard_zone <= invariant_region)) {
-      guard_placeholder.intersect(invariant_region);
-      guard_placeholder.cf();
-      if (guard_placeholder.emptiness()) {
-        cpplog(cpplogging::debug)
-            << "Transition: " << transition
-            << " cannot be taken; entering invariant is false." << std::endl
-            << "\tExtra invariant condition: " << invariant_region << std::endl;
+        guard_placeholder.intersect(invariant_region);
+        guard_placeholder.cf();
+        if (guard_placeholder.emptiness()) {
+          cpplog(cpplogging::debug)
+              << "Transition: " << transition
+              << " cannot be taken; entering invariant is false." << std::endl
+              << "\tExtra invariant condition: " << invariant_region << std::endl;
 
-        continue;
-      }
-      guard_zone.intersect(invariant_region);
-      guard_zone.cf();
+          continue;
+        }
+        guard_zone.intersect(invariant_region);
+        guard_zone.cf();
       }
     }
 
