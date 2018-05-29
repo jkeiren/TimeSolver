@@ -54,14 +54,14 @@ private:
 
   /** The list of DBMs; the set of valuations represented is
    * dbms[0] || dbms[1] || ... || dbms[dbms->size()-1]. */
-  dbm_list_t *dbms;
+  dbm_list_t* m_dbms;
 
-  const clock_name_to_index_t* declared_clocks;
+  const clock_name_to_index_t* m_declared_clocks;
 
   /** True if the DBM is still in canonical form (cf()), false otherwise.
    * This provides a quick a 1-bit check that avoids needless
    * work to convert something already in cf() to cf(). */
-  bool isCf;
+  bool m_is_cf;
 
   /** Private method that returns the complement of a DBM. This uses
    * the (simple) method of performing a DBM that is the union of all
@@ -70,7 +70,7 @@ private:
    * Does not preserve canonical form.
    * @param Y (&) The DBM to complement.
    * @return The complemented DBM, given as a DBMList. */
-  void complementDBM(DBMList& out, const DBM &Y) {
+  void complementDBM(DBMList& out, const DBM& Y) {
     assert(out.emptiness());
     if(Y.emptiness())
     {
@@ -81,7 +81,7 @@ private:
         for (DBM::size_type i = 0; i < Y.clocks_size(); i++) {
           for (DBM::size_type j = 0; j < Y.clocks_size(); j++) {
             if (!(Y.isConstraintImplicit(i, j))) {
-              const DBM negated_dbm(j, i, negate_constraint(Y(i,j)), declared_clocks);
+              const DBM negated_dbm(j, i, negate_constraint(Y(i,j)), m_declared_clocks);
               if(first) {
                 *out.front() = std::move(negated_dbm);
                 first = false;
@@ -131,9 +131,9 @@ private:
     erase(last, end());
   }
 
-public:
-  std::size_t clocks_size() const { return declared_clocks->size()+1; }
+  std::size_t clocks_size() const { return m_declared_clocks->size()+1; }
 
+public:
   /** Default Constructor for a DBMList; creates an initial DBMList
    * with one DBM,
    * representing no constraint: the diagonal and the top row are
@@ -141,11 +141,11 @@ public:
    * This is the loosest possible DBM.
    * @return [Constructor] */
   DBMList(const clock_name_to_index_t* cs)
-      : dbms(new std::vector<DBM*>),
-        declared_clocks(cs),
-        isCf(false)
+      : m_dbms(new std::vector<DBM*>),
+        m_declared_clocks(cs),
+        m_is_cf(false)
   {
-    dbms->emplace_back(new DBM(cs));
+    m_dbms->emplace_back(new DBM(cs));
   }
 
   /** Copy Constructor for DBMList, making a DBMList representing the
@@ -153,70 +153,70 @@ public:
    * @param Y (&) The object to copy.
    * @return [Constructor] */
   DBMList(const DBM &Y)
-      : dbms(new std::vector<DBM*>),
-        declared_clocks(Y.declared_clocks()),
-        isCf(Y.isInCf()) {
-    dbms->emplace_back(new DBM(Y));
+      : m_dbms(new std::vector<DBM*>),
+        m_declared_clocks(Y.declared_clocks()),
+        m_is_cf(Y.isInCf()) {
+    m_dbms->emplace_back(new DBM(Y));
   }
 
   /** Copy Constructor for DBMLists, copying a DBMList.
    * @param Y (&) The object to copy.
    * @return [Constructor] */
   DBMList(const DBMList &Y)
-      : dbms(new std::vector<DBM*>),
-        declared_clocks(Y.declared_clocks),
-        isCf(Y.isCf) {
+      : m_dbms(new std::vector<DBM*>),
+        m_declared_clocks(Y.m_declared_clocks),
+        m_is_cf(Y.m_is_cf) {
     // Vector constructor makes a deep copy of the pointers (not of the objects
     // that the pointers point to). Make a deep copy of the DBM objects here
-    deep_copy(*dbms, *(Y.dbms));
+    deep_copy(*m_dbms, *(Y.m_dbms));
   }
 
   DBMList(DBMList&& other) noexcept
-    : dbms(std::move(other.dbms)),
-      declared_clocks(std::move(other.declared_clocks)),
-      isCf(std::move(other.isCf)) {
-    other.dbms = nullptr;
+    : m_dbms(std::move(other.m_dbms)),
+      m_declared_clocks(std::move(other.m_declared_clocks)),
+      m_is_cf(std::move(other.m_is_cf)) {
+    other.m_dbms = nullptr;
   }
 
   /** Destructor; deletes each DBM in the DBMList and then deletes the vector.
    * @return [Destructor]. */
   ~DBMList() {
-    if (dbms != nullptr) {
-      delete_vector_elements(*dbms);
-      dbms->clear();
-      delete dbms;
+    if (m_dbms != nullptr) {
+      delete_vector_elements(*m_dbms);
+      m_dbms->clear();
+      delete m_dbms;
     }
   }
 
   // iterator support
-  iterator begin() { return dbms->begin(); }
-  iterator end() { return dbms->end(); }
-  const_iterator begin() const { return dbms->begin(); }
-  const_iterator end() const { return dbms->end(); }
+  iterator begin() { return m_dbms->begin(); }
+  iterator end() { return m_dbms->end(); }
+  const_iterator begin() const { return m_dbms->begin(); }
+  const_iterator end() const { return m_dbms->end(); }
 
   // Whether the list of DBMs is empty. Note: different from emptiness()
-  bool empty() const { return dbms->empty(); }
+  bool empty() const { return m_dbms->empty(); }
 
 private:
   // reverse iterator support
-  reverse_iterator rbegin() { return dbms->rbegin(); }
-  const_reverse_iterator rbegin() const { return dbms->rbegin(); }
-  reverse_iterator rend() { return dbms->rend(); }
-  const_reverse_iterator rend() const { return dbms->rend(); }
+  reverse_iterator rbegin() { return m_dbms->rbegin(); }
+  const_reverse_iterator rbegin() const { return m_dbms->rbegin(); }
+  reverse_iterator rend() { return m_dbms->rend(); }
+  const_reverse_iterator rend() const { return m_dbms->rend(); }
 
   // capacity
-  size_type size() const { return dbms->size(); }
+  size_type size() const { return m_dbms->size(); }
 
-  value_type back() const { return dbms->back(); }
-  void push_back(const value_type& val) { dbms->push_back(val); }
-  void push_back(value_type&& val) { dbms->push_back(val); }
-  void pop_back() { dbms->pop_back(); }
-  value_type front() const { return dbms->front(); }
+  value_type back() const { return m_dbms->back(); }
+  void push_back(const value_type& val) { m_dbms->push_back(val); }
+  void push_back(value_type&& val) { m_dbms->push_back(val); }
+  void pop_back() { m_dbms->pop_back(); }
+  value_type front() const { return m_dbms->front(); }
 
-  iterator erase(const_iterator first, const_iterator last) { return dbms->erase(first, last); }
-  iterator erase(const_iterator position) { return dbms->erase(position); }
-  void clear() { dbms->clear(); }
-  void reserve(const size_type n) { dbms->reserve(n); }
+  iterator erase(const_iterator first, const_iterator last) { return m_dbms->erase(first, last); }
+  iterator erase(const_iterator position) { return m_dbms->erase(position); }
+  void clear() { m_dbms->clear(); }
+  void reserve(const size_type n) { m_dbms->reserve(n); }
 
 public:
   /** Tell the object that it is not in canonical form.
@@ -224,7 +224,7 @@ public:
    * Otherwise, cf() will fail to convert the DBMList to canonical form.
    * @return None */
   void setIsCfFalse(bool recursive) {
-    isCf = false;
+    m_is_cf = false;
     /* Do I also need to set isCf = false for internal DBMs?
      * I believe I do. */
     if(recursive) {
@@ -234,7 +234,7 @@ public:
 
   /** Returns whether this DBMList is in canonical form or not.
    * @return true: the DBMList is in canonical form; false: otherwise. */
-  bool isInCf() const { return isCf; }
+  bool isInCf() const { return m_is_cf; }
 
   /** Union the calling DBMList with DBM Y; perform this by making
    * a deep copy of Y and adding to the list of DBMs.
@@ -243,8 +243,8 @@ public:
    * @param Y (&) The DBM to add to the list of DBMs.
    * @return None. */
   void addDBM(const DBM &Y) {
-    dbms->emplace_back(new DBM(Y));
-    isCf = false; // only set isCf to false; individual DBMs are still in Cf.
+    m_dbms->emplace_back(new DBM(Y));
+    m_is_cf = false; // only set isCf to false; individual DBMs are still in Cf.
   }
 
   void union_(const DBM& other) {
@@ -288,24 +288,24 @@ public:
       erase(dbm_it, end());
       *front() = *Y.front();
     } else {
-      delete_vector_elements(*dbms);
+      delete_vector_elements(*m_dbms);
       clear();
       // Vector constructor makes a deep copy of the pointers (not of the
       // objects that the pointers point to). Make a deep copy of the DBM
       // objects here
-      deep_copy(*dbms, *Y.dbms);
+      deep_copy(*m_dbms, *Y.m_dbms);
     }
 
-    isCf = Y.isInCf();
+    m_is_cf = Y.isInCf();
     return *this;
   }
 
   /** Move assignment */
   DBMList& operator=(DBMList&& other) {
-    declared_clocks = std::move(other.declared_clocks);
-    dbms = std::move(other.dbms);
-    isCf = std::move(other.isCf);
-    other.dbms = nullptr;
+    m_declared_clocks = std::move(other.m_declared_clocks);
+    m_dbms = std::move(other.m_dbms);
+    m_is_cf = std::move(other.m_is_cf);
+    other.m_dbms = nullptr;
     return *this;
   }
 
@@ -320,7 +320,7 @@ public:
     erase(dbm_it, end());
     *front() = Y;
 
-    isCf = Y.isInCf();
+    m_is_cf = Y.isInCf();
     return *this;
   }
 
@@ -332,27 +332,27 @@ public:
    * Does not preserve canonical form.
    * @return The complemented DBMList, given as a DBMList. */
   DBMList &operator!() {
-    std::vector<DBM *> *old_dbms = dbms;
+    std::vector<DBM *> *old_dbms = m_dbms;
 
     if (size() == 1) {
-      DBMList complement_dbms((DBM(declared_clocks)));
+      DBMList complement_dbms((DBM(m_declared_clocks)));
       complement_dbms.makeEmpty();
       complementDBM(complement_dbms, *front());
-      dbms = std::move(complement_dbms.dbms);
-      complement_dbms.dbms = nullptr;
-      isCf = complement_dbms.isInCf();
+      m_dbms = std::move(complement_dbms.m_dbms);
+      complement_dbms.m_dbms = nullptr;
+      m_is_cf = complement_dbms.isInCf();
     } else {
       // Complement the first DBM, and intersect the complement with the complement
       // of all other DBMs.
       std::vector<DBM*>::const_iterator dbm_it = old_dbms->begin();
-      DBMList first_complement_dbms((DBM(declared_clocks)));
+      DBMList first_complement_dbms((DBM(m_declared_clocks)));
       first_complement_dbms.makeEmpty();
       complementDBM(first_complement_dbms, **dbm_it);
-      dbms = std::move(first_complement_dbms.dbms);
-      first_complement_dbms.dbms = nullptr;
-      isCf = first_complement_dbms.isInCf();
+      m_dbms = std::move(first_complement_dbms.m_dbms);
+      first_complement_dbms.m_dbms = nullptr;
+      m_is_cf = first_complement_dbms.isInCf();
 
-      DBMList complement_dbms((DBM(declared_clocks)));
+      DBMList complement_dbms((DBM(m_declared_clocks)));
       while(++dbm_it != old_dbms->end()) {
         complement_dbms.makeEmpty();
         complementDBM(complement_dbms, **dbm_it);
@@ -379,7 +379,7 @@ public:
   DBMList& intersect(const DBM& Y) {
     /* This forms a new list by distributing the DBMs */
     std::for_each(begin(), end(), [&](DBM* d){ d->intersect(Y); });
-    isCf = false;
+    m_is_cf = false;
     return *this;
   }
 
@@ -394,14 +394,14 @@ public:
     if (size() == 1 && Y.size() == 1) {
       front()->intersect(*Y.front());
     } else {
-      std::vector<DBM *> *old_dbms = dbms;
-      dbms = new std::vector<DBM *>;
+      std::vector<DBM *> *old_dbms = m_dbms;
+      m_dbms = new std::vector<DBM *>;
       if (old_dbms->size() == 1) {
         // Deep copy of DBM to dbmListVec; since the size of the current DBMList
         // is 1, first copy, then intersect each DBM with the (single) DBM in the
         // current list.
-        deep_copy(*dbms, *Y.dbms);
-        for (DBM* dbm: *dbms) {
+        deep_copy(*m_dbms, *Y.m_dbms);
+        for (DBM* dbm: *m_dbms) {
           dbm->intersect(*old_dbms->front());
         }
       } else {
@@ -410,7 +410,7 @@ public:
         // For example (a || b) && (c || d)
         // is transformed to a && c || a && d || b && c || b && d
         for (const DBM* const dbm1: *old_dbms) {
-          for (const DBM* const dbm2: *Y.dbms) {
+          for (const DBM* const dbm2: *Y.m_dbms) {
             DBM* copyDBM = new DBM(*dbm1);
             copyDBM->intersect(*dbm2);
             push_back(copyDBM);
@@ -427,7 +427,7 @@ public:
     /* This forms a new list by distributing out the intersection */
     /* Should we check for same number of clocks (?)
      * Currently, the code does not. */
-    isCf = false;
+    m_is_cf = false;
     return *this;
   }
 
@@ -606,7 +606,7 @@ public:
    * @return The reference to the changed calling DBMList. */
   DBMList &suc() {
     std::for_each(begin(), end(), [](DBM* d){ d->suc(); });
-    isCf = false;
+    m_is_cf = false;
     return *this;
   }
 
@@ -616,7 +616,7 @@ public:
    * @return The reference to the changed calling DBMList. */
   DBMList &pre() {
     std::for_each(begin(), end(), [](DBM* d){ d->pre(); });
-    isCf = false;
+    m_is_cf = false;
     return *this;
   }
 
@@ -627,7 +627,7 @@ public:
    * @return The reference to the changed, calling resulting DBMList. */
   DBMList &reset(const DBM::size_type x) {
     std::for_each(begin(), end(),[&](DBM* d){ d->reset(x); });
-    isCf = false;
+    m_is_cf = false;
     return *this;
   }
 
@@ -638,7 +638,7 @@ public:
    * @return The reference to the changed, calling resulting DBM. */
   DBMList &reset(const clock_set& rs) {
     std::for_each(begin(), end(), [&](DBM* d){ d->reset(rs); });
-    isCf = false;
+    m_is_cf = false;
     return *this;
   }
 
@@ -650,7 +650,7 @@ public:
    * @return The reference to the changed, calling resulting DBMList. */
   DBMList &reset(const DBM::size_type x, const DBM::size_type y) {
     std::for_each(begin(), end(), [&](DBM* d){ d->reset(x, y); });
-    isCf = false;
+    m_is_cf = false;
     return *this;
   }
 
@@ -664,7 +664,7 @@ public:
    * @return The reference to the modified DBMList. */
   DBMList &preset(const DBM::size_type x) {
     std::for_each(begin(), end(), [&](DBM* d){ d->preset(x); });
-    isCf = false;
+    m_is_cf = false;
     return *this;
   }
 
@@ -678,7 +678,7 @@ public:
    * @return The reference to the modified DBMList. */
   DBMList &preset(const clock_set& prs) {
     std::for_each(begin(), end(), [&](DBM* d){ d->preset(prs); });
-    isCf = false;
+    m_is_cf = false;
     return *this;
   }
 
@@ -693,7 +693,7 @@ public:
    * @return The reference to the modified DBMList. */
   DBMList &preset(const DBM::size_type x, const DBM::size_type y) {
     std::for_each(begin(), end(), [&](DBM* d){ d->preset(x, y); });
-    isCf = false;
+    m_is_cf = false;
     return *this;
   }
 
@@ -707,7 +707,7 @@ public:
    * or does not have any clock difference constraints in the automaton. */
   void bound(const bound_t maxc) {
     std::for_each(begin(), end(), [&](DBM* d){ d->bound(maxc); });
-    isCf = false;
+    m_is_cf = false;
   }
 
   /** Converts the calling DBMList to its canonical form. In this
@@ -733,7 +733,7 @@ public:
   void cf(bool no_remove_contained_dbms = false) {
     /* Check that the DBM is in Canonical Form, and
      * do nothing if it is */
-    if (!isCf) {
+    if (!m_is_cf) {
       std::for_each(begin(), end(), [](DBM* d){ d->cf(); });
 
       remove_empty_dbms();
@@ -741,7 +741,7 @@ public:
       remove_contained_dbms();
       }
 
-      isCf = true; // the DBMList is now in Canonical Form
+      m_is_cf = true; // the DBMList is now in Canonical Form
     }
   }
 
@@ -756,7 +756,7 @@ public:
     std::for_each(++begin(), end(), [](DBM* d) { delete d; });
     erase(++begin(), end());
     front()->makeEmpty();
-    isCf = true;
+    m_is_cf = true;
   }
 
   /** This checks if DBMList represents an empty region
@@ -764,7 +764,7 @@ public:
    * is in canonical form.
    * @return true: this clock zone is empty, false: otherwise. */
   bool emptiness() const {
-    assert(isCf);
+    assert(m_is_cf);
     // since conversion to cf() removes empty DBMs,
     // the list is only empty if the first DBM is empty;
     return front()->emptiness();
@@ -777,7 +777,7 @@ public:
    * @return None*/
   void closure() {
     std::for_each(begin(), end(), [](DBM* d){ d->closure(); });
-    isCf = false;
+    m_is_cf = false;
   }
 
   /** This converts all finite constraints
@@ -787,7 +787,7 @@ public:
    * @return None*/
   void closureRev() {
     std::for_each(begin(), end(), [](DBM* d){ d->closureRev(); });
-    isCf = false;
+    m_is_cf = false;
   }
 
   /** This converts all finite upper-bound constraints
@@ -797,7 +797,7 @@ public:
    * @return None*/
   void predClosureRev() {
     std::for_each(begin(), end(), [](DBM* d){ d->predClosureRev(); });
-    isCf = false;
+    m_is_cf = false;
   }
 
   /** Prints out the DBMList by printing each DBM
@@ -808,7 +808,7 @@ public:
    * @return None */
   void print(std::ostream &os) const {
     int dInd = 0;
-    for (const DBM* const dbm: *dbms) {
+    for (const DBM* const dbm: *m_dbms) {
       os << "DBMList DBM " << dInd << std::endl
          << *dbm;
       dInd++;
