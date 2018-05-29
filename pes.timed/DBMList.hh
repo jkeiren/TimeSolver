@@ -133,6 +133,15 @@ private:
 
   std::size_t clocks_size() const { return m_declared_clocks->size()+1; }
 
+  /** Maps f to all DBMs in the list and marks the DBMList as not in cf */
+  template<typename F>
+  DBMList& map(F f)
+  {
+    std::for_each(begin(), end(), f);
+    m_is_cf = false;
+    return *this;
+  }
+
 public:
   /** Default Constructor for a DBMList; creates an initial DBMList
    * with one DBM,
@@ -377,10 +386,7 @@ public:
    * @param Y (&) The DBM to intersect
    */
   DBMList& intersect(const DBM& Y) {
-    /* This forms a new list by distributing the DBMs */
-    std::for_each(begin(), end(), [&](DBM* d){ d->intersect(Y); });
-    m_is_cf = false;
-    return *this;
+    return map([&](DBM* d){ d->intersect(Y); });
   }
 
   /** Intersects this DBMList with another by converting the intersection to
@@ -605,9 +611,7 @@ public:
    * This method preserves canonical form.
    * @return The reference to the changed calling DBMList. */
   DBMList &suc() {
-    std::for_each(begin(), end(), [](DBM* d){ d->suc(); });
-    m_is_cf = false;
-    return *this;
+    return map([](DBM* d){ d->suc(); });
   }
 
   /** Performs the time predecessor operator; this is equivalent
@@ -615,9 +619,7 @@ public:
    * This method does not preserve canonical form.
    * @return The reference to the changed calling DBMList. */
   DBMList &pre() {
-    std::for_each(begin(), end(), [](DBM* d){ d->pre(); });
-    m_is_cf = false;
-    return *this;
+    return map([](DBM* d){ d->pre(); });
   }
 
   /** Reset a single clock, specified by x, to 0, by resetting
@@ -626,9 +628,7 @@ public:
    * @param x The clock to reset to 0.
    * @return The reference to the changed, calling resulting DBMList. */
   DBMList &reset(const DBM::size_type x) {
-    std::for_each(begin(), end(),[&](DBM* d){ d->reset(x); });
-    m_is_cf = false;
-    return *this;
+    return map([&](DBM* d){ d->reset(x); });
   }
 
   /** Resets all the clocks in the given clock set to $0$ by resetting
@@ -637,9 +637,7 @@ public:
    * @param rs (*) The set of clocks to reset to 0.
    * @return The reference to the changed, calling resulting DBM. */
   DBMList &reset(const clock_set& rs) {
-    std::for_each(begin(), end(), [&](DBM* d){ d->reset(rs); });
-    m_is_cf = false;
-    return *this;
+    return map([&](DBM* d){ d->reset(rs); });
   }
 
   /** Assign the current value to clock y to clock x (x := y). This
@@ -649,9 +647,7 @@ public:
    * @param y The clock to reset the first clock to.
    * @return The reference to the changed, calling resulting DBMList. */
   DBMList &reset(const DBM::size_type x, const DBM::size_type y) {
-    std::for_each(begin(), end(), [&](DBM* d){ d->reset(x, y); });
-    m_is_cf = false;
-    return *this;
+    return map([&](DBM* d){ d->reset(x, y); });
   }
 
   /** Compute the reset predecessor operator, which gives DBMList[x |-> 0].
@@ -663,9 +659,7 @@ public:
    * @param x The clock that was just reset (after the predecessor zone).
    * @return The reference to the modified DBMList. */
   DBMList &preset(const DBM::size_type x) {
-    std::for_each(begin(), end(), [&](DBM* d){ d->preset(x); });
-    m_is_cf = false;
-    return *this;
+    return map([&](DBM* d){ d->preset(x); });
   }
 
   /** Compute the reset predecessor operator, which gives DBMList[PRS |-> 0].
@@ -677,9 +671,7 @@ public:
    * @param prs (*) The set of clocks just reset (after the predecessor zone).
    * @return The reference to the modified DBMList. */
   DBMList &preset(const clock_set& prs) {
-    std::for_each(begin(), end(), [&](DBM* d){ d->preset(prs); });
-    m_is_cf = false;
-    return *this;
+    return map([&](DBM* d){ d->preset(prs); });
   }
 
   /** Compute the reset predecessor operator after the assignment
@@ -692,9 +684,7 @@ public:
    * @param y The second clock; the clock whose value x was just assigned to.
    * @return The reference to the modified DBMList. */
   DBMList &preset(const DBM::size_type x, const DBM::size_type y) {
-    std::for_each(begin(), end(), [&](DBM* d){ d->preset(x, y); });
-    m_is_cf = false;
-    return *this;
+    return map([&](DBM* d){ d->preset(x, y); });
   }
 
   /** Normalizes the DBMList with respect to the specified
@@ -705,9 +695,8 @@ public:
    * @return none
    * @note This only works when the timed automaton is "diagonal-free,"
    * or does not have any clock difference constraints in the automaton. */
-  void bound(const bound_t maxc) {
-    std::for_each(begin(), end(), [&](DBM* d){ d->bound(maxc); });
-    m_is_cf = false;
+  DBMList& bound(const bound_t maxc) {
+    return map([&](DBM* d){ d->bound(maxc); });
   }
 
   /** Converts the calling DBMList to its canonical form. In this
@@ -775,9 +764,8 @@ public:
    * < to <=.
    * The DBMList calling this method is changed.
    * @return None*/
-  void closure() {
-    std::for_each(begin(), end(), [](DBM* d){ d->closure(); });
-    m_is_cf = false;
+  DBMList& closure() {
+    return map([](DBM* d){ d->closure(); });
   }
 
   /** This converts all finite constraints
@@ -785,9 +773,8 @@ public:
    * <= to <.
    * The DBMList calling this method is changed.
    * @return None*/
-  void closureRev() {
-    std::for_each(begin(), end(), [](DBM* d){ d->closureRev(); });
-    m_is_cf = false;
+  DBMList& closureRev() {
+    return map([](DBM* d){ d->closureRev(); });
   }
 
   /** This converts all finite upper-bound constraints
@@ -795,9 +782,8 @@ public:
    * <= to <, excluding single clock lower-bounds.
    * The DBMList calling this method is changed.
    * @return None*/
-  void predClosureRev() {
-    std::for_each(begin(), end(), [](DBM* d){ d->predClosureRev(); });
-    m_is_cf = false;
+  DBMList& predClosureRev() {
+    return map([](DBM* d){ d->predClosureRev(); });
   }
 
   /** Prints out the DBMList by printing each DBM
