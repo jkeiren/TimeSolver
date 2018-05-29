@@ -14,7 +14,7 @@
 
 /** Use this function only for testing! */
 bool strictly_equal(const DBMList& xs, const DBMList& ys) {
-  return std::equal(xs.begin(), xs.end(), ys.begin(), [](const DBM* x, const DBM* y) { return *x == *y; });
+  return std::equal(xs.begin(), xs.end(), ys.begin(), [](const DBM& x, const DBM& y) { return x == y; });
 }
 
 // l1b

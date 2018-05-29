@@ -527,11 +527,11 @@ protected:
       cpplog(cpplogging::debug, "exists_rel_sidecondition") << "   !placeholder1 = " << placeholder1_complement << std::endl;
 
       // Process on a per-DBM basis
-      for (const DBM* const placeholder2_zone: placeholder2)
+      for (const DBM& placeholder2_zone: placeholder2)
       {
-        cpplog(cpplogging::debug, "exists_rel_sidecondition") << "    placeholder2-part = " << *placeholder2_zone << std::endl;
+        cpplog(cpplogging::debug, "exists_rel_sidecondition") << "    placeholder2-part = " << placeholder2_zone << std::endl;
 
-        DBM pred_placeholder2_zone_strict(*placeholder2_zone);
+        DBM pred_placeholder2_zone_strict(placeholder2_zone);
         pred_placeholder2_zone_strict.pre();
         pred_placeholder2_zone_strict.predClosureRev();
         pred_placeholder2_zone_strict.cf();
@@ -559,7 +559,7 @@ protected:
         !bad_successors_strict_complement;
         bad_successors_strict_complement.cf();
 
-        DBMList placeholder(*placeholder2_zone);
+        DBMList placeholder(placeholder2_zone);
         placeholder.intersect(bad_successors_strict_complement);
         placeholder.cf();
 
@@ -585,7 +585,7 @@ protected:
 
     // establish placeholder = !inv(l) || placeholder2
     // this ensures satisfaction of first sidecondition.
-    DBMList placeholder(placeholder2);
+    DBMList placeholder(std::move(placeholder2));
     DBMList invariant_region(INFTYDBM);
     bool nonempty_invariant = restrict_to_invariant(
         input_pes.invariants(), invariant_region, discrete_state);
@@ -2927,9 +2927,9 @@ inline bool prover::do_proof_place_ablewaitinf(const SubstList& discrete_state,
    * either all DBMs have an upper bound constraint, or none
    * of them do. Hence, checking the first is always good enough. */
   assert(!ph.empty());
-  DBM* firstDBM = *(ph.begin());
+  const DBM& firstDBM = *(ph.begin());
 
-  bool retVal = !firstDBM->hasUpperConstraint();
+  bool retVal = !firstDBM.hasUpperConstraint();
   if(!retVal && place != nullptr)
   {
     place->makeEmpty();
@@ -2961,8 +2961,8 @@ inline bool prover::do_proof_place_unablewaitinf(const SubstList& discrete_state
    * of them do. Hence, checking the first is always good enough. */
   assert(!ph.empty());
 
-  DBM* firstDBM = *(ph.begin());
-  bool retVal = firstDBM->hasUpperConstraint();
+  const DBM& firstDBM = *(ph.begin());
+  bool retVal = firstDBM.hasUpperConstraint();
   if(!retVal && place != nullptr) {
     place->makeEmpty();
   }

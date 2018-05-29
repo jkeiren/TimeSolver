@@ -213,7 +213,9 @@ public:
     : Array(std::move(other)),
       m_is_cf(std::move(other.m_is_cf)),
       m_declared_clocks(std::move(other.m_declared_clocks))
-  {}
+  {
+    other.m_declared_clocks = nullptr;
+  }
 
   size_type clocks_size() const { return m_declared_clocks->size() + 1; }
 
@@ -310,6 +312,7 @@ public:
     Array<raw_constraint_t>::operator=(std::move(other));
     m_declared_clocks = std::move(other.m_declared_clocks);
     m_is_cf = std::move(other.m_is_cf);
+    other.m_declared_clocks = nullptr;
     return *this;
   }
 
