@@ -1878,7 +1878,7 @@ inline void prover::do_proof_place_or(const SubstList& discrete_state,
   do_proof_place(discrete_state, zone, &placeholder_left, *formula.getLeft());
   placeholder_left.cf();
 
-  if (!(placeholder_left >= zone) && !(placeholder_left >= *place))
+  if (!(placeholder_left >= *place))
   {
     // We use place here, since the result of the second call is likely to be
     // part of the result anyway. If not, we will roll back later.
