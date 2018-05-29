@@ -116,10 +116,10 @@ private:
   /** True if the DBM is still in canonical form (cf()), false otherwise.
    * This provides a quick a 1-bit check that avoids needless
    * work to convert something already in cf() to cf(). */
-  bool isCf;
+  bool m_is_cf;
 
   /** Pointer to the globally declared clocks */
-  const clock_name_to_index_t* declared_clocks_;
+  const clock_name_to_index_t* m_declared_clocks;
 
   size_type offset(const size_type row, const size_type col) const {
     assert(row < clocks_size());
@@ -172,7 +172,7 @@ public:
    * @return [Constructor] */
   DBM(const clock_name_to_index_t* cs)
       : Array((cs->size()+1) * (cs->size()+1)),
-        declared_clocks_(cs) {
+        m_declared_clocks(cs) {
     for (size_type i = 0; i < clocks_size(); ++i) {
       for (size_type j = 0; j < clocks_size(); ++j) {
         operatorWrite(i,j) = (i == 0 || i == j) ? zero_le : infinity;
@@ -180,7 +180,7 @@ public:
     }
 
     // Set isCf to false to prevent breaking parser code
-    isCf = false;
+    m_is_cf = false;
   }
 
   /** DBM constructor initializing a DBM constrained by one specified
@@ -194,18 +194,10 @@ public:
    * @return [Constructor] */
   DBM(const size_type row, const size_type col,
       const raw_constraint_t val, const clock_name_to_index_t* cs)
-      : Array((cs->size()+1) * (cs->size()+1)),
-        declared_clocks_(cs) {
-    for (size_type i = 0; i < clocks_size(); ++i) {
-      for (size_type j = 0; j < clocks_size(); ++j) {
-        operatorWrite(i,j) = (i == 0 || i == j) ? zero_le : infinity;
-      }
-    }
-    /* Input in the single constraint */
+      : DBM(cs)
+  {
     operatorWrite(row, col) = val;
-
-    // Set isCf to false to prevent breaking parser code
-    isCf = false;
+    m_is_cf = false;
   }
 
   /** Copy Constructor for DBMs.
@@ -213,31 +205,31 @@ public:
    * @return [Constructor] */
   DBM(const DBM &Y)
       : Array(Y),
-        isCf(Y.isCf),
-        declared_clocks_(Y.declared_clocks_) {
+        m_is_cf(Y.m_is_cf),
+        m_declared_clocks(Y.m_declared_clocks) {
   }
 
   DBM(DBM&& other)
     : Array(std::move(other)),
-      isCf(std::move(other.isCf)),
-      declared_clocks_(std::move(other.declared_clocks_))
+      m_is_cf(std::move(other.m_is_cf)),
+      m_declared_clocks(std::move(other.m_declared_clocks))
   {}
 
-  size_type clocks_size() const { return declared_clocks_->size() + 1; }
+  size_type clocks_size() const { return m_declared_clocks->size() + 1; }
 
   const clock_name_to_index_t* declared_clocks() const {
-    return declared_clocks_;
+    return m_declared_clocks;
   }
 
   /** Tell the object that it is not in canonical form.
    * Call this method whenever changing the DBM's value from the outside.
    * Otherwise, cf() will fail to convert the DBM to canonical form.
    * @return None */
-  void setIsCfFalse() { isCf = false; }
+  void setIsCfFalse() { m_is_cf = false; }
 
   /** Returns whether this DBM is in canonical form or not.
    * @return true: the DBM is in canonical form; false: otherwise. */
-  bool isInCf() const { return isCf; }
+  bool isInCf() const { return m_is_cf; }
 
   /** The public method is used to read a value of a
    * specific constraint in the DBM. This method performs out of bounds checks
@@ -279,7 +271,7 @@ public:
     }
 
     operatorWrite(row,col) = val;
-    isCf = false;
+    m_is_cf = false;
   }
 
   /* Returns if the constraint row - col is implicit.
@@ -309,15 +301,15 @@ public:
     assert(clocks_size() == Y.clocks_size());
     Array<raw_constraint_t>::operator=(Y);
 
-    declared_clocks_ = Y.declared_clocks_;
-    isCf = Y.isCf;
+    m_declared_clocks = Y.m_declared_clocks;
+    m_is_cf = Y.m_is_cf;
     return *this;
   }
 
   DBM& operator=(DBM&& other) {
     Array<raw_constraint_t>::operator=(other);
-    declared_clocks_ = std::move(other.declared_clocks_);
-    isCf = std::move(other.isCf);
+    m_declared_clocks = std::move(other.m_declared_clocks);
+    m_is_cf = std::move(other.m_is_cf);
     return *this;
   }
 
@@ -328,7 +320,7 @@ public:
    * @param Y (&) The DBM to intersect */
   DBM& intersect(const DBM& Y) {
     assert(clocks_size() == Y.clocks_size());
-    if(isCf && emptiness()) {
+    if(m_is_cf && emptiness()) {
       return *this;
     } else {
       /* Should we check for same number of clocks (?)
@@ -337,7 +329,7 @@ public:
         for (size_type j = 0; j < clocks_size(); ++j) {
           if(Y.at(i,j) < at(i,j)) {
             operatorWrite(i,j) = Y.at(i,j);
-            isCf = false;
+            m_is_cf = false;
           }
         }
       }
@@ -432,7 +424,7 @@ public:
     for (size_type i = 0; i < clocks_size(); ++i) {
       operatorWrite(0, i) = zero_le;
     }
-    isCf = false;
+    m_is_cf = false;
     return *this;
   }
 
@@ -496,7 +488,7 @@ public:
         operatorWrite(i, x) = at(i, y);
       }
     }
-    isCf = false;
+    m_is_cf = false;
     return *this;
   }
 
@@ -544,7 +536,7 @@ public:
     }
     operatorWrite(x, 0) = infinity;
     operatorWrite(0, x) = zero_le;
-    isCf = false;
+    m_is_cf = false;
     return *this;
   }
 
@@ -609,7 +601,7 @@ public:
         operatorWrite(0, i) = zero_le;
       }
     }
-    isCf = false;
+    m_is_cf = false;
     return *this;
   }
 
@@ -653,7 +645,7 @@ public:
     }
     operatorWrite(x, 0) = infinity;
     operatorWrite(0, x) = zero_le;
-    isCf = false;
+    m_is_cf = false;
     return *this;
   }
 
@@ -731,7 +723,7 @@ public:
         }
       }
     }
-    isCf = false;
+    m_is_cf = false;
   }
 
   /** Converts the calling DBM to its canonical form, or
@@ -743,7 +735,7 @@ public:
    * @note This implementation is the Floyd-Warshall Algorithm
    * for all pairs shortest paths.*/
   void cf() {
-    if(!isCf) {
+    if(!m_is_cf) {
       /* Don't you need to initialize all D(i,i) to (0, \leq) (?)
        * Answer:  For this method, yes.  However, if matrices
        * are initialized properly to $(0, \leq)$, those
@@ -766,7 +758,7 @@ public:
         }
       }
 
-      isCf = true; // the DBM is now in Canonical Form
+      m_is_cf = true; // the DBM is now in Canonical Form
     }
   }
 
@@ -777,7 +769,7 @@ public:
    * @return [None] */
   void makeEmpty() {
     std::fill(begin(), end(), zero_less);
-    isCf = true;
+    m_is_cf = true;
   }
 
   /** This checks if DBM represents an empty region
@@ -889,12 +881,12 @@ public:
         }
         if (i != 0 && j != 0) {
           // os << "x" << (i);
-          os << declared_clocks_->reverse_at(i);
+          os << m_declared_clocks->reverse_at(i);
           os << "-";
           // os << "x" << (j);
-          os << declared_clocks_->reverse_at(j);
+          os << m_declared_clocks->reverse_at(j);
         } else if (i == 0) {
-          os << declared_clocks_->reverse_at(j);
+          os << m_declared_clocks->reverse_at(j);
           if (type == 1)
             os << ">=" << -val;
           else
@@ -902,7 +894,7 @@ public:
           end = true;
           continue;
         } else if (j == 0) {
-          os << declared_clocks_->reverse_at(i);
+          os << m_declared_clocks->reverse_at(i);
         }
 
         if (type == 1) {

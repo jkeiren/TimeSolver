@@ -78,7 +78,6 @@ private:
     } else {
       bool first = true;
       if(!Y.emptiness()) {
-        /* Check for infinity DBM */
         for (DBM::size_type i = 0; i < Y.clocks_size(); i++) {
           for (DBM::size_type j = 0; j < Y.clocks_size(); j++) {
             if (!(Y.isConstraintImplicit(i, j))) {
