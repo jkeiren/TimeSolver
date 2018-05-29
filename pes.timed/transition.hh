@@ -32,7 +32,7 @@ public:
    * @return [Constructor]. */
   Transition(ExprNode* const destParent, const ExprNode* const leftExprIn,
              ExprNode* const rightExprIn, const bool isDestOnLeft,
-             const SubstList* const dest, const ClockSet* const reset,
+             const SubstList* const dest, const clock_set* const reset,
              const std::vector<std::pair<DBM::size_type, clock_value_t>>* const
                  clockAssignments)
       : destPar(destParent),
@@ -121,7 +121,7 @@ public:
 
   /** Returns the clock set of the clocks reset by this transition.
    * @return the clocks reset by this transition. */
-  const ClockSet* reset_clocks() const { return resetList; }
+  const clock_set* reset_clocks() const { return resetList; }
 
   /** Given the location of a state that satisfies the
    * location constraints of the transition, this gives
@@ -181,7 +181,7 @@ private:
 
   /** The set of clocks to reset on the transition. This is nullptr
    * if there are no clocks to reset */
-  const ClockSet* resetList;
+  const clock_set* resetList;
 };
 
 inline std::ostream& operator<<(std::ostream& os, const Transition* const t) {

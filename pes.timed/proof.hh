@@ -1378,7 +1378,7 @@ inline bool prover::do_proof_allact(const SubstList& discrete_state,
       if (has_nonvacuous_invariant) {
         invariant_zone.cf();
         // Some clocks are reset on this transition
-        const ClockSet* reset_clocks = transition->reset_clocks();
+        const clock_set* reset_clocks = transition->reset_clocks();
         if (reset_clocks != nullptr) {
           invariant_zone.preset(*reset_clocks);
           invariant_zone.cf();
@@ -1481,7 +1481,7 @@ inline bool prover::do_proof_existact(const SubstList& discrete_state,
         input_pes.invariants(), invariant_zone, transition->destination_location(&discrete_state));
     if (invariant_satisfiable) {
       invariant_zone.cf();
-      const ClockSet* reset_clocks = transition->reset_clocks();
+      const clock_set* reset_clocks = transition->reset_clocks();
       if (reset_clocks != nullptr) {
         invariant_zone.preset(*reset_clocks);
       }
@@ -2456,7 +2456,7 @@ inline void prover::do_proof_place_allact(const SubstList& discrete_state,
       assert(invariant_satisfiable || invariant_zone.isInCf());
       if (invariant_satisfiable) {
         invariant_zone.cf();
-        const ClockSet* reset_clocks = transition->reset_clocks();
+        const clock_set* reset_clocks = transition->reset_clocks();
         if (reset_clocks != nullptr) {
           invariant_zone.preset(*reset_clocks);
         }
@@ -2573,7 +2573,7 @@ inline void prover::do_proof_place_existact(const SubstList& discrete_state,
 
     if (invariant_satisfiable) { // the invariant does not hold vacuously.
       invariant_region.cf();
-      const ClockSet* reset_clocks = transition->reset_clocks();
+      const clock_set* reset_clocks = transition->reset_clocks();
       if (reset_clocks != nullptr) {
         invariant_region.preset(*reset_clocks);
       }

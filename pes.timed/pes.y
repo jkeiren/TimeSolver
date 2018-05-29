@@ -72,7 +72,7 @@
   char* strVal;
   short int   intVal;
   ExprNode* exprVal;
-  ClockSet* cSet;
+  clock_set* cSet;
   SubstList* subList;
   DBM* constraint;
   Transition * ttrans;
@@ -504,7 +504,7 @@ TOK_ID_CLOCK
 {
   int x = input_pes.lookup_clock($1);
   if ( x != -1){
-    $$ = new ClockSet(x, input_pes.clocks()->size());
+    $$ = new clock_set(x, input_pes.clocks()->size());
   }
   else {
     errPrtExit("clock variable not defined");
@@ -515,7 +515,7 @@ TOK_ID_CLOCK
 {
   int x = input_pes.lookup_clock($3);
   if ( x!= -1){
-    $$ = ($1)->addclock(x);
+    $$ = ($1)->set(x);
   }
   else {
     errPrtExit("clock variable not defined");
@@ -1200,12 +1200,12 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 };
 
 /** Generates the set of clocks that needs to be reset
- * as a ClockSet object. */
+ * as a clock_set object. */
 reset:      TOK_ID_CLOCK
 {
   int x = input_pes.lookup_clock($1);;
   if ( x != -1){
-    $$ = new ClockSet(x, input_pes.clocks()->size());
+    $$ = new clock_set(x, input_pes.clocks()->size());
   }
   else {
     errPrtExit("clock variable not defined");
@@ -1216,7 +1216,7 @@ reset:      TOK_ID_CLOCK
 {
   int x = input_pes.lookup_clock($1);;
   if ( x!= -1){
-    $$ = ($3)->addclock(x);
+    $$ = ($3)->set(x);
   }
   else {
     errPrtExit("clock variable not defined");

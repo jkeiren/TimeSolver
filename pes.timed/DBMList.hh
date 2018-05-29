@@ -637,7 +637,7 @@ public:
    * The final DBM is not in canonical form.
    * @param rs (*) The set of clocks to reset to 0.
    * @return The reference to the changed, calling resulting DBM. */
-  DBMList &reset(const ClockSet& rs) {
+  DBMList &reset(const clock_set& rs) {
     std::for_each(begin(), end(), [&](DBM* d){ d->reset(rs); });
     isCf = false;
     return *this;
@@ -677,7 +677,7 @@ public:
    * after this operation.
    * @param prs (*) The set of clocks just reset (after the predecessor zone).
    * @return The reference to the modified DBMList. */
-  DBMList &preset(const ClockSet& prs) {
+  DBMList &preset(const clock_set& prs) {
     std::for_each(begin(), end(), [&](DBM* d){ d->preset(prs); });
     isCf = false;
     return *this;

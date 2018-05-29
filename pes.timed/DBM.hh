@@ -20,9 +20,9 @@
 #include "bidirectional_map.hh"
 #include "constraints.hh"
 
-class ClockSet {
+class clock_set {
 protected:
-  std::vector<bool> _data;
+  std::vector<bool> m_data;
 
 public:
   /** Constructor. Initializes the set of clocks with a specified
@@ -33,31 +33,41 @@ public:
    * @param num_clocks The number of clocks in the set of clocks. This
    * number does not include the dummy "zero clock".
    * @return [Constructor]. */
-  ClockSet(const std::size_t bit, const std::size_t num_clocks)
-    : _data(num_clocks + 1, false)
+  clock_set(const std::size_t bit, const std::size_t num_clocks)
+    : m_data(num_clocks + 1, false)
   {
-    assert(bit < _data.size());
-    _data[bit] = true;
+    assert(bit < m_data.size());
+    m_data[bit] = true;
   }
 
   /** Copy Constructor.
    * @param other (&) The object to copy.
    * @return [Constructor]. */
-  ClockSet(const ClockSet &other) = default;
+  clock_set(const clock_set &other) = default;
 
   /** Move Constructor. */
-  ClockSet(ClockSet&& other) noexcept = default;
+  clock_set(clock_set&& other) noexcept = default;
 
   /** Destructor.  Does nothing.
    * @return [Destructor]. */
-  ~ClockSet() { }
+  ~clock_set() { }
 
   /** This adds a clock to the clock set.
    * @param bit The index of the clock to add.
-   * @return The changed ClockSet object. */
-  ClockSet *addclock(const std::size_t bit) {
-    _data[bit] = true;
+   * @return this. */
+  clock_set* set(const std::size_t bit) {
+    m_data[bit] = true;
     return this;
+  }
+
+  /** Determines if the clock index specified by bit is in
+   * the set.
+   * @param bit The index of the clock to see if it is in the
+   * set.
+   * @return true iff the clock bit is in the set. */
+  bool get(const std::size_t bit) const {
+    assert(bit < m_data.size());
+    return m_data[bit];
   }
 
   /** Prints out the list of clocks in the set,
@@ -70,8 +80,8 @@ public:
   void print(std::ostream &os) const {
     bool end = false;
     os << "[";
-    for (std::size_t i = 1; i < _data.size(); ++i) {
-      if (_data[i]) {
+    for (std::size_t i = 1; i < m_data.size(); ++i) {
+      if (m_data[i]) {
         if (end) {
           os << ",";
         }
@@ -82,16 +92,6 @@ public:
       }
     }
     os << "]";
-  }
-
-  /** Determines if the clock index specified by bit is in
-   * the ClockSet.
-   * @param bit The index of the clock to see if it is in the
-   * ClockSet.
-   * @return 1: the clock bit is in the ClockSet; 0: otherwise. */
-  bool getc(const std::size_t bit) const {
-    assert(bit < _data.size());
-    return _data[bit];
   }
 };
 
@@ -464,12 +464,12 @@ public:
    * The final DBM is in canonical form.
    * @param rs (*) The set of clocks to reset to 0.
    * @return The reference to the changed, calling resulting DBM. */
-  DBM &reset(const ClockSet& rs) {
+  DBM &reset(const clock_set& rs) {
     /* This for loop takes the DBM and resets
      * all the specified clocks to reset to
      * 0. */
     for (size_type i = 1; i < clocks_size(); ++i) {
-      if (rs.getc(i)) {
+      if (rs.get(i)) {
         reset(i);
       }
     }
@@ -557,7 +557,7 @@ public:
    * after this operation.
    * @param prs (*) The set of clocks just reset (after the predecessor zone).
    * @return The reference to the modified DBM. */
-  DBM &preset(const ClockSet& prs) {
+  DBM &preset(const clock_set& prs) {
     /* Handle clock difference constraints first. This
      * allows us to use the single-clock constraints
      * already in the DBM */
@@ -566,7 +566,7 @@ public:
         if (i != j) {
           /* In all conditions, handle constraint (i,j) here.
            * Constraint (j,i) is handled later. */
-          if (prs.getc(i) && prs.getc(j)) {
+          if (prs.get(i) && prs.get(j)) {
             /* Note that if we are here for constraint (i,j),
              * we will get here in constraint (j,i) */
 
@@ -577,10 +577,10 @@ public:
             }
             // If both clocks are reset then their difference does not matter
             operatorWrite(i, j) = infinity;
-          } else if (prs.getc(i)) {
+          } else if (prs.get(i)) {
             operatorWrite(0, j) = std::min(at(0, j), at(i, j));
             operatorWrite(i, j) = infinity;
-          } else if (prs.getc(j)) {
+          } else if (prs.get(j)) {
             operatorWrite(i, 0) = std::min(at(i, 0), at(i, j));
             operatorWrite(i, j) = infinity;
           } // Do nothing if neither clock is reset
@@ -590,7 +590,7 @@ public:
     }
     /* Handle Single clock constraints last. */
     for (size_type i = 1; i < clocks_size(); ++i) {
-      if (prs.getc(i)) {
+      if (prs.get(i)) {
         const raw_constraint_t raw_0_i = at(0, i);
         // For upper bound constraints, only invalidate if strictly
         // less than 0

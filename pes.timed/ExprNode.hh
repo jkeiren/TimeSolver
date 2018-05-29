@@ -224,7 +224,7 @@ public:
       : left(q), op(o), declared_clocks(cs), declared_atomic(as) {
     right = nullptr;
     constraint = nullptr;
-    cset = nullptr;
+    m_clock_set = nullptr;
     predicate = nullptr;
     subst = nullptr;
     assert(q != nullptr);
@@ -244,7 +244,7 @@ public:
       : left(l), right(r), op(o), declared_clocks(cs), declared_atomic(as) {
     constraint = nullptr;
     predicate = nullptr;
-    cset = nullptr;
+    m_clock_set = nullptr;
     subst = nullptr;
     assert(l != nullptr);
     assert(r != nullptr);
@@ -266,7 +266,7 @@ public:
     right = nullptr;
     predicate = nullptr;
     constraint = c;
-    cset = nullptr;
+    m_clock_set = nullptr;
     subst = nullptr;
   }
 
@@ -288,7 +288,7 @@ public:
     right = nullptr;
     predicate = nullptr;
     constraint = nullptr;
-    cset = nullptr;
+    m_clock_set = nullptr;
     subst = nullptr;
   }
 
@@ -315,7 +315,7 @@ public:
     right = nullptr;
     predicate = nullptr;
     subst = nullptr;
-    cset = nullptr;
+    m_clock_set = nullptr;
     constraint = nullptr;
   }
 
@@ -348,7 +348,7 @@ public:
     left = nullptr;
     right = nullptr;
     predicate = nullptr;
-    cset = nullptr;
+    m_clock_set = nullptr;
     subst = nullptr;
   }
 
@@ -369,24 +369,24 @@ public:
         declared_atomic(as) {
     left = nullptr;
     right = nullptr;
-    cset = nullptr;
+    m_clock_set = nullptr;
     subst = nullptr;
     constraint = nullptr;
   }
 
   /** Constructor for clock set expressions with opType = {RESET}. These
    * expressions are used to reset a set of clocks (specified by the
-   * ClockSet) to 0.
+   * clock_set) to 0.
    * @param o The logical operator/constraint type.
    * @param l (*) The single (left) child expression.
    * @param s (*) The set of clocks (to reset to 0).
    * @note Using this constructor with an opType value other than one of
    * the values given above may result in program errors.
    * @return [Constructor]. */
-  ExprNode(const opType o, ExprNode* l, ClockSet* s,
+  ExprNode(const opType o, ExprNode* l, clock_set* s,
            const clock_name_to_index_t* cs,
            const atomic_name_to_index_t* as)
-      : left(l), cset(s), op(o), declared_clocks(cs), declared_atomic(as) {
+      : left(l), m_clock_set(s), op(o), declared_clocks(cs), declared_atomic(as) {
     right = nullptr;
     predicate = nullptr;
     constraint = nullptr;
@@ -411,7 +411,7 @@ public:
       : left(l), subst(s), op(o), declared_clocks(cs), declared_atomic(as) {
     right = nullptr;
     predicate = nullptr;
-    cset = nullptr;
+    m_clock_set = nullptr;
     constraint = nullptr;
   }
 
@@ -441,7 +441,7 @@ public:
         declared_atomic(as) {
     right = nullptr;
     predicate = nullptr;
-    cset = nullptr;
+    m_clock_set = nullptr;
     constraint = nullptr;
     subst = nullptr;
   }
@@ -463,8 +463,8 @@ public:
     if (other.constraint != nullptr) {
       constraint = new DBM(*(other.constraint));
     }
-    if (other.cset != nullptr) {
-      cset = new ClockSet(*(other.cset));
+    if (other.m_clock_set != nullptr) {
+      m_clock_set = new clock_set(*(other.m_clock_set));
     }
     if (other.subst != nullptr) {
       subst = new SubstList(*(other.subst));
@@ -488,7 +488,7 @@ public:
         left(std::move(other.left)),
         right(std::move(other.right)),
         constraint(std::move(other.constraint)),
-        cset(std::move(other.cset)),
+        m_clock_set(std::move(other.m_clock_set)),
         subst(std::move(other.subst)),
         op(std::move(other.op)),
         atomic(std::move(other.atomic)),
@@ -498,7 +498,7 @@ public:
         declared_atomic(std::move(other.declared_atomic)) {
     other.predicate = nullptr;
     other.constraint = nullptr;
-    other.cset = nullptr;
+    other.m_clock_set = nullptr;
     other.subst = nullptr;
     other.left = nullptr;
     other.right = nullptr;
@@ -520,7 +520,7 @@ public:
 
     delete constraint;
     delete subst;
-    delete cset;
+    delete m_clock_set;
     /* Note: since predicates are shallow-copied, they are not deleted
      * here. */
   }
@@ -596,7 +596,7 @@ public:
   /** Returns the set of clocks stored in the ExprNode.
    * @return The set of clocks stored in the Expression.
    * @see The Constructor(s) comments for more information. */
-  const ClockSet* getClockSet() const { return cset; }
+  const clock_set* getClockSet() const { return m_clock_set; }
 
   /** Returns the assignment of control variables stored in the expression.
    * @return The assignment of (discrete) variables.
@@ -746,7 +746,7 @@ protected:
   /** Represents the set of clocks (a subset of the set of
    * specified clocks) in an ExprNode, currently used
    * to specify the set of clocks to reset to 0.  */
-  ClockSet* cset;
+  clock_set* m_clock_set;
   /** Represents a list of (usually control or atomic) variables and
    * what values should be substituted into them.
    * Used in an expression to represent a substitution of variables in a
