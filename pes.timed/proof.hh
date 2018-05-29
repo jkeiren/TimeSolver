@@ -2576,8 +2576,8 @@ inline void prover::do_proof_place_existact(const SubstList& discrete_state,
       const clock_set* reset_clocks = transition->reset_clocks();
       if (reset_clocks != nullptr) {
         invariant_region.preset(*reset_clocks);
+        invariant_region.cf();
       }
-      invariant_region.cf();
       /* Now perform clock assignments sequentially: perform the
        * front assignments first */
       const std::vector<std::pair<DBM::size_type, clock_value_t>>* clock_assignments =
