@@ -307,7 +307,7 @@ public:
   }
 
   DBM& operator=(DBM&& other) {
-    Array<raw_constraint_t>::operator=(other);
+    Array<raw_constraint_t>::operator=(std::move(other));
     m_declared_clocks = std::move(other.m_declared_clocks);
     m_is_cf = std::move(other.m_is_cf);
     return *this;
