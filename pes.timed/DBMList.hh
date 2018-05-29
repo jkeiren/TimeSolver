@@ -70,28 +70,29 @@ private:
    * Does not preserve canonical form.
    * @param Y (&) The DBM to complement.
    * @return The complemented DBM, given as a DBMList. */
-  void complementDBM(DBMList& out, const DBM& Y) {
-    assert(out.emptiness());
+  DBMList complementDBM(const DBM& Y) {
     if(Y.emptiness())
     {
-      out = DBMList(Y.declared_clocks());
+      return DBMList(Y.declared_clocks());
     } else {
       bool first = true;
-      if(!Y.emptiness()) {
-        for (DBM::size_type i = 0; i < Y.clocks_size(); i++) {
-          for (DBM::size_type j = 0; j < Y.clocks_size(); j++) {
-            if (!(Y.isConstraintImplicit(i, j))) {
-              const DBM negated_dbm(j, i, negate_constraint(Y(i,j)), m_declared_clocks);
-              if(first) {
-                out.front() = std::move(negated_dbm);
-                first = false;
-              } else {
-                out.addDBM(std::move(negated_dbm));
-              }
+      DBMList result(Y.declared_clocks());
+      result.makeEmpty();
+      for (DBM::size_type i = 0; i < Y.clocks_size(); i++) {
+        for (DBM::size_type j = 0; j < Y.clocks_size(); j++) {
+          if (!(Y.isConstraintImplicit(i, j))) {
+            const DBM negated_dbm(j, i, negate_constraint(Y(i,j)), m_declared_clocks);
+            if(first) {
+              assert(result.size() == 1);
+              result.front() = std::move(negated_dbm);
+              first = false;
+            } else {
+              result.addDBM(std::move(negated_dbm));
             }
           }
         }
       }
+      return result;
     }
   }
 
@@ -351,28 +352,19 @@ public:
   DBMList &operator!() {
 
     if (size() == 1) {
-      DBMList complement_dbms((DBM(m_declared_clocks)));
-      complement_dbms.makeEmpty();
-      complementDBM(complement_dbms, front());
-      m_dbms = std::move(complement_dbms.m_dbms);
-      m_is_cf = complement_dbms.isInCf();
+      *this = complementDBM(front());
     } else {
       // Complement the first DBM, and intersect the complement with the complement
       // of all other DBMs.
-      std::vector<DBM>::const_iterator dbm_it = m_dbms.begin();
-      DBMList first_complement_dbms((DBM(m_declared_clocks)));
-      first_complement_dbms.makeEmpty();
-      complementDBM(first_complement_dbms, *dbm_it);
-      m_is_cf = first_complement_dbms.isInCf();
 
-      DBMList complement_dbms((DBM(m_declared_clocks)));
+      std::vector<DBM>::const_iterator dbm_it = m_dbms.begin();
+      DBMList complement(complementDBM(*dbm_it));
+
       while(++dbm_it != m_dbms.end()) {
-        complement_dbms.makeEmpty();
-        complementDBM(complement_dbms, *dbm_it);
-        first_complement_dbms.intersect(complement_dbms);
+        complement.intersect(complementDBM(*dbm_it));
       }
-      m_dbms = std::move(first_complement_dbms.m_dbms);
-      m_is_cf = first_complement_dbms.isInCf();
+
+      *this = std::move(complement);
       cf(true);
     }
 
