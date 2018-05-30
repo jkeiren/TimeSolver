@@ -1969,9 +1969,10 @@ inline void prover::do_proof_place_forall(const SubstList& discrete_state,
 
     DBMList placeholder_forall(*place);
     establish_forall_place_sidecondition(&placeholder_forall, discrete_state, zone, *place);
-    *place = placeholder_forall;
+    place->intersect(placeholder_forall);
 
     if (cpplogEnabled(cpplogging::debug)) {
+      place->cf();
       // Result only used for printing the correct value below.
       bool result = !place->emptiness();
       // This work is done in the succCheck method.
@@ -2195,7 +2196,7 @@ inline void prover::do_proof_place_forall_rel(const SubstList& discrete_state,
         }
       }
 
-      *place = placeholder_exists;
+      *place = std::move(placeholder_exists);
       place->union_(placeholder_forall);
       place->cf();
     }
