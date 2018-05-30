@@ -134,8 +134,6 @@ private:
     erase(last, end());
   }
 
-  std::size_t clocks_size() const { return m_declared_clocks->size()+1; }
-
   /** Maps f to all DBMs in the list and marks the DBMList as not in cf */
   template<typename F>
   DBMList& map(F f)
@@ -153,10 +151,10 @@ public:
    * This is the loosest possible DBM.
    * @return [Constructor] */
   DBMList(const clock_name_to_index_t* cs)
-      : m_declared_clocks(cs),
-        m_is_cf(false)
+      : m_declared_clocks(cs)
   {
     m_dbms.emplace_back(cs);
+    m_is_cf = m_dbms.back().isInCf();
   }
 
   /** Copy Constructor for DBMList, making a DBMList representing the
@@ -182,20 +180,12 @@ public:
   /** Copy Constructor for DBMLists, copying a DBMList.
    * @param Y (&) The object to copy.
    * @return [Constructor] */
-  DBMList(const DBMList &other)
-      : m_dbms(other.m_dbms),
-        m_declared_clocks(other.m_declared_clocks),
-        m_is_cf(other.m_is_cf) {
-  }
+  DBMList(const DBMList &other) = default;
 
-  DBMList(DBMList&& other) noexcept
-    : m_dbms(std::move(other.m_dbms)),
-      m_declared_clocks(std::move(other.m_declared_clocks)),
-      m_is_cf(std::move(other.m_is_cf)) {
-  }
+  /** Default move constructor */
+  DBMList(DBMList&& other) noexcept = default;
 
-  /** Destructor; deletes each DBM in the DBMList and then deletes the vector.
-   * @return [Destructor]. */
+  /** Destructor */
   ~DBMList() {  }
 
   // iterator support
@@ -299,29 +289,10 @@ public:
    * Preserves canonical form.
    * @param Y (&) The object to copy.
    * @return A reference to the copied object, which is the LHS object. */
-  DBMList &operator=(const DBMList &Y) {
-    if (Y.size() == 1) {
-      iterator dbm_it = ++begin();
-      erase(dbm_it, end());
-      front() = Y.front();
-    } else {
-      // Vector constructor makes a deep copy of the pointers (not of the
-      // objects that the pointers point to). Make a deep copy of the DBM
-      // objects here
-      m_dbms = Y.m_dbms;
-    }
-
-    m_is_cf = Y.isInCf();
-    return *this;
-  }
+  DBMList &operator=(const DBMList &Y) = default;
 
   /** Move assignment */
-  DBMList& operator=(DBMList&& other) {
-    m_declared_clocks = std::move(other.m_declared_clocks);
-    m_dbms = std::move(other.m_dbms);
-    m_is_cf = std::move(other.m_is_cf);
-    return *this;
-  }
+  DBMList& operator=(DBMList&& other) = default;
 
   /** Performs a deep copy of a DBM to a DBMList object.
    * The DBMList calling this method is changed.
@@ -331,6 +302,7 @@ public:
   DBMList &operator=(const DBM &Y) {
     erase(++begin(), end());
     front() = Y;
+    m_declared_clocks = Y.declared_clocks();
     m_is_cf = Y.isInCf();
     return *this;
   }
@@ -338,7 +310,8 @@ public:
   DBMList &operator=(DBM &&Y) {
     erase(++begin(), end());
     front() = std::move(Y);
-    m_is_cf = Y.isInCf();
+    m_declared_clocks = std::move(Y.declared_clocks());
+    m_is_cf = std::move(Y.isInCf());
     return *this;
   }
 
@@ -350,7 +323,6 @@ public:
    * Does not preserve canonical form.
    * @return The complemented DBMList, given as a DBMList. */
   DBMList &operator!() {
-
     if (size() == 1) {
       *this = complementDBM(front());
     } else {
