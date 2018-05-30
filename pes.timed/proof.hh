@@ -931,6 +931,7 @@ inline bool prover::do_proof_forall(const SubstList& discrete_state,
    * allowing multiple branches of AND and OR to have the same zone. */
   DBM succ_lhs(zone);
   succ_lhs.suc();
+  succ_lhs.cf();
   restrict_to_invariant(input_pes.invariants(), succ_lhs, discrete_state);
   succ_lhs.cf();
 
@@ -1673,8 +1674,8 @@ inline void prover::do_proof_place_predicate(const SubstList& discrete_state,
       if (cached_sequent != nullptr &&
           cached_sequent->tabled_sequent(zone, &cached_placeholder)) {
         // Found known true
-        *place = cached_placeholder;
-        if (cached_placeholder.emptiness()) {
+        *place = std::move(cached_placeholder);
+        if (place->emptiness()) {
           // returning placeholder must be non-empty for the sequent
           // to be valid
           return;
@@ -1917,31 +1918,25 @@ inline void prover::do_proof_place_or_simple(const SubstList& discrete_state,
 
   // Now do the right proof, and take the right if its placeholder is
   // larger that from the left side.
-  if (!placeholder_left.emptiness() && (placeholder_left >= *place)) {
-    assert(placeholder_left == *place);
-    /* Here, the current transition successful;
-     * we are done */
-    *place = placeholder_left;
-    return;
+  if (!(placeholder_left >= *place)) {
+    // We anticipate the right placeholder is the correct result here.
+    // if not, we roll back later.
+    do_proof_place(discrete_state, zone, place, *formula.getRight());
+    place->cf();
+
+    /* If the left is simple, then we have an empty left or
+     * left is the entire placeholder. */
+    /* If both are non-empty then the left is not the
+     * entire placeholder. Hence, the left was not the simple
+     * disjunct. Therefore, the right must be the simple disjunct
+     * and must be the entire placeholder. */
+    if (place->emptiness()) {
+      // Take previous DBM
+      *place = std::move(placeholder_left);
+    }
   }
 
-  // We anticipate the right placeholder is the correct result here.
-  // if not, we roll back later.
-  do_proof_place(discrete_state, zone, place, *formula.getRight());
-  place->cf();
 
-  /* If the left is simple, then we have an empty left or
-   * left is the entire placeholder. */
-
-  if (!placeholder_left.emptiness() && place->emptiness()) {
-    // Take previous DBM
-    *place = placeholder_left;
-  }
-
-  /* If both are non-empty then the left is not the
-   * entire placeholder. Hence, the left was not the simple
-   * disjunct. Therefore, the right must be the simple disjunct
-   * and must be the entire placeholder. */
 }
 
 // [FC14] Proof rule \forall_{t2}
@@ -2139,10 +2134,10 @@ inline void prover::do_proof_place_forall_rel(const SubstList& discrete_state,
     parentPlaceRef = nullptr;
 
     if (placeholder2.emptiness()) {
-      *place = placeholder2;
+      *place = std::move(placeholder2);
     } else if (placeholder2 >= lhs_succ) {
       /* \forallrel(\phi_2) holds, avoid extra work. */
-      *place = placeholder2;
+      *place = std::move(placeholder2);
     } else {
       /* Now do a succ check on phi_2 to get \phi_forall
        * and a predCheck using both phi_1 and phi_2 to get phi_exists */
@@ -2233,7 +2228,7 @@ inline void prover::do_proof_place_exists(const SubstList& discrete_state,
                                 << std::endl
                                 << std::endl;
     }
-    *place = placeholder;
+    place->makeEmpty();
   } else {
     /* Now check that it works (the new placeholder can be
      * obtained from the old
@@ -2286,7 +2281,7 @@ inline void prover::do_proof_place_exists_rel(const SubstList& discrete_state,
                                 << std::endl
                                 << std::endl;
     }
-    *place = placeholder2;
+    place->makeEmpty();
   } else {
     /* Now check for the relativization.
      * First, find the subset of the predecessor_< of the placeholder
@@ -2319,11 +2314,9 @@ inline void prover::do_proof_place_exists_rel(const SubstList& discrete_state,
     placeholder1_intersect_placeholder2_pred.intersect(placeholder2_predecessor);
     placeholder1_intersect_placeholder2_pred.cf();
     if (placeholder1_intersect_placeholder2_pred.emptiness()) {
-      *place = placeholder1_intersect_placeholder2_pred;
-
       if (cpplogEnabled(cpplogging::debug)) {
         print_sequentCheck(cpplogGet(cpplogging::debug), step - 1, false, zone_succ,
-                           *place, discrete_state, formula.getOpType());
+                           placeholder1_intersect_placeholder2_pred, discrete_state, formula.getOpType());
 
         cpplog(cpplogging::debug)
             << "----() Empty Second Placeholder: Relativization Formula \\phi_1 "
@@ -2338,8 +2331,8 @@ inline void prover::do_proof_place_exists_rel(const SubstList& discrete_state,
        * Else, return empty and break */
       placeholder2.intersect(zone); // zone here is before the time elapse
       placeholder2.cf();
-      *place = placeholder2;
-      if (placeholder2.emptiness()) {
+      *place = std::move(placeholder2);
+      if (place->emptiness()) {
         cpplog(cpplogging::debug)
             << "----(Invalid) Time Elapsed required for formula to be true; "
                "hence, relativized formula cannot always be false."
@@ -2348,7 +2341,7 @@ inline void prover::do_proof_place_exists_rel(const SubstList& discrete_state,
       } else {
         /* While a time elapse is not required, the placeholder
          * must span all of zone */
-        if (placeholder2 >= zone) {
+        if (*place >= zone) {
           cpplog(cpplogging::debug)
               << "----(Valid) Time Elapse not required and placeholder spans "
                  "zone; hence, formula is true-----"
@@ -2360,7 +2353,7 @@ inline void prover::do_proof_place_exists_rel(const SubstList& discrete_state,
               << std::endl;
         }
         cpplog(cpplogging::debug) << "----With resulting Placeholder := {"
-                                  << placeholder2 << "} ----" << std::endl
+                                  << *place << "} ----" << std::endl
                                   << std::endl;
       }
     } else {
@@ -2376,7 +2369,7 @@ inline void prover::do_proof_place_exists_rel(const SubstList& discrete_state,
             << std::endl
             << std::endl;
 
-        *place = placeholder;
+        place->makeEmpty();
       }
       else
       {
@@ -2460,8 +2453,8 @@ inline void prover::do_proof_place_allact(const SubstList& discrete_state,
         const clock_set* reset_clocks = transition->reset_clocks();
         if (reset_clocks != nullptr) {
           invariant_zone.preset(*reset_clocks);
+          invariant_zone.cf();
         }
-        invariant_zone.cf();
         /* Now perform clock assignments sequentially: perform the
          * front assignments first */
         const std::vector<std::pair<DBM::size_type, clock_value_t>>* clock_assignments =
@@ -2834,7 +2827,7 @@ inline void prover::do_proof_place_reset(const SubstList& discrete_state,
   do_proof_place(discrete_state, lhs_reset, &placeholder1, *formula.getExpr());
   placeholder1.cf();
   if (placeholder1.emptiness()) {
-    *place = placeholder1;
+    place->makeEmpty();
   } else {
     // Apply the preset (weakest precondition operator)
     placeholder1.preset(*formula.getClockSet());
@@ -2876,7 +2869,7 @@ inline void prover::do_proof_place_assign(const SubstList& discrete_state,
   do_proof_place(discrete_state, lhs_assign, &placeB, *formula.getExpr());
   placeB.cf();
   if (placeB.emptiness()) {
-    *place = placeB;
+    place->makeEmpty();
   } else {
     // Double Check that the new placeholder follows from the first
     placeB.preset(cX, cY);
