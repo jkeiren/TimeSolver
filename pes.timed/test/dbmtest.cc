@@ -201,14 +201,14 @@ TEST(DBMTest, Copy)
 TEST(DBMTest, Emptiness)
 {
     EXPECT_TRUE(emptyDBM3().emptiness());
-    EXPECT_FALSE(testDBM1().emptiness());
-    EXPECT_FALSE(testDBM2().emptiness());
-    EXPECT_FALSE(testDBM3().emptiness());
-    EXPECT_FALSE(testDBM4().emptiness());
-    EXPECT_FALSE(testDBM5().emptiness());
-    EXPECT_FALSE(testDBM6().emptiness());
-    EXPECT_FALSE(testDBM7().emptiness());
-    EXPECT_FALSE(DBM(make_c2()).emptiness());
+    EXPECT_FALSE(testDBM1().cf().emptiness());
+    EXPECT_TRUE(testDBM2().cf().emptiness());
+    EXPECT_FALSE(testDBM3().cf().emptiness());
+    EXPECT_TRUE(testDBM4().cf().emptiness());
+    EXPECT_TRUE(testDBM5().cf().emptiness());
+    EXPECT_FALSE(testDBM6().cf().emptiness());
+    EXPECT_FALSE(testDBM7().cf().emptiness());
+    EXPECT_FALSE(DBM(make_c2()).cf().emptiness());
 }
 
 TEST(DBMTest, PreEmptyIsEmpty)
@@ -221,10 +221,8 @@ TEST(DBMTest, PreEmptyIsEmpty)
 
 TEST(DBMTest, CanonicalEmpty)
 {
-    DBM canonical(emptyDBM3());
-    canonical.cf();
-    EXPECT_TRUE(canonical.emptiness());
-    EXPECT_EQ(emptyDBM3(), canonical);
+    EXPECT_TRUE(emptyDBM3().cf().emptiness());
+    EXPECT_EQ(emptyDBM3(), emptyDBM3().cf());
 }
 
 TEST(DBMTest, CanonicalDBM1)
@@ -405,6 +403,7 @@ TEST(DBMTest, CanonicalBound3DBM2)
     DBM bound3(testDBM2());
     bound3.cf();
     bound3.bound(3);
+    bound3.cf();
 
     EXPECT_TRUE(bound3.emptiness());
     EXPECT_EQ(emptyDBM3(), bound3);
@@ -418,7 +417,6 @@ TEST(DBMTest, IntersectDBM7DBM6)
     right.cf();
 
     left.intersect(right);
-    EXPECT_FALSE(left.emptiness());
 
     DBM expected(make_c2());
     expected.addConstraint(0,0, zero_le);
@@ -433,6 +431,8 @@ TEST(DBMTest, IntersectDBM7DBM6)
 
     EXPECT_EQ(expected, left);
 
+    left.cf();
+    EXPECT_TRUE(left.emptiness());
 }
 
 TEST(DBMTest, IntersectDBM8DBM6)
@@ -443,7 +443,6 @@ TEST(DBMTest, IntersectDBM8DBM6)
     right.cf();
 
     left.intersect(right);
-    EXPECT_FALSE(left.emptiness());
 
     DBM expected(make_c2());
     expected.addConstraint(0,0, zero_le);
@@ -470,7 +469,6 @@ TEST(DBMTest, IntersectDBM8DBM6heap)
     right.cf();
 
     left->intersect(right);
-    EXPECT_FALSE(left->emptiness());
 
     DBM expected(make_c2());
     expected.addConstraint(0,0, zero_le);
@@ -499,7 +497,6 @@ TEST(DBMTest, IntersectDBM8DBM6reference)
     right.cf();
 
     left->intersect(right);
-    EXPECT_FALSE(left->emptiness());
 
     DBM expected(make_c2());
     expected.addConstraint(0,0, zero_le);
@@ -525,7 +522,6 @@ TEST(DBMTest, ccrepA)
     ccrepA.addConstraint(i,0, zero_le);
   }
 
-  EXPECT_FALSE(ccrepA.emptiness());
   ccrepA.cf();
   EXPECT_FALSE(ccrepA.emptiness());
 
@@ -557,7 +553,6 @@ TEST(DBMTest, tDBM5)
     test.addConstraint(0,2, bound_to_constraint(-3, weak));
     test.addConstraint(1,0, bound_to_constraint(2, weak));
     test.addConstraint(2,0, bound_to_constraint(2, weak));
-    EXPECT_FALSE(test.emptiness());
 
     test.cf();
     EXPECT_TRUE(test.emptiness());
@@ -578,13 +573,13 @@ TEST(DBMTest, Bound1)
     test.addConstraint(2,1, infinity);
     test.addConstraint(2,2, zero_le);
 
-    EXPECT_FALSE(test.emptiness());
     DBM canonical(test);
     canonical.cf();
     EXPECT_EQ(test, canonical);
     EXPECT_FALSE(canonical.emptiness());
 
     test.bound(2);
+    test.cf();
     EXPECT_FALSE(test.emptiness());
 
     DBM expected(make_c2());
@@ -615,13 +610,13 @@ TEST(DBMTest, Bound2)
     test.addConstraint(2,1, bound_to_constraint(2, weak));
     test.addConstraint(2,2, zero_le);
 
-    EXPECT_FALSE(test.emptiness());
     DBM canonical(test);
     canonical.cf();
     EXPECT_EQ(test, canonical);
     EXPECT_FALSE(canonical.emptiness());
 
     test.bound(4);
+    test.cf();
     EXPECT_FALSE(test.emptiness());
 
     DBM expected(make_c2());
@@ -652,8 +647,6 @@ TEST(DBMTest, Bound3)
     test.addConstraint(2,1, bound_to_constraint(2, weak));
     test.addConstraint(2,2, zero_le);
 
-    EXPECT_FALSE(test.emptiness());
-
     // DBM in canonical form, test canonisation works for this instance.
     DBM canonical(make_c2());
     canonical.addConstraint(0,0, zero_le);
@@ -668,7 +661,7 @@ TEST(DBMTest, Bound3)
 
     test.cf();
     EXPECT_EQ(canonical, test);
-    EXPECT_FALSE(canonical.emptiness());
+    EXPECT_FALSE(test.emptiness());
 
     // Finally test bounding.
     DBM expected(make_c2());
@@ -683,6 +676,7 @@ TEST(DBMTest, Bound3)
     expected.addConstraint(2,2, zero_le);
 
     test.bound(4);
+    test.cf();
     EXPECT_FALSE(test.emptiness());
     EXPECT_EQ(expected, test);
 }
@@ -701,8 +695,6 @@ TEST(DBMTest, Bound4)
     test.addConstraint(2,1, bound_to_constraint(2, weak));
     test.addConstraint(2,2, zero_le);
 
-    EXPECT_FALSE(test.emptiness());
-
     // DBM in canonical form, test canonisation works for this instance.
     DBM canonical(make_c2());
     canonical.addConstraint(0,0, zero_le);
@@ -717,7 +709,7 @@ TEST(DBMTest, Bound4)
 
     test.cf();
     EXPECT_EQ(canonical, test);
-    EXPECT_FALSE(canonical.emptiness());
+    EXPECT_FALSE(test.emptiness());
 
     // Finally test bounding.
     DBM expected(make_c2());
@@ -732,6 +724,7 @@ TEST(DBMTest, Bound4)
     expected.addConstraint(2,2, zero_le);
 
     test.bound(4);
+    test.cf();
     EXPECT_FALSE(test.emptiness());
     EXPECT_EQ(expected, test);
 }
@@ -750,8 +743,6 @@ TEST(DBMTest, Bound5)
     test.addConstraint(2,1, bound_to_constraint(2, weak));
     test.addConstraint(2,2, zero_le);
 
-    EXPECT_FALSE(test.emptiness());
-
     // DBM in canonical form, test canonisation works for this instance.
     DBM canonical(make_c2());
     canonical.addConstraint(0,0, zero_le);
@@ -766,7 +757,7 @@ TEST(DBMTest, Bound5)
 
     test.cf();
     EXPECT_EQ(canonical, test);
-    EXPECT_FALSE(canonical.emptiness());
+    EXPECT_FALSE(test.emptiness());
 
     // Finally test bounding.
     DBM expected(make_c2());
@@ -781,8 +772,9 @@ TEST(DBMTest, Bound5)
     expected.addConstraint(2,2, zero_le);
 
     test.bound(4);
-    EXPECT_FALSE(test.emptiness());
     EXPECT_EQ(expected, test);
+    test.cf();
+    EXPECT_FALSE(test.emptiness());
 }
 
 TEST(DBMTest, Bound6)
@@ -799,8 +791,6 @@ TEST(DBMTest, Bound6)
     test.addConstraint(2,1, infinity);
     test.addConstraint(2,2, zero_le);
 
-    EXPECT_FALSE(test.emptiness());
-
     // DBM in canonical form, test canonisation works for this instance.
     DBM canonical(make_c2());
     canonical.addConstraint(0,0, zero_le);
@@ -815,7 +805,7 @@ TEST(DBMTest, Bound6)
 
     test.cf();
     EXPECT_EQ(canonical, test);
-    EXPECT_FALSE(canonical.emptiness());
+    EXPECT_FALSE(test.emptiness());
 
     // Finally test bounding.
     DBM expected(make_c2());
@@ -830,10 +820,8 @@ TEST(DBMTest, Bound6)
     expected.addConstraint(2,2, zero_le);
 
     test.bound(1);
-    EXPECT_FALSE(test.emptiness());
-    EXPECT_EQ(expected, test);
-
     test.cf();
+    EXPECT_FALSE(test.emptiness());
     EXPECT_EQ(expected, test);
 }
 
@@ -850,12 +838,11 @@ TEST(DBMTest, Empty1)
     test.addConstraint(2,1, bound_to_constraint(2, weak));
     test.addConstraint(2,2, zero_le);
 
-    EXPECT_FALSE(test.emptiness());
-
     // DBM is already in cf
     DBM canonical(test);
     canonical.cf();
     EXPECT_EQ(test, canonical);
+    EXPECT_FALSE(canonical.emptiness());
 
     // Normalize
     DBM expected(make_c2());
@@ -870,6 +857,7 @@ TEST(DBMTest, Empty1)
     expected.addConstraint(2,2, zero_le);
 
     test.bound(4);
+    test.cf();
     EXPECT_EQ(expected, test);
     EXPECT_FALSE(test.emptiness());
 
@@ -881,43 +869,39 @@ TEST(DBMTest, Empty1)
 TEST(DBMTest, Empty2)
 {
     DBM test(testDBM8());
-    EXPECT_FALSE(test.emptiness());
 
     // DBM is already in cf
     DBM canonical(test);
     canonical.cf();
     EXPECT_EQ(test, canonical);
-    EXPECT_FALSE(test.emptiness());
+    EXPECT_FALSE(canonical.emptiness());
 }
 
 TEST(DBMTest, Empty3)
 {
     DBM test(testDBM9());
-    EXPECT_FALSE(test.emptiness());
 
     // DBM is already in cf
     DBM canonical(test);
     canonical.cf();
     EXPECT_EQ(test, canonical);
-    EXPECT_FALSE(test.emptiness());
+    EXPECT_FALSE(canonical.emptiness());
 }
 
 TEST(DBMTest, Empty4)
 {
     DBM test(testDBM10());
-    EXPECT_FALSE(test.emptiness());
 
     // DBM is already in cf
     DBM canonical(test);
     canonical.cf();
     EXPECT_EQ(test, canonical);
-    EXPECT_FALSE(test.emptiness());
+    EXPECT_FALSE(canonical.emptiness());
 }
 
 TEST(DBMTest, Empty5)
 {
     DBM test(testDBM11());
-    EXPECT_FALSE(test.emptiness());
 
     DBM canonical(make_c3());
     canonical.addConstraint(0,0, zero_le);

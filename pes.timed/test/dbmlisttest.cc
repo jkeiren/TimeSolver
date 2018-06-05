@@ -272,6 +272,7 @@ TEST(DBMListTest, Subset)
     list3.cf();
     list4.cf();
     DBM infty(make_c2());
+    infty.cf();
 
     EXPECT_TRUE(list3 <= infty);
     EXPECT_TRUE(list4 <= infty);
@@ -287,6 +288,7 @@ TEST(DBMListTest, Superset)
     list3.cf();
     list4.cf();
     DBM infty(make_c2());
+    infty.cf();
 
     EXPECT_TRUE(list3 >= infty);
     EXPECT_FALSE(list4 >= infty);
@@ -331,6 +333,7 @@ TEST(DBMListTest, DBMList7Test)
     EXPECT_TRUE(strictly_equal(list7orig, *list7copy));
 
     DBM infty(make_c2());
+    infty.cf();
     EXPECT_TRUE(list7 == infty);
     EXPECT_TRUE(strictly_equal(list7, list7orig));
     EXPECT_TRUE(list7 >= infty);
