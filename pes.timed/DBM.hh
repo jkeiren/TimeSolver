@@ -737,7 +737,7 @@ public:
    * @return None
    * @note This implementation is the Floyd-Warshall Algorithm
    * for all pairs shortest paths.*/
-  void cf() {
+  DBM& cf() {
     if(!m_is_cf) {
       /* Don't you need to initialize all D(i,i) to (0, \leq) (?)
        * Answer:  For this method, yes.  However, if matrices
@@ -749,7 +749,7 @@ public:
         /* Deal with overflow in cf() rather than emptiness() */
         if (k == 2 && this->emptiness()) {
           makeEmpty();
-          return;
+          return *this;
         }
         for (size_type i = 0; i < clocks_size(); ++i) {
           for (size_type j = 0; j < clocks_size(); ++j) {
@@ -763,6 +763,7 @@ public:
 
       m_is_cf = true; // the DBM is now in Canonical Form
     }
+    return *this;
   }
 
   /** This method changes this DBM to the empty DBM. This is used for
