@@ -750,7 +750,7 @@ public:
 
       for (size_type k = 0; k < clocks_size(); ++k) {
         /* Deal with overflow in cf() rather than emptiness() */
-        if (k == 2 && this->emptiness()) {
+        if (k == 2 && emptiness(false)) {
           makeEmpty();
           return *this;
         }
@@ -783,7 +783,8 @@ public:
    * or the empty clock zone. This method assumes the DBM
    * is in canonical form.
    * @return true: this clock zone is empty, false: otherwise. */
-  bool emptiness() const {
+  bool emptiness(bool assertcf = true) const {
+    assert(!assertcf || m_is_cf); // for cf()
     /* O(n) version. This assumes that the DBM is in canonical form.
      * an O(n^2) version was previously used to handle overflow possibilities
      * from a model with different semantics. */

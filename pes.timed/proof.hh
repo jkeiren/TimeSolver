@@ -2837,6 +2837,7 @@ inline void prover::do_proof_place_reset(const SubstList& discrete_state,
     place->cf();
 
     if (cpplogEnabled(cpplogging::debug)) {
+      placeholder1.cf();
       print_sequent_placeCheck(std::cerr, step - 1, !place->emptiness(), zone, *place, placeholder1,
                                discrete_state, formula.getOpType());
       if (!place->emptiness()) {
