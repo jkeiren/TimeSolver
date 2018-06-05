@@ -382,7 +382,7 @@ public:
    * 1: X <= Y,  2: X >= Y,  3: X == Y.
    * @note This method assumes that the calling DBM and Y have the same
    * number of clocks. */
-  int relation(const DBM &Y) {
+  int relation(const DBM &Y) const {
     assert(clocks_size() == Y.clocks_size());
     /* Should we check for same number of clocks (?)
      * Currently, the code does not. */
@@ -504,6 +504,7 @@ public:
    * @param x The clock that was just reset (after the predecessor zone).
    * @return The reference to the modified DBM. */
   DBM &preset(const size_type x) {
+    assert(m_is_cf);
     /* Do out of bounds checking now instead of in methods */
     if (x >= clocks_size()) {
       std::cerr << "clocks_size() : " << clocks_size() << " x : " << x << std::endl;
@@ -553,6 +554,7 @@ public:
    * @param prs (*) The set of clocks just reset (after the predecessor zone).
    * @return The reference to the modified DBM. */
   DBM &preset(const clock_set& prs) {
+    assert(m_is_cf);
     /* Handle clock difference constraints first. This
      * allows us to use the single-clock constraints
      * already in the DBM */
@@ -620,6 +622,7 @@ public:
    * @param y The second clock; the clock whose value x was just assigned to.
    * @return The reference to the modified DBM. */
   DBM &preset(const size_type x, const size_type y) {
+    assert(m_is_cf);
     /* Do out of bounds checking now instead of in methods */
     if (x >= clocks_size() || y >= clocks_size()) {
       std::cerr << "clocks_size() : " << clocks_size() << " x : " << x << " y : " << y
