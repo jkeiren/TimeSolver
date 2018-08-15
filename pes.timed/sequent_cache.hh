@@ -41,7 +41,7 @@ public:
   /** XList_true is an array of stacks of sequents that
    * keeps track of all previously proven true sequents. */
   sequentStack Xlist_true;
-  /** XList_false is an array stacks of sequents that
+  /** XList_false is an array of stacks of sequents that
    * keeps track of all previously proven false sequents. */
   sequentStack Xlist_false;
   /** XList_pGFP_ph (XList) is an array of stacks, where each stack
@@ -90,8 +90,8 @@ public:
 
   /** Purge backpointers from all caches. Purging occurrs
    * until no sequent was purged (not purging a sequent indicates that
-   * no further sequents needs to be purged). For performance For
-   * performance efficiency, this method passes pointers to vectors.
+   * no further sequents need to be purged). For performance
+   * efficiency, this method passes pointers to vectors.
    * Furthermore, for performance reasons, backpointers do not examine
    * clock states and conservatively purge. This method handles
    * both placeholder and non-placeholder sequents. Feed in an empty
