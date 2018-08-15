@@ -25,9 +25,6 @@ protected:
 
   const prover_options& options;
 
-  bool currParityGfp;
-  bool prevParityGfp;
-
   /** The current step in the proof; initially 0 */
   size_t step;
 
@@ -59,8 +56,6 @@ public:
   prover(const pes& input_pes, const prover_options& options)
       : input_pes(input_pes),
         options(options),
-        currParityGfp(false),
-        prevParityGfp(false),
         step(0),
         numLocations(1),
         INFTYDBM(input_pes.clocks()),
@@ -87,13 +82,6 @@ public:
   bool do_proof_init(pes& p, DBMList* placeholder = nullptr)
   {
     const ExprNode* start_pred = p.lookup_predicate(p.start_predicate());
-
-    /* A Placeholder to remember the current parity;
-     * false = lfp parity, true = gfp parity. */
-    currParityGfp = start_pred->get_Parity();
-    /* A Placeholder to remember the previous parity;
-     * false = lfp parity, true = gfp parity. */
-    prevParityGfp = currParityGfp;
 
     if (placeholder == nullptr)
     {
@@ -669,13 +657,12 @@ inline bool prover::do_proof_predicate(const SubstList& discrete_state,
                                        const ExprNode& formula) {
   bool retVal = false;
 
-  ExprNode* e = input_pes.lookup_equation(formula.getPredicate());
+  const ExprNode* e = input_pes.lookup_equation(formula.getPredicate());
 
   // Get Predicate Index for Hashing
   const int predicate_index =
       input_pes.lookup_predicate(formula.getPredicate())->getIntVal() - 1;
-  prevParityGfp = currParityGfp;
-  currParityGfp = formula.get_Parity();
+  const bool currParityGfp = formula.get_Parity();
 
   /* Look in Known True and Known False Sequent Caches */
   if (options.useCaching) {
@@ -1631,10 +1618,9 @@ inline void prover::do_proof_place_predicate(const SubstList& discrete_state,
   ExprNode* e = input_pes.lookup_equation(formula.getPredicate());
 
   // Get Predicate Index for Hashing
-  int predicate_index =
+  const int predicate_index =
       input_pes.lookup_predicate(formula.getPredicate())->getIntVal() - 1;
-  prevParityGfp = currParityGfp;
-  currParityGfp = formula.get_Parity();
+  const bool currParityGfp = formula.get_Parity();
 
   /* First look in known true and false sequent tables */
   if (options.useCaching) {
