@@ -23,12 +23,12 @@ protected:
    * arrays (Sequents). */
   typedef std::vector<SequentType*> stack_t;
   typedef std::vector<DBMsetElementType> DBMsetType;
-  stack_t* Xlist;
+  stack_t* Xlist; // Array of vectors (stacks)
 
-  std::size_t atomic_size; // number of atomics in PES.
-  int nbits;
-  int size;
-  int seqStSize;
+  const std::size_t atomic_size; // number of atomics in PES.
+  const int nbits;
+  const int size; // size of stack_t;
+  const int seqStSize;
   const int predicates_size; // number of predicates in PES.
 
   /** Provide the hash function to hash atomic (discrete location) variables
@@ -110,11 +110,7 @@ public:
   ~sequentStackT() {
     for (int i = 0; i < size; i++) {
       // Now Iterate and delete for each vector
-      for (typename stack_t::iterator it = Xlist[i].begin();
-           it != Xlist[i].end(); it++) {
-        SequentType* ls = (*it);
-        delete ls;
-      }
+      delete_vector_elements(Xlist[i]);
     }
     delete[] Xlist;
   }
