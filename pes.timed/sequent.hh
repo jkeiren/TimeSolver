@@ -79,7 +79,6 @@ public:
     // Do not delete parent placeholder sequent
     // Clearing vectors is enough
     _parent_sequents.clear();
-    _parent_sequents_placeholder.clear();
   }
 
   /** Returns the ExprNode element (rhs or consequent) of the Sequent.
@@ -93,16 +92,8 @@ public:
   /** Add a parent sequent */
   void addParent(Sequent *s) { _parent_sequents.push_back(s); }
 
-  /** Add a parent sequent (with placeholder) */
-  void addParent(SequentPlace *s) { _parent_sequents_placeholder.push_back(s); }
-
   /** Get parent sequents */
   const std::vector<Sequent *> &parents() const { return _parent_sequents; }
-
-  /** Get parent sequents (with placeholders) */
-  const std::vector<SequentPlace *> &parents_with_placeholders() const {
-    return _parent_sequents_placeholder;
-  }
 
   const DBMset &dbm_set() const { return ds; }
 
@@ -234,11 +225,6 @@ protected:
    * in the proof tree. */
   DBMset ds;
 
-  /** The placeholder sequent parent to this sequent in the proof tree;
-   * this is used  to quickly access backpointers. A sequent either has a parent
-   * with a placeholder (parSequentPlace) or a parent without a
-   * placeholder (parSequent). */
-  std::vector<SequentPlace *> _parent_sequents_placeholder;
   /** The sequent parent to this sequent in the proof tree; this is used
    * to quickly access backpointers. A sequent either has a parent
    * with a placeholder (parSequentPlace) or a parent without a

@@ -104,19 +104,43 @@ public:
    * placeholder sequents to purge.
    * @return true: something was purged; false: otherwise (nothing was
    * purged).*/
-  bool look_for_and_purge_rhs_backStack(
-      const std::vector<Sequent*>& initialPtr,
-      const std::vector<SequentPlace*>& initialPlacePtr) {
+
+  bool look_for_and_purge_rhs_backStack(std::deque<Sequent*>& purgeSeqQueue) {
     bool madeChange = false;
 
-    /* Store a vector of stateBackList, where each sequent only has one DBM */
+    /* Now purge the original Sequents */
+    while (!(purgeSeqQueue.empty())) {
+      Sequent* t = purgeSeqQueue.front();
 
-    /* Now iterate until the vector sequentQueue is empty,
-     * purging backpointers and adding relevant ones in the queue */
-    /* For now, implement purging with deques instead of vectors */
-    std::deque<Sequent*> purgeSeqQueue(initialPtr.begin(), initialPtr.end());
-    std::deque<SequentPlace*> purgeSeqPlaceQueue(initialPlacePtr.begin(),
-                                                 initialPlacePtr.end());
+      int pInd =
+          input_pes.lookup_predicate(t->rhs()->getPredicate())->getIntVal() - 1;
+      /* Note: Purging parent sequents still ignores clock states */
+
+      /* Now purge the sequent and the DBM from all lists.
+       * Circularity caches are correctly maintained; therefore,
+       * they are not purged. */
+      bool b1 = Xlist_false.look_for_and_purge_rhs_sequent_state(t, pInd);
+      /* If found, Purge Sequent from its cache */
+      bool b1b = Xlist_true.look_for_and_purge_rhs_sequent_state(t, pInd);
+
+      /* Now find its backpointers to add to the queue
+       * Only add backpointers to queue if something is purged. */
+      if (b1 || b1b) {
+        madeChange = true;
+        // Now add sequents
+        purgeSeqQueue.insert(purgeSeqQueue.end(), t->parents().begin(),
+                             t->parents().end());
+      }
+
+      purgeSeqQueue.pop_front();
+    }
+
+    return madeChange;
+  }
+
+  bool look_for_and_purge_rhs_backStackPlace(std::deque<Sequent*>& purgeSeqQueue,
+                                        std::deque<SequentPlace*>& purgeSeqPlaceQueue) {
+    bool madeChange = false;
 
     while (!(purgeSeqPlaceQueue.empty())) {
       SequentPlace* tp = purgeSeqPlaceQueue.front();
@@ -149,37 +173,30 @@ public:
       purgeSeqPlaceQueue.pop_front();
     }
 
-    /* Now purge the original Sequents */
-    while (!(purgeSeqQueue.empty())) {
-      Sequent* t = purgeSeqQueue.front();
+    return madeChange;
+  }
 
-      int pInd =
-          input_pes.lookup_predicate(t->rhs()->getPredicate())->getIntVal() - 1;
-      /* Note: Purging parent sequents still ignores clock states */
+  bool look_for_and_purge_rhs_backStack(const std::vector<Sequent*>& initialPtr) {
+    std::deque<Sequent*> purgeSeqQueue(initialPtr.begin(), initialPtr.end());
+    return look_for_and_purge_rhs_backStack(purgeSeqQueue);
+  }
 
-      /* Now purge the sequent and the DBM from all lists.
-       * Circularity caches are correctly maintained; therefore,
-       * they are not purged. */
-      bool b1 = Xlist_false.look_for_and_purge_rhs_sequent_state(t, pInd);
-      /* If found, Purge Sequent from its cache */
-      bool b1b = Xlist_true.look_for_and_purge_rhs_sequent_state(t, pInd);
+  bool look_for_and_purge_rhs_backStack(
+      const std::vector<Sequent*>& initialPtr,
+      const std::vector<SequentPlace*>& initialPlacePtr) {
 
-      /* Now find its backpointers to add to the queue
-       * Only add backpointers to queue if something is purged. */
-      if (b1 || b1b) {
-        madeChange = true;
-        // Now add sequents
-        purgeSeqQueue.insert(purgeSeqQueue.end(), t->parents().begin(),
-                             t->parents().end());
-        purgeSeqPlaceQueue.insert(purgeSeqPlaceQueue.end(),
-                                  t->parents_with_placeholders().begin(),
-                                  t->parents_with_placeholders().end());
-      }
+    /* Store a vector of stateBackList, where each sequent only has one DBM */
 
-      purgeSeqQueue.pop_front();
-    }
-    // For now, do not remove backpointers from backList
-    // This may be too conservative.
+    /* Now iterate until the vector sequentQueue is empty,
+     * purging backpointers and adding relevant ones in the queue */
+    /* For now, implement purging with deques instead of vectors */
+    std::deque<Sequent*> purgeSeqQueue(initialPtr.begin(), initialPtr.end());
+    std::deque<SequentPlace*> purgeSeqPlaceQueue(initialPlacePtr.begin(),
+                                                 initialPlacePtr.end());
+
+    bool madeChange = look_for_and_purge_rhs_backStackPlace(purgeSeqQueue, purgeSeqPlaceQueue);
+    // Order is important.
+    madeChange = look_for_and_purge_rhs_backStack(purgeSeqQueue) || madeChange;
 
     return madeChange;
   }

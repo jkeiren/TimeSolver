@@ -787,8 +787,7 @@ inline bool prover::do_proof_predicate(const SubstList& discrete_state,
       /* Now purge backpointers */
       if (cached_false_sequent != nullptr) {
         cache.look_for_and_purge_rhs_backStack(
-            cached_false_sequent->parents(),
-            cached_false_sequent->parents_with_placeholders());
+            cached_false_sequent->parents());
       }
 
       // Now update in proper Cache
@@ -815,8 +814,7 @@ inline bool prover::do_proof_predicate(const SubstList& discrete_state,
        * Ignore circularity booleans because they do not form backpointers */
       if (cached_true_sequent != nullptr) {
         cache.look_for_and_purge_rhs_backStack(
-            cached_true_sequent->parents(),
-            cached_true_sequent->parents_with_placeholders());
+            cached_true_sequent->parents());
       }
 
       // Now update in proper Cache
