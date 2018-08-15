@@ -638,7 +638,7 @@ public:
    * expression: true = gfp, false = lfp.
    * @note This does the same thing as getBool(). It is used differently.
    * @see The Constructor(s) comments for more information. */
-  bool get_Parity() const { return b; }
+  bool is_gfp() const { return b; }
 
   /** Returns the integer representing the block number of the expression.
    * This function is used for PREDICATE expressions.

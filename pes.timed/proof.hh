@@ -662,7 +662,6 @@ inline bool prover::do_proof_predicate(const SubstList& discrete_state,
   // Get Predicate Index for Hashing
   const int predicate_index =
       input_pes.lookup_predicate(formula.getPredicate())->getIntVal() - 1;
-  const bool currParityGfp = formula.get_Parity();
 
   /* Look in Known True and Known False Sequent Caches */
   if (options.useCaching) {
@@ -703,7 +702,7 @@ inline bool prover::do_proof_predicate(const SubstList& discrete_state,
   Sequent* h = nullptr;
   { // Restricted scope for detecting circularities
     Sequent* t = new Sequent(&formula, &discrete_state);
-    if (currParityGfp) { // Thus a Greatest Fixpoint
+    if (formula.is_gfp()) { // Thus a Greatest Fixpoint
       bool newSequent;
       h = cache.Xlist_pGFP.locate_sequent(t, predicate_index, newSequent);
       if ((!newSequent) && h->tabled_sequent(zone)) {
@@ -757,7 +756,7 @@ inline bool prover::do_proof_predicate(const SubstList& discrete_state,
 
   /* Assign parent value after caching since during caching we may have
    * to use the previous parent */
-  Sequent* tempParentState = parentRef;
+  Sequent* prevParentRef = parentRef;
   /* Get the current variable: do a shallow, not deep copy */
   parentRef = h;
 
@@ -765,7 +764,7 @@ inline bool prover::do_proof_predicate(const SubstList& discrete_state,
 
     /* Now update the parent so it points to the previous parent, and not this
    * predicate */
-  parentRef = tempParentState;
+  parentRef = prevParentRef;
 
   /* Key Concept of Purging:
    * If Was True, discovered false, check that
@@ -1620,7 +1619,6 @@ inline void prover::do_proof_place_predicate(const SubstList& discrete_state,
   // Get Predicate Index for Hashing
   const int predicate_index =
       input_pes.lookup_predicate(formula.getPredicate())->getIntVal() - 1;
-  const bool currParityGfp = formula.get_Parity();
 
   /* First look in known true and false sequent tables */
   if (options.useCaching) {
@@ -1691,7 +1689,7 @@ inline void prover::do_proof_place_predicate(const SubstList& discrete_state,
   SequentPlace* h = nullptr;
   { // Restricted scope for detecting circularities
     SequentPlace* t = new SequentPlace(&formula, &discrete_state);
-    if (currParityGfp) { // Thus a Greatest Fixpoint
+    if (formula.is_gfp()) { // Thus a Greatest Fixpoint
       /* Already looked in known false so no need to do so */
       bool newSequent;
       h = cache.Xlist_pGFP_ph.locate_sequent(t, predicate_index, newSequent);
