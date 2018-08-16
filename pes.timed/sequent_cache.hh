@@ -183,7 +183,7 @@ public:
    * @return true: something was purged; false: otherwise (nothing was
    * purged).*/
 
-  bool look_for_and_purge_rhs_backStack(std::deque<Sequent*>& purgeSeqQueue) {
+  void look_for_and_purge_rhs_backStack(std::deque<Sequent*>& purgeSeqQueue) {
     /* Now purge the original Sequents */
     while (!(purgeSeqQueue.empty())) {
       Sequent* t = purgeSeqQueue.front();
@@ -201,11 +201,9 @@ public:
 
       purgeSeqQueue.pop_front();
     }
-
-    return false;
   }
 
-  bool look_for_and_purge_rhs_backStackPlace(std::deque<Sequent*>& purgeSeqQueue,
+  void look_for_and_purge_rhs_backStackPlace(std::deque<Sequent*>& purgeSeqQueue,
                                         std::deque<SequentPlace*>& purgeSeqPlaceQueue) {
     while (!(purgeSeqPlaceQueue.empty())) {
       SequentPlace* tp = purgeSeqPlaceQueue.front();
@@ -225,16 +223,14 @@ public:
 
       purgeSeqPlaceQueue.pop_front();
     }
-
-    return false;
   }
 
-  bool look_for_and_purge_rhs_backStack(const std::vector<Sequent*>& initialPtr) {
+  void look_for_and_purge_rhs_backStack(const std::vector<Sequent*>& initialPtr) {
     std::deque<Sequent*> purgeSeqQueue(initialPtr.begin(), initialPtr.end());
-    return look_for_and_purge_rhs_backStack(purgeSeqQueue);
+    look_for_and_purge_rhs_backStack(purgeSeqQueue);
   }
 
-  bool look_for_and_purge_rhs_backStack(
+  void look_for_and_purge_rhs_backStack(
       const std::vector<Sequent*>& initialPtr,
       const std::vector<SequentPlace*>& initialPlacePtr) {
 
@@ -249,8 +245,6 @@ public:
 
     look_for_and_purge_rhs_backStackPlace(purgeSeqQueue, purgeSeqPlaceQueue);
     look_for_and_purge_rhs_backStack(purgeSeqQueue);
-
-    return false;
   }
 
   void printTabledSequents(std::ostream& os) const {
