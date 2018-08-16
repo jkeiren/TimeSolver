@@ -197,18 +197,9 @@ public:
       /* Now purge the sequent and the DBM from all lists.
        * Circularity caches are correctly maintained; therefore,
        * they are not purged. */
-      bool b1 = Xlist_false.look_for_and_purge_rhs_sequent_state(t, pInd);
+      Xlist_false.look_for_and_purge_rhs_sequent_state(t, pInd);
       /* If found, Purge Sequent from its cache */
-      bool b1b = Xlist_true.look_for_and_purge_rhs_sequent_state(t, pInd);
-
-      /* Now find its backpointers to add to the queue
-       * Only add backpointers to queue if something is purged. */
-      if (b1 || b1b) {
-        madeChange = true;
-        // Now add sequents
-        purgeSeqQueue.insert(purgeSeqQueue.end(), t->parents().begin(),
-                             t->parents().end());
-      }
+      Xlist_true.look_for_and_purge_rhs_sequent_state(t, pInd);
 
       purgeSeqQueue.pop_front();
     }
@@ -233,20 +224,8 @@ public:
        * they are not purged. */
 
       /* If found, Purge Sequent from its cache */
-      bool b2 = Xlist_false_ph.look_for_and_purge_rhs_sequent_state(tp, pInd);
-      bool b2b = Xlist_true_ph.look_for_and_purge_rhs_sequent_state(tp, pInd);
-
-      /* Now find its backpointers to add to the queue
-       * Only add backpointers to queue if something is purged. */
-      if (b2 || b2b) {
-        madeChange = true;
-        // Now add sequents
-        purgeSeqQueue.insert(purgeSeqQueue.end(), tp->parents().begin(),
-                             tp->parents().end());
-        purgeSeqPlaceQueue.insert(purgeSeqPlaceQueue.end(),
-                                  tp->parents_with_placeholders().begin(),
-                                  tp->parents_with_placeholders().end());
-      }
+      Xlist_false_ph.look_for_and_purge_rhs_sequent_state(tp, pInd);
+      Xlist_true_ph.look_for_and_purge_rhs_sequent_state(tp, pInd);
 
       purgeSeqPlaceQueue.pop_front();
     }
