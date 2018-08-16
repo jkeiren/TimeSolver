@@ -68,6 +68,28 @@ public:
     return false;
   }
 
+  void cache_true_sequent(const SubstList& discrete_state,
+                          const DBM& zone,
+                          const ExprNode& formula)
+  {
+    Sequent* true_sequent = new Sequent(&formula, &discrete_state);
+    bool newSequent; // unused
+    Sequent* cached_true_sequent =
+        Xlist_true.locate_sequent(true_sequent, predicate_index(formula), newSequent);
+    cached_true_sequent->update_sequent(zone);
+  }
+
+  void cache_false_sequent(const SubstList& discrete_state,
+                          const DBM& zone,
+                          const ExprNode& formula)
+  {
+    Sequent* false_sequent = new Sequent(&formula, &discrete_state);
+    bool newSequent; // unused
+    Sequent* cached_false_sequent =
+        Xlist_false.locate_sequent(false_sequent, predicate_index(formula), newSequent);
+    cached_false_sequent->update_false_sequent(zone);
+  }
+
   /** XList_pGFP (XList) is an array of stacks, where each stack
    * is an array of sequents that
    * keeps track of all possible GFP Sequents

@@ -202,7 +202,7 @@ public:
                                               const int predicate_index,
                                               const bool tableCheck,
                                               bool* const madeEmpty) {
-    int index = get_index(sequent->discrete_state(), predicate_index);
+    const int index = get_index(sequent->discrete_state(), predicate_index);
     *madeEmpty = false;
     /* This assumes that location only locates one sequent in the stack */
     SequentType* foundSequent = nullptr;

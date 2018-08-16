@@ -697,10 +697,7 @@ inline bool prover::do_proof_predicate(const SubstList& discrete_state,
 
         // Add sequent to known true cache
         if (options.useCaching) {
-          Sequent* true_sequent = new Sequent(&formula, &discrete_state);
-          Sequent* cached_true_sequent =
-              cache.Xlist_true.locate_sequent(true_sequent, predicate_index, newSequent);
-          cached_true_sequent->update_sequent(zone);
+          cache.cache_true_sequent(discrete_state, zone, formula);
         }
         return true; // greatest fixed point circularity found
       }
@@ -718,10 +715,7 @@ inline bool prover::do_proof_predicate(const SubstList& discrete_state,
 
         // Now Put Sequent in False Cache
         if (options.useCaching) {
-          Sequent* false_sequent = new Sequent(&formula, &discrete_state);
-          Sequent* cached_false_sequent =
-              cache.Xlist_false.locate_sequent(false_sequent, predicate_index, newSequent);
-          cached_false_sequent->update_false_sequent(zone);
+          cache.cache_false_sequent(discrete_state, zone, formula);
         }
         return false; // least fixed point circularity found
       }
