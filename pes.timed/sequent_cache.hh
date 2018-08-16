@@ -184,8 +184,6 @@ public:
    * purged).*/
 
   bool look_for_and_purge_rhs_backStack(std::deque<Sequent*>& purgeSeqQueue) {
-    bool madeChange = false;
-
     /* Now purge the original Sequents */
     while (!(purgeSeqQueue.empty())) {
       Sequent* t = purgeSeqQueue.front();
@@ -204,13 +202,11 @@ public:
       purgeSeqQueue.pop_front();
     }
 
-    return madeChange;
+    return false;
   }
 
   bool look_for_and_purge_rhs_backStackPlace(std::deque<Sequent*>& purgeSeqQueue,
                                         std::deque<SequentPlace*>& purgeSeqPlaceQueue) {
-    bool madeChange = false;
-
     while (!(purgeSeqPlaceQueue.empty())) {
       SequentPlace* tp = purgeSeqPlaceQueue.front();
 
@@ -230,7 +226,7 @@ public:
       purgeSeqPlaceQueue.pop_front();
     }
 
-    return madeChange;
+    return false;
   }
 
   bool look_for_and_purge_rhs_backStack(const std::vector<Sequent*>& initialPtr) {
@@ -251,11 +247,10 @@ public:
     std::deque<SequentPlace*> purgeSeqPlaceQueue(initialPlacePtr.begin(),
                                                  initialPlacePtr.end());
 
-    bool madeChange = look_for_and_purge_rhs_backStackPlace(purgeSeqQueue, purgeSeqPlaceQueue);
-    // Order is important.
-    madeChange = look_for_and_purge_rhs_backStack(purgeSeqQueue) || madeChange;
+    look_for_and_purge_rhs_backStackPlace(purgeSeqQueue, purgeSeqPlaceQueue);
+    look_for_and_purge_rhs_backStack(purgeSeqQueue);
 
-    return madeChange;
+    return false;
   }
 
   void printTabledSequents(std::ostream& os) const {
