@@ -157,7 +157,6 @@ public:
    * sequent is then examined for the desired clock state (with
    * tabled_sequent()).
    * @param subs (*) The discrete state of the sequent.
-   * @param Xlist (*) The cache of sequents to look in.
    * @param pInd The index of the predicate; used to find the proper hashing
    * bin.
    * @return The reference to the sequent with the three components

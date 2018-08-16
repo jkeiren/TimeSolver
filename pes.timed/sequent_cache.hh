@@ -40,6 +40,11 @@ public:
     return predicate_index(*(sequent->rhs()));
   }
 
+  int predicate_index(const SequentPlace* sequent) const
+  {
+    return predicate_index(*(sequent->rhs()));
+  }
+
   // Determine whether the predicate is cached as a known false sequent
   bool is_known_false_sequent(const SubstList& discrete_state,
                               const DBM& zone,
@@ -188,8 +193,8 @@ public:
     while (!(purgeSeqQueue.empty())) {
       Sequent* t = purgeSeqQueue.front();
 
-      int pInd =
-          input_pes.lookup_predicate(t->rhs()->getPredicate())->getIntVal() - 1;
+      const int pInd = predicate_index(t);
+
       /* Note: Purging parent sequents still ignores clock states */
 
       /* Now purge the sequent and the DBM from all lists.
@@ -203,14 +208,12 @@ public:
     }
   }
 
-  void look_for_and_purge_rhs_backStackPlace(std::deque<Sequent*>& purgeSeqQueue,
-                                        std::deque<SequentPlace*>& purgeSeqPlaceQueue) {
+  void look_for_and_purge_rhs_backStackPlace(std::deque<SequentPlace*>& purgeSeqPlaceQueue) {
     while (!(purgeSeqPlaceQueue.empty())) {
       SequentPlace* tp = purgeSeqPlaceQueue.front();
 
-      int pInd =
-          input_pes.lookup_predicate(tp->rhs()->getPredicate())->getIntVal() -
-          1;
+      const int pInd = predicate_index(tp);
+
       /* Note: Purging parent sequents still ignores clock states. */
 
       /* Now purge the sequent and the DBM from all lists.
@@ -243,7 +246,7 @@ public:
     std::deque<SequentPlace*> purgeSeqPlaceQueue(initialPlacePtr.begin(),
                                                  initialPlacePtr.end());
 
-    look_for_and_purge_rhs_backStackPlace(purgeSeqQueue, purgeSeqPlaceQueue);
+    look_for_and_purge_rhs_backStackPlace(purgeSeqPlaceQueue);
     look_for_and_purge_rhs_backStack(purgeSeqQueue);
   }
 
