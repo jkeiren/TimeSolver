@@ -271,7 +271,7 @@ public:
    * false. Likewise, if tableCheck = false, then we are aiming to purge
    * sequents cached as false but discovered to be true.
    * @return true: one or more sequents were purged; false: otherwise.*/
-  bool look_for_and_purge_rhs_sequent_state(const SequentType* const sequent,
+  void look_for_and_purge_rhs_sequent_state(const SequentType* const sequent,
                                             const int predicate_index) {
     int index = get_index(sequent->discrete_state(), predicate_index);
     for (typename stack_t::iterator it = Xlist[index].begin();
@@ -301,8 +301,6 @@ public:
         it--;
       }
     }
-    // sequent not in list and thus no purging occurred.
-    return false;
   }
 
   /** Prints out all of the sequents in the list; the printing (for
