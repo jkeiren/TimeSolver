@@ -29,6 +29,45 @@ protected:
   int nHash;
 
 public:
+  /* Make this protected eventually */
+  int predicate_index(const ExprNode& formula) const
+  {
+    return input_pes.lookup_predicate(formula.getPredicate())->getIntVal() - 1;
+  }
+
+  // Determine whether the predicate is cached as a known false sequent
+  bool is_known_false_sequent(const SubstList& discrete_state,
+                              const DBM& zone,
+                              const ExprNode& formula,
+                              Sequent* parentRef)
+  {
+    Sequent* cached_sequent =
+        Xlist_false.look_for_sequent(&discrete_state, predicate_index(formula));
+    if (cached_sequent != nullptr &&
+        cached_sequent->tabled_false_sequent(zone)) {
+      /* Add backpointer to parent sequent (shallow copy) */
+      cached_sequent->addParent(parentRef);
+      return true;
+    }
+    return false;
+  }
+
+  // Determine whether the predicate is cached as a known true sequent
+  bool is_known_true_sequent(const SubstList& discrete_state,
+                              const DBM& zone,
+                              const ExprNode& formula,
+                              Sequent* parentRef)
+  { // Restricted scope for looking up true sequents
+    Sequent* cached_sequent =
+        Xlist_true.look_for_sequent(&discrete_state, predicate_index(formula));
+    if (cached_sequent != nullptr && cached_sequent->tabled_sequent(zone)) {
+      /* Add backpointer to parent sequent (shallow copy) */
+      cached_sequent->addParent(parentRef);
+      return true;
+    }
+    return false;
+  }
+
   /** XList_pGFP (XList) is an array of stacks, where each stack
    * is an array of sequents that
    * keeps track of all possible GFP Sequents

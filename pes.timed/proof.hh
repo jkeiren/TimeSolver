@@ -660,40 +660,20 @@ inline bool prover::do_proof_predicate(const SubstList& discrete_state,
   const ExprNode* e = input_pes.lookup_equation(formula.getPredicate());
 
   // Get Predicate Index for Hashing
-  const int predicate_index =
-      input_pes.lookup_predicate(formula.getPredicate())->getIntVal() - 1;
+  const int predicate_index = cache.predicate_index(formula);
 
   /* Look in Known True and Known False Sequent Caches */
   if (options.useCaching) {
-    /* First look in known False Sequent table */
-    { // Restricted scope for looking up false sequents
-      Sequent* cached_sequent =
-          cache.Xlist_false.look_for_sequent(&discrete_state, predicate_index);
-      if (cached_sequent != nullptr &&
-          cached_sequent->tabled_false_sequent(zone)) {
-        cpplog(cpplogging::debug)
-            << "---(Invalid) Located a Known False Sequent ----" << std::endl
-            << std::endl;
-
-        /* Add backpointer to parent sequent (shallow copy) */
-        cached_sequent->addParent(parentRef);
-        return false;
-      }
-    }
-
-    /* Now look in known True Sequent table */
-    { // Restricted scope for looking up true sequents
-      Sequent* cached_sequent =
-          cache.Xlist_true.look_for_sequent(&discrete_state, predicate_index);
-      if (cached_sequent != nullptr && cached_sequent->tabled_sequent(zone)) {
-        cpplog(cpplogging::debug)
-            << "---(Valid) Located a Known True Sequent ----" << std::endl
-            << std::endl;
-
-        /* Add backpointer to parent sequent (shallow copy) */
-        cached_sequent->addParent(parentRef);
-        return true;
-      }
+    if (cache.is_known_false_sequent(discrete_state, zone, formula, parentRef)) {
+      cpplog(cpplogging::debug)
+          << "---(Invalid) Located a Known False Sequent ----" << std::endl
+          << std::endl;
+      return false;
+    } else if (cache.is_known_true_sequent(discrete_state, zone, formula, parentRef)) {
+      cpplog(cpplogging::debug)
+          << "---(Valid) Located a Known True Sequent ----" << std::endl
+          << std::endl;
+      return true;
     }
   }
 
