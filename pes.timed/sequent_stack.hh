@@ -274,7 +274,6 @@ public:
   bool look_for_and_purge_rhs_sequent_state(const SequentType* const sequent,
                                             const int predicate_index) {
     int index = get_index(sequent->discrete_state(), predicate_index);
-    bool foundMatch = false;
     for (typename stack_t::iterator it = Xlist[index].begin();
          it != Xlist[index].end(); it++) {
       SequentType* ls = (*it);
@@ -303,7 +302,7 @@ public:
       }
     }
     // sequent not in list and thus no purging occurred.
-    return foundMatch;
+    return false;
   }
 
   /** Prints out all of the sequents in the list; the printing (for
