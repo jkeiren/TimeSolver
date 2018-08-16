@@ -35,6 +35,11 @@ public:
     return input_pes.lookup_predicate(formula.getPredicate())->getIntVal() - 1;
   }
 
+  int predicate_index(const Sequent* sequent) const
+  {
+    return predicate_index(*(sequent->rhs()));
+  }
+
   // Determine whether the predicate is cached as a known false sequent
   bool is_known_false_sequent(const SubstList& discrete_state,
                               const DBM& zone,
@@ -68,15 +73,30 @@ public:
     return false;
   }
 
+  void cache_true_sequent(Sequent* true_sequent,
+                          const DBM& zone)
+  {
+    bool newSequent; // unused
+    Sequent* cached_true_sequent =
+        Xlist_true.locate_sequent(true_sequent, predicate_index(true_sequent), newSequent);
+    cached_true_sequent->update_sequent(zone);
+  }
+
   void cache_true_sequent(const SubstList& discrete_state,
                           const DBM& zone,
                           const ExprNode& formula)
   {
     Sequent* true_sequent = new Sequent(&formula, &discrete_state);
+    cache_true_sequent(true_sequent, zone);
+  }
+
+  void cache_false_sequent(Sequent* false_sequent,
+                          const DBM& zone)
+  {
     bool newSequent; // unused
-    Sequent* cached_true_sequent =
-        Xlist_true.locate_sequent(true_sequent, predicate_index(formula), newSequent);
-    cached_true_sequent->update_sequent(zone);
+    Sequent* cached_false_sequent =
+        Xlist_false.locate_sequent(false_sequent, predicate_index(false_sequent), newSequent);
+    cached_false_sequent->update_false_sequent(zone);
   }
 
   void cache_false_sequent(const SubstList& discrete_state,
@@ -84,10 +104,7 @@ public:
                           const ExprNode& formula)
   {
     Sequent* false_sequent = new Sequent(&formula, &discrete_state);
-    bool newSequent; // unused
-    Sequent* cached_false_sequent =
-        Xlist_false.locate_sequent(false_sequent, predicate_index(formula), newSequent);
-    cached_false_sequent->update_false_sequent(zone);
+    cache_false_sequent(false_sequent, zone);
   }
 
   /** XList_pGFP (XList) is an array of stacks, where each stack

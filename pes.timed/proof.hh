@@ -657,8 +657,6 @@ inline bool prover::do_proof_predicate(const SubstList& discrete_state,
                                        const ExprNode& formula) {
   bool retVal = false;
 
-  const ExprNode* e = input_pes.lookup_equation(formula.getPredicate());
-
   // Get Predicate Index for Hashing
   const int predicate_index = cache.predicate_index(formula);
 
@@ -734,6 +732,7 @@ inline bool prover::do_proof_predicate(const SubstList& discrete_state,
   /* Get the current variable: do a shallow, not deep copy */
   parentRef = h;
 
+  const ExprNode* e = input_pes.lookup_equation(formula.getPredicate());
   retVal = do_proof(discrete_state, zone, *e);
 
     /* Now update the parent so it points to the previous parent, and not this
@@ -765,12 +764,7 @@ inline bool prover::do_proof_predicate(const SubstList& discrete_state,
       }
 
       // Now update in proper Cache
-      bool newSequent;
-      Sequent* cached_true_sequent =
-          cache.Xlist_true.locate_sequent(true_sequent, predicate_index, newSequent);
-      cached_true_sequent->update_sequent(zone);
-      // Since we update the cached_true_sequent with true_sequent, we shall
-      // not free true_sequent.
+      cache.cache_true_sequent(true_sequent, zone);
 
       if (madeEmpty) {
         delete cached_false_sequent;
@@ -790,16 +784,12 @@ inline bool prover::do_proof_predicate(const SubstList& discrete_state,
         cache.look_for_and_purge_rhs_backStack(
             cached_true_sequent->parents());
       }
-
-      // Now update in proper Cache
-      bool newSequent;
-      Sequent* cached_false_sequent =
-          cache.Xlist_false.locate_sequent(false_sequent, predicate_index, newSequent);
-      cached_false_sequent->update_false_sequent(zone);
-
       if (madeEmpty) {
         delete cached_true_sequent;
       }
+
+      cache.cache_false_sequent(false_sequent, zone);
+
     }
   }
 
