@@ -138,14 +138,16 @@ public:
       /* Sequent not found; add it to the cache.
        * (This is why we must take in the entire Sequent s as a parameter
        * and not just its sublist component.) */
+      newSequent = true;
       const int index = get_index(sequent->discrete_state(), predicate_index);
       Xlist[index].push_back(sequent);
       result = Xlist[index].back();
+      assert(result == sequent);
     } else {
+      newSequent = ls->dbm_set().empty();
       delete sequent;
       result = ls;
     }
-    newSequent = (ls == nullptr || ls->dbm_set().empty());
     return result;
   }
 
