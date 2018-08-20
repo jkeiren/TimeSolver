@@ -61,7 +61,7 @@ protected:
 
   // Comparison for look_for_and_purge_rhs_sequent
   constexpr bool match_for_purging_tabled(const DBM* fst, const DBM& snd) const {
-    return *fst <= snd;
+    return *fst >= snd;
   }
 
   // Comparison for look_for_and_purge_rhs_sequent
