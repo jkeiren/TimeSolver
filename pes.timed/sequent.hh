@@ -161,9 +161,9 @@ public:
    * it only needs to compare clock states.
    * @param s (*) The sequent that contains a set of DBMs.
    * @param lhs (*) The DBM to compare the sequent's DBMs to.
-   * @return true: lhs == some sequent in s, false: otherwise.*/
+   * @return true: lhs <= some sequent in s, false: otherwise.*/
   bool tabled_sequent_lfp(const DBM& lhs) {
-    return std::any_of(ds.begin(), ds.end(), [&lhs](const DBM* x) { return *x == lhs; });
+    return std::any_of(ds.begin(), ds.end(), [&lhs](const DBM* x) { return *x >= lhs; });
   }
 
   /** Takes in set of known true sequents (s) with a newly
