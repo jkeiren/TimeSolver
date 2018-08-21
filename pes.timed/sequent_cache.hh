@@ -29,21 +29,6 @@ protected:
   int nHash;
 
 public:
-  /* Make this protected eventually */
-  int predicate_index(const ExprNode& formula) const
-  {
-    return m_input_pes.lookup_predicate(formula.getPredicate())->getIntVal() - 1;
-  }
-
-  int predicate_index(const Sequent* sequent) const
-  {
-    return predicate_index(*(sequent->rhs()));
-  }
-
-  int predicate_index(const SequentPlace* sequent) const
-  {
-    return predicate_index(*(sequent->rhs()));
-  }
 
   // Determine whether the predicate is cached as a known false sequent
   bool is_known_false_sequent(const SubstList& discrete_state,
@@ -52,7 +37,7 @@ public:
                               Sequent* parentRef)
   {
     Sequent* cached_sequent =
-        Xlist_false.look_for_sequent(&discrete_state, predicate_index(formula));
+        Xlist_false.look_for_sequent(discrete_state, formula);
     if (cached_sequent != nullptr &&
         cached_sequent->tabled_false_sequent(zone)) {
       /* Add backpointer to parent sequent (shallow copy) */
@@ -69,7 +54,7 @@ public:
                               Sequent* parentRef)
   { // Restricted scope for looking up true sequents
     Sequent* cached_sequent =
-        Xlist_true.look_for_sequent(&discrete_state, predicate_index(formula));
+        Xlist_true.look_for_sequent(discrete_state, formula);
     if (cached_sequent != nullptr && cached_sequent->tabled_sequent(zone)) {
       /* Add backpointer to parent sequent (shallow copy) */
       cached_sequent->addParent(parentRef);
@@ -78,38 +63,22 @@ public:
     return false;
   }
 
-  void cache_true_sequent(Sequent* true_sequent,
-                          const DBM& zone)
-  {
-    bool newSequent; // unused
-    Sequent* cached_true_sequent =
-        Xlist_true.locate_sequent(true_sequent, predicate_index(true_sequent), newSequent);
-    cached_true_sequent->update_sequent(zone);
-  }
-
   void cache_true_sequent(const SubstList& discrete_state,
                           const DBM& zone,
                           const ExprNode& formula)
   {
-    Sequent* true_sequent = new Sequent(&formula, &discrete_state);
-    cache_true_sequent(true_sequent, zone);
-  }
-
-  void cache_false_sequent(Sequent* false_sequent,
-                          const DBM& zone)
-  {
-    bool newSequent; // unused
-    Sequent* cached_false_sequent =
-        Xlist_false.locate_sequent(false_sequent, predicate_index(false_sequent), newSequent);
-    cached_false_sequent->update_false_sequent(zone);
+    Sequent* cached_true_sequent =
+        Xlist_true.locate_sequent(discrete_state, formula);
+    cached_true_sequent->update_sequent(zone);
   }
 
   void cache_false_sequent(const SubstList& discrete_state,
                           const DBM& zone,
                           const ExprNode& formula)
   {
-    Sequent* false_sequent = new Sequent(&formula, &discrete_state);
-    cache_false_sequent(false_sequent, zone);
+    Sequent* cached_false_sequent =
+        Xlist_false.locate_sequent(discrete_state, formula);
+    cached_false_sequent->update_false_sequent(zone);
   }
 
   /** XList_pGFP (XList) is an array of stacks, where each stack
@@ -154,21 +123,21 @@ public:
       : m_input_pes(input_pes),
         nbits(nbits),
         nHash(seqStSize),
-        Xlist_pGFP(input_pes.atomic()->size(), nbits, size, seqStSize,
+        Xlist_pGFP(input_pes, input_pes.atomic()->size(), nbits, size, seqStSize,
                    input_pes.predicates().size()),
-        Xlist_pLFP(input_pes.atomic()->size(), nbits, size, seqStSize,
+        Xlist_pLFP(input_pes, input_pes.atomic()->size(), nbits, size, seqStSize,
                    input_pes.predicates().size()),
-        Xlist_true(input_pes.atomic()->size(), nbits, size, seqStSize,
+        Xlist_true(input_pes, input_pes.atomic()->size(), nbits, size, seqStSize,
                    input_pes.predicates().size()),
-        Xlist_false(input_pes.atomic()->size(), nbits, size, seqStSize,
+        Xlist_false(input_pes, input_pes.atomic()->size(), nbits, size, seqStSize,
                     input_pes.predicates().size()),
-        Xlist_pGFP_ph(input_pes.atomic()->size(), nbits, size, seqStSize,
+        Xlist_pGFP_ph(input_pes, input_pes.atomic()->size(), nbits, size, seqStSize,
                       input_pes.predicates().size()),
-        Xlist_pLFP_ph(input_pes.atomic()->size(), nbits, size, seqStSize,
+        Xlist_pLFP_ph(input_pes, input_pes.atomic()->size(), nbits, size, seqStSize,
                       input_pes.predicates().size()),
-        Xlist_true_ph(input_pes.atomic()->size(), nbits, size, seqStSize,
+        Xlist_true_ph(input_pes, input_pes.atomic()->size(), nbits, size, seqStSize,
                       input_pes.predicates().size()),
-        Xlist_false_ph(input_pes.atomic()->size(), nbits, size, seqStSize,
+        Xlist_false_ph(input_pes, input_pes.atomic()->size(), nbits, size, seqStSize,
                        input_pes.predicates().size()) {}
 
   /** Purge backpointers from all caches. Purging occurrs
@@ -193,16 +162,14 @@ public:
     while (!(purgeSeqQueue.empty())) {
       Sequent* t = purgeSeqQueue.front();
 
-      const int pInd = predicate_index(t);
-
       /* Note: Purging parent sequents still ignores clock states */
 
       /* Now purge the sequent and the DBM from all lists.
        * Circularity caches are correctly maintained; therefore,
        * they are not purged. */
-      Xlist_false.look_for_and_purge_rhs_sequent_state(t, pInd);
+      Xlist_false.look_for_and_purge_rhs_sequent_state(t);
       /* If found, Purge Sequent from its cache */
-      Xlist_true.look_for_and_purge_rhs_sequent_state(t, pInd);
+      Xlist_true.look_for_and_purge_rhs_sequent_state(t);
 
       purgeSeqQueue.pop_front();
     }
@@ -212,8 +179,6 @@ public:
     while (!(purgeSeqPlaceQueue.empty())) {
       SequentPlace* tp = purgeSeqPlaceQueue.front();
 
-      const int pInd = predicate_index(tp);
-
       /* Note: Purging parent sequents still ignores clock states. */
 
       /* Now purge the sequent and the DBM from all lists.
@@ -221,8 +186,8 @@ public:
        * they are not purged. */
 
       /* If found, Purge Sequent from its cache */
-      Xlist_false_ph.look_for_and_purge_rhs_sequent_state(tp, pInd);
-      Xlist_true_ph.look_for_and_purge_rhs_sequent_state(tp, pInd);
+      Xlist_false_ph.look_for_and_purge_rhs_sequent_state(tp);
+      Xlist_true_ph.look_for_and_purge_rhs_sequent_state(tp);
 
       purgeSeqPlaceQueue.pop_front();
     }
