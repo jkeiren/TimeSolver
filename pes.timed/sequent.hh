@@ -58,7 +58,7 @@ public:
    * of the sequent.
    * @return [Constructor]. */
   Sequent(const ExprNode *const rhs, const SubstList *const discrete_state)
-      : _rhs(rhs), _discrete_state(new SubstList(*discrete_state)) {}
+      : m_rhs(rhs), m_discrete_state(new SubstList(*discrete_state)) {}
 
   /* A default Copy Constructor is implemented by the
    * compiler which performs a member-wise deep copy. */
@@ -70,50 +70,50 @@ public:
    * delete itself, the destructor does not delete parent sequents.
    * @return [Destructor] */
   ~Sequent() {
-    delete _discrete_state;
+    delete m_discrete_state;
     // Iterate Through and Delete every element of ds
-    delete_vector_elements(ds);
-    ds.clear();
+    delete_vector_elements(m_dbms);
+    m_dbms.clear();
     // Do not delete e since it is a pointer to the overall ExprNode.
     // Do not delete parent sequent upon deletion
     // Do not delete parent placeholder sequent
     // Clearing vectors is enough
-    _parent_sequents.clear();
+    m_parent_sequents.clear();
   }
 
   /** Returns the ExprNode element (rhs or consequent) of the Sequent.
    * @return the rhs expression of the ExprNode element of the Sequent. */
-  const ExprNode *rhs() const { return _rhs; }
+  const ExprNode *rhs() const { return m_rhs; }
 
   /** Returns the discrete state of the sequent's left (the SubstList).
    * @return the discrete state of the sequent's left (the SubstList). */
-  const SubstList *discrete_state() const { return _discrete_state; }
+  const SubstList *discrete_state() const { return m_discrete_state; }
 
   /** Add a parent sequent */
-  void addParent(Sequent *s) { _parent_sequents.push_back(s); }
+  void addParent(Sequent *s) { m_parent_sequents.push_back(s); }
 
   /** Get parent sequents */
-  const std::vector<Sequent *> &parents() const { return _parent_sequents; }
+  const std::vector<Sequent *> &parents() const { return m_parent_sequents; }
 
-  const DBMset &dbm_set() const { return ds; }
+  const DBMset &dbm_set() const { return m_dbms; }
 
-  DBMset &dbm_set() { return ds; }
+  DBMset &dbm_set() { return m_dbms; }
 
   /** Adds a sequent (better: the left hand side of the sequent), to the set of
    * sequents represented by this Sequent object */
-  void push_sequent(DBM *lhs) { ds.push_back(lhs); }
+  void push_sequent(DBM *lhs) { m_dbms.push_back(lhs); }
 
   /** Removes the last added sequent from the set of sequents represented by
    * this object */
   void pop_sequent() {
-    delete ds.back();
-    ds.pop_back();
+    delete m_dbms.back();
+    m_dbms.pop_back();
   }
 
   /** Delete sequents and clear the vector */
   void delete_sequents() {
-    delete_vector_elements(ds);
-    ds.clear();
+    delete_vector_elements(m_dbms);
+    m_dbms.clear();
   }
 
   /** Using that a Sequent object is a set of sequents with matching rhs and
@@ -130,7 +130,7 @@ public:
    * @return true: lhs <= some sequent in s
    * (consequently, the sequent is true), false: otherwise.*/
    bool tabled_sequent(const DBM& lhs) const {
-    return std::any_of(ds.begin(), ds.end(), [&lhs](const DBM* x) { return *x >= lhs; });
+    return std::any_of(m_dbms.begin(), m_dbms.end(), [&lhs](const DBM* x) { return *x >= lhs; });
   }
 
   /** Using that a Sequent object is a set of sequents with matching rhs and
@@ -148,7 +148,7 @@ public:
    * @return true: lhs >= some sequent in s
    * (consequently, the sequent is false), false: otherwise.*/
   bool tabled_false_sequent(const DBM& lhs) const {
-    return std::any_of(ds.begin(), ds.end(), [&lhs](const DBM* x) { return *x <= lhs; });
+    return std::any_of(m_dbms.begin(), m_dbms.end(), [&lhs](const DBM* x) { return *x <= lhs; });
   }
 
   /** Using that a Sequent object is a set of sequents with matching rhs and
@@ -163,7 +163,7 @@ public:
    * @param lhs (*) The DBM to compare the sequent's DBMs to.
    * @return true: lhs <= some sequent in s, false: otherwise.*/
   bool tabled_sequent_lfp(const DBM& lhs) {
-    return std::any_of(ds.begin(), ds.end(), [&lhs](const DBM* x) { return *x >= lhs; });
+    return std::any_of(m_dbms.begin(), m_dbms.end(), [&lhs](const DBM* x) { return *x >= lhs; });
   }
 
   /** Takes in set of known true sequents (s) with a newly
@@ -178,11 +178,11 @@ public:
    * @param s (*) The set of known sequents to update.
    * @param lhs (*) The DBM of the newly-established clock state. */
   void update_sequent(const DBM& lhs) {
-    DBMset::iterator it = std::find_if(ds.begin(), ds.end(), [&lhs](const DBM*x) {
+    DBMset::iterator it = std::find_if(m_dbms.begin(), m_dbms.end(), [&lhs](const DBM*x) {
       return *x <= lhs;
     });
-    if(it == ds.end()) {
-      ds.emplace_back(new DBM(lhs));
+    if(it == m_dbms.end()) {
+      m_dbms.emplace_back(new DBM(lhs));
     } else {
       **it = lhs;
     }
@@ -201,11 +201,11 @@ public:
    * @param s (*) The set of known sequents to update.
    * @param lhs (*) The DBM of the newly-established clock state. */
   void update_false_sequent(const DBM& lhs) {
-    DBMset::iterator it = std::find_if(ds.begin(), ds.end(), [&lhs](const DBM*x) {
+    DBMset::iterator it = std::find_if(m_dbms.begin(), m_dbms.end(), [&lhs](const DBM*x) {
       return *x >= lhs;
     });
-    if(it == ds.end()) {
-      ds.emplace_back(new DBM(lhs));
+    if(it == m_dbms.end()) {
+      m_dbms.emplace_back(new DBM(lhs));
     } else {
       **it = lhs;
     }
@@ -213,23 +213,23 @@ public:
 
 protected:
   /** The right hand side expression of the sequent. */
-  const ExprNode *_rhs;
+  const ExprNode *m_rhs;
   /** The discrete state of the left of a sequent, represented
    * as a SubstList. */
-  const SubstList *_discrete_state;
+  const SubstList *m_discrete_state;
   /** A list of DBMs stored in the sequent, used to store a set of sequents
    * in a method for easy access during sequent caching. This vector
    * stores the clock state part of the left hand side of each sequent.
    * Each element in ds is combined with the location state (st)
    * and the right hand expression (e) to form a proof sequent
    * in the proof tree. */
-  DBMset ds;
+  DBMset m_dbms;
 
   /** The sequent parent to this sequent in the proof tree; this is used
    * to quickly access backpointers. A sequent either has a parent
    * with a placeholder (parSequentPlace) or a parent without a
    * placeholder (parSequent). */
-  std::vector<Sequent *> _parent_sequents;
+  std::vector<Sequent *> m_parent_sequents;
 };
 
 /** Defines a vector of (DBM, DBMList) pairs. Used for lists
@@ -270,7 +270,7 @@ public:
    * of the sequent.
    * @return [Constructor]. */
   SequentPlace(const ExprNode *const rhs, const SubstList *const sub)
-      : _rhs(rhs), _discrete_state(new SubstList(*sub)) {}
+      : m_rhs(rhs), m_discrete_state(new SubstList(*sub)) {}
 
   /* A default Copy Constructor is implemented by the
    * compiler which performs a member-wise deep copy.
@@ -284,68 +284,68 @@ public:
    * delete itself, the destructor does not delete parent sequents.
    * @return [Destructor] */
   ~SequentPlace() {
-    delete _discrete_state;
+    delete m_discrete_state;
     // Iterate Through and Delete every element of ds
-    for (std::pair<DBM*, DBMList*> p: _dbms) {
+    for (std::pair<DBM*, DBMList*> p: m_dbms) {
       delete p.first;
       delete p.second;
     }
-    _dbms.clear();
+    m_dbms.clear();
     // Do not delete e since it is a pointer to the overall ExprNode.
 
     // Do not delete parent sequent parSequentPlace
     // Do not delete parent sequent parSequent
     // Clearing vectors is enough
-    _parent_sequents.clear();
-    _parent_sequents_placeholder.clear();
+    m_parent_sequents.clear();
+    m_parent_sequents_placeholder.clear();
   }
 
   /** Returns the ExprNode element (rhs or consequent) of the Sequent.
    * @return the rhs expression of the ExprNode element of the Sequent. */
-  const ExprNode *rhs() const { return _rhs; }
+  const ExprNode *rhs() const { return m_rhs; }
 
   /** Returns the discrete state of the sequent's left (the SubstList).
    * @return the discrete state of the sequent's left (the SubstList). */
-  const SubstList *discrete_state() const { return _discrete_state; }
+  const SubstList *discrete_state() const { return m_discrete_state; }
 
-  const DBMPlaceSet &dbm_set() const { return _dbms; }
+  const DBMPlaceSet &dbm_set() const { return m_dbms; }
 
-  DBMPlaceSet &dbm_set() { return _dbms; }
+  DBMPlaceSet &dbm_set() { return m_dbms; }
 
   /** Adds a sequent (better: the left hand side of the sequent), to the set of
    * sequents represented by this Sequent object */
-  void push_sequent(std::pair<DBM *, DBMList *> s) { _dbms.push_back(s); }
+  void push_sequent(std::pair<DBM *, DBMList *> s) { m_dbms.push_back(s); }
 
   /** Removes the last added sequent from the set of sequents represented by
    * this object */
   void pop_sequent() {
-    std::pair<DBM *, DBMList *> b = _dbms.back();
+    std::pair<DBM *, DBMList *> b = m_dbms.back();
     delete b.first;
     delete b.second;
-    _dbms.pop_back();
+    m_dbms.pop_back();
   }
 
   /** Delete sequents and clear the vector */
   void delete_sequents() {
-    for (std::pair<DBM*, DBMList*> p: _dbms) {
+    for (std::pair<DBM*, DBMList*> p: m_dbms) {
       delete p.first;
       delete p.second;
     }
-    _dbms.clear();
+    m_dbms.clear();
   }
 
   /** Add a parent sequent */
-  void addParent(Sequent *s) { _parent_sequents.push_back(s); }
+  void addParent(Sequent *s) { m_parent_sequents.push_back(s); }
 
   /** Add a parent sequent (with placeholder) */
-  void addParent(SequentPlace *s) { _parent_sequents_placeholder.push_back(s); }
+  void addParent(SequentPlace *s) { m_parent_sequents_placeholder.push_back(s); }
 
   /** Get parent sequents */
-  const std::vector<Sequent *> &parents() const { return _parent_sequents; }
+  const std::vector<Sequent *> &parents() const { return m_parent_sequents; }
 
   /** Get parent sequents (with placeholders) */
   const std::vector<SequentPlace *> &parents_with_placeholders() const {
-    return _parent_sequents_placeholder;
+    return m_parent_sequents_placeholder;
   }
 
   /** Using that a Sequent object is a set of sequents with matching rhs and
@@ -377,7 +377,7 @@ public:
       return false;
     };
 
-    return std::find_if(_dbms.begin(), _dbms.end(), p) != _dbms.end();
+    return std::find_if(m_dbms.begin(), m_dbms.end(), p) != m_dbms.end();
   }
 
   /** Using that a Sequent object is a set of sequents with matching rhs and
@@ -399,10 +399,10 @@ public:
    * @return true: (lhs, lhsPlace) >= some sequent in s
    * (consequently, the sequent is false), false: otherwise.*/
   bool tabled_false_sequent(const DBM& lhs) {
-    return std::find_if(_dbms.begin(), _dbms.end(),
+    return std::find_if(m_dbms.begin(), m_dbms.end(),
                         [&](const std::pair<const DBM *, const DBMList *> x) {
                           return *(x.first) <= lhs;
-                        }) != _dbms.end();
+                        }) != m_dbms.end();
   }
 
   /** Using that a Sequent object is a set of sequents with matching rhs and
@@ -421,10 +421,10 @@ public:
    * @return true: (lhs, lhsPlace) == some sequent in s, false: otherwise.*/
   bool tabled_sequent_lfp(const DBM& lhs,
                                  const DBMList *const lhsPlace) {
-    return std::find_if(_dbms.begin(), _dbms.end(),
+    return std::find_if(m_dbms.begin(), m_dbms.end(),
                         [&](const std::pair<const DBM *, const DBMList *> x) {
                           return *(x.first) == lhs && *(x.second) == *lhsPlace;
-                        }) != _dbms.end();
+                        }) != m_dbms.end();
   }
 
   /** Using that a Sequent object is a set of sequents with matching rhs and
@@ -447,10 +447,10 @@ public:
    * (consequently, the sequent is true), false: otherwise.*/
   bool tabled_sequent_gfp(const DBM& lhs,
                                  const DBMList *const lhsPlace) {
-    return std::find_if(_dbms.begin(), _dbms.end(),
+    return std::find_if(m_dbms.begin(), m_dbms.end(),
                         [&](const std::pair<const DBM *, const DBMList *> x) {
                           return *(x.first) == lhs && *(x.second) >= *lhsPlace;
-                        }) != _dbms.end();
+                        }) != m_dbms.end();
   }
 
   /** Assumes the current sequent is known to be true, and updates it with a
@@ -465,7 +465,7 @@ public:
    * @param lhsPlace (*) The DBMList of the newly-established clock state. */
   void update_sequent(const DBM& lhs,
                              const DBMList *const lhsPlace) {
-    for (std::pair<DBM *, DBMList *> pair: _dbms) {
+    for (std::pair<DBM *, DBMList *> pair: m_dbms) {
       /* Extra work for placeholders. For now,
        * force equality on LHS sequent and use tabling logic
        * for placeholders. */
@@ -474,7 +474,7 @@ public:
         return;
       }
     }
-    _dbms.emplace_back(new DBM(lhs), new DBMList(*lhsPlace));
+    m_dbms.emplace_back(new DBM(lhs), new DBMList(*lhsPlace));
   }
 
   /** Assumes the current sequent is known to be true, and updates it with a
@@ -491,7 +491,7 @@ public:
    * @return true: the clock state was incorporated into one of s's
    * sequents; false: otherwise (a new sequent was added to s). */
   void update_false_sequent(const DBM& lhs) {
-    for (std::pair<DBM *, DBMList *> pair: _dbms) {
+    for (std::pair<DBM *, DBMList *> pair: m_dbms) {
       if (*pair.first >= lhs) {
         *pair.first = lhs;
         return;
@@ -506,15 +506,15 @@ public:
     DBM EMPTY(lhs.declared_clocks());
     EMPTY.makeEmpty();
 
-    _dbms.emplace_back(new DBM(lhs), new DBMList(EMPTY));
+    m_dbms.emplace_back(new DBM(lhs), new DBMList(EMPTY));
   }
 
 protected:
   /** The right hand side expression of the sequent. */
-  const ExprNode *_rhs;
+  const ExprNode *m_rhs;
   /** The discrete state of the left of a sequent, represented
    * as a SubstList. */
-  const SubstList *_discrete_state;
+  const SubstList *m_discrete_state;
   /** A list of (DBM, DBMList) pairs stored in the sequent,
    * used to store a set of sequents
    * in a method for easy access during sequent caching. This vector
@@ -522,19 +522,19 @@ protected:
    * Each element in ds is combined with the location state (st)
    * and the right hand expression (e) to form a proof sequent
    * in the proof tree. */
-  DBMPlaceSet _dbms;
+  DBMPlaceSet m_dbms;
 
   /** The placeholder sequent parent to this sequent in the proof tree;
    * this is used  to quickly access backpointers. A sequent either has a parent
    * with a placeholder (parSequentPlace) or a parent without a
    * placeholder (parSequent). */
-  std::vector<SequentPlace *> _parent_sequents_placeholder;
+  std::vector<SequentPlace *> m_parent_sequents_placeholder;
 
   /** The sequent parent to this sequent in the proof tree; this is used
    * to quickly access backpointers. A sequent either has a parent
    * with a placeholder (parSequentPlace) or a parent without a
    * placeholder (parSequent). */
-  std::vector<Sequent *> _parent_sequents;
+  std::vector<Sequent *> m_parent_sequents;
 };
 
 #endif // SEQUENT_HH

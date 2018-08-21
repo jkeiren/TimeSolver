@@ -19,7 +19,7 @@
 
 class sequent_cache {
 protected:
-  const pes& input_pes;
+  const pes& m_input_pes;
 
   /** The maximum number of bits used in the hashing function
    * when storing discrete states. */
@@ -32,7 +32,7 @@ public:
   /* Make this protected eventually */
   int predicate_index(const ExprNode& formula) const
   {
-    return input_pes.lookup_predicate(formula.getPredicate())->getIntVal() - 1;
+    return m_input_pes.lookup_predicate(formula.getPredicate())->getIntVal() - 1;
   }
 
   int predicate_index(const Sequent* sequent) const
@@ -151,7 +151,7 @@ public:
 
   sequent_cache(const pes& input_pes, const int nbits, const int size,
                 const int seqStSize)
-      : input_pes(input_pes),
+      : m_input_pes(input_pes),
         nbits(nbits),
         nHash(seqStSize),
         Xlist_pGFP(input_pes.atomic()->size(), nbits, size, seqStSize,
