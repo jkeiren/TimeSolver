@@ -754,9 +754,10 @@ inline bool prover::do_proof_predicate(const SubstList& discrete_state,
       if (cached_false_sequent != nullptr) {
         cache.look_for_and_purge_rhs_backStack(
             cached_false_sequent->parents());
-      }
-      if (madeEmpty) {
-        delete cached_false_sequent;
+
+        if (madeEmpty) {
+          delete cached_false_sequent;
+        }
       }
 
       // Now update in proper Cache
@@ -775,9 +776,10 @@ inline bool prover::do_proof_predicate(const SubstList& discrete_state,
       if (cached_true_sequent != nullptr) {
         cache.look_for_and_purge_rhs_backStack(
             cached_true_sequent->parents());
-      }
-      if (madeEmpty) {
-        delete cached_true_sequent;
+
+        if (madeEmpty) {
+          delete cached_true_sequent;
+        }
       }
 
       cache.cache_false_sequent(discrete_state, zone, formula);
@@ -1746,6 +1748,11 @@ inline void prover::do_proof_place_predicate(const SubstList& discrete_state,
         cache.look_for_and_purge_rhs_backStack(
             cached_false_sequent->parents(),
             cached_false_sequent->parents_with_placeholders());
+
+        // this delete is necessary for memory management but problematic
+        if (madeEmpty) {
+          delete cached_false_sequent;
+        }
       }
 
       // Now update in proper Cache
@@ -1753,10 +1760,6 @@ inline void prover::do_proof_place_predicate(const SubstList& discrete_state,
           cache.Xlist_true_ph.locate_sequent(discrete_state, formula);
       cached_true_sequent->update_sequent(zone, place);
 
-      // this delete is necessary for memory management but problematic
-      if (madeEmpty) {
-        delete cached_false_sequent;
-      }
     } else {
       /* place is empty */
       /* First look in opposite parity Cache */
@@ -1773,17 +1776,17 @@ inline void prover::do_proof_place_predicate(const SubstList& discrete_state,
         cache.look_for_and_purge_rhs_backStack(
             cached_true_sequent->parents(),
             cached_true_sequent->parents_with_placeholders());
+
+        // This delete is necessary for memory management but problematic
+        if (madeEmpty) {
+          delete cached_true_sequent;
+        }
       }
 
       // Now update in proper Cache
       SequentPlace* cached_false_sequent =
           cache.Xlist_false_ph.locate_sequent(discrete_state, formula);
       cached_false_sequent->update_false_sequent(zone);
-
-      // This delete is necessary for memory management but problematic
-      if (madeEmpty) {
-        delete cached_true_sequent;
-      }
     }
   }
 }
