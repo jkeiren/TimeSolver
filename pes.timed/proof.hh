@@ -683,7 +683,7 @@ inline bool prover::do_proof_predicate(const SubstList& discrete_state,
     if (formula.is_gfp()) { // Thus a Greatest Fixpoint
       bool newSequent;
       h = cache.Xlist_pGFP.locate_sequent(t, predicate_index, newSequent);
-      if ((!newSequent) && h->tabled_sequent(zone)) {
+      if (h->tabled_sequent(zone)) {
         // Found gfp Circularity - thus valid
         cpplog(cpplogging::debug)
             << "---(Valid) Located a True Sequent or gfp Circularity ----"
@@ -703,7 +703,7 @@ inline bool prover::do_proof_predicate(const SubstList& discrete_state,
       // Now look for a Circularity
       bool newSequent;
       h = cache.Xlist_pLFP.locate_sequent(t, predicate_index, newSequent);
-      if ((!newSequent) && h->tabled_sequent_lfp(zone)) {
+      if (h->tabled_sequent_lfp(zone)) {
         cpplog(cpplogging::debug)
             << "---(Invalid) Located a lfp Circularity ----" << std::endl
             << std::endl;
@@ -1655,7 +1655,7 @@ inline void prover::do_proof_place_predicate(const SubstList& discrete_state,
       /* Already looked in known false so no need to do so */
       bool newSequent;
       h = cache.Xlist_pGFP_ph.locate_sequent(t, predicate_index, newSequent);
-      if (!newSequent && h->tabled_sequent_gfp(zone, place)) {
+      if (h->tabled_sequent_gfp(zone, place)) {
         // Found gfp Circularity - thus valid
         cpplog(cpplogging::debug)
             << "---(Valid) Located True Sequent or gfp Circularity ----"
@@ -1684,7 +1684,7 @@ inline void prover::do_proof_place_predicate(const SubstList& discrete_state,
       // Now look in lfp circularity cache
       bool newSequent;
       h = cache.Xlist_pLFP_ph.locate_sequent(t, predicate_index, newSequent);
-      if (!newSequent && h->tabled_sequent_lfp(zone, place)) {
+      if (h->tabled_sequent_lfp(zone, place)) {
         // Found lfp circularity - thus invalid
         place->makeEmpty();
 
