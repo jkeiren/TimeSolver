@@ -18,16 +18,6 @@
 #include "sequent_stack.hh"
 
 class sequent_cache {
-protected:
-  const pes& m_input_pes;
-
-  /** The maximum number of bits used in the hashing function
-   * when storing discrete states. */
-  int nbits;
-
-  /** The size of the Hash table of Sequents: nBits + 1 */
-  int nHash;
-
 public:
 
   // Determine whether the predicate is cached as a known false sequent
@@ -118,27 +108,17 @@ public:
    * placeholders. */
   sequentStackPlace Xlist_false_ph;
 
-  sequent_cache(const pes& input_pes, const int nbits, const int size,
-                const int seqStSize)
-      : m_input_pes(input_pes),
-        nbits(nbits),
-        nHash(seqStSize),
-        Xlist_pGFP(input_pes, input_pes.atomic()->size(), nbits, size, seqStSize,
-                   input_pes.predicates().size()),
-        Xlist_pLFP(input_pes, input_pes.atomic()->size(), nbits, size, seqStSize,
-                   input_pes.predicates().size()),
-        Xlist_true(input_pes, input_pes.atomic()->size(), nbits, size, seqStSize,
-                   input_pes.predicates().size()),
-        Xlist_false(input_pes, input_pes.atomic()->size(), nbits, size, seqStSize,
-                    input_pes.predicates().size()),
-        Xlist_pGFP_ph(input_pes, input_pes.atomic()->size(), nbits, size, seqStSize,
-                      input_pes.predicates().size()),
-        Xlist_pLFP_ph(input_pes, input_pes.atomic()->size(), nbits, size, seqStSize,
-                      input_pes.predicates().size()),
-        Xlist_true_ph(input_pes, input_pes.atomic()->size(), nbits, size, seqStSize,
-                      input_pes.predicates().size()),
-        Xlist_false_ph(input_pes, input_pes.atomic()->size(), nbits, size, seqStSize,
-                       input_pes.predicates().size()) {}
+  sequent_cache(const pes& input_pes,
+                const std::size_t num_hashing_bins)
+      : Xlist_pGFP(input_pes, num_hashing_bins),
+        Xlist_pLFP(input_pes, num_hashing_bins),
+        Xlist_true(input_pes, num_hashing_bins),
+        Xlist_false(input_pes, num_hashing_bins),
+        Xlist_pGFP_ph(input_pes, num_hashing_bins),
+        Xlist_pLFP_ph(input_pes, num_hashing_bins),
+        Xlist_true_ph(input_pes, num_hashing_bins),
+        Xlist_false_ph(input_pes, num_hashing_bins)
+  {}
 
   /** Purge backpointers from all caches. Purging occurrs
    * until no sequent was purged (not purging a sequent indicates that

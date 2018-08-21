@@ -25,16 +25,15 @@ protected:
   typedef std::vector<SequentType*> stack_t;
   typedef std::vector<DBMsetElementType> DBMsetType;
 
+  const pes& m_input_pes;
+  const std::size_t m_num_hash_bins; // number of hashing bins
+  const std::size_t m_atomic_size; // number of atomics in PES.
+  const std::size_t m_size; // size of stack_t;
+  const std::size_t m_hash_bitmask; // bitmask for hashing
+  const std::size_t m_predicates_size; // number of predicates in PES.
+
   // Maps indices of predicate variables to maps of discrete state -> SequentType*.
   std::vector<stack_t> Xlist; // Vector of vectors (stacks)
-
-
-  const pes& m_input_pes;
-  const std::size_t m_atomic_size; // number of atomics in PES.
-  const int m_nbits;
-  const int m_size; // size of stack_t;
-  const int m_seqStSize;
-  const int m_predicates_size; // number of predicates in PES.
 
   /** Provide the hash function to hash atomic (discrete location) variables
    * into bins; it gives a hash bin per SubstList (
@@ -46,22 +45,20 @@ protected:
    * to save space.
    * @param sub (*) The discrete state to hash into a bin.
    * @return The hashed bin index for that discrete state.*/
-  int hash_func(const SubstList& discrete_state, const std::size_t atomic_size,
-                const int nbits) const {
+  std::size_t hash(const SubstList& discrete_state) const {
     // From demo.7.cc (instead of from demo.cc) of previous code
-    int sum = 0;
-    for (std::size_t i = 0; i < atomic_size; i++) {
-      sum += (discrete_state.at(i) & nbits);
-      sum = sum & nbits;
+    std::size_t sum = 0;
+    for (std::size_t i = 0; i < m_atomic_size; i++) {
+      sum += (discrete_state.at(i) & m_hash_bitmask);
+      sum = sum & m_hash_bitmask;
     }
     return sum;
   }
 
   /** Get the right index into the stack */
-  int get_index(const SubstList& discrete_state,
-                const int predicate_index) const {
-    return predicate_index * m_seqStSize +
-           hash_func(discrete_state, m_atomic_size, m_nbits);
+  std::size_t get_index(const SubstList& discrete_state,
+                const ExprNode& formula) const {
+    return predicate_index(formula) * m_num_hash_bins + hash(discrete_state);
   }
 
   // Comparison for look_for_and_purge_rhs_sequent
@@ -103,15 +100,16 @@ protected:
   constexpr const DBM* getDBM(const DBM* p) const { return p; }
 
 public:
-  sequentStackT(const pes& input_pes, const std::size_t atomic_size, const int nbits, const int size,
-                const int seqStSize, const int predicates_size)
-      : Xlist(size, stack_t()),
-        m_input_pes(input_pes),
-        m_atomic_size(atomic_size),
-        m_nbits(nbits),
-        m_size(size),
-        m_seqStSize(seqStSize),
-        m_predicates_size(predicates_size) {}
+  sequentStackT(const pes& input_pes, const int num_hash_bins)
+      : m_input_pes(input_pes),
+        m_num_hash_bins(num_hash_bins),
+        m_atomic_size(input_pes.atomic()->size()),
+        m_size(input_pes.predicates().size() * num_hash_bins),
+        m_hash_bitmask(num_hash_bins-1),
+        m_predicates_size(input_pes.predicates().size()),
+        Xlist(m_size, stack_t()) {
+    assert(is_power_of_two(m_num_hash_bins));
+  }
 
   ~sequentStackT() {
     for (stack_t& stack : Xlist) {
@@ -152,7 +150,7 @@ public:
       /* Sequent not found; add it to the cache.
        * (This is why we must take in the entire Sequent s as a parameter
        * and not just its sublist component.) */
-      const int index = get_index(discrete_state, predicate_index(formula));
+      const std::size_t index = get_index(discrete_state, formula);
       Xlist[index].emplace_back(new SequentType(&formula, &discrete_state));
       result = Xlist[index].back();
     }
@@ -173,7 +171,7 @@ public:
    * specified as parameters. */
   SequentType* look_for_sequent(const SubstList& discrete_state,
                                 const ExprNode& formula) const {
-    const int index = get_index(discrete_state, predicate_index(formula));
+    const std::size_t index = get_index(discrete_state, formula);
     typename stack_t::const_iterator it = std::find_if(
           Xlist[index].begin(), Xlist[index].end(),
           [&discrete_state](const SequentType* s) {
@@ -211,7 +209,7 @@ public:
                                               const ExprNode& formula,
                                               const bool tableCheck,
                                               bool* const madeEmpty) {
-    const int index = get_index(discrete_state, predicate_index(formula));
+    const std::size_t index = get_index(discrete_state, formula);
     *madeEmpty = false;
     /* This assumes that location only locates one sequent in the stack */
     SequentType* foundSequent = nullptr;
@@ -285,7 +283,7 @@ public:
     const SubstList& discrete_state = *(sequent->discrete_state());
     const ExprNode& formula = *(sequent->rhs());
 
-    int index = get_index(discrete_state, predicate_index(formula));
+    const std::size_t index = get_index(discrete_state, formula);
     for (typename stack_t::iterator it = Xlist[index].begin();
          it != Xlist[index].end(); it++) {
       SequentType* ls = (*it);
@@ -326,7 +324,7 @@ public:
     int totNumSeq = 0;
     os << "\t--For Each Sequence, Premise sets separated by \";\" --"
        << std::endl;
-    for (int i = 0; i < m_predicates_size * (m_nbits + 1); i++) {
+    for (std::size_t i = 0; i < m_size; ++i) {
       for (typename stack_t::const_iterator it = Xlist[i].begin();
            it != Xlist[i].end(); it++) {
         int conseqNumSeq = 0;

@@ -61,7 +61,7 @@ public:
         INFTYDBM(input_pes.clocks()),
         parentRef(nullptr),
         parentPlaceRef(nullptr),
-        cache(input_pes, options.nbits, input_pes.predicates().size() * options.nHash, options.nHash) {
+        cache(input_pes, options.nHash) {
     /* This is initialized to be the largest (loosest)
      * possible DBM
      * @see DBM Constructor (Default Constructor). */
@@ -1571,10 +1571,6 @@ inline void prover::do_proof_place_predicate(const SubstList& discrete_state,
                                              const DBM& zone, DBMList* place,
                                              const ExprNode& formula) {
   ExprNode* e = input_pes.lookup_equation(formula.getPredicate());
-
-  // Get Predicate Index for Hashing
-  const int predicate_index =
-      input_pes.lookup_predicate(formula.getPredicate())->getIntVal() - 1;
 
   /* First look in known true and false sequent tables */
   if (options.useCaching) {

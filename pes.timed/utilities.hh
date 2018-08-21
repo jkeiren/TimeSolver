@@ -11,6 +11,15 @@
 #include <algorithm>
 #include <vector>
 
+
+inline bool is_power_of_two(std::size_t n) {
+  if (n == 0) {
+    return false;
+  } else {
+    return (n & (n - 1)) == 0;
+  }
+}
+
 template<typename T>
 void delete_vector_elements(std::vector<T*>& vec)
 {

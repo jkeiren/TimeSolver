@@ -19,9 +19,10 @@
  */
 
 #include <getopt.h>
+#include <cstdlib>
 #include <iostream>
-#include <string.h>
-#include <stdio.h>
+#include <cstring>
+#include <cstdio>
 #include <map>
 #include <set>
 #include <deque>
@@ -56,6 +57,7 @@ void printUsage() {
   std::cerr << "\t option: --debug/-d  print debug information which includes the proof tree"
       << std::endl;
   std::cerr << "\t option: --tabled/-t print out the end caches of sequents" << std::endl;
+  std::cerr << "\t option: --hash/-H   sets the number of hashing bins to the number specified. Should be a power of 2" << std::endl;
   std::cerr << "\t option: --help/-h   this help info" << std::endl;
   std::cerr << "\t option: --version   print the version of the tool" << std::endl;
   std::cerr << "\t option: --no-caching/-n disables performance-optimizing "
@@ -99,10 +101,13 @@ void parse_command_line(int argc, char** argv, prover_options& opt) {
         opt.tabled = true;
         break;
       case 'H': // change the Hash Size
-        opt.nHash = atoi(optarg);
-        opt.nbits = opt.nHash - 1;
+        opt.nHash = strtoul(optarg, nullptr, 0);
         if (opt.nHash < 1) {
-          std::cerr << "Hashed number must be greater than 0." << std::endl;
+          std::cerr << "Number of hashing bins must be greater than 0." << std::endl;
+          exit(-1);
+        }
+        if (!is_power_of_two(opt.nHash)) {
+          std::cerr << "Number of hashing bins must be a power of 2." << std::endl;
           exit(-1);
         }
         break;

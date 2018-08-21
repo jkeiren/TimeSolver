@@ -14,11 +14,7 @@ struct prover_options {
   bool tabled;
 
   /** The size of the Hash table of Sequents: nBits + 1 */
-  int nHash;
-
-  /** The maximum number of bits used in the hashing function
-   * when storing discrete states. */
-  int nbits;
+  unsigned long nHash;
 
   /** Debug boolean to enable or disable known true and known false caches.
    * This parameter does not influence caching of circularities. As a result,
@@ -26,7 +22,7 @@ struct prover_options {
   bool useCaching;
 
   prover_options()
-      : debug(false), tabled(false), nHash(16), nbits(0xF), useCaching(true) {}
+      : debug(false), tabled(false), nHash(16), useCaching(true) {}
 };
 
 #endif // PROVER_OPTIONS_HH
