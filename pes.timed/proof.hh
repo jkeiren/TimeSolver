@@ -1531,63 +1531,21 @@ inline void prover::do_proof_place_predicate(const SubstList& discrete_state,
 
   /* First look in known true and false sequent tables */
   if (options.useCaching) {
-    { // restricted block for known false sequents
-      /* First look in known False Sequent tables.
-       * Note: The False sequents with placeholders do not
-       * need to store placeholders. */
-      SequentPlace* cached_sequent =
-          cache.Xlist_false_ph.find_sequent(discrete_state, formula);
-      if (cached_sequent != nullptr &&
-          cached_sequent->tabled_false_sequent(zone)) {
-        // Found known false
-        place->makeEmpty();
-        cpplog(cpplogging::debug)
-            << "---(Invalid) Located a Known False Sequent ----" << std::endl
-            << std::endl;
-
-        /* Update backpointers to add possible pointer for parent
-         * This is a bit conservative */
-        /* Now that we have a proven sequent, add the backpointer
-         * from the child to the parent */
-        if (parentPlaceRef != nullptr) {
-          cached_sequent->addParent(parentPlaceRef);
-        } else { // Parent is regular sequent
-          cached_sequent->addParent(parentRef);
-        }
-        return;
-      }
-    }
-
-    /* Next look in known True Sequent tables. */
-    { // restricted block for known true sequents
-      SequentPlace* cached_sequent =
-          cache.Xlist_true_ph.find_sequent(discrete_state, formula);
+    cpplog(cpplogging::debug1) << "Looking for sequent in known-false and known-true cache" << std::endl;
+    if (cache.is_known_false_sequent(discrete_state, zone, formula, parentRef, parentPlaceRef)) {
+      cpplog(cpplogging::debug)
+          << "---(Invalid) Located a Known False Sequent ----" << std::endl
+          << std::endl;
+      place->makeEmpty();
+      return;
+    } else {
       DBMList cached_placeholder(INFTYDBM);
-      /* Note: tempPlace is changed by tabled_sequentPlace() */
-      if (cached_sequent != nullptr &&
-          cached_sequent->tabled_sequent(zone, &cached_placeholder)) {
-        // Found known true
+      if (cache.is_known_true_sequent(discrete_state, zone, formula, &cached_placeholder, parentRef, parentPlaceRef)) {
         *place = std::move(cached_placeholder);
-        if (place->emptiness()) {
-          // returning placeholder must be non-empty for the sequent
-          // to be valid
-          return;
-        }
-        // Note: we intersect the current found placeholder
-        // with the placeholder stored in the sequent.
-
-        cpplog(cpplogging::debug)
-            << "---(Valid) Located a Known True Sequent ----" << std::endl
-            << std::endl;
-
-        /* Update backpointers to add possible pointer for parent
-         * This is a bit conservative */
-        /* Now that we have a proven sequent, add the backpointer
-         * in the cache from the child to the parent */
-        if (parentPlaceRef != nullptr) {
-          cached_sequent->addParent(parentPlaceRef);
-        } else { // Parent is regular sequent
-          cached_sequent->addParent(parentRef);
+        if(!place->emptiness()) {
+          cpplog(cpplogging::debug)
+              << "---(Valid) Located a Known True Sequent ----" << std::endl
+              << std::endl;
         }
         return;
       }
@@ -1595,67 +1553,51 @@ inline void prover::do_proof_place_predicate(const SubstList& discrete_state,
   }
 
   /* Now deal with greatest fixpoint and least fixpoint circularity */
-  SequentPlace* h = nullptr;
-  { // Restricted scope for detecting circularities
-    if (formula.is_gfp()) { // Thus a Greatest Fixpoint
-      /* Already looked in known false so no need to do so */
-      h = cache.Xlist_pGFP_ph.find_sequent_else_add(discrete_state, formula);
-      if (h->tabled_sequent_gfp(zone, place)) {
-        // Found gfp Circularity - thus valid
-        cpplog(cpplogging::debug)
-            << "---(Valid) Located True Sequent or gfp Circularity ----"
-            << std::endl
-            << std::endl;
+  SequentPlace* cached_fp_sequent = nullptr;
+  // Restricted scope for detecting circularities
+  if (formula.is_gfp()) { // Thus a Greatest Fixpoint
+    std::pair<SequentPlace*, bool> gfp_cycle = cache.completes_gfp_cycle(discrete_state, zone, formula, place, parentRef, parentPlaceRef);
 
-        /* Now update backpointer for greatest fixpoint circularity */
-        if (parentPlaceRef != nullptr) {
-          h->addParent(parentPlaceRef);
-        } else { // Parent is regular sequent
-          h->addParent(parentRef);
-        }
+    if (gfp_cycle.second) {
+      cpplog(cpplogging::debug)
+        << "---(Valid) Located True Sequent or gfp Circularity ----"
+        << std::endl
+        << std::endl;
 
-        // Add sequent to known true cache
-        if (options.useCaching) {
-          SequentPlace* cached_true_sequent =
-              cache.Xlist_true_ph.find_sequent_else_add(discrete_state, formula);
-          cached_true_sequent->update_sequent(zone, place);
-        }
-        return;
+      // Add sequent to known true cache
+      if (options.useCaching) {
+        cache.cache_true_sequent(discrete_state, zone, formula, *place);
       }
-
-      h->push_sequent(std::make_pair(new DBM(zone), new DBMList(*place)));
-    } else { // Thus, a least fixpoint
-      // Now look in lfp circularity cache
-      h = cache.Xlist_pLFP_ph.find_sequent_else_add(discrete_state, formula);
-      if (h->tabled_sequent_lfp(zone, place)) {
-        // Found lfp circularity - thus invalid
-        place->makeEmpty();
-
-        cpplog(cpplogging::debug)
-            << "---(Invalid) Located lfp Circularity ----" << std::endl
-            << std::endl;
-
-        /* Now update backpointer for least fixpoint circularity */
-        if (parentPlaceRef != nullptr) {
-          h->addParent(parentPlaceRef);
-        } else { // Parent is regular sequent
-          h->addParent(parentRef);
-        }
-
-        // Now Put Sequent in False Cache
-        if (options.useCaching) {
-          SequentPlace* cached_false_sequent =
-              cache.Xlist_false_ph.find_sequent_else_add(discrete_state, formula);
-          cached_false_sequent->update_false_sequent(zone);
-        }
-        return;
-      }
-
-      h->push_sequent(std::make_pair(new DBM(zone), new DBMList(*place)));
+      return;
+    } else {
+      cached_fp_sequent = gfp_cycle.first;
     }
-  } // End scope for circularity
 
-  assert(h != nullptr);
+  } else { // Thus, a least fixpoint
+    std::pair<SequentPlace*, bool> lfp_cycle = cache.completes_lfp_cycle(discrete_state, zone, formula, place, parentRef, parentPlaceRef);
+
+    if (lfp_cycle.second) {
+      place->makeEmpty();
+
+      cpplog(cpplogging::debug)
+          << "---(Invalid) Located lfp Circularity ----" << std::endl
+          << std::endl;
+
+      // Now Put Sequent in False Cache
+      if (options.useCaching) {
+        cache.cache_false_sequent(discrete_state, zone, formula, *place);
+      }
+      return;
+
+    } else {
+      cached_fp_sequent = lfp_cycle.first;
+    }
+
+  }
+  assert(cached_fp_sequent != nullptr);
+
+  cached_fp_sequent->push_sequent(std::make_pair(new DBM(zone), new DBMList(*place)));
+
   // no least/greatest fixed point circularity was found; the sequent has been
   // added to the appropriate cache
 
@@ -1665,7 +1607,7 @@ inline void prover::do_proof_place_predicate(const SubstList& discrete_state,
    * to use the previous parent */
   SequentPlace* tempParentPlace = parentPlaceRef;
   /* Get the current variable */
-  parentPlaceRef = h;
+  parentPlaceRef = cached_fp_sequent;
 
   do_proof_place(discrete_state, zone, place, *e);
 
@@ -1673,73 +1615,20 @@ inline void prover::do_proof_place_predicate(const SubstList& discrete_state,
    * predicate */
   parentPlaceRef = tempParentPlace;
 
-  h->pop_sequent(); // XXX Why do this at a different place than in the
+  cached_fp_sequent->pop_sequent(); // XXX Why do this at a different place than in the
                     // non-placeholder case? (JK)
   // ds might be empty, but we leave it in
 
   // Now Purge updated premise
   place->cf();
 
-  /* Key Concept of Purging:
-   * If Was True, discovered false, check that
-   *		Z_now_false <= Z_cached_true | or | Z_cached_true >= Z_now_false
-   * If Was False, discovered true, check that
-   *		Z_now_true >= Z_cached_false | or | Z_cached_false <= Z_now_true
-   * This Must be done regardless of how the tabling
-   * is done for that specific cache */
   if (options.useCaching) {
     if (!place->emptiness()) {
-      /* First look in opposite parity Caches */
-      bool madeEmpty = false;
-      SequentPlace* cached_false_sequent =
-          cache.Xlist_false_ph.look_for_and_purge_rhs_sequent(
-              std::make_pair(&zone, place), discrete_state, formula, false,
-              &madeEmpty);
-
-      /* Now purge backpointers */
-      if (cached_false_sequent != nullptr) {
-        cache.look_for_and_purge_rhs_backStack(
-            cached_false_sequent->parents(),
-            cached_false_sequent->parents_with_placeholders());
-
-        // this delete is necessary for memory management but problematic
-        if (madeEmpty) {
-          delete cached_false_sequent;
-        }
-      }
-
-      // Now update in proper Cache
-      SequentPlace* cached_true_sequent =
-          cache.Xlist_true_ph.find_sequent_else_add(discrete_state, formula);
-      cached_true_sequent->update_sequent(zone, place);
-
+      cache.purge_false_sequent(discrete_state, zone, formula, *place);
+      cache.cache_true_sequent(discrete_state, zone, formula, *place);
     } else {
-      /* place is empty */
-      /* First look in opposite parity Cache */
-      // Now look in placeholder caches
-      bool madeEmpty = false;
-      SequentPlace* cached_true_sequent =
-          cache.Xlist_true_ph.look_for_and_purge_rhs_sequent(
-              std::make_pair(&zone, place), discrete_state, formula, true,
-              &madeEmpty);
-
-      /* Now purge backpointers.
-       * Ignore circularity booleans because they do not form backpointers */
-      if (cached_true_sequent != nullptr) {
-        cache.look_for_and_purge_rhs_backStack(
-            cached_true_sequent->parents(),
-            cached_true_sequent->parents_with_placeholders());
-
-        // This delete is necessary for memory management but problematic
-        if (madeEmpty) {
-          delete cached_true_sequent;
-        }
-      }
-
-      // Now update in proper Cache
-      SequentPlace* cached_false_sequent =
-          cache.Xlist_false_ph.find_sequent_else_add(discrete_state, formula);
-      cached_false_sequent->update_false_sequent(zone);
+      cache.purge_true_sequent(discrete_state, zone, formula, *place);
+      cache.cache_false_sequent(discrete_state, zone, formula, *place);
     }
   }
 }

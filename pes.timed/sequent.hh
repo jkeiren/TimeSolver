@@ -494,7 +494,7 @@ public:
    * @return true: (lhs, lhsPlace) <= some sequent in s
    * (consequently, the sequent is true), false: otherwise.*/
   bool tabled_sequent_gfp(const DBM& lhs,
-                                 const DBMList *const lhsPlace) {
+                          const DBMList *const lhsPlace) {
     return std::find_if(m_dbms.begin(), m_dbms.end(),
                         [&](const std::pair<const DBM *, const DBMList *> x) {
                           return *(x.first) == lhs && *(x.second) >= *lhsPlace;
@@ -512,18 +512,18 @@ public:
    * @param lhs (*) The DBM of the newly-established clock state.
    * @param lhsPlace (*) The DBMList of the newly-established clock state. */
   void update_sequent(const DBM& lhs,
-                             const DBMList *const lhsPlace) {
-    assert(lhsPlace->isInCf());
+                      const DBMList& lhsPlace) {
+    assert(lhsPlace.isInCf());
     for (std::pair<DBM *, DBMList *> pair: m_dbms) {
       /* Extra work for placeholders. For now,
        * force equality on LHS sequent and use tabling logic
        * for placeholders. */
-      if (*pair.first == lhs && *pair.second <= *lhsPlace) {
-        *pair.second = *lhsPlace;
+      if (*pair.first == lhs && *pair.second <= lhsPlace) {
+        *pair.second = lhsPlace;
         return;
       }
     }
-    m_dbms.emplace_back(new DBM(lhs), new DBMList(*lhsPlace));
+    m_dbms.emplace_back(new DBM(lhs), new DBMList(lhsPlace));
   }
 
   /** Assumes the current sequent is known to be true, and updates it with a
