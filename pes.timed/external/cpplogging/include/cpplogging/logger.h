@@ -549,7 +549,7 @@ std::set<output_policy*> initialise_output_policies()
 }
 
 /// Unless otherwise specified, we compile away all debug messages that have
-/// a log level greater than MCRL2_MAX_LOG_LEVEL.
+/// a log level greater than CPPLOG_MAX_LOG_LEVEL.
 #ifndef CPPLOG_MAX_LOG_LEVEL
 #define CPPLOG_MAX_LOG_LEVEL cpplogging::debug
 #endif
