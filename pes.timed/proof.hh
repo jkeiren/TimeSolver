@@ -728,6 +728,7 @@ inline bool prover::do_proof_predicate(const SubstList& discrete_state,
 
   // Restore caller-saved value of parentRef.
   parentRef = parentRef_saved;
+  cached_fp_sequent->pop_sequent();
 
   // We have now recursively established the value of the rhs.
   // This possibly changes the value of some cached items, since we now know whether we can prove
@@ -744,9 +745,6 @@ inline bool prover::do_proof_predicate(const SubstList& discrete_state,
     }
   }
 
-  /* The line: h->addParent(parentRef);
-   * is not needed since the backpointer stored before proof. */
-  cached_fp_sequent->pop_sequent();
   return retVal;
 }
 
