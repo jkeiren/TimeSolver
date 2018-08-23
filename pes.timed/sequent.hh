@@ -28,13 +28,30 @@
 #ifndef SEQUENT_HH
 #define SEQUENT_HH
 
+#include "cpplogging/logger.h"
 #include "ExprNode.hh"
 
+class Sequent;
 class SequentPlace; // forward declaration for parent scope
 
 /** This defines a DBMset as a vector of DBM
  * arrays (DBM Arrays). */
 typedef std::vector<DBM*> DBMset;
+
+std::ostream& operator<<(std::ostream& os, const Sequent& s);
+std::ostream& operator<<(std::ostream& os, const SequentPlace& s);
+
+std::ostream& operator<<(std::ostream& os, const DBMset& dbms) {
+  os << "{ ";
+  for(DBMset::const_iterator i = dbms.begin(); i != dbms.end(); ++i) {
+    if(std::distance(dbms.begin(), i) > 0) {
+      os << ", ";
+    }
+    os << **i;
+  }
+  os << " }";
+  return os;
+}
 
 /** The internal representation of a proof sequent with
  * a clock zone for the clock state. A sequent is a
@@ -90,7 +107,10 @@ public:
   const SubstList *discrete_state() const { return m_discrete_state; }
 
   /** Add a parent sequent */
-  void addParent(Sequent *s) { m_parent_sequents.push_back(s); }
+  void addParent(Sequent *s) {
+    cpplog(cpplogging::debug1, "sequent") << "Adding " << *s << " as parent of " << *this << std::endl;
+    m_parent_sequents.push_back(s);
+  }
 
   /** Get parent sequents */
   const std::vector<Sequent *> &parents() const { return m_parent_sequents; }
@@ -129,7 +149,7 @@ public:
    * @param lhs (*) The DBM to compare the sequent's DBMs to.
    * @return true: lhs <= some sequent in s
    * (consequently, the sequent is true), false: otherwise.*/
-   bool tabled_sequent(const DBM& lhs) const {
+  bool tabled_sequent(const DBM& lhs) const {
     return std::any_of(m_dbms.begin(), m_dbms.end(), [&lhs](const DBM* x) { return *x >= lhs; });
   }
 
@@ -211,6 +231,11 @@ public:
     }
   }
 
+
+  void print(std::ostream& os) const {
+    os << "(" << *m_discrete_state << ", " << m_dbms << " |- " << *m_rhs;
+  }
+
 protected:
   /** The right hand side expression of the sequent. */
   const ExprNode *m_rhs;
@@ -236,6 +261,18 @@ protected:
  * of placeholder proofs, since (for faster performance) the union
  * of clock zones is restricted to placeholders. */
 typedef std::vector<std::pair<DBM *, DBMList *> > DBMPlaceSet;
+
+std::ostream& operator<<(std::ostream& os, const DBMPlaceSet& dbms) {
+  os << "{ ";
+  for(DBMPlaceSet::const_iterator i = dbms.begin(); i != dbms.end(); ++i) {
+    if(std::distance(dbms.begin(), i) > 0) {
+      os << ", ";
+    }
+    os << "(" << *(i->first) << ", " << *(i->second);
+  }
+  os << " }";
+  return os;
+}
 
 /** The internal representation of a proof sequent with
  * a (potential) union of clock zones for the clock state.
@@ -335,10 +372,16 @@ public:
   }
 
   /** Add a parent sequent */
-  void addParent(Sequent *s) { m_parent_sequents.push_back(s); }
+  void addParent(Sequent *s) {
+    cpplog(cpplogging::debug1, "sequent") << "Adding " << *s << " as parent of " << *this << std::endl;
+    m_parent_sequents.push_back(s);
+  }
 
   /** Add a parent sequent (with placeholder) */
-  void addParent(SequentPlace *s) { m_parent_sequents_placeholder.push_back(s); }
+  void addParent(SequentPlace *s) {
+    cpplog(cpplogging::debug1, "sequent") << "Adding " << *s << " as parent of " << *this << std::endl;
+    m_parent_sequents_placeholder.push_back(s);
+  }
 
   /** Get parent sequents */
   const std::vector<Sequent *> &parents() const { return m_parent_sequents; }
@@ -509,7 +552,13 @@ public:
     m_dbms.emplace_back(new DBM(lhs), new DBMList(EMPTY));
   }
 
+  void print(std::ostream& os) const {
+    os << "(" << *m_discrete_state << ", " << m_dbms << " |- " << *m_rhs;
+  }
+
 protected:
+
+
   /** The right hand side expression of the sequent. */
   const ExprNode *m_rhs;
   /** The discrete state of the left of a sequent, represented
@@ -536,5 +585,15 @@ protected:
    * placeholder (parSequent). */
   std::vector<Sequent *> m_parent_sequents;
 };
+
+inline std::ostream& operator<<(std::ostream& os, const Sequent& s) {
+  s.print(os);
+  return os;
+}
+
+inline std::ostream& operator<<(std::ostream& os, const SequentPlace& s) {
+  s.print(os);
+  return os;
+}
 
 #endif // SEQUENT_HH

@@ -153,6 +153,7 @@ public:
       const std::size_t index = get_index(discrete_state, formula);
       Xlist[index].emplace_back(new SequentType(&formula, &discrete_state));
       result = Xlist[index].back();
+      cpplog(cpplogging::debug1, "sequent_stack") << "Added new sequent " << *result << " to sequent stack" << std::endl;
     }
     return result;
   }
@@ -171,6 +172,7 @@ public:
    * specified as parameters. */
   SequentType* look_for_sequent(const SubstList& discrete_state,
                                 const ExprNode& formula) const {
+    cpplog(cpplogging::debug1, "sequent_stack") << "Locating (" << discrete_state << ", ___) |- " << formula << " in sequent stack" << std::endl;
     const std::size_t index = get_index(discrete_state, formula);
     typename stack_t::const_iterator it = std::find_if(
           Xlist[index].begin(), Xlist[index].end(),

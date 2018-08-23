@@ -469,11 +469,7 @@ protected:
       const DBMList& placeholder1,
       const DBMList& placeholder2) const {
 
-    // By default do not print the debugging info for computing side condition.
-    // The this next line to debug to get the output
-      cpplogging::logger::set_reporting_level(cpplogging::verbose, "exists_rel_sidecondition");
-
-    cpplog(cpplogging::debug, "exists_rel_sidecondition") << "Computing side condition for relativized exists with zone " << zone << std::endl
+    cpplog(cpplogging::debug1, "exists_rel_sidecondition") << "Computing side condition for relativized exists with zone " << zone << std::endl
                               << " placeholder1: " << placeholder1 << std::endl
                               << " placeholder2: " << placeholder2 << std::endl;
     DBM succ_zone(zone);
@@ -486,25 +482,25 @@ protected:
     pred_placeholder2_strict.predClosureRev();
     pred_placeholder2_strict.cf();
 
-    cpplog(cpplogging::debug, "exists_rel_sidecondition") << "  pre_<(placeholder2) = " << pred_placeholder2_strict << std::endl;
+    cpplog(cpplogging::debug1, "exists_rel_sidecondition") << "  pre_<(placeholder2) = " << pred_placeholder2_strict << std::endl;
 
     // left hand side of containment check
     DBMList succ_zone_and_pred_placeholder2_strict(succ_zone);
     succ_zone_and_pred_placeholder2_strict.intersect(pred_placeholder2_strict);
     succ_zone_and_pred_placeholder2_strict.cf();
 
-    cpplog(cpplogging::debug, "exists_rel_sidecondition") << "  succ((l,cc)) && pre_<(placeholder2) = " << succ_zone_and_pred_placeholder2_strict << std::endl;
+    cpplog(cpplogging::debug1, "exists_rel_sidecondition") << "  succ((l,cc)) && pre_<(placeholder2) = " << succ_zone_and_pred_placeholder2_strict << std::endl;
 
     // right hand side of containment check
     DBMList succ_zone_and_placeholder1(succ_zone);
     succ_zone_and_placeholder1.intersect(placeholder1);
     succ_zone_and_placeholder1.cf();
 
-    cpplog(cpplogging::debug, "exists_rel_sidecondition") << "  succ((l,cc)) && placeholder1 = " << succ_zone_and_placeholder1 << std::endl;
+    cpplog(cpplogging::debug1, "exists_rel_sidecondition") << "  succ((l,cc)) && placeholder1 = " << succ_zone_and_placeholder1 << std::endl;
 
     if(succ_zone_and_pred_placeholder2_strict <= succ_zone_and_placeholder1) {
       *result = placeholder2;
-      cpplog(cpplogging::debug, "exists_rel_sidecondition") << "   placeholder2 works!" << std::endl;
+      cpplog(cpplogging::debug1, "exists_rel_sidecondition") << "   placeholder2 works!" << std::endl;
     } else {
       result->makeEmpty();
 
@@ -512,31 +508,31 @@ protected:
       !placeholder1_complement;
       placeholder1_complement.cf();
 
-      cpplog(cpplogging::debug, "exists_rel_sidecondition") << "   !placeholder1 = " << placeholder1_complement << std::endl;
+      cpplog(cpplogging::debug1, "exists_rel_sidecondition") << "   !placeholder1 = " << placeholder1_complement << std::endl;
 
       // Process on a per-DBM basis
       for (const DBM& placeholder2_zone: placeholder2)
       {
-        cpplog(cpplogging::debug, "exists_rel_sidecondition") << "    placeholder2-part = " << placeholder2_zone << std::endl;
+        cpplog(cpplogging::debug1, "exists_rel_sidecondition") << "    placeholder2-part = " << placeholder2_zone << std::endl;
 
         DBM pred_placeholder2_zone_strict(placeholder2_zone);
         pred_placeholder2_zone_strict.pre();
         pred_placeholder2_zone_strict.predClosureRev();
         pred_placeholder2_zone_strict.cf();
 
-        cpplog(cpplogging::debug, "exists_rel_sidecondition") << "    pre_<(placeholder2-part) = " << pred_placeholder2_zone_strict << std::endl;
+        cpplog(cpplogging::debug1, "exists_rel_sidecondition") << "    pre_<(placeholder2-part) = " << pred_placeholder2_zone_strict << std::endl;
 
         // left hand side of containment check
         DBMList succ_zone_and_pred_placeholder2_zone_strict(succ_zone);
         succ_zone_and_pred_placeholder2_zone_strict.intersect(pred_placeholder2_zone_strict);
         succ_zone_and_pred_placeholder2_zone_strict.cf();
-        cpplog(cpplogging::debug, "exists_rel_sidecondition") << "    succ((l,cc)) && pre_<(placeholder2-part) = " << succ_zone_and_pred_placeholder2_zone_strict << std::endl;
+        cpplog(cpplogging::debug1, "exists_rel_sidecondition") << "    succ((l,cc)) && pre_<(placeholder2-part) = " << succ_zone_and_pred_placeholder2_zone_strict << std::endl;
 
         DBMList bad(succ_zone_and_pred_placeholder2_zone_strict);
         bad.intersect(placeholder1_complement);
         bad.cf();
 
-        cpplog(cpplogging::debug, "exists_rel_sidecondition") << "    bad = " << bad << std::endl;
+        cpplog(cpplogging::debug1, "exists_rel_sidecondition") << "    bad = " << bad << std::endl;
 
         DBMList bad_successors_strict(bad);
         bad_successors_strict.suc();
@@ -551,7 +547,7 @@ protected:
         placeholder.intersect(bad_successors_strict_complement);
         placeholder.cf();
 
-        cpplog(cpplogging::debug, "exists_rel_sidecondition") << "    adding placeholder " << placeholder << std::endl;
+        cpplog(cpplogging::debug1, "exists_rel_sidecondition") << "    adding placeholder " << placeholder << std::endl;
 
         result->addDBMList(placeholder);
       }
@@ -638,7 +634,7 @@ protected:
       if(succ_zone_restricted_to_placeholder_forall.emptiness() || succ_zone_restricted_to_placeholder_forall <= succ_zone_and_placeholder) {
         *result = placeholder_forall;
       } else {
-        cpplog(cpplogging::debug, "forall_place_sidecondition")
+        cpplog(cpplogging::debug1, "forall_place_sidecondition")
             << "placeholder_forall: " << placeholder_forall << std::endl
             << "succ((l,cc) && placeholder_forall): " << succ_zone_restricted_to_placeholder_forall << std::endl
             << "succ((l,cc)) && old placeholder_forall: " << succ_zone_and_placeholder << std::endl;
@@ -659,6 +655,7 @@ inline bool prover::do_proof_predicate(const SubstList& discrete_state,
 
   /* Look in Known True and Known False Sequent Caches */
   if (options.useCaching) {
+    cpplog(cpplogging::debug1) << "Looking for sequent in known-false and known-true cache" << std::endl;
     if (cache.is_known_false_sequent(discrete_state, zone, formula, parentRef)) {
       cpplog(cpplogging::debug)
           << "---(Invalid) Located a Known False Sequent ----" << std::endl
@@ -670,13 +667,16 @@ inline bool prover::do_proof_predicate(const SubstList& discrete_state,
           << std::endl;
       return true;
     }
+    cpplog(cpplogging::debug1) << "... not found in caches" << std::endl;
   }
+
 
   /* Now deal with greatest fixpoint circularity and least
    * fixpoint circularity */
   Sequent* h = nullptr;
   { // Restricted scope for detecting circularities
     if (formula.is_gfp()) { // Thus a Greatest Fixpoint
+      cpplog(cpplogging::debug1) << "Checking circularity of gfp " << formula << std::endl;
       h = cache.Xlist_pGFP.locate_sequent(discrete_state, formula);
       if (h->tabled_sequent(zone)) {
         // Found gfp Circularity - thus valid
@@ -695,6 +695,7 @@ inline bool prover::do_proof_predicate(const SubstList& discrete_state,
         return true; // greatest fixed point circularity found
       }
     } else { // Thus, a least fixpoint
+      cpplog(cpplogging::debug1) << "Checking circularity of lfp " << formula << std::endl;
       // Now look for a Circularity
       h = cache.Xlist_pLFP.locate_sequent(discrete_state, formula);
       if (h->tabled_sequent_lfp(zone)) {

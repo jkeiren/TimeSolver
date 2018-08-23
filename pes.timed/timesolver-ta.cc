@@ -73,9 +73,10 @@ void printVersion() {
 /** Parsers the command line */
 void parse_command_line(int argc, char** argv, prover_options& opt) {
   /* Sets parameters and looks for inputs from the command line. */
-  const char* const short_opts = "dhntH:";
+  const char* const short_opts = "dDhntH:";
   const option long_opts[] {
     {"debug", 0, nullptr, 'd'},
+    {"full-debug", 0, nullptr, 'D'},
     {"help", 0, nullptr, 'h'},
     {"no-caching", 0, nullptr, 'n'},
     {"tabled-output", 0, nullptr, 't'},
@@ -94,6 +95,9 @@ void parse_command_line(int argc, char** argv, prover_options& opt) {
     switch (g_opt) {
       case 'd':
         opt.debug = true; // Turn on Debug Mode
+        break;
+      case 'D':
+        opt.full_debug = true; // Turn on Debug Mode
         break;
       case 't': // Turn on tabled output
         /* This outputs the lists of tabled sequents
@@ -155,6 +159,9 @@ int main(int argc, char** argv) {
   parse_command_line(argc, argv, opt);
   if (opt.debug) {
     cpplogging::logger::set_reporting_level(cpplogging::debug);
+  }
+  if (opt.full_debug) {
+    cpplogging::logger::set_reporting_level(cpplogging::debug5);
   }
 
   /** Filename for the input */

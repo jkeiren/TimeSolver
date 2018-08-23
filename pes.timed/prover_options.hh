@@ -9,6 +9,11 @@ struct prover_options {
    * program with -d sets it to true. */
   bool debug;
 
+  /** True if full debug mode is on, and
+   * False if full debug mode is off. Running the
+   * program with -D sets it to true. */
+  bool full_debug;
+
   /** If True, use tables in the output.  Else (False),
    * print regular output. */
   bool tabled;
