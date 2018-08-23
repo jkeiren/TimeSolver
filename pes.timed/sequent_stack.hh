@@ -100,7 +100,7 @@ protected:
   constexpr const DBM* getDBM(const DBM* p) const { return p; }
 
 public:
-  sequentStackT(const pes& input_pes, const int num_hash_bins)
+  sequentStackT(const pes& input_pes, const std::size_t num_hash_bins)
       : m_input_pes(input_pes),
         m_num_hash_bins(num_hash_bins),
         m_atomic_size(input_pes.atomic()->size()),
@@ -141,8 +141,6 @@ public:
    * specified as parameters. */
   SequentType* locate_sequent(const SubstList& discrete_state,
                               const ExprNode& formula) {
-    //SequentType* const sequent,
-    //                          int predicate_index) const {
     assert(formula.getOpType() == PREDICATE);
 
     SequentType* result = look_for_sequent(discrete_state, formula);
