@@ -32,7 +32,6 @@ protected:
   const std::size_t m_hash_bitmask; // bitmask for hashing
   const std::size_t m_predicates_size; // number of predicates in PES.
 
-  // Maps indices of predicate variables to maps of discrete state -> SequentType*.
   std::vector<stack_t> Xlist; // Vector of vectors (stacks)
 
   /** Provide the hash function to hash atomic (discrete location) variables
@@ -57,7 +56,7 @@ protected:
 
   /** Get the right index into the stack */
   std::size_t get_index(const SubstList& discrete_state,
-                const ExprNode& formula) const {
+                        const ExprNode& formula) const {
     return predicate_index(formula) * m_num_hash_bins + hash(discrete_state);
   }
 
@@ -99,6 +98,13 @@ protected:
 
   constexpr const DBM* getDBM(const DBM* p) const { return p; }
 
+  /* Make this protected eventually */
+  int predicate_index(const ExprNode& formula) const
+  {
+    assert(formula.getOpType() == PREDICATE);
+    return m_input_pes.lookup_predicate(formula.getPredicate())->getIntVal() - 1;
+  }
+
 public:
   sequentStackT(const pes& input_pes, const std::size_t num_hash_bins)
       : m_input_pes(input_pes),
@@ -113,16 +119,24 @@ public:
 
   ~sequentStackT() {
     for (stack_t& stack : Xlist) {
-      // Now Iterate and delete for each vector
       delete_vector_elements(stack);
     }
   }
 
-  /* Make this protected eventually */
-  int predicate_index(const ExprNode& formula) const
-  {
-    assert(formula.getOpType() == PREDICATE);
-    return m_input_pes.lookup_predicate(formula.getPredicate())->getIntVal() - 1;
+  /* Add a sequent to the cache.
+   * pre: there is no sequent for discrete_state, formula in the cache,
+   *      i.e. find_sequent(discrete_state, formula) returns nullptr.
+   */
+  SequentType* add_sequent(const SubstList& discrete_state,
+                           const ExprNode& formula) {
+
+    assert(find_sequent(discrete_state, formula) == nullptr);
+    const std::size_t index = get_index(discrete_state, formula);
+    Xlist[index].emplace_back(new SequentType(&formula, &discrete_state));
+
+    cpplog(cpplogging::debug1, "sequent_stack") << "Added new sequent " << *Xlist[index].back() << " to sequent stack" << std::endl;
+
+    return Xlist[index].back();
   }
 
   /** Looks in a cache of sequents (the stack Xlist) for the right hand side
@@ -131,7 +145,7 @@ public:
    * method is only used for sequents of predicate variable right hand sided.
    * Because this method both finds a sequent and to adds it into a cache, it
    * makes an unfound sequent (for efficiency). To merely return if no sequent
-   * is found, use look_for_sequent(...) instead. The returned partial sequent
+   * is found, use find_sequent(...) instead. The returned partial sequent
    * is then examined for the desired clock state (with tabled_sequent()).
    * @param s (*) The sequent; only its discrete state is examined, but the
    * entire sequent is added if not found.
@@ -139,21 +153,15 @@ public:
    * bin.
    * @return The reference to the sequent with the three components
    * specified as parameters. */
-  SequentType* locate_sequent(const SubstList& discrete_state,
+  SequentType* find_sequent_else_add(const SubstList& discrete_state,
                               const ExprNode& formula) {
     assert(formula.getOpType() == PREDICATE);
-
-    SequentType* result = look_for_sequent(discrete_state, formula);
-    if (result == nullptr) {
-      /* Sequent not found; add it to the cache.
-       * (This is why we must take in the entire Sequent s as a parameter
-       * and not just its sublist component.) */
-      const std::size_t index = get_index(discrete_state, formula);
-      Xlist[index].emplace_back(new SequentType(&formula, &discrete_state));
-      result = Xlist[index].back();
-      cpplog(cpplogging::debug1, "sequent_stack") << "Added new sequent " << *result << " to sequent stack" << std::endl;
+    SequentType* result = find_sequent(discrete_state, formula);
+    if (result != nullptr) {
+      return result;
+    } else {
+      return add_sequent(discrete_state, formula);
     }
-    return result;
   }
 
   /** Looks in a cache of sequents (the stack Xlist)
@@ -168,8 +176,8 @@ public:
    * bin.
    * @return The reference to the sequent with the three components
    * specified as parameters. */
-  SequentType* look_for_sequent(const SubstList& discrete_state,
-                                const ExprNode& formula) const {
+  SequentType* find_sequent(const SubstList& discrete_state,
+                            const ExprNode& formula) const {
     cpplog(cpplogging::debug1, "sequent_stack") << "Locating (" << discrete_state << ", ___) |- " << formula << " in sequent stack" << std::endl;
     const std::size_t index = get_index(discrete_state, formula);
     typename stack_t::const_iterator it = std::find_if(
@@ -192,9 +200,6 @@ public:
    * or a change in truth of a sequent.
    * @param lhs (*) The DBM of the sequent
    * @param s (*) The sequent (its discrete state is most important)
-   * @param Xlist (&*) The sequent cache to examine
-   * @param pInd The index of the predicate; used to find the proper hashing
-   * bin.
    * @param tableCheck The boolean indicating whether to table for false
    * sequents (make false) or true sequents (make true).  If tableCheck = true,
    * then we are aiming to purge sequents cached as true but discovered to be
@@ -263,22 +268,8 @@ public:
    * In order to purge backpointers quickly, clock state comparisons
    * are avoided and all clock states of potential backpointers
    * are conservatively purged (the proofs are still sound and complete).
-   * By assumption, the right
-   * hand side of Sequent s is the predicate variable specified
-   * by pInd. This method returns true if one or more sequents are
-   * purged and false otherwise. The caller uses a false return value
-   * to indicate that no further purging is needed (guarantees finite
-   * termination).
    * @param s (*) The sequent (its discrete state is most important)
-   * @param Xlist (&*) The sequent cache to examine
-   * @param pInd The index of the predicate; used to find the proper hashing
-   * bin.
-   * @param tableCheck The boolean indicating whether to table for false
-   * sequents (make false) or true sequents (make true).  If tableCheck = true,
-   * then we are aiming to purge sequents cached as true but discovered to be
-   * false. Likewise, if tableCheck = false, then we are aiming to purge
-   * sequents cached as false but discovered to be true.
-   * @return true: one or more sequents were purged; false: otherwise.*/
+   */
   void look_for_and_purge_rhs_sequent_state(const SequentType* const sequent) {
     const SubstList& discrete_state = *(sequent->discrete_state());
     const ExprNode& formula = *(sequent->rhs());
@@ -288,20 +279,7 @@ public:
          it != Xlist[index].end(); it++) {
       SequentType* ls = (*it);
 
-      /* For Now, purge the LHS Possibilities
-       * that are in line with the proper "tabling"
-       * or containment, which are specified by
-       * the tableCheck Boolean */
       if (discrete_state == *(ls->discrete_state())) {
-        /* Key Concept of Purging:
-         * If Was True (tableCheck is true), discovered false, check that
-         *		Z_now_false <= Z_cached_true | or | Z_cached_true >=
-         *Z_now_false If Was False (tableCheck is false), discovered true, check
-         *that Z_now_true >= Z_cached_false | or | Z_cached_false <= Z_now_true
-         * This Must be done regardless of how the tabling
-         * is done for that specific cache */
-        // Potential memory leak: may need to go through and delete DBMs
-        // Iterate Through and Delete every element of ds
         ls->delete_sequents();
         delete ls; // This line causes some problems
         // If sequent is empty, remove it from the list of sequents

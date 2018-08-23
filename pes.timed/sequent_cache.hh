@@ -18,59 +18,8 @@
 #include "sequent_stack.hh"
 
 class sequent_cache {
-public:
 
-  // Determine whether the predicate is cached as a known false sequent
-  bool is_known_false_sequent(const SubstList& discrete_state,
-                              const DBM& zone,
-                              const ExprNode& formula,
-                              Sequent* parentRef)
-  {
-    Sequent* cached_sequent =
-        Xlist_false.look_for_sequent(discrete_state, formula);
-    if (cached_sequent != nullptr &&
-        cached_sequent->tabled_false_sequent(zone)) {
-      /* Add backpointer to parent sequent (shallow copy) */
-      cached_sequent->addParent(parentRef);
-      return true;
-    }
-    return false;
-  }
-
-  // Determine whether the predicate is cached as a known true sequent
-  bool is_known_true_sequent(const SubstList& discrete_state,
-                              const DBM& zone,
-                              const ExprNode& formula,
-                              Sequent* parentRef)
-  { // Restricted scope for looking up true sequents
-    Sequent* cached_sequent =
-        Xlist_true.look_for_sequent(discrete_state, formula);
-    if (cached_sequent != nullptr && cached_sequent->tabled_sequent(zone)) {
-      /* Add backpointer to parent sequent (shallow copy) */
-      cached_sequent->addParent(parentRef);
-      return true;
-    }
-    return false;
-  }
-
-  void cache_true_sequent(const SubstList& discrete_state,
-                          const DBM& zone,
-                          const ExprNode& formula)
-  {
-    Sequent* cached_true_sequent =
-        Xlist_true.locate_sequent(discrete_state, formula);
-    cached_true_sequent->update_sequent(zone);
-  }
-
-  void cache_false_sequent(const SubstList& discrete_state,
-                          const DBM& zone,
-                          const ExprNode& formula)
-  {
-    Sequent* cached_false_sequent =
-        Xlist_false.locate_sequent(discrete_state, formula);
-    cached_false_sequent->update_false_sequent(zone);
-  }
-
+protected:
   /** XList_pGFP (XList) is an array of stacks, where each stack
    * is an array of sequents that
    * keeps track of all possible GFP Sequents
@@ -90,6 +39,9 @@ public:
    * is an array of sequents that
    * keeps track of all possible GFP Sequents
    * used for circularity (valid proofs) when placeholders are involved. */
+
+public:
+
   sequentStackPlace Xlist_pGFP_ph;
   /** XList_pLFP_ph is an array of stacks of sequents that
    * keeps track of all possible LFP Sequents
@@ -120,38 +72,160 @@ public:
         Xlist_false_ph(input_pes, num_hashing_bins)
   {}
 
-  /** Purge backpointers from all caches. Purging occurrs
-   * until no sequent was purged (not purging a sequent indicates that
-   * no further sequents need to be purged). For performance
-   * efficiency, this method passes pointers to vectors.
-   * Furthermore, for performance reasons, backpointers do not examine
-   * clock states and conservatively purge. This method handles
-   * both placeholder and non-placeholder sequents. Feed in an empty
-   * list for one of the parameters if only one type of sequent
-   * needs to be purged. We utilize one method so that non-placeholder
-   * sequents that are parents of placeholder sequents can be purged.
-   * @param initialPtr (*) The vector of initial
-   * non-placeholder sequents to purge.
-   * @param initialPlacePtr (*) The vector of initial
-   * placeholder sequents to purge.
-   * @return true: something was purged; false: otherwise (nothing was
-   * purged).*/
+public:
 
-  void look_for_and_purge_rhs_backStack(std::deque<Sequent*>& purgeSeqQueue) {
-    /* Now purge the original Sequents */
-    while (!(purgeSeqQueue.empty())) {
-      const Sequent* t = purgeSeqQueue.front();
+  // Determine whether the predicate is cached as a known false sequent
+  bool is_known_false_sequent(const SubstList& discrete_state,
+                              const DBM& zone,
+                              const ExprNode& formula,
+                              Sequent* parentRef)
+  {
+    Sequent* cached_sequent =
+        Xlist_false.find_sequent(discrete_state, formula);
+    if (cached_sequent != nullptr &&
+        cached_sequent->tabled_false_sequent(zone)) {
+      /* Add backpointer to parent sequent (shallow copy) */
+      cached_sequent->addParent(parentRef);
+      return true;
+    }
+    return false;
+  }
 
-      /* Note: Purging parent sequents still ignores clock states */
+  // Determine whether the predicate is cached as a known true sequent
+  bool is_known_true_sequent(const SubstList& discrete_state,
+                             const DBM& zone,
+                             const ExprNode& formula,
+                             Sequent* parentRef)
+  {
+    Sequent* cached_sequent =
+        Xlist_true.find_sequent(discrete_state, formula);
+    if (cached_sequent != nullptr && cached_sequent->tabled_sequent(zone)) {
+      /* Add backpointer to parent sequent (shallow copy) */
+      cached_sequent->addParent(parentRef);
+      return true;
+    }
+    return false;
+  }
 
-      /* Now purge the sequent and the DBM from all lists.
-       * Circularity caches are correctly maintained; therefore,
-       * they are not purged. */
-      Xlist_false.look_for_and_purge_rhs_sequent_state(t);
-      /* If found, Purge Sequent from its cache */
-      Xlist_true.look_for_and_purge_rhs_sequent_state(t);
+  /** Determine whether the sequent formed by discrete_state, zone and formula
+   * completes a greatest fixed-point cycle.
+   *
+   * Returns: pair of pointer to sequent and boolean. If the boolean is true, a fixed point cycle was completed,
+   * and the sequent is the sequent witnessing the complete cycle.
+   * If the boolean is false, the sequent points to the sequent corresponding to discrete_state, formula in the cache.
+   * if no such sequent was originally present, it is added to the cache.
+   */
+  std::pair<Sequent*, bool> completes_gfp_cycle(const SubstList& discrete_state,
+                                                const DBM& zone,
+                                                const ExprNode& formula,
+                                                Sequent* parentRef)
+  {
+    cpplog(cpplogging::debug1) << "Checking circularity of gfp " << formula << std::endl;
+    Sequent* sequent = Xlist_pGFP.find_sequent(discrete_state, formula);
+    if (sequent == nullptr) {
+      sequent = Xlist_pGFP.add_sequent(discrete_state, formula);
+    } else if (sequent->tabled_sequent(zone)) {
+      // gfp circularity found, the sequent is valid.
+      // Add backpointer to parent sequent (shallow copy)
+      sequent->addParent(parentRef);
+      return std::make_pair(sequent, true); // greatest fixed point circularity found
+    }
+    return std::make_pair(sequent, false);
+  }
 
-      purgeSeqQueue.pop_front();
+  /** Determine whether the sequent formed by discrete_state, zone and formula
+   * completes a least fixed-point cycle.
+   *
+   * Returns: pair of pointer to sequent and boolean. If the boolean is true, a fixed point cycle was completed,
+   * and the sequent is the sequent witnessing the complete cycle.
+   * If the boolean is false, the sequent points to the sequent corresponding to discrete_state, formula in the cache.
+   * if no such sequent was originally present, it is added to the cache.
+   */
+  std::pair<Sequent*, bool> completes_lfp_cycle(const SubstList& discrete_state,
+                                                const DBM& zone,
+                                                const ExprNode& formula,
+                                                Sequent* parentRef)
+  {
+    cpplog(cpplogging::debug1) << "Checking circularity of lfp " << formula << std::endl;
+    Sequent* sequent = Xlist_pLFP.find_sequent(discrete_state, formula);
+    if (sequent == nullptr) {
+      sequent = Xlist_pLFP.add_sequent(discrete_state, formula);
+    } else if (sequent->tabled_sequent_lfp(zone)) {
+      // lfp circularity found, the sequent is valid.
+      // Add backpointer to parent sequent (shallow copy)
+      sequent->addParent(parentRef);
+      return std::make_pair(sequent, true); // least fixed point circularity found
+    }
+    return std::make_pair(sequent, false);
+  }
+
+  void cache_true_sequent(const SubstList& discrete_state,
+                          const DBM& zone,
+                          const ExprNode& formula)
+  {
+    Sequent* cached_true_sequent =
+        Xlist_true.find_sequent_else_add(discrete_state, formula);
+    cached_true_sequent->update_sequent(zone);
+  }
+
+  void cache_false_sequent(const SubstList& discrete_state,
+                          const DBM& zone,
+                          const ExprNode& formula)
+  {
+    Sequent* cached_false_sequent =
+        Xlist_false.find_sequent_else_add(discrete_state, formula);
+    cached_false_sequent->update_false_sequent(zone);
+  }
+
+  /* Key Concept of Purging:
+   * If Was True, discovered false, check that
+   *		Z_now_false <= Z_cached_true | or | Z_cached_true >= Z_now_false
+   * If Was False, discovered true, check that
+   *		Z_now_true >= Z_cached_false | or | Z_cached_false <= Z_now_true
+   * This Must be done regardless of how the tabling
+   * is done for that specific cache */
+  // Purge updated sequent
+  void purge_true_sequent(const SubstList& discrete_state,
+                          const DBM& zone,
+                          const ExprNode& formula)
+  {
+    bool madeEmpty = false;
+    /* If found, Purge Sequent from its cache */
+    Sequent* cached_true_sequent =
+        Xlist_true.look_for_and_purge_rhs_sequent(
+            &zone, discrete_state, formula, true, &madeEmpty);
+
+    /* Now purge backpointers.
+     * Ignore circularity booleans because they do not form backpointers */
+    if (cached_true_sequent != nullptr) {
+      look_for_and_purge_rhs_backStack(
+          cached_true_sequent->parents());
+
+      if (madeEmpty) {
+        delete cached_true_sequent;
+      }
+    }
+  }
+
+  void purge_false_sequent(const SubstList& discrete_state,
+                           const DBM& zone,
+                           const ExprNode& formula)
+  {
+    /* First look in opposite parity Caches */
+    bool madeEmpty = false;
+    /* If found, Purge Sequent from its cache */
+    Sequent* cached_false_sequent =
+        Xlist_false.look_for_and_purge_rhs_sequent(
+            &zone, discrete_state, formula, false, &madeEmpty);
+
+    /* Now purge backpointers */
+    if (cached_false_sequent != nullptr) {
+      look_for_and_purge_rhs_backStack(
+          cached_false_sequent->parents());
+
+      if (madeEmpty) {
+        delete cached_false_sequent;
+      }
     }
   }
 
@@ -173,10 +247,7 @@ public:
     }
   }
 
-  void look_for_and_purge_rhs_backStack(const std::vector<Sequent*>& initialPtr) {
-    std::deque<Sequent*> purgeSeqQueue(initialPtr.begin(), initialPtr.end());
-    look_for_and_purge_rhs_backStack(purgeSeqQueue);
-  }
+
 
   void look_for_and_purge_rhs_backStack(
       const std::vector<Sequent*>& initialPtr,
@@ -225,6 +296,48 @@ public:
     os << std::endl;
     os << "----Known True (Placeholder) Cached Sequents---------" << std::endl;
     Xlist_true_ph.print_Xlist(os);
+  }
+
+protected:
+
+  void look_for_and_purge_rhs_backStack(const std::vector<Sequent*>& initialPtr) {
+    std::deque<Sequent*> purgeSeqQueue(initialPtr.begin(), initialPtr.end());
+    look_for_and_purge_rhs_backStack(purgeSeqQueue);
+  }
+
+  /** Purge backpointers from all caches. Purging occurrs
+   * until no sequent was purged (not purging a sequent indicates that
+   * no further sequents need to be purged). For performance
+   * efficiency, this method passes pointers to vectors.
+   * Furthermore, for performance reasons, backpointers do not examine
+   * clock states and conservatively purge. This method handles
+   * both placeholder and non-placeholder sequents. Feed in an empty
+   * list for one of the parameters if only one type of sequent
+   * needs to be purged. We utilize one method so that non-placeholder
+   * sequents that are parents of placeholder sequents can be purged.
+   * @param initialPtr (*) The vector of initial
+   * non-placeholder sequents to purge.
+   * @param initialPlacePtr (*) The vector of initial
+   * placeholder sequents to purge.
+   * @return true: something was purged; false: otherwise (nothing was
+   * purged).*/
+
+  void look_for_and_purge_rhs_backStack(std::deque<Sequent*>& purgeSeqQueue) {
+    /* Now purge the original Sequents */
+    while (!(purgeSeqQueue.empty())) {
+      const Sequent* t = purgeSeqQueue.front();
+
+      /* Note: Purging parent sequents still ignores clock states */
+
+      /* Now purge the sequent and the DBM from all lists.
+       * Circularity caches are correctly maintained; therefore,
+       * they are not purged. */
+      Xlist_false.look_for_and_purge_rhs_sequent_state(t);
+      /* If found, Purge Sequent from its cache */
+      Xlist_true.look_for_and_purge_rhs_sequent_state(t);
+
+      purgeSeqQueue.pop_front();
+    }
   }
 };
 
