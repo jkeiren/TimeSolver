@@ -173,11 +173,7 @@ public:
   DBM(const clock_name_to_index_t* cs)
       : Array((cs->size()+1) * (cs->size()+1)),
         m_declared_clocks(cs) {
-    for (size_type i = 0; i < clocks_size(); ++i) {
-      for (size_type j = 0; j < clocks_size(); ++j) {
-        operatorWrite(i,j) = (i == 0 || i == j) ? zero_le : infinity;
-      }
-    }
+    makeInfty();
 
     // Set isCf to false to prevent breaking parser code
     m_is_cf = false;
@@ -776,6 +772,18 @@ public:
    * @return [None] */
   void makeEmpty() {
     std::fill(begin(), end(), zero_less);
+    m_is_cf = true;
+  }
+
+  /** This method changes this DBM to the unrestricted DBM. The result DBM
+   * is in canonical form.
+   * @return [None] */
+  void makeInfty() {
+    for (size_type i = 0; i < clocks_size(); ++i) {
+      for (size_type j = 0; j < clocks_size(); ++j) {
+        operatorWrite(i,j) = (i == 0 || i == j) ? zero_le : infinity;
+      }
+    }
     m_is_cf = true;
   }
 
