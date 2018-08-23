@@ -9,7 +9,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG") #  -march=native -mtune=native
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DTIMESOLVER_DEBUG")
 
 if (NOT DEFINED TIMESOLVER_MAX_LOG_LEVEL)
-  set (TIMESOLVER_MAX_LOG_LEVEL "debug")
+  set (TIMESOLVER_MAX_LOG_LEVEL "debug" CACHE STRING "The maximum log level to enable at compile time.")
 endif()
 
 add_definitions("-DCPPLOG_MAX_LOG_LEVEL=cpplogging::${TIMESOLVER_MAX_LOG_LEVEL}")
@@ -18,7 +18,7 @@ if(APPLE)
   if (NOT DEFINED TIMESOLVER_OSX_STACK_SIZE)
     # Stack size set to 4GB for Mac, since terminal hard limit is 64MB
     # This number is the number of bytes in Hex
-    set (TIMESOLVER_OSX_STACK_SIZE "200000000")
+    set (TIMESOLVER_OSX_STACK_SIZE "200000000" CACHE STRING "Maximum stack size to allow on MacOS, in number of bytes in hexadecimal (200000000 equals 4GB).")
   endif()
   set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-stack_size,${TIMESOLVER_OSX_STACK_SIZE}")
 endif()
