@@ -214,48 +214,34 @@ public:
                                               const ExprNode& formula,
                                               const bool tableCheck,
                                               bool* const madeEmpty) {
+
     const std::size_t index = get_index(discrete_state, formula);
-    *madeEmpty = false;
-    /* This assumes that location only locates one sequent in the stack */
+    typename stack_t::const_iterator it = std::find_if(
+          Xlist[index].begin(), Xlist[index].end(),
+          [&discrete_state](const SequentType* s) {
+            return discrete_state == *(s->discrete_state());
+          });
+
     SequentType* foundSequent = nullptr;
+    *madeEmpty = false;
 
-    for (typename stack_t::const_iterator it = Xlist[index].begin();
-         it != Xlist[index].end(); it++) {
-      SequentType* ls = (*it);
-
-      /* For Now, purge the LHS Possibilities
-       * that are in line with the proper "tabling"
-       * or containment, which are specified by
-       * the tableCheck Boolean */
-      if (discrete_state == *(ls->discrete_state())) {
-        assert(foundSequent == nullptr);
-        // Now Iterate on the Tabled Sequents
-        /* Key Concept of Purging:
-         * If Was True (tableCheck is true), discovered false, check that
-         *		Z_now_false <= Z_cached_true | or | Z_cached_true >=
-         *Z_now_false If Was False (tableCheck is false), discovered true, check
-         *that Z_now_true >= Z_cached_false | or | Z_cached_false <= Z_now_true
-         * This Must be done regardless of how the tabling
-         * is done for that specific cache */
-
-        for (typename DBMsetType::iterator itb = ls->dbm_set().begin();
-             itb != ls->dbm_set().end(); ++itb) {
-          if ((tableCheck && match_for_purging_tabled(*itb, *getDBM(elt)))
-              || *getDBM(*itb) <= *getDBM(elt)) {
-            // purge Here
-            delete_DBMset_elt(*itb);
-            itb = ls->dbm_set().erase(itb);
-            itb--;
-            foundSequent = ls;
-          }
+    if(it != Xlist[index].end()) {
+      for (typename DBMsetType::iterator itb = (*it)->dbm_set().begin();
+           itb != (*it)->dbm_set().end(); ++itb) {
+        if ((tableCheck && match_for_purging_tabled(*itb, *getDBM(elt)))
+            || *getDBM(*itb) <= *getDBM(elt)) {
+          // purge Here
+          delete_DBMset_elt(*itb);
+          itb = (*it)->dbm_set().erase(itb);
+          itb--;
+          foundSequent = (*it);
         }
+      }
 
-        // If sequent is empty, remove it from the list of sequents
-        if ((ls->dbm_set()).empty()) {
-          it = Xlist[index].erase(it);
-          it--;
-          *madeEmpty = true;
-        }
+      // If sequent is empty, remove it from the list of sequents
+      if ((*it)->dbm_set().empty()) {
+        Xlist[index].erase(it);
+        *madeEmpty = true;
       }
     }
 
@@ -275,20 +261,16 @@ public:
     const ExprNode& formula = *(sequent->rhs());
 
     const std::size_t index = get_index(discrete_state, formula);
-    for (typename stack_t::iterator it = Xlist[index].begin();
-         it != Xlist[index].end(); it++) {
-      SequentType* ls = (*it);
+    typename stack_t::const_iterator it = std::find_if(
+          Xlist[index].begin(), Xlist[index].end(),
+          [&discrete_state](const SequentType* s) {
+            return discrete_state == *(s->discrete_state());
+          });
 
-      if (discrete_state == *(ls->discrete_state())) {
-        ls->delete_sequents();
-        delete ls; // This line causes some problems
-        // If sequent is empty, remove it from the list of sequents
-        /* Since deleting all DBM sequents in purging (aggressive: usually
-         * over purges), just erase the list. */
-        it = Xlist[index].erase(it);
-        it--;
-        return;
-      }
+    if(it != Xlist[index].end()) {
+      (*it)->delete_sequents();
+      delete (*it);
+      Xlist[index].erase(it);
     }
   }
 
