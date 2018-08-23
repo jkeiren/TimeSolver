@@ -140,7 +140,7 @@ public:
   void look_for_and_purge_rhs_backStack(std::deque<Sequent*>& purgeSeqQueue) {
     /* Now purge the original Sequents */
     while (!(purgeSeqQueue.empty())) {
-      Sequent* t = purgeSeqQueue.front();
+      const Sequent* t = purgeSeqQueue.front();
 
       /* Note: Purging parent sequents still ignores clock states */
 
@@ -157,7 +157,7 @@ public:
 
   void look_for_and_purge_rhs_backStackPlace(std::deque<SequentPlace*>& purgeSeqPlaceQueue) {
     while (!(purgeSeqPlaceQueue.empty())) {
-      SequentPlace* tp = purgeSeqPlaceQueue.front();
+      const SequentPlace* tp = purgeSeqPlaceQueue.front();
 
       /* Note: Purging parent sequents still ignores clock states. */
 

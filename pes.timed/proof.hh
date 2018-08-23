@@ -727,8 +727,8 @@ inline bool prover::do_proof_predicate(const SubstList& discrete_state,
   /* Get the current variable: do a shallow, not deep copy */
   parentRef = h;
 
-  const ExprNode* e = input_pes.lookup_equation(formula.getPredicate());
-  retVal = do_proof(discrete_state, zone, *e);
+  const ExprNode* rhs = input_pes.lookup_equation(formula.getPredicate());
+  retVal = do_proof(discrete_state, zone, *rhs);
 
     /* Now update the parent so it points to the previous parent, and not this
    * predicate */

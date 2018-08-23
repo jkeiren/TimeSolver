@@ -75,7 +75,9 @@ public:
    * of the sequent.
    * @return [Constructor]. */
   Sequent(const ExprNode *const rhs, const SubstList *const discrete_state)
-      : m_rhs(rhs), m_discrete_state(new SubstList(*discrete_state)) {}
+      : m_rhs(rhs),
+        m_discrete_state(new SubstList(*discrete_state))
+  {}
 
   /* A default Copy Constructor is implemented by the
    * compiler which performs a member-wise deep copy. */
@@ -183,7 +185,7 @@ public:
    * @param lhs (*) The DBM to compare the sequent's DBMs to.
    * @return true: lhs <= some sequent in s, false: otherwise.*/
   bool tabled_sequent_lfp(const DBM& lhs) {
-    return std::any_of(m_dbms.begin(), m_dbms.end(), [&lhs](const DBM* x) { return *x >= lhs; });
+    return tabled_sequent(lhs);
   }
 
   /** Takes in set of known true sequents (s) with a newly
@@ -306,8 +308,8 @@ public:
    * @param sub (*) The discrete state component of the left side
    * of the sequent.
    * @return [Constructor]. */
-  SequentPlace(const ExprNode *const rhs, const SubstList *const sub)
-      : m_rhs(rhs), m_discrete_state(new SubstList(*sub)) {}
+  SequentPlace(const ExprNode *const rhs, const SubstList *const discrete_state)
+      : m_rhs(rhs), m_discrete_state(new SubstList(*discrete_state)) {}
 
   /* A default Copy Constructor is implemented by the
    * compiler which performs a member-wise deep copy.
@@ -339,19 +341,22 @@ public:
 
   /** Returns the ExprNode element (rhs or consequent) of the Sequent.
    * @return the rhs expression of the ExprNode element of the Sequent. */
-  const ExprNode *rhs() const { return m_rhs; }
+  const ExprNode* rhs() const { return m_rhs; }
 
   /** Returns the discrete state of the sequent's left (the SubstList).
    * @return the discrete state of the sequent's left (the SubstList). */
-  const SubstList *discrete_state() const { return m_discrete_state; }
+  const SubstList* discrete_state() const { return m_discrete_state; }
 
-  const DBMPlaceSet &dbm_set() const { return m_dbms; }
+  const DBMPlaceSet& dbm_set() const { return m_dbms; }
 
-  DBMPlaceSet &dbm_set() { return m_dbms; }
+  DBMPlaceSet& dbm_set() { return m_dbms; }
 
   /** Adds a sequent (better: the left hand side of the sequent), to the set of
    * sequents represented by this Sequent object */
-  void push_sequent(std::pair<DBM *, DBMList *> s) { m_dbms.push_back(s); }
+  void push_sequent(const std::pair<DBM *, DBMList *>& s) {
+    assert((s.second)->isInCf());
+    m_dbms.push_back(s);
+  }
 
   /** Removes the last added sequent from the set of sequents represented by
    * this object */
@@ -508,6 +513,7 @@ public:
    * @param lhsPlace (*) The DBMList of the newly-established clock state. */
   void update_sequent(const DBM& lhs,
                              const DBMList *const lhsPlace) {
+    assert(lhsPlace->isInCf());
     for (std::pair<DBM *, DBMList *> pair: m_dbms) {
       /* Extra work for placeholders. For now,
        * force equality on LHS sequent and use tabling logic
