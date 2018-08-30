@@ -320,7 +320,7 @@ public:
                           const DBM& zone,
                           const ExprNode& formula)
   {
-    purge_sequent(Xlist_true, discrete_state, zone, formula);
+    purge_sequent(Xlist_true, discrete_state, zone, formula, true);
   }
 
   void purge_true_sequent(const SubstList& discrete_state,
@@ -328,14 +328,14 @@ public:
                           const ExprNode& formula,
                           const DBMList& place)
   {
-    purge_sequent(Xlist_true_ph, discrete_state, zone, formula, place);
+    purge_sequent(Xlist_true_ph, discrete_state, zone, formula, place, true);
   }
 
   void purge_false_sequent(const SubstList& discrete_state,
                            const DBM& zone,
                            const ExprNode& formula)
   {
-    purge_sequent(Xlist_false, discrete_state, zone, formula);
+    purge_sequent(Xlist_false, discrete_state, zone, formula, false);
   }
 
   void purge_false_sequent(const SubstList& discrete_state,
@@ -343,7 +343,7 @@ public:
                            const ExprNode& formula,
                            const DBMList& place)
   {
-    purge_sequent(Xlist_false_ph, discrete_state, zone, formula, place);
+    purge_sequent(Xlist_false_ph, discrete_state, zone, formula, place, false);
   }
 
   void printTabledSequents(std::ostream& os) const {
@@ -382,13 +382,14 @@ protected:
   void purge_sequent(sequentStack& stack,
                           const SubstList& discrete_state,
                           const DBM& zone,
-                          const ExprNode& formula)
+                          const ExprNode& formula,
+                     bool true_sequent)
   {
     bool madeEmpty = false;
     /* If found, Purge Sequent from its cache */
     Sequent* cached_sequent =
         stack.look_for_and_purge_rhs_sequent(
-            &zone, discrete_state, formula, true, &madeEmpty);
+            &zone, discrete_state, formula, true_sequent, &madeEmpty);
 
     /* Now purge backpointers.
      * Ignore circularity booleans because they do not form backpointers */
@@ -406,12 +407,13 @@ protected:
                      const SubstList& discrete_state,
                      const DBM& zone,
                      const ExprNode& formula,
-                     const DBMList& place)
+                     const DBMList& place,
+                     bool true_sequent)
   {
     bool madeEmpty = false;
     SequentPlace* cached_sequent =
         stack.look_for_and_purge_rhs_sequent(
-            std::make_pair(&zone, &place), discrete_state, formula, true,
+            std::make_pair(&zone, &place), discrete_state, formula, true_sequent,
             &madeEmpty);
 
     /* Now purge backpointers.

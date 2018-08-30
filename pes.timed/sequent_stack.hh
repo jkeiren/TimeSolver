@@ -229,7 +229,7 @@ public:
       for (typename DBMsetType::iterator itb = (*it)->dbm_set().begin();
            itb != (*it)->dbm_set().end(); ++itb) {
         if ((tableCheck && match_for_purging_tabled(*itb, *getDBM(elt)))
-            || *getDBM(*itb) <= *getDBM(elt)) {
+            || (!tableCheck && *getDBM(*itb) <= *getDBM(elt))) {
           // purge Here
           delete_DBMset_elt(*itb);
           itb = (*it)->dbm_set().erase(itb);
