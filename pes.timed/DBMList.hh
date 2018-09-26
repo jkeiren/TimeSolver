@@ -325,6 +325,7 @@ public:
   DBMList &operator!() {
     if (size() == 1) {
       *this = complementDBM(front());
+      m_is_cf = false;
     } else {
       // Complement the first DBM, and intersect the complement with the complement
       // of all other DBMs.
@@ -337,6 +338,7 @@ public:
       }
 
       *this = std::move(complement);
+      m_is_cf = false;
       cf(true);
     }
 
