@@ -7,6 +7,9 @@
 \usepackage{float}
 \usepackage[svgnames]{xcolor}
 
+\usepackage{tikz}
+\usetikzlibrary{arrows,automata}
+
 % Proof rules and SOS rules.
 \newcommand{\proofrule}[3][]{#1 \frac{\raisebox{.7ex}{\normalsize{$#2$}}}
   {\raisebox{-1.0ex}{\normalsize{$#3$}}}}
@@ -46,14 +49,27 @@
 
 \maketitle
 
-In this note we describe the proof rules for $\mu$-calculus model checking of timed automata as they are implemented in TimeSolver. We stick as close as possible to the implementation. The rules were described originally in~\cite{ZC:05rtss}, and the rules with placeholder stem from~\cite{FC:14}. A more elaborate discussion of (some of) the proof rules can be found in~\cite{FC:14report}.
+In this note we describe the proof rules for $\mu$-calculus model checking of
+timed automata as they are implemented in TimeSolver. We stick as close as
+possible to the implementation. The rules were described originally
+in~\cite{ZC:05rtss}, and the rules with placeholder stem from~\cite{FC:14}. A
+more elaborate discussion of (some of) the proof rules can be found
+in~\cite{FC:14report}.
 
-The proof rules are implemented in the file \texttt{proof.hh}. This is a header-only implementation to allow the compiler to inline wherever possible. The class \texttt{prover} supports proof rules without placeholder, named \texttt{do\_proof\_*}, and proof rules with placeholder, named \texttt{do\_proof\_place\_*}. Note that the rules without placeholders can call the rules with placeholders, but not the other way around. The methods with placeholder correspond to those proof rules in which a placeholder is present in the goal. 
+The proof rules are implemented in the file \texttt{proof.hh}. This is a
+header-only implementation to allow the compiler to inline wherever possible.
+The class \texttt{prover} supports proof rules without placeholder, named
+\texttt{do\_proof\_*}, and proof rules with placeholder, named
+\texttt{do\_proof\_place\_*}. Note that the rules without placeholders can call
+the rules with placeholders, but not the other way around. The methods with
+placeholder correspond to those proof rules in which a placeholder is present in
+the goal. 
 
 Below we describe each of the proof rules as they are implemented in the tool.
 
 \section{Predicate variables}
-The cases where the proof goal is a predicate variable is handled by the rules \texttt{do\_proof\_predicate} and \texttt{do\_proof\_place\_predicate}.
+The cases where the proof goal is a predicate variable is handled by the rules
+\texttt{do\_proof\_predicate} and \texttt{do\_proof\_place\_predicate}.
 
 \[
 \proofrule
@@ -67,6 +83,133 @@ The cases where the proof goal is a predicate variable is handled by the rules \
 {(\loc, \region), \placeholder \vdash \phi}
 \]
 Where $X \eqsigma \phi \in \E$ is an equation in the PES.
+
+When we encounter a predicate variable, we need to decide whether the proof is successful or unsuccessful, or whether we need to actually apply the proof rule and continue on the right hand side. This hinges on deciding whether the proof branch ending in the current proof node $\mathbf{n}$ labelled with sequent $(\loc, \region) \vdash X$ is complete. In other words, we need to determine whether it has a \emph{companion node} in the proof tree. For this, we need to distinguish two cases:
+\begin{itemize}
+  \item If $X$ is a $\nu$-variable, then a proof node $\mathbf{m}$ on the path from the root of the proof tree to $\mathbf{n}$ is a companion node of $\mathbf{n}$ iff it is labelled with the sequent $(\loc', \region') \vdash X$, such that $\loc = \loc'$, and $\region \subseteq \region'$, and there is no node $\mathbf{m'}$ on the path from $\mathbf{m}$ to $\mathbf{n}$ such that $\mathbf{m'}$ is labelled with $(\loc'', \region'') \vdash Y$ for $\mu$-variable $Y$ defined before $X$ in $\mathcal{E}$.
+  \item If $X$ is a $\mu$-variable, then a proof node $\mathbf{m}$ on the path from the root of the proof tree to $\mathbf{n}$ is a companion node of $\mathbf{n}$ iff it is labelled with the sequent $(\loc', \region') \vdash X$, such that $\loc = \loc'$, and $\region' \subseteq \region$, and there is no node $\mathbf{m'}$ on the path from $\mathbf{m}$ to $\mathbf{n}$ such that $\mathbf{m'}$ is labelled with $(\loc'', \region'') \vdash Y$ for $\nu$-variable $Y$ defined before $X$ in $\mathcal{E}$.
+\end{itemize}
+Note: in the alternation free case, there can never be a cancelling node $\mathbf{m'}$ on the path from $\mathbf{m}$ to $\mathbf{n}$, so we can omit the check for that.
+
+Detecting companion nodes in the implementation is performed by maintaining two stacks, containing $\nu$-sequents and $\mu$-sequents, respectively. Every time the fixed point rule is applied, the goal-sequent is pushed onto the appropriate stack, and the subgoal is calculated recursively. When the recursive call completes, the sequent needs to be popped from the stack again since otherwise it might interfere with other subproofs.
+
+The stacks need to support the following operations:
+\begin{itemize}
+  \item push a sequent $(\loc, \region) \vdash X$ onto the stack,
+  \item pop a sequent from the stack,
+  \item given a sequent $(\loc, \region) \vdash X$, determine whether the stack contains a sequent $(\loc, \region') \vdash X$, such that $\region \subseteq \region'$, in case $X$ is a $\nu$-variable, and $\region' \subseteq \region$, in case $x$ is a $\mu$-variable.
+\end{itemize}
+This results in the following code.
+
+\begin{algorithm}[H]
+  \caption{$\method{do\_proof\_predicate}(\loc, \region, \phi)$}
+  \begin{algorithmic}
+  \STATE \COMMENT{Assume $\phi = X$, and $X \stackrel{\mu/\nu}{=} \phi_X \in \mathcal{E}$}
+  \STATE \COMMENT{There are 2 caches: $C_\mu$, $C_\nu$, that contain previously detected least- and greatest fixed point sequents, respectively.}
+  
+  \IF{Parity of $X$ is $\nu$}
+    \IF{$\exists (X, \loc, \region') \in C_\nu . \region \subseteq \region'$}
+      \RETURN $\mathit{true}$
+    \ELSE
+      \STATE $\method{push}((X, \loc, \region), C_\nu)$
+      \STATE $\var{result} \gets \method{do\_proof}(\loc, \region, \phi_X)$
+      \STATE $\method{pop}(C_\nu)$
+    \ENDIF
+  \ELSE[Parity of $X$ is $\mu$]
+    \IF{$\exists (X, \loc, \region') \in C_\mu . \region' \subseteq \region$}
+      \RETURN $\mathit{false}$
+    \ELSE
+      \STATE $\method{push}((X, \loc, \region), C_\mu)$
+      \STATE $\var{result} \gets \method{do\_proof}(\loc, \region, \phi_X)$
+      \STATE $\method{pop}(C_\mu)$
+    \ENDIF
+  \ENDIF
+\end{algorithmic}
+\end{algorithm}
+
+An orthogonal caching structure keeps track of sequents that have previously been determined to be true/false. Given the structure of the proofs, the caching here is also restricted to sequents of the form $(\loc, \region) \vdash X$. We maintain two caches: $C_\top$ for known-true sequents and $C_\bot$ for known false sequents.
+Given sequent $(\loc, \region) \vdash X$ we need to be able to determine the following:
+\begin{itemize}
+  \item Determine whether $C_\top$ contains a sequent $(\loc, \region') \vdash X$ such that $\region \subseteq \region'$.
+  \item Determine whether $C_\bot$ contains a sequent $(\loc, \region') \vdash X$ such that $\region' \subseteq \region$.
+\end{itemize}
+Intuition here is as follows: in case we find a true sequent in the cache, and every state in the sequent that we need to prove is part of that cached sequent, we have a successful proof (this is consistent with the Thinning rule in the proof system); in case we find a false sequent in the cache that is a subset of the sequent that we try to prove, likewise, we conclude that we found a false sequent. Why this is the case can be seen intuitively from an alternative reading of the sequents: $\lnot((\loc, \region') \implies X)$ and $(\loc, \region') \implies (\loc, \region)$ together imply $\lnot((\loc, \region) \implies X)$.
+
+In some instances, in one branch of the proof we have concluded that a sequent is true, that we later observe to be false, or the other way around. An example of a case in which this happens is the following. Consider the timed automaton with a single state $s$, and the property $X \stackrel{\nu}{=} [-]X \land \mathit{false}$.
+
+\begin{tikzpicture}
+\node[state,initial left, initial text={}, label={below:$s$}] (s) {$x \leq 0$};
+\draw (s) edge[loop right] (s);
+\end{tikzpicture}
+
+The proof here is unsuccessful, but when we look at the structure of the proof (shown below) we see that in the first branch of the proof, we detect a greatest fixed point cycle, and assume that the property holds.
+
+\[
+\proofrule
+{(s,x \leq 0) \vdash X}
+{
+  \proofrule[\land]
+  {(s,x \leq 0) \vdash [-]X \land \mathit{false}}
+  {
+    \proofrule[{[-]}]
+    {(s,x \leq 0) \vdash [-]X}
+    {
+      (s,x \leq 0) \vdash X
+    }
+    \quad
+    (s,x \leq 0) \vdash \mathit{false}
+  }
+}
+\]
+The second time we observe the sequent $(s, x \leq 0) \vdash X$, that exact sequent is in the greatest fixed point cache, and we conclude that the sequent is true, and store it in the known-true cache. However, once we consider the second branch, $(s, x \leq 0) \vdash \mathit{false}$, and propagate the result back, we conclude that $(s, x \leq 0) \vdash X$ (in the first sequent) is false, so we need to move the sequent from the true-cache to the false-cache. Only then do we conclude that the proof is unsuccessful.
+
+
+\todo{Extend with an example that shows we also need to purge all cache entries for sequents above this sequent in the proof tree.}
+\todo{What is the cache-invariant that is preserved here?}
+
+
+% First of all, the value of the sequent $(\loc, \region) \vdash X$ can be looked
+% up in the cache; if we already know the value is true/false, we simply recall
+% that value.
+
+\begin{algorithm}[H]
+  \caption{$\method{do\_proof\_predicate}(\loc, \region, \phi)$}
+  \begin{algorithmic}
+  \STATE \COMMENT{Assume $\phi = X$, and $X \stackrel{\mu/\nu}{=} \phi_X \in \mathcal{E}$}
+  \STATE \COMMENT{There are 4 caches: $C_\top$, $C_\bot$, $C_\mu$, $C_\nu$, that contain known-true and knwon-false sequents, and previously detected least- and greatest fixed point sequents, respectively.}
+  \IF{$(X, \loc, \region) \in C_\top$}
+    \RETURN $\mathit{true}$
+  \ELSIF{$(X, \loc, \region) \in C_\bot$}
+    \RETURN $\mathit{false}$
+  \ENDIF
+  \STATE \COMMENT{$X$ is not in the true/false caches; determine if a 
+  fixed-point cycle exists}
+
+  \IF{Parity of $X$ is $\nu$}
+    \IF{$\exists (X, \loc, \region') \in C_\nu . \region \subseteq \region'$}
+      \RETURN $\mathit{true}$
+    \ELSE
+      \STATE $\var{result} \gets \method{do\_proof}(\loc, \region, \phi_X)$
+    \ENDIF
+  \ELSE[Parity of $X$ is $\mu$]
+    \IF{$\exists (X, \loc, \region') \in C_\mu . \region' \subseteq \region$}
+      \RETURN $\mathit{false}$
+    \ELSE
+      \STATE $\var{result} \gets \method{do\_proof}(\loc, \region, \phi_X)$
+    \ENDIF
+  \ENDIF
+
+  \STATE \COMMENT{Update the caches; sometimes we need to update cached values since other values depend on the current value.}
+
+\end{algorithmic}
+\end{algorithm}
+
+
+
+\jk{To generalize this to the full modal $\mu$-calculus, we need to take care of nodes cancelling other nodes.}
+
+\subsection{Some background in the literature}
+The implementation is based on the works by Fontana \cite{FC:14,FC:14report,Fontana:14} and Zhang~\cite{ZC:05forte,ZC:05rtss,Zhang:05}.
 
 \jk{Describe how the caching and cycle detection works}
 
@@ -1748,7 +1891,7 @@ Where we can introduce a new placeholder, and establish the corresponding sideco
 {(\loc, \post(\region, \lambda := 0)), \placeholder \vdash \phi}
 \post(\placeholder[{[]}], \lambda := 0) \subseteq \placeholder
 \]
-This sidecondition is equivalent to $\placeholder[{[]}] \subseteq \mathit{pre}(\placeholder, \lambda := 0)$ (property of weakest precondition and strongest postcondition). We can establish this by setting  $\placeholder[{[]}]$ to $ç$.
+This sidecondition is equivalent to $\placeholder[{[]}] \subseteq \mathit{pre}(\placeholder, \lambda := 0)$ (property of weakest precondition and strongest postcondition). We can establish this by setting  $\placeholder[{[]}]$ to $\mathit{pre}(\placeholder, \lambda := 0)$.
 
 Here we use the same observations as before to obtain the following proof rule.
 \[
