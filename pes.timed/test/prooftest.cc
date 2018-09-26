@@ -269,3 +269,51 @@ TEST(ProofTest, ExistsRelFalseFirstSubformulaTest)
   EXPECT_TRUE(pr.do_proof_init(p, &placeholder));
   placeholder.cf();
 }
+
+static
+std::string TrueCache(
+    "CLOCKS: {x}\n"
+    "CONTROL: {p=1}\n"
+    "INITIALLY: x == 0\n"
+    "PREDICATE: {X}\n"
+    "START: X\n"
+    "EQUATIONS: {\n"
+    "1: nu X = \\AllAct(X) && p!=1\n"
+    "}\n"
+    "INVARIANT:\n"
+    "	p == 1 -> x == 0\n"
+    "TRANSITIONS:\n"
+    "	(p==1)->(p=1);\n");
+
+TEST(ProofTest, TrueCacheTest)
+{
+  pes p;
+  ASSERT_NO_THROW(parse_pes_from_string(TrueCache, false, p));
+  prover_options options;
+  prover pr(p, options);
+  EXPECT_FALSE(pr.do_proof_init(p));
+}
+
+static
+std::string FalseCache(
+    "CLOCKS: {x}\n"
+    "CONTROL: {p=1}\n"
+    "INITIALLY: x == 0\n"
+    "PREDICATE: {X}\n"
+    "START: X\n"
+    "EQUATIONS: {\n"
+    "1: mu X = \\AllAct(X) || p==1\n"
+    "}\n"
+    "INVARIANT:\n"
+    "	p == 1 -> x == 0\n"
+    "TRANSITIONS:\n"
+    "	(p==1)->(p=1);\n");
+
+TEST(ProofTest, FalseCacheTest)
+{
+  pes p;
+  ASSERT_NO_THROW(parse_pes_from_string(FalseCache, false, p));
+  prover_options options;
+  prover pr(p, options);
+  EXPECT_TRUE(pr.do_proof_init(p));
+}
