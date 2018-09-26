@@ -16,17 +16,18 @@ extern int yyparse(void* scanner, bool debug, pes& input_pes);
 void yyerror(yyscan_t scanner, bool /*debug*/, pes&, char* s) {
   std::cerr << "Error at symbol \"" << yyget_text(scanner)
             << "\" on line " << yyget_lineno(scanner) << ": ";
-  if (s == nullptr)
+  if (s == nullptr) {
     std::cerr << "syntax error";
-  else
+  } else {
     std::cerr << s;
+}
   std::cerr << std::endl;
 }
 
 void parse_pes(const std::string& input_filename, bool debug, pes& result) {
   /* Read and lex the input file to tokens for the parser to use. */
   FILE* input_file = fopen(input_filename.c_str(), "r");
-  if (!input_file) {
+  if (input_file == nullptr) {
     throw std::runtime_error("Cannot open input file " + input_filename);
   }
 
@@ -47,7 +48,7 @@ void parse_pes(const std::string& input_filename, bool debug, pes& result) {
   // Close File for good file handling
   fclose(input_file);
 
-  if (parseError) {
+  if (parseError != 0) {
     throw std::runtime_error("\n**Syntax Error: Error Parsing file.**\n\n"
                              "==--End of Program Execution-----------------------==\n");
   }
@@ -67,7 +68,7 @@ void parse_pes_from_string(const std::string& input_string, bool debug, pes& res
   yy_delete_buffer(buf, scanner);
   yylex_destroy(scanner);
 
-  if (parseError) {
+  if (parseError != 0) {
     throw std::runtime_error("\n**Syntax Error: Error Parsing file.**\n\n"
                              "==--End of Program Execution-----------------------==\n");
   }
