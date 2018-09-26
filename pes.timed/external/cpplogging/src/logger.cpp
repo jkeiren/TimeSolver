@@ -43,7 +43,7 @@ std::string formatter::format(const log_level_t level, const std::string& hint, 
 
   // Check if message is finished. We
   bool msg_ends_with_newline = false;
-  if (msg.size() > 0)
+  if (!msg.empty())
   {
     msg_ends_with_newline = (msg[msg.size()-1] == '\n');
   }

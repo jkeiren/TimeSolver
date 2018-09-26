@@ -7,7 +7,7 @@
   * @copyright MIT Licence, see the accompanying LICENCE.txt.
   */
 
-#include <limits.h>
+#include <climits>
 #include "DBM.hh"
 #include "testdbms.hh"
 #include "gtest/gtest.h"

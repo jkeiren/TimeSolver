@@ -21,6 +21,7 @@
 #include <getopt.h>
 #include <cstdlib>
 #include <iostream>
+#include <cerrno>
 #include <cstring>
 #include <cstdio>
 #include <map>
@@ -30,14 +31,13 @@
 #include <list>
 #include <utility>
 #include <sys/timeb.h>
-#include <time.h>
+#include <ctime>
 #include <unistd.h>
 #include "cpplogging/logger.h"
 #include "ExprNode.hh"
 #include "sequent_stack.hh"
 #include "prover_options.hh"
 #include "proof.hh"
-#include "errno.h"
 #include "pes.hh"
 #include "parse.hh"
 #include "version.hh"
