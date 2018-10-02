@@ -52,7 +52,7 @@
 In this note we describe the proof rules for $\mu$-calculus model checking of
 timed automata as they are implemented in TimeSolver. We stick as close as
 possible to the implementation. The rules were described originally
-in~\cite{ZC:05rtss}, and the rules with placeholder stem from~\cite{FC:14}. A
+in~\cite{ZC:05forte,ZC:05rtss,Zhang:05}, and the rules with placeholder stem from~\cite{FC:14}. A
 more elaborate discussion of (some of) the proof rules can be found
 in~\cite{FC:14report}.
 
@@ -84,6 +84,7 @@ The cases where the proof goal is a predicate variable is handled by the rules
 \]
 Where $X \eqsigma \phi \in \E$ is an equation in the PES.
 
+\subsection{Detecting cycles/finding companion nodes}
 When we encounter a predicate variable, we need to decide whether the proof is successful or unsuccessful, or whether we need to actually apply the proof rule and continue on the right hand side. This hinges on deciding whether the proof branch ending in the current proof node $\mathbf{n}$ labelled with sequent $(\loc, \region) \vdash X$ is complete. In other words, we need to determine whether it has a \emph{companion node} in the proof tree. For this, we need to distinguish two cases:
 \begin{itemize}
   \item If $X$ is a $\nu$-variable, then a proof node $\mathbf{m}$ on the path from the root of the proof tree to $\mathbf{n}$ is a companion node of $\mathbf{n}$ iff it is labelled with the sequent $(\loc', \region') \vdash X$, such that $\loc = \loc'$, and $\region \subseteq \region'$, and there is no node $\mathbf{m'}$ on the path from $\mathbf{m}$ to $\mathbf{n}$ such that $\mathbf{m'}$ is labelled with $(\loc'', \region'') \vdash Y$ for $\mu$-variable $Y$ defined before $X$ in $\mathcal{E}$.
@@ -127,15 +128,28 @@ This results in the following code.
 \end{algorithmic}
 \end{algorithm}
 
-An orthogonal caching structure keeps track of sequents that have previously been determined to be true/false. Given the structure of the proofs, the caching here is also restricted to sequents of the form $(\loc, \region) \vdash X$. We maintain two caches: $C_\top$ for known-true sequents and $C_\bot$ for known false sequents.
-Given sequent $(\loc, \region) \vdash X$ we need to be able to determine the following:
+\subsection{Optimizing the proof: caching known true/false sequents}
+An orthogonal caching structure keeps track of sequents that have previously been determined to be true/false. Given the structure of the proofs, the caching here is also restricted to sequents of the form $(\loc, \region) \vdash X$. Intuitively, this allows the tool to save the work of computing the same subtree multiple times.
+
+In the implementation, we maintain four caches:
 \begin{itemize}
-  \item Determine whether $C_\top$ contains a sequent $(\loc, \region') \vdash X$ such that $\region \subseteq \region'$.
-  \item Determine whether $C_\bot$ contains a sequent $(\loc, \region') \vdash X$ such that $\region' \subseteq \region$.
+  \item $C_{pt}$ for possibly true sequents
+  \item $C_{pf}$ for possibly false sequents
+  \item $C_{t}$ for known true sequents
+  \item $C_{f}$ for known false sequents
+\end{itemize}
+The possibly true/false caches contain those sequents for which we have detected a fixed-point cycle, but for which we have not yet completed the proof of the right hand side of the sequent. This is still helpful in saving work when multiple subproofs refer to the same fixed point variable.
+
+The known true/false caches contain those sequents for which we have completed a proof of the right hand side.
+
+Given a sequent $(\loc, \region) \vdash X$ we need to be able to determine the following:
+\begin{itemize}
+  \item Determine whether $C_{pt}$ or $C_{t}$ contains a sequent $(\loc, \region') \vdash X$ such that $\region \subseteq \region'$.
+  \item Determine whether $C_{pf}$ of $C_{f}$ contains a sequent $(\loc, \region') \vdash X$ such that $\region' \subseteq \region$.
 \end{itemize}
 Intuition here is as follows: in case we find a true sequent in the cache, and every state in the sequent that we need to prove is part of that cached sequent, we have a successful proof (this is consistent with the Thinning rule in the proof system); in case we find a false sequent in the cache that is a subset of the sequent that we try to prove, likewise, we conclude that we found a false sequent. Why this is the case can be seen intuitively from an alternative reading of the sequents: $\lnot((\loc, \region') \implies X)$ and $(\loc, \region') \implies (\loc, \region)$ together imply $\lnot((\loc, \region) \implies X)$.
 
-In some instances, in one branch of the proof we have concluded that a sequent is true, that we later observe to be false, or the other way around. An example of a case in which this happens is the following. Consider the timed automaton with a single state $s$, and the property $X \stackrel{\nu}{=} [-]X \land \mathit{false}$.
+Note that, in some instances, in one branch of the proof we have concluded that a sequent is possibly true, and later observe that sequent to be false, or the other way around. An example of a case in which this happens is the following. Consider the timed automaton with a single state $s$, and the property $X \stackrel{\nu}{=} [-]X \land \mathit{false}$.
 
 \begin{tikzpicture}
 \node[state,initial left, initial text={}, label={below:$s$}] (s) {$x \leq 0$};
@@ -161,11 +175,35 @@ The proof here is unsuccessful, but when we look at the structure of the proof (
   }
 }
 \]
-The second time we observe the sequent $(s, x \leq 0) \vdash X$, that exact sequent is in the greatest fixed point cache, and we conclude that the sequent is true, and store it in the known-true cache. However, once we consider the second branch, $(s, x \leq 0) \vdash \mathit{false}$, and propagate the result back, we conclude that $(s, x \leq 0) \vdash X$ (in the first sequent) is false, so we need to move the sequent from the true-cache to the false-cache. Only then do we conclude that the proof is unsuccessful.
+The second time we observe the sequent $(s, x \leq 0) \vdash X$, that exact sequent is in the greatest fixed point cache, and we conclude that the sequent is possibly true, and we store it in the known-true cache. However, once we consider the second branch, $(s, x \leq 0) \vdash \mathit{false}$, and propagate the result back, we conclude that $(s, x \leq 0) \vdash X$ (in the first sequent) is false, so we need to move the sequent from the possibly true cache to the false cache. Only then do we conclude that the proof is unsuccessful. Note that, when we would have observed the right hand side of the sequent is true, it would have been moved from the possibly true cache to the true cache.
 
+In general, the caching mechanism works as follows.
+\begin{itemize}
+  \item When a sequent $(\loc, \region) \vdash X$ is observed, we check the following:
+  \begin{itemize}
+    \item is $(\loc, \region) \vdash X \in C_{t} \cup C_{pt}$ or $(\loc, \region) \vdash X \in C_{f} \cup C_{pf}$; in that case, we have found the solution for the current sequent.
+    \item otherwise, proceed as in the case without caching to compute the solution the right hand side of $X$ in $\mathcal{E}$; in the case a cycle is detected, the result is added to the $C_{pt}$ when the parity of $X$ is $\nu$, and $C_{pf}$ otherwise.
+    \item when the solution of the right hand side is computed, the sequent is removed from the $C_{pf}$ and $C_{pt}$ caches, and added to $C_f$ or $C_t$ depending on the obtained result.
+  \end{itemize}
+\end{itemize}
+\todo{Argue why the possibly true and true cache can be combined in the implementation, although they are conceptually separate things; and likewise for the false cache}
 
-\todo{Extend with an example that shows we also need to purge all cache entries for sequents above this sequent in the proof tree.}
-\todo{What is the cache-invariant that is preserved here?}
+\todo{The following is the reasoning behind not purging the caches in a backward way}
+So, why don’t we have to purge anything from the caches?
+This relies on the following observations.
+\begin{itemize}
+\item Remember that we maintain a stack of fixed point sequents that we have seen from the root of the proof tree until the current proof node.
+\item Suppose we are in a proof node that is a sequent $(\loc,\region) \vdash X$; a value for this proof node is only cached if its a leaf
+  \begin{itemize}
+	  \item Since it is a leaf, it has a companion node, and
+	  \item On the path from the companion node to the leaf, there is no sequent that refers to a predicate variable $Y$ for which $Y$ is of different parity, and it appears before $X$ in the MES.
+    \item The sequent $(\loc,\region) \vdash X$ can, at this point be cached as possibly true/false; not as definitely true/false.
+  \end{itemize}
+\item The sequent $(\loc,\region) \vdash X$ is moved from possibly true/false to known true/false precisely when we have completed solving the entire subtree rooted at the companion node $(\loc,\region) \vdash X$.
+\item Given the previous point, all nodes on the path from the root of the proof tree to the companion node are, when they are cached, in the possibly true/false cache, and not yet know to be true/false (if it would have been in the known true/false cache, we would not have continued down into the proof, but have used the cached value. This is interesting in the following sense. All fixed points that are defined before $X$ in the MES appear either just as assumptions (possibly true/false) in the context of the proof of $X$, or they are on the fixed-point stack, and no cycle has yet been completed.
+\item In particular this holds for sequents that appear before $X$, and have different parity!
+\item Before we enter a different subproof, either we have the same assumptions, from the root of the proof to the root of the subproof, or we have cached the definitive value for the right hand side of the root of the subproof.
+\end{itemize}
 
 
 % First of all, the value of the sequent $(\loc, \region) \vdash X$ can be looked
@@ -176,10 +214,10 @@ The second time we observe the sequent $(s, x \leq 0) \vdash X$, that exact sequ
   \caption{$\method{do\_proof\_predicate}(\loc, \region, \phi)$}
   \begin{algorithmic}
   \STATE \COMMENT{Assume $\phi = X$, and $X \stackrel{\mu/\nu}{=} \phi_X \in \mathcal{E}$}
-  \STATE \COMMENT{There are 4 caches: $C_\top$, $C_\bot$, $C_\mu$, $C_\nu$, that contain known-true and knwon-false sequents, and previously detected least- and greatest fixed point sequents, respectively.}
-  \IF{$(X, \loc, \region) \in C_\top$}
+  \STATE \COMMENT{There are a number of caches: $C_{pf}$, $C_{f}$, $C_{pt}$, $C_t$ $C_\mu$, $C_\nu$, that contain possibly false, false, possibly true, true, and previously detected least- and greatest fixed point sequents, respectively.}
+  \IF{$(X, \loc, \region) \in C_{pt} \cup C_t$}
     \RETURN $\mathit{true}$
-  \ELSIF{$(X, \loc, \region) \in C_\bot$}
+  \ELSIF{$(X, \loc, \region) \in C_{pf} \cup C_f$}
     \RETURN $\mathit{false}$
   \ENDIF
   \STATE \COMMENT{$X$ is not in the true/false caches; determine if a 
@@ -187,20 +225,28 @@ The second time we observe the sequent $(s, x \leq 0) \vdash X$, that exact sequ
 
   \IF{Parity of $X$ is $\nu$}
     \IF{$\exists (X, \loc, \region') \in C_\nu . \region \subseteq \region'$}
+      \STATE $C_{pt} \gets C_{pt} \cup \{ (\loc, \region, X) \}$
       \RETURN $\mathit{true}$
     \ELSE
       \STATE $\var{result} \gets \method{do\_proof}(\loc, \region, \phi_X)$
     \ENDIF
   \ELSE[Parity of $X$ is $\mu$]
     \IF{$\exists (X, \loc, \region') \in C_\mu . \region' \subseteq \region$}
+      \STATE $C_{pf} \gets C_{pf} \cup \{ (\loc, \region, X) \}$
       \RETURN $\mathit{false}$
     \ELSE
       \STATE $\var{result} \gets \method{do\_proof}(\loc, \region, \phi_X)$
     \ENDIF
   \ENDIF
-
-  \STATE \COMMENT{Update the caches; sometimes we need to update cached values since other values depend on the current value.}
-
+  \STATE \COMMENT{Update the caches.}
+  \STATE $C_{pt} \gets C_{pt} \setminus \{ (\loc, \region, X) \}$
+  \STATE $C_{pf} \gets C_{pf} \setminus \{ (\loc, \region, X) \}$
+  \IF{$\var{result}$}
+    \STATE $C_{t} \gets C_{t} \cup \{ (\loc, \region, X) \}$   
+  \ELSE
+    \STATE $C_{f} \gets C_{f} \cup \{ (\loc, \region, X) \}$
+  \ENDIF
+  \RETURN $\var{result}$
 \end{algorithmic}
 \end{algorithm}
 
@@ -208,8 +254,7 @@ The second time we observe the sequent $(s, x \leq 0) \vdash X$, that exact sequ
 
 \jk{To generalize this to the full modal $\mu$-calculus, we need to take care of nodes cancelling other nodes.}
 
-\subsection{Some background in the literature}
-The implementation is based on the works by Fontana \cite{FC:14,FC:14report,Fontana:14} and Zhang~\cite{ZC:05forte,ZC:05rtss,Zhang:05}.
+
 
 \jk{Describe how the caching and cycle detection works}
 
