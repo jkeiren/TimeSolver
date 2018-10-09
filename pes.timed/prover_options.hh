@@ -1,3 +1,9 @@
+/** \file prover_options.hh
+ * File with a struct of user-options that is accepted by the prover.
+ * @author Jeroen Keiren
+ * @copyright MIT Licence, see the accompanying LICENCE.txt
+ */
+
 #ifndef PROVER_OPTIONS_HH
 #define PROVER_OPTIONS_HH
 

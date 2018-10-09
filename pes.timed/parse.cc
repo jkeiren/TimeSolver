@@ -1,3 +1,12 @@
+/** \file parse.cc
+ * Main functions for parsing PESs from input file. See also the flex/bison parser generators.
+ * @author Peter Fontana
+ * @author Dezhuang Zhang
+ * @author Rance Cleaveland
+ * @author Jeroen Keiren
+ * @copyright MIT Licence, see the accompanying LICENCE.txt
+ */
+
 #include "parse.hh"
 #include "pes.tab.hh"
 #include "pes.lex.hh"

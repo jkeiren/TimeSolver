@@ -1,3 +1,11 @@
+/** Data structures for transitions of timed automata.
+  *
+  * @author Peter Fontana
+  * @author Dezhuang Zhang
+  * @author Rance Cleaveland
+  * @author Jeroen Keiren
+  * @copyright MIT Licence, see the accompanying LICENCE.txt
+  */
 #ifndef TRANSITION_HH
 #define TRANSITION_HH
 

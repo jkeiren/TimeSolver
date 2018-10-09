@@ -1,3 +1,9 @@
+/** \file parse.hh
+ * High-level interface for parsing a PES
+ * @author Jeroen Keiren
+ * @copyright MIT Licence, see the accompanying LICENCE.txt
+ */
+
 #ifndef PARSE_HH
 #define PARSE_HH
 
