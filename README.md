@@ -19,7 +19,7 @@ Written by Peter Fontana (pfontana@cs.umd.edu), Rance Cleaveland (rance@cs.umd.e
 You can obtain the source of the development version from Bitbucket:
 
 ```
-git clone https://jkeiren@bitbucket.org/jkeiren/timesolver.git
+git@github.com:jkeiren/TimeSolver.git
 ```
 
 ## Installing/Compiling
