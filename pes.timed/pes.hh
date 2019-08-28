@@ -124,7 +124,7 @@ public:
     try {
       return _clocks->at(name);
     } catch (std::out_of_range&) {
-      return -1;
+      throw std::out_of_range("Clock variable " + name + " not defined.");
     }
   }
 
@@ -159,7 +159,7 @@ public:
     try {
       return _atomic->at(name);
     } catch (std::out_of_range&) {
-      return -1;
+      throw std::out_of_range("Clock variable " + name + " not defined.");
     }
   }
 
