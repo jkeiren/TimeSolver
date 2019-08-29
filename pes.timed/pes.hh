@@ -28,15 +28,15 @@
 
 /** Predicate equation system, including timed automata specifics */
 class pes {
-protected:
+private:
   /** A Hash table of Clock variables, mapping string names to id values.
    * @see ExprNode.cc. */
-  clock_name_to_index_t* _clocks;
+  clock_name_to_index_t* m_clocks;
 
   /** A Hash table of Atomic values used to store discrete state
    * variables, mapping string names to id values.
    * @see ExprNode.cc. */
-  atomic_name_to_index_t* _atomic;
+  atomic_name_to_index_t* m_atomic;
 
   /** A Hash table of ints storing integer
    * substituations for atomic variables.
@@ -44,85 +44,87 @@ protected:
    * the "inital" state for each control (atomic) variable.
    * The map is represented as: (id, val).  0 is the default value.
    * @see ExprNode.cc */
-  std::map<std::size_t, atomic_value_t> _initially;
+  std::map<std::size_t, atomic_value_t> m_initially;
 
   /** A Hash table storing the list of declared predicates,
    * matching their label with their expression. */
-  std::map<std::string, ExprNode*> _predicates;
+  std::map<std::string, ExprNode*> m_predicates;
 
   /** The string label of the starting predicate, which
    * should be label the root ExprNode of the expression tree.
    * @see pes.y and pes.tab.c (parser files). */
-  std::string _start_predicate;
+  std::string m_start_predicate;
 
   /** A Hash table storing a list of PES, with their labels
    * and their expressions. */
-  std::map<std::string, ExprNode*> _equations;
+  std::map<std::string, ExprNode*> m_equations;
 
   /** This is a vector (list) of all invariants with their
    * ExprNodes.
    * This is constructed by the parser while the ExprNode Trees
    * are being generated.
    * @see pes.y and pes.tab.c (parser files). */
-  std::vector<const ExprNode*> _invariants;
+  std::vector<const ExprNode*> m_invariants;
 
   /** The list of transitions of the state machine
    * from the timed automaton and/or PES description. */
-  std::vector<Transition*> _transitions;
+  std::vector<Transition*> m_transitions;
 
   /** This parameter is the size of the maximum
    * constant (in the clock constraints).  There
    * is one constant for all of the clocks
    * This is modified by the program and the parser. */
-  clock_value_t max_constant_;
+  clock_value_t m_max_constant;
 
   /** This DBM represents the initial DBM. */
-  DBM* initial_clock_zone_;
+  DBM* m_initial_clock_zone;
 
 public:
   pes()
-    : _clocks(new clock_name_to_index_t),
-      _atomic(new atomic_name_to_index_t),
-      max_constant_(0),
-      initial_clock_zone_(nullptr) {}
+      : m_clocks(new clock_name_to_index_t),
+        m_atomic(new atomic_name_to_index_t),
+        m_max_constant(0),
+        m_initial_clock_zone(nullptr)
+  {
+  }
 
   /** Destructor assumes all predicates and invariants have been newed,
    * and that the memory can be freed. */
   ~pes() {
-    delete_vector_elements(_invariants);
-    delete_vector_elements(_transitions);
+    delete_vector_elements(m_invariants);
+    delete_vector_elements(m_transitions);
 
     // Delete equations
-    for (std::map<std::string, ExprNode*>::iterator it = _equations.begin();
-         it != _equations.end(); it++) {
+    for (std::map<std::string, ExprNode*>::iterator it = m_equations.begin();
+         it != m_equations.end(); it++) {
       delete (it->second);
     }
 
     // Delete all predicates
-    for (std::map<std::string, ExprNode*>::iterator it = _predicates.begin();
-         it != _predicates.end(); it++) {
+    for (std::map<std::string, ExprNode*>::iterator it = m_predicates.begin();
+         it != m_predicates.end(); it++) {
       delete (it->second);
     }
 
-    delete _clocks;
-    delete _atomic;
-    delete initial_clock_zone_;
+    delete m_clocks;
+    delete m_atomic;
+    delete m_initial_clock_zone;
   }
 
   /** All clocks declared in this PES */
-  const clock_name_to_index_t* clocks() const { return _clocks; }
+  const clock_name_to_index_t* clocks() const { return m_clocks; }
 
   /** Add clock with name @name */
   std::size_t add_clock(const std::string& name) {
-    std::size_t idx = _clocks->size() + 1;
-    _clocks->insert(name, idx);
+    std::size_t idx = m_clocks->size() + 1;
+    m_clocks->insert(name, idx);
     return idx;
   }
 
   /** Find the index of clock with name @name */
   std::size_t lookup_clock(const std::string& name) const {
     try {
-      return _clocks->at(name);
+      return m_clocks->at(name);
     } catch (std::out_of_range&) {
       throw std::out_of_range("Clock variable " + name + " not defined.");
     }
@@ -130,7 +132,7 @@ public:
 
   /** Print all clocks to @os */
   void print_clocks(std::ostream& os) const {
-    const std::map<std::string, std::size_t> m(_clocks->left());
+    const std::map<std::string, std::size_t> m(m_clocks->left());
     for (std::map<std::string, std::size_t>::const_iterator it = m.begin();
          it != m.end(); ++it) {
       os << it->first << ":" << it->second << "  ";
@@ -138,7 +140,7 @@ public:
   }
 
   /** Getter for all atomic variables */
-  const atomic_name_to_index_t* atomic() const { return _atomic; }
+  const atomic_name_to_index_t* atomic() const { return m_atomic; }
 
   /** Insert an atomic variable with label s and initial value
    * v into the list of atomic variables and give it an id.
@@ -148,16 +150,16 @@ public:
    * @return 1 when done. */
   int add_atomic(const char* s, const atomic_value_t v = 0) {
     std::string name(s);
-    std::size_t idx = _atomic->size();
-    _atomic->insert(name, idx);
-    _initially.insert(std::make_pair(idx, v));
+    std::size_t idx = m_atomic->size();
+    m_atomic->insert(name, idx);
+    m_initially.insert(std::make_pair(idx, v));
     return 1;
   }
 
   /** Find the index of the atomic variable @name */
   std::size_t lookup_atomic(const std::string& name) const {
     try {
-      return _atomic->at(name);
+      return m_atomic->at(name);
     } catch (std::out_of_range&) {
       throw std::out_of_range("Clock variable " + name + " not defined.");
     }
@@ -165,7 +167,7 @@ public:
 
   /** Print all atomic variables to @os */
   void print_atomic(std::ostream& os) const {
-    const std::map<std::string, std::size_t> m(_atomic->left());
+    const std::map<std::string, std::size_t> m(m_atomic->left());
     for (std::map<std::string, std::size_t>::const_iterator it = m.begin();
          it != m.end(); ++it) {
       os << it->first << ":" << it->second << "  ";
@@ -173,11 +175,14 @@ public:
   }
 
   /** Get the assignment of initial values */
-  const std::map<std::size_t, atomic_value_t>& initially() const { return _initially; }
+  const std::map<std::size_t, atomic_value_t>& initially() const
+  {
+    return m_initially;
+  }
 
   /** Get the declared predicates */
   const std::map<std::string, ExprNode*>& predicates() const {
-    return _predicates;
+    return m_predicates;
   }
 
   /** Adds an empty PREDICATE expression to the list of
@@ -191,9 +196,9 @@ public:
    * @return 1 when done. */
   int add_predicate(const char* s) {
     std::string name(s);
-    std::size_t i = _predicates.size();
-    ExprNode* pred = new ExprNode(PREDICATE, s, i, _clocks, _atomic);
-    _predicates.insert(std::make_pair(name, pred));
+    std::size_t i    = m_predicates.size();
+    ExprNode*   pred = new ExprNode(PREDICATE, s, i, m_clocks, m_atomic);
+    m_predicates.insert(std::make_pair(name, pred));
     return 1;
   }
 
@@ -205,8 +210,8 @@ public:
    * @throws runtime error when predicate variable not found. */
   ExprNode* lookup_predicate(const std::string& name) const {
     std::map<std::string, ExprNode*>::const_iterator it =
-        _predicates.find(name);
-    if (it != _predicates.end()) {
+        m_predicates.find(name);
+    if (it != m_predicates.end()) {
       return it->second;
     } else {
       throw std::runtime_error("open predicate variable found: " + name);
@@ -217,15 +222,15 @@ public:
    * side equations) to @os. */
   void print_predicates(std::ostream& os) const {
     for (std::map<std::string, ExprNode*>::const_iterator it =
-             _predicates.begin();
-         it != _predicates.end(); ++it) {
+             m_predicates.begin();
+         it != m_predicates.end(); ++it) {
       os << it->first << "  "
          << "ind: " << (it->second)->getIntVal() << "  ";
     }
   }
 
   /** Get the predicate for which we need to solve */
-  std::string& start_predicate() { return _start_predicate; }
+  std::string& start_predicate() { return m_start_predicate; }
 
   /** Sets or changes the parity and the block number of a given
    * predicate ExprNode in the list of predicates.
@@ -235,22 +240,22 @@ public:
    * @param parity The desired parity: true = gfp, false = lfp.
    * @return true:if successful (found the predicate expression),
    * false:otherwise. */
-  bool set_parity_block(const std::string& name, const int block,
-                        const bool parity) {
+  void set_parity_block(const std::string& name, const int block,
+                        const bool parity)
+  {
     std::map<std::string, ExprNode*>::const_iterator it =
-        _predicates.find(name);
-    if (it != _predicates.end()) {
+        m_predicates.find(name);
+    if (it != m_predicates.end()) {
       it->second->set_Parity(parity);
       it->second->set_Block(block);
-      return true;
     } else {
-      return false;
+      throw std::runtime_error("Predicate variable " + name + " not declared.");
     }
   }
 
   /** Get the equations */
   const std::map<std::string, ExprNode*>& equations() const {
-    return _equations;
+    return m_equations;
   }
 
   /** Adds an an equation, with its variable name and right hand side, to
@@ -264,13 +269,11 @@ public:
    * @param name The equation label.
    * @param e (*) The expression of the RHS of the equation.
    * @return 1 if successful in doing so and 0 otherwise. */
-  bool add_equation(const int block, const bool parity, const std::string& name,
-                    ExprNode* e) {
-    if (set_parity_block(name, block, parity)) {
-      _equations.insert(make_pair(name, e));
-      return true;
-    } else
-      return false;
+  void add_equation(const int block, const bool parity, const std::string& name,
+                    ExprNode* e)
+  {
+    set_parity_block(name, block, parity);
+    m_equations.insert(make_pair(name, e));
   }
 
   /** Tries to find the RHS expression of an equation with a given predicate
@@ -281,8 +284,9 @@ public:
    * found in the list of equations.
    * @throws runtime_error when no equation found. */
   ExprNode* lookup_equation(const std::string& name) const {
-    std::map<std::string, ExprNode*>::const_iterator it = _equations.find(name);
-    if (it != _equations.end()) {
+    std::map<std::string, ExprNode*>::const_iterator it =
+        m_equations.find(name);
+    if (it != m_equations.end()) {
       return it->second;
     } else {
       throw std::runtime_error("open predicate variable found: " + name);
@@ -290,46 +294,51 @@ public:
   }
 
   /** Get all invariants */
-  const std::vector<const ExprNode*>& invariants() const { return _invariants; }
+  const std::vector<const ExprNode*>& invariants() const
+  {
+    return m_invariants;
+  }
 
   /** Add an invariant */
-  void add_invariant(ExprNode* inv) { _invariants.push_back(inv); }
+  void add_invariant(ExprNode* inv) { m_invariants.push_back(inv); }
 
   /** Get all transitions of the TA */
-  const std::vector<Transition*>& transitions() const { return _transitions; }
+  const std::vector<Transition*>& transitions() const { return m_transitions; }
 
   /** Add a transition to the TA */
-  void add_transition(Transition* t) { _transitions.push_back(t); }
+  void add_transition(Transition* t) { m_transitions.push_back(t); }
 
   /** Get the largest constant in the system */
-  clock_value_t max_constant() const { return max_constant_; }
+  clock_value_t max_constant() const { return m_max_constant; }
 
   /** Update the largest constant in the system (if needed) */
-  void update_max_constant(const clock_value_t v) { max_constant_ = std::max(max_constant_, v); }
+  void update_max_constant(const clock_value_t v)
+  {
+    m_max_constant = std::max(m_max_constant, v);
+  }
 
   /** Set the intial clock zone.
    *  @pre initial_clock_zone == nullptr */
   void set_initial_clock_zone(DBM* dbm) {
-    assert(initial_clock_zone_ == nullptr);
-    initial_clock_zone_ = dbm;
-    initial_clock_zone_->setIsCfFalse();
-    initial_clock_zone_->cf();
+    assert(m_initial_clock_zone == nullptr);
+    m_initial_clock_zone = dbm;
+    m_initial_clock_zone->setIsCfFalse();
+    m_initial_clock_zone->cf();
   }
 
   /** Returns the initial clock zone.
    *  If the initial clock zone has not been initialized, it is here initialized
    *  to be the clock zone assigning 0 to all clocks */
   DBM* initial_clock_zone() {
-    if (initial_clock_zone_ == nullptr)
-    {
-      initial_clock_zone_ = new DBM(clocks());
-      for (DBM::size_type i = 0; i < initial_clock_zone_->clocks_size(); ++i) {
-        initial_clock_zone_->addConstraint(i, 0, zero_le);
+    if (m_initial_clock_zone == nullptr) {
+      m_initial_clock_zone = new DBM(clocks());
+      for (DBM::size_type i = 0; i < m_initial_clock_zone->clocks_size(); ++i) {
+        m_initial_clock_zone->addConstraint(i, 0, zero_le);
       }
-      initial_clock_zone_->cf();
+      m_initial_clock_zone->cf();
     }
 
-    return initial_clock_zone_;
+    return m_initial_clock_zone;
   }
 
   /* Create the initial substituation list,

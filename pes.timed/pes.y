@@ -32,23 +32,14 @@
 #include "pes.tab.hh"
 #include "pes.lex.hh"
 
-  using namespace std;
+  // using namespace std;
 
-#define errPrtExit(x)  \
-  {                    \
-    cerr << x << endl; \
-    exit(1);           \
-  }
-
-#define pout(x) \
-  {             \
-  }
   char lastToken[1024];
 
   extern void yyerror(void* scanner, bool debug, pes& input_pes, char *s);
-  extern int yylex(YYSTYPE * lvalp, void* scanner);
+  extern int  yylex(YYSTYPE * lvalp, void *scanner);
 
-  map<string, int> defcons;
+  std::map<std::string, int> defined_constants;
 
   // clang-format off
 %}
@@ -244,9 +235,11 @@ trans_left_list TOK_IMPLY trans_dest_list_top trans_reset_list_top trans_replace
     delete tempExprC;
     rightExpr = $5;
   }
-  vector<pair<atomic_size_type, atomic_value_t> > * assignVector = nullptr;
+  std::vector<std::pair<atomic_size_type, atomic_value_t>> *assignVector =
+      nullptr;
   if($5 != nullptr) {
-    assignVector = new vector<pair<atomic_size_type, atomic_value_t> >(0);
+    assignVector =
+        new std::vector<std::pair<atomic_size_type, atomic_value_t>>(0);
     makeAssignmentList(*$5, assignVector);
   }
   Transition * t = new Transition(parExpr, leftExpr, rightExpr, leftBool, $3, $4, assignVector);
@@ -336,9 +329,11 @@ trans_left_list TOK_IMPLY trans_dest_list_top trans_reset_list_top trans_replace
     delete tempExprC;
     rightExpr = $6;
   }
-  vector<pair<atomic_size_type, atomic_value_t> > * assignVector = nullptr;
+  std::vector<std::pair<atomic_size_type, atomic_value_t>> *assignVector =
+      nullptr;
   if($6 != nullptr) {
-    assignVector = new vector<pair<atomic_size_type, atomic_value_t> >(0);
+    assignVector =
+        new std::vector<std::pair<atomic_size_type, atomic_value_t>>(0);
     makeAssignmentList(*$6, assignVector);
   }
   Transition * t = new Transition(parExpr, leftExpr, rightExpr, leftBool, $4, $5, assignVector);
@@ -527,8 +522,9 @@ trans_source_list TOK_IMPLY constraints
  * allows the user to use constants in the examples. */
 define_Decl:
 TOK_DEFINE TOK_ID_CONST TOK_INT
-{ defcons.insert(make_pair($2,$3));
-  // Since the string is not a pointer in defcons, $2 can be deleted
+{
+  defined_constants.insert(std::make_pair($2, $3));
+  // Since the string is not a pointer in defined_constants, $2 can be deleted
   delete $2;
 };
 
@@ -544,7 +540,7 @@ TOK_CLOCKS TOK_COLON TOK_LBRACE clocks_list TOK_RBRACE
   if(debug){
     std::cerr << "clocks declared: ";
     input_pes.print_clocks(std::cerr);
-    std::cerr << endl;
+    std::cerr << std::endl;
   }
 };
 
@@ -566,7 +562,7 @@ TOK_ATOMIC TOK_COLON TOK_LBRACE atomic_list TOK_RBRACE
   if(debug) {
     std::cerr << "control variable declared: ";
     input_pes.print_atomic(std::cerr);
-    std::cerr << endl;
+    std::cerr << std::endl;
   }
 };
 
@@ -609,7 +605,7 @@ TOK_INITIALLY TOK_COLON initial_list
 {
   input_pes.set_initial_clock_zone($3);
   if(debug) {
-    std::cerr << "initial condition defined" <<endl;
+    std::cerr << "initial condition defined" << std::endl;
   }
 };
 
@@ -640,7 +636,7 @@ TOK_PREDICATE TOK_COLON TOK_LBRACE predicate_list TOK_RBRACE
   if(debug) {
     std::cerr << "predicate declared: ";
     input_pes.print_predicates(std::cerr);
-    std::cerr << endl;
+    std::cerr << std::endl;
   }
 };
 
@@ -677,16 +673,12 @@ equation {  }
 equation:
 TOK_INT TOK_COLON TOK_NU TOK_ID_PREDICATE TOK_ASSIGN expr
 {
-  if (!input_pes.add_equation($1,true,$4,$6)) {
-    errPrtExit("predicate variable not declared");
-  }
+  input_pes.add_equation($1, true, $4, $6);
   delete $4;
 }
 |TOK_INT TOK_COLON TOK_MU TOK_ID_PREDICATE TOK_ASSIGN expr
 {
-  if (!input_pes.add_equation($1, false,$4,$6)) {
-    errPrtExit("predicate variable not declared");
-  }
+  input_pes.add_equation($1, false, $4, $6);
   delete $4;
 };
 
@@ -771,9 +763,6 @@ TOK_FORALL TOK_TIME TOK_LPAREN expr TOK_RPAREN
 |TOK_ID_PREDICATE
 {
   $$ = input_pes.lookup_predicate($1);
-  if ( $$ == nullptr ) {
-    errPrtExit("predicate variable not declared");
-  }
   delete $1;
 }
 |atomicProp
@@ -894,9 +883,9 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 |TOK_ID_CLOCK TOK_GE TOK_ID_CONST
 {
   $$ = new DBM(input_pes.clocks());
-  map<string, int>::iterator it = defcons.find($3);
-  if (it == defcons.end()) {
-    errPrtExit("macro not defined");
+  std::map<std::string, int>::iterator it = defined_constants.find($3);
+  if (it == defined_constants.end()) {
+    throw std::runtime_error("Macro " + std::string($3) + " not defined.");
   }
   int v = (*it).second;
   input_pes.update_max_constant(v);
@@ -916,9 +905,9 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 |TOK_ID_CLOCK TOK_GT TOK_ID_CONST
 {
   $$ = new DBM(input_pes.clocks());
-  map<string, int>::iterator it = defcons.find($3);
-  if (it == defcons.end()) {
-    errPrtExit("macro not defined");
+  std::map<std::string, int>::iterator it = defined_constants.find($3);
+  if (it == defined_constants.end()) {
+    throw std::runtime_error("Macro " + std::string($3) + " not defined.");
   }
   int v = (*it).second;
   input_pes.update_max_constant(v);
@@ -938,9 +927,9 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 |TOK_ID_CLOCK TOK_LE TOK_ID_CONST
 {
   $$ = new DBM(input_pes.clocks());
-  map<string, int>::iterator it = defcons.find($3);
-  if (it == defcons.end()) {
-    errPrtExit("macro not defined");
+  std::map<std::string, int>::iterator it = defined_constants.find($3);
+  if (it == defined_constants.end()) {
+    throw std::runtime_error("Macro " + std::string($3) + " not defined.");
   }
   int v = (*it).second;
   input_pes.update_max_constant(v);
@@ -960,9 +949,9 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 |TOK_ID_CLOCK TOK_LT TOK_ID_CONST
 {
   $$ = new DBM(input_pes.clocks());
-  map<string, int>::iterator it = defcons.find($3);
-  if (it == defcons.end()) {
-    errPrtExit("macro not defined");
+  std::map<std::string, int>::iterator it = defined_constants.find($3);
+  if (it == defined_constants.end()) {
+    throw std::runtime_error("Macro " + std::string($3) + " not defined.");
   }
   int v = (*it).second;
   input_pes.update_max_constant(v);
@@ -983,9 +972,9 @@ TOK_ID_CLOCK TOK_GE TOK_INT
 |TOK_ID_CLOCK TOK_EQ TOK_ID_CONST
 {
   $$ = new DBM(input_pes.clocks());
-  map<string, int>::iterator it = defcons.find($3);
-  if (it == defcons.end()) {
-    errPrtExit("macro not defined");
+  std::map<std::string, int>::iterator it = defined_constants.find($3);
+  if (it == defined_constants.end()) {
+    throw std::runtime_error("Macro " + std::string($3) + " not defined.");
   }
   int v = (*it).second;
   input_pes.update_max_constant(v);
