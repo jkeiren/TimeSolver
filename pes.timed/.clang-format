@@ -2,6 +2,15 @@
 Language:        Cpp
 BasedOnStyle:  Google
 AccessModifierOffset: -2
+AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: true
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterStruct: true
+  AfterClass: true
+  AfterNamespace: true
+  AfterFunction: true
+BreakConstructorInitializers: BeforeColon
 PointerAlignment: Left
 SpacesBeforeTrailingComments: 1
 SortIncludes:    false
