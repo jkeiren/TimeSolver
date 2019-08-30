@@ -11,8 +11,9 @@
 #include <algorithm>
 #include <vector>
 
-
-inline bool is_power_of_two(std::size_t n) {
+/** \brief Determines whether n is exactly a power of two */
+inline bool is_power_of_two(const std::size_t n)
+{
   if (n == 0) {
     return false;
   } else {
@@ -20,17 +21,11 @@ inline bool is_power_of_two(std::size_t n) {
   }
 }
 
+/** \brief calls delete on all element af a vector */
 template<typename T>
 void delete_vector_elements(std::vector<T*>& vec)
 {
   std::for_each(vec.begin(), vec.end(), [](T* t) { delete t; });
-}
-
-template<typename T>
-void deep_copy(std::vector<T*>& out, const std::vector<T*>& in)
-{
-  out.reserve(out.size()+in.size());
-  std::for_each(in.begin(), in.end(), [&](T* t) { out.emplace_back(new T(*t)); });
 }
 
 #endif // UTILITIES_HH

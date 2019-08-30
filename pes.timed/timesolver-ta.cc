@@ -107,12 +107,11 @@ void parse_command_line(int argc, char** argv, prover_options& opt) {
       case 'H': // change the Hash Size
         opt.nHash = strtoul(optarg, nullptr, 0);
         if (opt.nHash < 1) {
-          std::cerr << "Number of hashing bins must be greater than 0." << std::endl;
-          exit(-1);
-        }
-        if (!is_power_of_two(opt.nHash)) {
-          std::cerr << "Number of hashing bins must be a power of 2." << std::endl;
-          exit(-1);
+          throw std::runtime_error(
+              "Number of hashing bins must be greater than 0");
+        } else if (!is_power_of_two(opt.nHash)) {
+          throw std::runtime_error(
+              "Number of hashing bins must be a power of 2");
         }
         break;
       case 'n':
