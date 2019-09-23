@@ -7,9 +7,9 @@
  * @copyright MIT Licence, see the accompanying LICENCE.txt
  */
 
-#include "parse.hh"
-#include "pes.tab.hh"
-#include "pes.lex.hh"
+#include "parse.h"
+#include "pes.tab.h"
+#include "pes.lex.h"
 
 /** The method that parses the lexed file
  * and creates the ExprNode objects.

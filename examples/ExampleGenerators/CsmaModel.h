@@ -3,7 +3,7 @@
 #ifndef CSMAMODEL_H
 #define CSMAMODEL_H
 
-#include "TATransition.hh"
+#include "TATransition.h"
 
 using namespace std;
 

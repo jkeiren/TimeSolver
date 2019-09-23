@@ -24,13 +24,13 @@
 
 #include <iostream>
 #include <vector>
-#include "pes.hh"
-#include "ExprNode.hh"
-#include "transition.hh"
-#include "array.hh"
-#include "DBM.hh"
-#include "pes.tab.hh"
-#include "pes.lex.hh"
+#include "pes.h"
+#include "ExprNode.h"
+#include "transition.h"
+#include "array.h"
+#include "DBM.h"
+#include "pes.tab.h"
+#include "pes.lex.h"
 
   // using namespace std;
 

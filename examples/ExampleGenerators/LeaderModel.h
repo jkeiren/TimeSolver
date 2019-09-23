@@ -3,7 +3,7 @@
 #ifndef LEADERMODEL_H
 #define LEADERMODEL_H
 
-#include "TATransition.hh"
+#include "TATransition.h"
 
 using namespace std;
 

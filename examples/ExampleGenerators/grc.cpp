@@ -4,8 +4,8 @@
 #include <fstream>
 #include <string>
 #include <vector>
-#include "TATransition.hh"
-#include "GrcModel.hh"
+#include "TATransition.h"
+#include "GrcModel.h"
 #include <stdlib.h>
 
 using namespace std;

@@ -32,8 +32,8 @@ add_subdirectory(external/cpplogging)
 # Generate lexer and parser
 find_package(BISON)
 find_package(FLEX)
-BISON_TARGET(PesParser pes.y ${CMAKE_CURRENT_BINARY_DIR}/pes.tab.cc)
-FLEX_TARGET(PesScanner pes.l ${CMAKE_CURRENT_BINARY_DIR}/pes.lex.cc DEFINES_FILE pes.lex.hh)
+BISON_TARGET(PesParser pes.y ${CMAKE_CURRENT_BINARY_DIR}/pes.tab.cpp)
+FLEX_TARGET(PesScanner pes.l ${CMAKE_CURRENT_BINARY_DIR}/pes.lex.cpp DEFINES_FILE pes.lex.hh)
 ADD_FLEX_BISON_DEPENDENCY(PesScanner PesParser)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR} # for lexer/parser
@@ -41,12 +41,12 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR} # for lexer/parser
   external/cpplogging/include)
 
 # Build two libraries for the sake of unit testing
-add_library(ExprNode ExprNode.cc)
-add_library(parse parse.cc ${CMAKE_CURRENT_BINARY_DIR}/pes.lex.cc ${CMAKE_CURRENT_BINARY_DIR}/pes.tab.cc)
+add_library(ExprNode ExprNode.cpp)
+add_library(parse parse.cpp ${CMAKE_CURRENT_BINARY_DIR}/pes.lex.cpp ${CMAKE_CURRENT_BINARY_DIR}/pes.tab.cpp)
 
 # Build the actual executable
 add_executable(timesolver-ta
-  timesolver-ta.cc
+  timesolver-ta.cpp
   ${BISON_PesParser_OUTPUTS}
   ${FLEX_PesScanner_OUTPUTS}
   )

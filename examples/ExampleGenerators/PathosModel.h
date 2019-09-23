@@ -3,7 +3,7 @@
 #ifndef FISCHERMODEL_H
 #define FISCHERMODEL_H
 
-#include "TATransition.hh"
+#include "TATransition.h"
 
 using namespace std;
 

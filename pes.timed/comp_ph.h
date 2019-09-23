@@ -10,9 +10,9 @@
 #ifndef COMP_PH_HH
 #define COMP_PH_HH
 
-#include "ExprNode.hh"
-#include "DBM.hh"
-#include "DBMList.hh"
+#include "ExprNode.h"
+#include "DBM.h"
+#include "DBMList.h"
 
 /** Internal prover to evaluate Boolean- and atomic expressions.
  * @param e The formula to evaluate

@@ -3,7 +3,7 @@
 #ifndef GRCMODEL_H
 #define GRCMODEL_H
 
-#include "TATransition.hh"
+#include "TATransition.h"
 
 using namespace std;
 

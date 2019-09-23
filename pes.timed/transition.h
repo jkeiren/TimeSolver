@@ -10,7 +10,7 @@
 #define TRANSITION_HH
 
 #include <ostream>
-#include "ExprNode.hh"
+#include "ExprNode.h"
 
 /** Class used to represent transitions of a timed automaton. This
  * class allows for ease of parsing and storage of transitions during

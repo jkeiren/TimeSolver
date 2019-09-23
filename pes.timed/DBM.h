@@ -16,9 +16,9 @@
 #include <functional>
 #include <iostream>
 #include <vector>
-#include "array.hh"
-#include "bidirectional_map.hh"
-#include "constraints.hh"
+#include "array.h"
+#include "bidirectional_map.h"
+#include "constraints.h"
 
 class clock_set {
 protected:

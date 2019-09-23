@@ -7,7 +7,7 @@
 #ifndef PARSE_HH
 #define PARSE_HH
 
-#include "pes.hh"
+#include "pes.h"
 
 void parse_pes(const std::string& input_filename, bool debug, pes& result);
 

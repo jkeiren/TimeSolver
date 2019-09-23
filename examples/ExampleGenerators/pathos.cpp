@@ -4,8 +4,8 @@
 #include <fstream>
 #include <string>
 #include <vector>
-#include "TATransition.hh"
-#include "PathosModel.hh"
+#include "TATransition.h"
+#include "PathosModel.h"
 
 using namespace std;
 

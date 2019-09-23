@@ -13,16 +13,15 @@
 %option yylineno
 
 %{
-#include "pes.hh"
-#include "ExprNode.hh"
-#include "transition.hh"
+#include "pes.h"
+#include "ExprNode.h"
+#include "transition.h"
 #include <string>
 #include <iostream>
-#include "pes.tab.hh"
+#include "pes.tab.h"
 
-
-extern char lastToken[1024];
-char currentToken[1024];
+  extern char lastToken[1024];
+  char        currentToken[1024];
 
 #define SAVELAST strcpy(lastToken,currentToken); strcpy(currentToken,yytext)
 

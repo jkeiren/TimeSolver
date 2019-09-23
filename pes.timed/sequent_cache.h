@@ -14,8 +14,8 @@
 #define SEQUENT_CACHE_HH
 
 #include <deque>
-#include "pes.hh"
-#include "sequent_stack.hh"
+#include "pes.h"
+#include "sequent_stack.h"
 
 class sequent_cache {
 

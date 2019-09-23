@@ -1,11 +1,11 @@
-//To Generate the examples for fischer case study
+//To Generate the examples for csma-cd case study
 
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <vector>
-#include "TATransition.hh"
-#include "FischerModel.hh"
+#include "TATransition.h"
+#include "CsmaModel.h"
 #include <stdlib.h>
 
 using namespace std;
@@ -19,14 +19,14 @@ int main(int argc, char **argv) {
     fileBase = argv[2];
   }
   else {
-    fileBase = "./GeneratorOutputs/FISCHER";
+    fileBase = "./GeneratorOutputs/CSMA";
   }
   if( process < 1 || process > 20) {cerr << "process number between 2 and 20" << endl; exit(-1);}
   
   char line[STRLEN];
    
   /* Generate the Model */ 
-  FischerModel myFISCHER(process);
+  CsmaModel myCSMA(process);
   
   /*=======================================================*/
   /*----------- Insert Specifications Here ----------------*/
@@ -40,7 +40,6 @@ int main(int argc, char **argv) {
   string phi;
   string phi1;
   string phi2;
-  string phi3;
   bool first;
   
   /*---- New Spec: AS */
@@ -48,23 +47,22 @@ int main(int argc, char **argv) {
   fileSuffix = "-" + processStr + "-a-s.in"; /* Give suffix */
   fileStr = fileBase + fileSuffix;
   ofs.open(fileStr.c_str());
-  myFISCHER.printModelPartBeforeSpec(ofs, "");
+  myCSMA.printModelPartBeforeSpec(ofs, "");
   
   ofs << "PREDICATE: {X}" <<endl;
   ofs << "START: X" <<endl;
-
+  
   ofs << "EQUATIONS: {" <<endl;
-  ofs << "1: nu X = ";
-
-  // Print out the property specification
-  /* The specification does not need to iterate over all processors 
-   * Because the processor behavior is symmetric and operators
-   * are commutative and associative */
-  ofs << "(p1 != 3 |s| p2 != 3) && \\forall time(\\AllAct(X))" << endl;
- 
+  /* The original specification seems to be for two processes only,
+   * so this attempts to extend it to n processes
+   * Iteration is not required to extend it since the processes are symmetric
+   * and operations are commutative and associative, we can only use
+   * the first part of the spec for a safety property. */
+  ofs << "1: nu X = \\forall time(";
+  ofs << "({p1 != 1} || ({p2 != 1} || ((x1 < CB) && (x2 < CB)))) && \\AllAct(X))" << endl;
   ofs << "}" <<endl;
   
-  myFISCHER.printModelPartAfterSpec(ofs);
+  myCSMA.printModelPartAfterSpec(ofs);
   ofs.close();
   
   /*---- New Spec: BS */
@@ -72,46 +70,75 @@ int main(int argc, char **argv) {
   fileSuffix = "-" + processStr + "-b-s.in"; /* Give suffix */
   fileStr = fileBase + fileSuffix;
   ofs.open(fileStr.c_str());
-  myFISCHER.printModelPartBeforeSpec(ofs, "");
+  myCSMA.printModelPartBeforeSpec(ofs, "");
   
   ofs << "PREDICATE: {X}" <<endl;
   ofs << "START: X" <<endl;
-
+  
   ofs << "EQUATIONS: {" <<endl;
-  ofs << "1: nu X = ";
-
-  // Print out the property specification
-  /* The specification does not need to iterate over all processors 
-   * Because the processor behavior is symmetric and operators
-   * are commutative and associative */
-  if(process < 5) { // Then this is true, so print out vacuous spec
-	  ofs << "(p1 != 5)";
+  /* Change Specification here. (Difference from csmaA)
+   * This requires enumerating over the processors */
+  /* Since the processes are symmetric, as well as the operations
+   * being commutative and associative we can simplify the spec
+   * part to only involving a few processes. 
+   * Note: Spec is vacuously true for 2 processes. */
+  if(process == 2) {
+	  // Spec Vacuously true for two processes
+	  ofs << "1: nu X = (((p1==1 && p2==1)->(p1 == 1)))" << endl;
   }
-  else{  // At least one of the first five processes is not waiting
-	  ofs << "(p1 != 2 |s| p2 != 2 |s| p3 != 2 |s| p4 != 2 |s| p5 != 2)";
+  else {
+	  ofs << "1: nu X =  (((p1==1 && p2==1)->(p3==2)) && ((p1==1 && p3==1)->(p2==2)) && ((p2==1 && p3==1)->(p1==2)))" << endl;
   }
-  ofs << "&& \\forall time(\\AllAct(X))" << endl;
+  ofs << " && \\forall time(\\AllAct(X))" << endl;
   ofs << "}" <<endl;
   
-  myFISCHER.printModelPartAfterSpec(ofs);
+  myCSMA.printModelPartAfterSpec(ofs);
   ofs.close();
   
   /*---- New Spec: AL */
   /*------------------------------------*/
+ //  fileSuffix = "-" + processStr + "-a-l.in"; /* Give suffix */
+//   fileStr = fileBase + fileSuffix;
+//   ofs.open(fileStr.c_str());
+//   myCSMA.printModelPartBeforeSpec(ofs, "");
+//   
+//   ofs << "PREDICATE: {X}" <<endl;
+//   ofs << "START: X" <<endl;
+//   
+//   ofs << "EQUATIONS: {" <<endl;
+//   // for ease of generation, write the property phi first
+//   phi = "(";
+//   first = true;
+//   for (int i = 1; i <= process; i++){
+//     sprintf(line, "(p%d == 0 && x%d >= 1)", i,i);
+//     if (first) first = false;
+//     else phi += " || ";
+//     phi += line;
+//   }
+//   phi += ")";
+//   
+//   ofs << "1: mu X = \\forall time\\rel[" << phi << "]";
+//   ofs << "(" << phi << " || " << "\\AllAct(X))" << " && ";
+//   ofs << "(UnableWaitInf || \\exists time(" << phi << "))" << endl;
+//   
+//   ofs << "}" <<endl;
+//   
+//   myCSMA.printModelPartAfterSpec(ofs);
+//   ofs.close();
   fileSuffix = "-" + processStr + "-a-l.in"; /* Give suffix */
   fileStr = fileBase + fileSuffix;
   ofs.open(fileStr.c_str());
-  myFISCHER.printModelPartBeforeSpec(ofs, "");
+  myCSMA.printModelPartBeforeSpec(ofs, "");
   
   ofs << "PREDICATE: {X}" <<endl;
   ofs << "START: X" <<endl;
-
+  
   ofs << "EQUATIONS: {" <<endl;
   // for ease of generation, write the property phi first
   phi = "(";
   first = true;
-  for (int i = 1; i <= process; i++) {
-    sprintf(line, "(p%d == 0)", i);
+  for (int i = 1; i <= process; i++){
+    sprintf(line, "(p%d == 0)", i,i);
     if (first) first = false;
     else phi += " && ";
     phi += line;
@@ -122,7 +149,7 @@ int main(int argc, char **argv) {
   ofs << "(UnableWaitInf && \\forall time(\\AllAct(X)))" << endl; 
   ofs << "}" <<endl;
   
-  myFISCHER.printModelPartAfterSpec(ofs);
+  myCSMA.printModelPartAfterSpec(ofs);
   ofs.close();
   
   /*---- New Spec: BL */
@@ -130,12 +157,13 @@ int main(int argc, char **argv) {
   fileSuffix = "-" + processStr + "-b-l.in"; /* Give suffix */
   fileStr = fileBase + fileSuffix;
   ofs.open(fileStr.c_str());
-  myFISCHER.printModelPartBeforeSpec(ofs, "");
+  myCSMA.printModelPartBeforeSpec(ofs, "");
   
   ofs << "PREDICATE: {X}" <<endl;
   ofs << "START: X" <<endl;
-
   ofs << "EQUATIONS: {" <<endl;
+  /* While iteration might not be required due to symmetry, we iterate 
+   * anyway. */
   // for ease of generation, write the property phi first
   phi = "(";
   first = true;
@@ -146,12 +174,11 @@ int main(int argc, char **argv) {
     phi += line;
   }
   phi += ")";
-  
   ofs << "1: mu X = " << "{" << phi << "}" << " || ";
   ofs << "(UnableWaitInf && \\forall time(\\AllAct(X)))" << endl; 
   ofs << "}" <<endl;
   
-  myFISCHER.printModelPartAfterSpec(ofs);
+  myCSMA.printModelPartAfterSpec(ofs);
   ofs.close();
   
   /*---- New Spec: M1 */
@@ -159,30 +186,29 @@ int main(int argc, char **argv) {
   fileSuffix = "-" + processStr + "-M1.in"; /* Give suffix */
   fileStr = fileBase + fileSuffix;
   ofs.open(fileStr.c_str());
-  myFISCHER.printModelPartBeforeSpec(ofs,"");
+  myCSMA.printModelPartBeforeSpec(ofs, "");
   
   ofs << "PREDICATE: {X,X2}" <<endl;
   ofs << "START: X" <<endl;
-
+  
   ofs << "EQUATIONS: {" <<endl;
    // for ease of generation, write the property phi first
   phi = "(";
-  sprintf(line, "{p%d == 0} || X2", 1);
+  sprintf(line, "{p1 != 2} || X2");
   phi += line;
   phi += ")";
   
   ofs << "1: nu X = " << "\\forall time( " << phi << " && \\AllAct(X))" << endl;
   
-  
   phi2 = "(";
-  sprintf(line, "p%d == 3", 1);
+  sprintf(line, "p1 == 1");
   phi2 += line;
   phi2 += ")";
-  ofs << "2: mu X2 = " << "{" << phi2 << "}" << " || ";
-  ofs << "(UnableWaitInf && \\forall time(\\AllAct(X2)))" << endl; 
+  ofs << "2: mu X2 = {" << phi2 << "}" << " || ";
+  ofs << "(UnableWaitInf && \\forall time(\\AllAct(X2)))" << endl;
   ofs << "}" <<endl;
   
-  myFISCHER.printModelPartAfterSpec(ofs);
+  myCSMA.printModelPartAfterSpec(ofs);
   ofs.close();
   
   /*---- New Spec: M2 */
@@ -190,30 +216,29 @@ int main(int argc, char **argv) {
   fileSuffix = "-" + processStr + "-M2.in"; /* Give suffix */
   fileStr = fileBase + fileSuffix;
   ofs.open(fileStr.c_str());
-  myFISCHER.printModelPartBeforeSpec(ofs, "");
+  myCSMA.printModelPartBeforeSpec(ofs, "");
   
   ofs << "PREDICATE: {X,X2}" <<endl;
   ofs << "START: X" <<endl;
-
+  
   ofs << "EQUATIONS: {" <<endl;
    // for ease of generation, write the property phi first
   phi = "(";
-  sprintf(line, "{p%d == 0} || X2", 3);
+  sprintf(line, "{p != 2} || X2");
   phi += line;
   phi += ")";
   
   ofs << "1: nu X = " << "\\forall time( " << phi << " && \\AllAct(X))" << endl;
-  
-  
+
   phi2 = "(";
-  sprintf(line, "p%d == 3", 3);
+  sprintf(line, "p == 0");
   phi2 += line;
   phi2 += ")";
-  ofs << "2: mu X2 = " << "{" << phi2 << "}" << " || ";
-  ofs << "(UnableWaitInf && \\forall time(\\AllAct(X2)))" << endl; 
+  ofs << "2: mu X2 = {" << phi2 << "} || ";
+  ofs << "(UnableWaitInf && \\forall time(\\AllAct(X2)))" << endl;
   ofs << "}" <<endl;
   
-  myFISCHER.printModelPartAfterSpec(ofs);
+  myCSMA.printModelPartAfterSpec(ofs);
   ofs.close();
   
   /*---- New Spec: M3 */
@@ -221,23 +246,34 @@ int main(int argc, char **argv) {
   fileSuffix = "-" + processStr + "-M3.in"; /* Give suffix */
   fileStr = fileBase + fileSuffix;
   ofs.open(fileStr.c_str());
-  myFISCHER.printModelPartBeforeSpec(ofs, "");
+  myCSMA.printModelPartBeforeSpec(ofs, "");
   
   ofs << "PREDICATE: {X}" <<endl;
   ofs << "START: X" <<endl;
-
+  
   ofs << "EQUATIONS: {" <<endl;
-    // for ease of generation, write the property phi first
-  phi = "(";
-  sprintf(line, "p1 == 3 && x1 <= 0");
-  phi += line;
-  phi += ")";
+  // for ease of generation, write the properties phi1 and phi2 first
+	// phi1
+  phi1 = "(";
+  sprintf(line, "p == 0");
+  phi1 += line;
+  phi1 += ")";
+  // phi2
+  phi2 = "(";
+  first = true;
+  for (int i = 1; i <= process; i++){
+    sprintf(line, "(p%d == 1)", i);
+    if (first) first = false;
+    else phi2 += " |s| ";
+    phi2 += line;
+  }
+  phi2 += ")";
   
-  ofs << "1: mu X = " << "\\exists time( " << phi << " || \\ExistAct(X))" << endl;
-  
+  ofs << "1: mu X = \\forall time\\rel[" << phi2 << "]( (" << phi1 << " || " << phi2 << ") && (" << phi2 << " || \\AllAct(X)))";
+  ofs << " && ( UnableWaitInf || \\exists time\\rel[" << phi1 << "](" << phi2 << "))"; 
   ofs << "}" <<endl;
   
-  myFISCHER.printModelPartAfterSpec(ofs);
+  myCSMA.printModelPartAfterSpec(ofs);
   ofs.close();
   
   /*---- New Spec: M4 */
@@ -245,29 +281,36 @@ int main(int argc, char **argv) {
   fileSuffix = "-" + processStr + "-M4.in"; /* Give suffix */
   fileStr = fileBase + fileSuffix;
   ofs.open(fileStr.c_str());
-  myFISCHER.printModelPartBeforeSpec(ofs, "");
+  myCSMA.printModelPartBeforeSpec(ofs, "");
   
   ofs << "PREDICATE: {X}" <<endl;
   ofs << "START: X" <<endl;
-
+  
   ofs << "EQUATIONS: {" <<endl;
-    // for ease of generation, write the property phi first
-  phi = "(";
+  // for ease of generation, write the properties phi1 and phi2 first
+	// phi1
+  phi1 = "(";
+  sprintf(line, "p == 0");
+  phi1 += line;
+  phi1 += ")";
+  // phi2
+  phi2 = "(";
   first = true;
   for (int i = 1; i <= process; i++){
-    sprintf(line, "(p%d == 3)", i);
+    sprintf(line, "(p%d == 1)", i);
     if (first) first = false;
-    else phi += " |s| ";
-    phi += line;
+    else phi2 += " |s| ";
+    phi2 += line;
   }
-  phi += ")";
-  
-  ofs << "1: nu X = " << "\\forall time( " << phi << " || \\AllAct(";
-  ofs << "\\forall time( " << phi << " || \\AllAct(" << "\\forall time( " << phi << " || \\AllAct(" << "\\forall time( " << phi << " || \\AllAct(" << "\\forall time( " << phi << " || \\AllAct(" << phi << ")) )) )) )) ))" << endl;
-  
+  phi2 += ")";
+  // Here, we are only examining paths with an infinite number of
+  // actions, and we simplify since phi_1 and phi_2 only involve
+  // atomic propositions
+  ofs << "1: mu X = " << "{" << phi2 << "}" << " || (" << phi1 << " && \\forall time(";
+  ofs << "\\AllAct(X)))" << endl;
   ofs << "}" <<endl;
   
-  myFISCHER.printModelPartAfterSpec(ofs);
+  myCSMA.printModelPartAfterSpec(ofs);
   ofs.close();
   
   

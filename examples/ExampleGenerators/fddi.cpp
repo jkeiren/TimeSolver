@@ -4,8 +4,8 @@
 #include <fstream>
 #include <string>
 #include <vector>
-#include "TATransition.hh"
-#include "FddiModel.hh"
+#include "TATransition.h"
+#include "FddiModel.h"
 
 using namespace std;
 

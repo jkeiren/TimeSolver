@@ -29,7 +29,7 @@
 #define SEQUENT_HH
 
 #include "cpplogging/logger.h"
-#include "ExprNode.hh"
+#include "ExprNode.h"
 
 class Sequent;
 class SequentPlace; // forward declaration for parent scope

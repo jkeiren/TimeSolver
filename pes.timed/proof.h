@@ -11,13 +11,13 @@
 #define PROOF_HH
 
 #include "cpplogging/logger.h"
-#include "prover_options.hh"
-#include "pes.hh"
-#include "DBM.hh"
-#include "ExprNode.hh"
-#include "transition.hh"
-#include "comp_ph.hh"
-#include "sequent_cache.hh"
+#include "prover_options.h"
+#include "pes.h"
+#include "DBM.h"
+#include "ExprNode.h"
+#include "transition.h"
+#include "comp_ph.h"
+#include "sequent_cache.h"
 
 class prover {
 protected:

@@ -4,8 +4,8 @@
 #include <fstream>
 #include <string>
 #include <vector>
-#include "TATransition.hh"
-#include "LeaderModel.hh"
+#include "TATransition.h"
+#include "LeaderModel.h"
 #include <stdlib.h>
 
 using namespace std;

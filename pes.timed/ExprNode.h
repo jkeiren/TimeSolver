@@ -18,9 +18,9 @@
 #include <vector>
 #include <utility>
 #include <string>
-#include "array.hh"
-#include "DBM.hh"
-#include "DBMList.hh"
+#include "array.h"
+#include "DBM.h"
+#include "DBMList.h"
 
 /** The type that contains all of the logical constraints/connectives
  * needed. This covers all possible cases of an ExprNode expression.

@@ -10,11 +10,11 @@
 #ifndef SEQUENT_STACK_HH
 #define SEQUENT_STACK_HH
 
-#include "pes.hh"
-#include "DBM.hh"
-#include "DBMList.hh"
-#include "ExprNode.hh"
-#include "sequent.hh"
+#include "pes.h"
+#include "DBM.h"
+#include "DBMList.h"
+#include "ExprNode.h"
+#include "sequent.h"
 
 /** Stack of sequents used to detect, among others, cycles of fixed points */
 template <typename SequentType, typename DBMsetElementType, typename DBMsetConstElementType>

@@ -34,13 +34,13 @@
 #include <ctime>
 #include <unistd.h>
 #include "cpplogging/logger.h"
-#include "ExprNode.hh"
-#include "sequent_stack.hh"
-#include "prover_options.hh"
-#include "proof.hh"
-#include "pes.hh"
-#include "parse.hh"
-#include "version.hh"
+#include "ExprNode.h"
+#include "sequent_stack.h"
+#include "prover_options.h"
+#include "proof.h"
+#include "pes.h"
+#include "parse.h"
+#include "version.h"
 
 #ifndef DEBUG
 #define DEBUG true

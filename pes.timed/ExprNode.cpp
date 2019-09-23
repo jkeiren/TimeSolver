@@ -14,8 +14,8 @@
 #include <string>
 #include <sstream>
 #include <map>
-#include "bidirectional_map.hh"
-#include "ExprNode.hh"
+#include "bidirectional_map.h"
+#include "ExprNode.h"
 
 using namespace std;
 

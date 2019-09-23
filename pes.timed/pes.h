@@ -9,10 +9,10 @@
 #include <map>
 #include <string>
 #include <vector>
-#include "utilities.hh"
-#include "bidirectional_map.hh"
-#include "ExprNode.hh"
-#include "transition.hh"
+#include "utilities.h"
+#include "bidirectional_map.h"
+#include "ExprNode.h"
+#include "transition.h"
 
 /* From pes.y
  * 		#define (define_list)

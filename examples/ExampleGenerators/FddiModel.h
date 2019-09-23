@@ -3,7 +3,7 @@
 #ifndef FDDIMODEL_H
 #define FDDIMODEL_H
 
-#include "TATransition.hh"
+#include "TATransition.h"
 
 using namespace std;
 

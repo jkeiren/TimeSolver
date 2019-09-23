@@ -16,8 +16,8 @@
 #include <algorithm>
 #include <iostream>
 #include <vector>
-#include "utilities.hh"
-#include "DBM.hh"
+#include "utilities.h"
+#include "DBM.h"
 
 /** The Difference Bound Matrix List (DBMList) class; a list
  * (union) of matrices implementation for a union of clock zones.
