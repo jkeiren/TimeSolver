@@ -81,7 +81,7 @@ private:
       for (DBM::size_type i = 0; i < Y.clocks_size(); i++) {
         for (DBM::size_type j = 0; j < Y.clocks_size(); j++) {
           if (!(Y.isConstraintImplicit(i, j))) {
-            const DBM negated_dbm(j, i, negate_constraint(Y(i,j)), m_declared_clocks);
+            const DBM negated_dbm(j, i, -Y(i, j), m_declared_clocks);
             if(first) {
               assert(result.size() == 1);
               result.front() = std::move(negated_dbm);
@@ -658,7 +658,8 @@ public:
    * @return none
    * @note This only works when the timed automaton is "diagonal-free,"
    * or does not have any clock difference constraints in the automaton. */
-  DBMList& bound(const bound_t maxc) {
+  DBMList& bound(const clock_value_t maxc)
+  {
     return map([&](DBM& d){ d.bound(maxc); });
   }
 

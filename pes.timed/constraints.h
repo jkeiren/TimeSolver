@@ -1,4 +1,4 @@
-/** \file bound_to_constraint.hh
+/** \file bound_to_constraint.h
  * Implementation of the type for clock values.
  * @author Peter Fontana
  * @author Dezhuang Zhang
@@ -15,115 +15,137 @@
 #include <cstdint>
 #include <limits>
 
-typedef short int raw_constraint_t; // encoding of an upper bound in the TA/DBM: the LSB denotes </<=
-typedef short int bound_t; // integer constant, being a bound or a clock_value in the TA/DBM
-typedef bound_t clock_value_t; // values that can be attained by a clock; == bound_t
+typedef int clock_value_t; // values that can be attained by a clock;
 
-const     bound_t infinity_bound = std::numeric_limits<bound_t>::max() >> 1; // first 4 bits unused
-static_assert (sizeof (bound_t) == 2, "sizeof (bound_t) != 2 bytes");
-
-constexpr raw_constraint_t infinity = infinity_bound << 1; // msb is sign bit. next 2 bits (14,13) unused;
-const     raw_constraint_t zero_less = 0;
-const     raw_constraint_t zero_le = 1;
-
-typedef enum {
-  strict = 0,
-  weak = 1
-} strictness_t;
-
-inline
-constexpr strictness_t add_strictness(const strictness_t x, const strictness_t y)
+/** Bounds used in difference bound matrices.
+ *
+ * Represents a pair (x, R) where x is a clock value and R in { <, <= }.
+ * This representation is coded as an integer value where the lsb denotes R,
+ * such that, if lsb = 0, the ordering is strict (R = <), and when lsb = 1, the
+ * ordering is weak (R = <=).
+ */
+class bound_t
 {
-  return static_cast<strictness_t>(x&y);
-}
+public:
+  /// Public type to denote the raw value. This is exposed for testing purposes.
+  typedef clock_value_t raw_value_type; // raw value
 
-inline
-constexpr strictness_t add_strictness(const strictness_t x, const strictness_t y, const strictness_t z)
-{
-  return static_cast<strictness_t>(x&y&z);
-}
+private:
+  /// Field that records the actual value.
+  raw_value_type m_value;
 
-inline
-constexpr strictness_t negate_strictness(const strictness_t x)
-{
-  return static_cast<strictness_t>(x ^ weak);
-}
+  /// The largest clock value that can possibly be represented.
+  static constexpr clock_value_t infinity_clock_value =
+      std::numeric_limits<clock_value_t>::max() >> 1;
 
-inline
-constexpr strictness_t bool_to_strictness(const bool is_strict)
-{
-  return static_cast<strictness_t>(is_strict?0:1);
-}
+  /// The representation used internally for infinity.
+  static constexpr raw_value_type infinity_raw_value = infinity_clock_value
+                                                       << 1;
+  /// Convert a raw value to a clock value.
+  constexpr clock_value_t clock_value(const raw_value_type x) const
+  {
+    return x >> 1;
+  }
 
-inline
-constexpr bound_t constraint_to_bound(const raw_constraint_t x)
-{
-  return x >> 1;
-}
+public:
+  /// Default constructor, produced representation of infinity.
+  constexpr bound_t() : m_value(infinity_raw_value) {}
 
-inline
-constexpr strictness_t constraint_to_strictness(const raw_constraint_t x)
-{
-  return static_cast<strictness_t>(x & 0x1);
-}
+  /// Constructor
+  constexpr bound_t(clock_value_t value, bool strict)
+      : m_value(static_cast<raw_value_type>(value << 1) |
+                (strict ? static_cast<raw_value_type>(0)
+                        : static_cast<raw_value_type>(1)))
+  {
+  }
 
-inline
-constexpr raw_constraint_t bound_to_constraint(const bound_t x, const strictness_t strictness)
-{
-  return (x << 1) | strictness;
-}
+  /// Explicit constructor. Assumes \a raw_value is already in the internal
+  /// representation. Use for testing purposes only.
+  explicit constexpr bound_t(const raw_value_type raw_value)
+      : m_value(raw_value)
+  {
+  }
 
-inline
-constexpr bound_t add_constraint_bounds(const raw_constraint_t x, const raw_constraint_t y)
-{
-  return constraint_to_bound(x) + constraint_to_bound(y);
-}
+  /// Extract the clock value x from a bound (x, R)
+  constexpr clock_value_t value() const { return clock_value(m_value); }
 
-inline
-constexpr strictness_t add_constraint_strictness(const raw_constraint_t x, const raw_constraint_t y)
-{
-  return static_cast<strictness_t>(add_strictness(constraint_to_strictness(x),constraint_to_strictness(y)));
-}
+  /// Determine whether the bound is strict.
+  /// For bound (x, R) this is true iff R = <.
+  constexpr bool is_strict() const { return (m_value & 0x1) == 0; }
 
-inline
-constexpr strictness_t add_constraint_strictness(const raw_constraint_t x, const raw_constraint_t y, const raw_constraint_t z)
-{
-  return static_cast<strictness_t>(add_strictness(constraint_to_strictness(x),constraint_to_strictness(y), constraint_to_strictness(z)));
-}
+  /// Add two bounds.
+  constexpr bound_t operator+(const bound_t& other) const
+  {
+    return (m_value == infinity_raw_value ||
+            other.m_value == infinity_raw_value)
+               ? bound_t()
+               : bound_t(value() + other.value(),
+                         is_strict() || other.is_strict());
+  }
 
-inline
-constexpr raw_constraint_t make_constraint_weak(const raw_constraint_t x)
-{
-  return x | weak;
-}
+  /// Negate bound
+  constexpr bound_t operator-() const
+  {
+    return bound_t(-value(), !is_strict());
+  }
 
-inline
-constexpr raw_constraint_t make_constraint_strict(const raw_constraint_t x)
-{
-  return x & ~weak;
-}
+  /// Get strict version of this bound.
+  /// \pre (*this) == (x,R)
+  /// \return (x,<)
+  constexpr bound_t get_strict() const { return bound_t(m_value & ~0x1); }
 
-inline
-constexpr raw_constraint_t negate_constraint(const raw_constraint_t x)
-{
-  return bound_to_constraint(-constraint_to_bound(x), negate_strictness(constraint_to_strictness(x)));
-}
+  /// Get weak version of this bound.
+  /// \pre (*this) == (x,R)
+  /// \return (x,<=)
+  constexpr bound_t get_weak() const { return bound_t(m_value | 0x1); }
 
-inline
-raw_constraint_t add_constraints_finite(const raw_constraint_t x, const raw_constraint_t y)
-{
-  assert(x != infinity);
-  assert(y != infinity);
-  return bound_to_constraint(add_constraint_bounds(x,y), add_constraint_strictness(x,y));
-}
+  /// \overload
+  constexpr bool operator==(const bound_t& other) const
+  {
+    return m_value == other.m_value;
+  }
 
-inline
-raw_constraint_t add_constraints(const raw_constraint_t x, const raw_constraint_t y)
-{
-  return (x == infinity || y == infinity)
-       ? infinity
-       : add_constraints_finite(x,y);
-}
+  /// \overload
+  constexpr bool operator!=(const bound_t& other) const
+  {
+    return m_value != other.m_value;
+  }
 
+  /// \overload
+  constexpr bool operator<(const bound_t& other) const
+  {
+    return m_value < other.m_value;
+  }
+
+  /// \overload
+  constexpr bool operator<=(const bound_t& other) const
+  {
+    return m_value <= other.m_value;
+  }
+
+  /// \overload
+  constexpr bool operator>(const bound_t& other) const
+  {
+    return m_value > other.m_value;
+  }
+
+  /// \overload
+  constexpr bool operator>=(const bound_t& other) const
+  {
+    return m_value >= other.m_value;
+  }
+};
+
+/// Convenience constant for bound (infinity, <).
+/// Used in many comparisons in the algorithms.
+constexpr bound_t infinity = bound_t();
+
+/// Convenience constant for bound (0,<=).
+/// Used in many comparisons in the algorithms.
+constexpr bound_t zero_le = bound_t(0, false);
+
+/// Convenience constant for bound (0,<).
+/// Used in many comparisons in the algorithms.
+constexpr bound_t zero_less = bound_t(0, true);
 
 #endif // CONSTRAINTS_H

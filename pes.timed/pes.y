@@ -877,7 +877,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
   $$ = new DBM(input_pes.clocks());
   input_pes.update_max_constant($3);
   const std::size_t x = input_pes.lookup_clock($1);
-  $$->addConstraint(0, x, bound_to_constraint(-$3, weak));
+  $$->addConstraint(0, x, bound_t(-$3, false));
   delete $1;
 }
 |TOK_ID_CLOCK TOK_GE TOK_ID_CONST
@@ -890,7 +890,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
   int v = (*it).second;
   input_pes.update_max_constant(v);
   const std::size_t x = input_pes.lookup_clock($1);
-  $$->addConstraint(0, x, bound_to_constraint(-v, weak));
+  $$->addConstraint(0, x, bound_t(-v, false));
   delete $1;
   delete $3;
 }
@@ -899,7 +899,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
   $$ = new DBM(input_pes.clocks());
   input_pes.update_max_constant($3);
   const std::size_t x = input_pes.lookup_clock($1);
-  $$->addConstraint(0, x, bound_to_constraint(-$3, strict));
+  $$->addConstraint(0, x, bound_t(-$3, true));
   delete $1;
 }
 |TOK_ID_CLOCK TOK_GT TOK_ID_CONST
@@ -912,7 +912,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
   int v = (*it).second;
   input_pes.update_max_constant(v);
   const std::size_t x = input_pes.lookup_clock($1);
-  $$->addConstraint(0, x, bound_to_constraint(-v, strict));
+  $$->addConstraint(0, x, bound_t(-v, true));
   delete $1;
   delete $3;
 }
@@ -921,7 +921,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
   $$ = new DBM( input_pes.clocks());
   input_pes.update_max_constant($3);
   const std::size_t x = input_pes.lookup_clock($1);
-  $$->addConstraint(x, 0, bound_to_constraint($3, weak));
+  $$->addConstraint(x, 0, bound_t($3, false));
   delete $1;
 }
 |TOK_ID_CLOCK TOK_LE TOK_ID_CONST
@@ -934,7 +934,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
   int v = (*it).second;
   input_pes.update_max_constant(v);
   const std::size_t x = input_pes.lookup_clock($1);
-  $$->addConstraint(x, 0, bound_to_constraint(v, weak));
+  $$->addConstraint(x, 0, bound_t(v, false));
   delete $1;
   delete $3;
 }
@@ -943,7 +943,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
   $$ = new DBM(input_pes.clocks());
   input_pes.update_max_constant($3);
   const std::size_t x = input_pes.lookup_clock($1);
-  $$->addConstraint(x, 0, bound_to_constraint($3, strict));
+  $$->addConstraint(x, 0, bound_t($3, true));
   delete $1;
 }
 |TOK_ID_CLOCK TOK_LT TOK_ID_CONST
@@ -956,7 +956,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
   int v = (*it).second;
   input_pes.update_max_constant(v);
   const std::size_t x = input_pes.lookup_clock($1);
-  $$->addConstraint(x, 0, bound_to_constraint(v, strict));
+  $$->addConstraint(x, 0, bound_t(v, true));
   delete $1;
   delete $3;
 }
@@ -965,8 +965,8 @@ TOK_ID_CLOCK TOK_GE TOK_INT
   $$ = new DBM(input_pes.clocks());
   input_pes.update_max_constant($3);
   const std::size_t x = input_pes.lookup_clock($1);
-  $$->addConstraint(x, 0, bound_to_constraint($3, weak));
-  $$->addConstraint(0, x, bound_to_constraint(-$3, weak));
+  $$->addConstraint(x, 0, bound_t($3, false));
+  $$->addConstraint(0, x, bound_t(-$3, false));
   delete $1;
 }
 |TOK_ID_CLOCK TOK_EQ TOK_ID_CONST
@@ -979,8 +979,8 @@ TOK_ID_CLOCK TOK_GE TOK_INT
   int v = (*it).second;
   input_pes.update_max_constant(v);
   const std::size_t x = input_pes.lookup_clock($1);
-  $$->addConstraint(x, 0, bound_to_constraint(v, weak));
-  $$->addConstraint(0, x, bound_to_constraint(-v, weak));
+  $$->addConstraint(x, 0, bound_t(v, false));
+  $$->addConstraint(0, x, bound_t(-v, false));
   delete $1;
   delete $3;
 }
@@ -990,7 +990,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
   input_pes.update_max_constant($5);
   const std::size_t x = input_pes.lookup_clock($1);
   const std::size_t y = input_pes.lookup_clock($3);
-  $$->addConstraint(y, x, bound_to_constraint(-$5, weak));
+  $$->addConstraint(y, x, bound_t(-$5, false));
   delete $1;
   delete $3;
 }
@@ -1000,7 +1000,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
   input_pes.update_max_constant($5);
   const std::size_t x = input_pes.lookup_clock($1);
   const std::size_t y = input_pes.lookup_clock($3);
-  $$->addConstraint(y, x, bound_to_constraint(-$5, strict));
+  $$->addConstraint(y, x, bound_t(-$5, true));
   delete $1;
   delete $3;
 }
@@ -1010,7 +1010,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
   input_pes.update_max_constant($5);
   const std::size_t x = input_pes.lookup_clock($1);
   const std::size_t y = input_pes.lookup_clock($3);
-  $$->addConstraint(x, y, bound_to_constraint($5, weak));
+  $$->addConstraint(x, y, bound_t($5, false));
   delete $1;
   delete $3;
 }
@@ -1020,7 +1020,7 @@ TOK_ID_CLOCK TOK_GE TOK_INT
   input_pes.update_max_constant($5);
   const std::size_t x = input_pes.lookup_clock($1);
   const std::size_t y = input_pes.lookup_clock($3);
-  $$->addConstraint(x, y, bound_to_constraint($5, strict));
+  $$->addConstraint(x, y, bound_t($5, true));
   delete $1;
   delete $3;
 }
@@ -1030,8 +1030,8 @@ TOK_ID_CLOCK TOK_GE TOK_INT
   input_pes.update_max_constant($5);
   const std::size_t x = input_pes.lookup_clock($1);
   const std::size_t y = input_pes.lookup_clock($3);
-  $$->addConstraint(x, y, bound_to_constraint($5, weak));
-  $$->addConstraint(y, x, bound_to_constraint(-$5, weak));
+  $$->addConstraint(x, y, bound_t($5, false));
+  $$->addConstraint(y, x, bound_t(-$5, false));
   delete $1;
   delete $3;
 };
