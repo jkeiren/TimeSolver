@@ -526,7 +526,7 @@ public:
     }
 
     const bound_t& bound_x_0 = at(x, 0);
-    if (bound_x_0.value() ||
+    if (bound_x_0.value() < 0 ||
         bound_0_x == zero_less) { // FIXME: this cannot be correct as it is
       makeEmpty();
       return *this;
