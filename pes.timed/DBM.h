@@ -519,15 +519,7 @@ public:
      * then return the emptyset.
      * Assumption made: for single clocks, there is never a negative
      * constant used*/
-    const bound_t& bound_0_x = at(0, x);
-    if (bound_0_x.value() < 0 || bound_0_x == zero_less) {
-      makeEmpty();
-      return *this;
-    }
-
-    const bound_t& bound_x_0 = at(x, 0);
-    if (bound_x_0.value() < 0 ||
-        bound_0_x == zero_less) { // FIXME: this cannot be correct as it is
+    if (at(0, x) <= zero_less || at(x, 0) <= zero_less) {
       makeEmpty();
       return *this;
     }
@@ -571,8 +563,7 @@ public:
             /* Note that if we are here for constraint (i,j),
              * we will get here in constraint (j,i) */
 
-            const bound_t& bound_i_j = at(i, j);
-            if (bound_i_j.value() < 0 || bound_i_j == zero_less) {
+            if (at(i, j) <= zero_less) {
               makeEmpty();
               return *this;
             }
@@ -592,16 +583,10 @@ public:
     /* Handle Single clock constraints last. */
     for (size_type i = 1; i < clocks_size(); ++i) {
       if (prs.get(i)) {
-        const bound_t& bound_0_i = at(0, i);
         // For upper bound constraints, only invalidate if strictly
         // less than 0
-        if (bound_0_i.value() < 0) {
+        if (at(0, i) < zero_less || at(i, 0) < zero_less) {
           // Make an empty DBM
-          makeEmpty();
-          return *this;
-        }
-        const bound_t& bound_i_0 = at(i, 0);
-        if (bound_i_0.value() < 0) {
           makeEmpty();
           return *this;
         }
@@ -639,12 +624,9 @@ public:
     // are reset by x
     /* First check that it is a valid assignment, and make empty otherwise */
     for (size_type i = 0; i < clocks_size(); ++i) {
-      if (i != y && i != x) {
-        if (at(i, x) < at(i, y) ||
-            at(x, i) < at(y, i)) {
-          makeEmpty();
-          return *this;
-        }
+      if (i != y && i != x && (at(i, x) < at(i, y) || at(x, i) < at(y, i))) {
+        makeEmpty();
+        return *this;
       }
     }
     for (size_type i = 1; i < clocks_size(); ++i) {
@@ -701,7 +683,7 @@ public:
         for (size_type j = 0; j < clocks_size(); ++j) {
           if (j != i) {
             const bound_t& bound_j_0 = at(j, 0);
-            operatorWrite(j, i)     = (bound_j_0 == infinity)
+            operatorWrite(j, i)      = (bound_j_0 == infinity)
                                       ? infinity
                                       : bound_t(bound_j_0.value() - maxc, true);
           }
@@ -801,7 +783,8 @@ public:
    * or the empty clock zone. This method assumes the DBM
    * is in canonical form.
    * @return true: this clock zone is empty, false: otherwise. */
-  bool emptiness(bool assertcf = true) const {
+  bool emptiness(bool assertcf = true) const
+  {
     assert(!assertcf || m_is_cf); // for cf()
     /* O(n) version. This assumes that the DBM is in canonical form.
      * an O(n^2) version was previously used to handle overflow possibilities

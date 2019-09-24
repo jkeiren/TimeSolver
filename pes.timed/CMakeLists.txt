@@ -32,8 +32,8 @@ add_subdirectory(external/cpplogging)
 # Generate lexer and parser
 find_package(BISON)
 find_package(FLEX)
-BISON_TARGET(PesParser pes.y ${CMAKE_CURRENT_BINARY_DIR}/pes.tab.cpp)
-FLEX_TARGET(PesScanner pes.l ${CMAKE_CURRENT_BINARY_DIR}/pes.lex.cpp DEFINES_FILE pes.lex.hh)
+BISON_TARGET(PesParser pes.y ${CMAKE_CURRENT_BINARY_DIR}/pes.tab.cpp DEFINES_FILE ${CMAKE_CURRENT_BINARY_DIR}/pes.tab.h)
+FLEX_TARGET(PesScanner pes.l ${CMAKE_CURRENT_BINARY_DIR}/pes.lex.cpp DEFINES_FILE ${CMAKE_CURRENT_BINARY_DIR}/pes.lex.h)
 ADD_FLEX_BISON_DEPENDENCY(PesScanner PesParser)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR} # for lexer/parser

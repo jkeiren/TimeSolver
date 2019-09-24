@@ -58,3 +58,9 @@ pes.timed/test/dbmtest[1]_include.cmake
 pes.timed/test/parsetest[1]_include.cmake
 pes.timed/test/prooftest[1]_include.cmake
 Doxyfile.doxygen
+doc/notes.aux
+doc/notes.bbl
+doc/notes.blg
+doc/notes.fdb_latexmk
+doc/notes.fls
+doc/notes.synctex.gz
