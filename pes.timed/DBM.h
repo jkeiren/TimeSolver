@@ -78,17 +78,17 @@ public:
    * @param os - the output stream to print to.
    * @return none */
   void print(std::ostream &os) const {
-    bool end = false;
+    bool first = true;
     os << "[";
     for (std::size_t i = 1; i < m_data.size(); ++i) {
       if (m_data[i]) {
-        if (end) {
+        if (!first) {
           os << ",";
         }
         /* Print clocks as x(ind): x1, x2, ...
          * x0, the dummy clock, is not printed. */
         os << "x" << i;
-        end = true;
+        first = false;
       }
     }
     os << "]";
@@ -103,10 +103,9 @@ public:
  * entry (i,j) containing the upper bound constraint on clock constraint
  * x_i - x_j. The 0 clock (which is counted as a clock in numClocks) is
  * is the standard "zero clock" for clock zones.
- * For performance reasons, each clock is represented as a
- * clock_value_t of 13 bits, (#, op). # is the 12-bit non-negative
- * integer value and op is in {<,<=}. For the last (rightmost) bit:
- * 0: <. 1: <=. For the 12-bit integer value, Infinity is represented as infinity_bound.
+ * Each bound clock is represented as a
+ * bound_t (#, op). # is the integer value and op is in {<,<=}.
+ * For the last (rightmost) bit: 0: <. 1: <=.
  * @author Peter Fontana, Dezhuang Zhang, and Rance Cleaveland.
  * @version 1.1
  * @note Many functions are inlined for better performance.
@@ -114,14 +113,15 @@ public:
 class DBM : public Array<bound_t>
 {
 private:
-  /** True if the DBM is still in canonical form (cf()), false otherwise.
-   * This provides a quick a 1-bit check that avoids needless
+  /** True if the DBM is still guaranteed to be in canonical form (cf()), false
+   * otherwise. This provides a quick a 1-bit check that avoids needless
    * work to convert something already in cf() to cf(). */
   bool m_is_cf;
 
   /** Pointer to the globally declared clocks */
   const clock_name_to_index_t* m_declared_clocks;
 
+  /// Calculate the offset into the underlying 1-D array.
   size_type offset(const size_type row, const size_type col) const {
     assert(row < clocks_size());
     assert(col < clocks_size());
@@ -251,7 +251,7 @@ public:
       exit(-1);
     }
 
-    return at(row,col);
+    return at(row, col);
   }
 
   /** The public method is used to write a value to a

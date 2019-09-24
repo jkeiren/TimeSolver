@@ -107,20 +107,20 @@ public:
   }
 
   // iterator support
-  iterator begin() { return m_data; }
+  iterator       begin() { return m_data; }
   const_iterator begin() const { return m_data; }
-  iterator end() { return m_data + m_size; }
+  iterator       end() { return m_data + m_size; }
   const_iterator end() const { return m_data + m_size; }
 
   // reverse iterator support
-  reverse_iterator rbegin() { return m_data + m_size - 1; }
+  reverse_iterator       rbegin() { return m_data + m_size - 1; }
   const_reverse_iterator rbegin() const { return m_data + m_size - 1; }
-  reverse_iterator rend() { return m_data - 1; }
+  reverse_iterator       rend() { return m_data - 1; }
   const_reverse_iterator rend() const { return m_data - 1; }
 
   // capacity
   size_type size() const { return m_size; }
-  bool empty() const { return m_size == 0; }
+  bool      empty() const { return m_size == 0; }
 
   // element access
   /** Access element i of the array
@@ -151,23 +151,22 @@ public:
     return m_data[i];
   }
 
-  reference front() { return m_data[0]; }
-  const_reference front() const { return m_data[0]; }
-  reference back() { return m_data[m_size-1]; }
-  const_reference back() const { return m_data[m_size-1]; }
-
   /** Access element i of the array
    *
    * Returns a const reference to the object at position i.
    */
   const_reference at(const std::size_t i) const
   {
-    if(!(i < m_size)) {
+    if (!(i < m_size)) {
       throw std::runtime_error("index out of bounds");
     }
     return m_data[i];
   }
 
+  reference       front() { return m_data[0]; }
+  const_reference front() const { return m_data[0]; }
+  reference       back() { return m_data[m_size - 1]; }
+  const_reference back() const { return m_data[m_size-1]; }
 
   /** Comparison with another array
    */

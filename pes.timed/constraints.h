@@ -1,21 +1,21 @@
 /** \file bound_to_constraint.h
- * Implementation of the type for clock values.
+ * Implementation of the type for clock values and bounds used in DBMs.
  * @author Peter Fontana
  * @author Dezhuang Zhang
  * @author Rance Cleaveland
  * @author Jeroen Keiren
  * @copyright MIT Licence, see the accompanying LICENCE.txt
- * @note Many functions are inlined for better performance.
  */
 
 #ifndef CONSTRAINTS_H
 #define CONSTRAINTS_H
 
-#include <cassert>
 #include <cstdint>
 #include <limits>
 
-typedef int clock_value_t; // values that can be attained by a clock;
+/// values that can be attained by a clock;
+/// use fastest int of at least 16 bits for this.
+typedef int_fast16_t clock_value_t;
 
 /** Bounds used in difference bound matrices.
  *
@@ -84,6 +84,8 @@ public:
   }
 
   /// Negate bound
+  /// \pre (*this) == (x,R)
+  /// \ret (-x,R') where R' == < iff R == <=
   constexpr bound_t operator-() const
   {
     return bound_t(-value(), !is_strict());
