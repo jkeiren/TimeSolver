@@ -191,8 +191,8 @@ public:
    * @param col The second clock in constraint.
    * @param val The value constraining the upper bound of row - col.
    * @return [Constructor] */
-  DBM(const size_type row, const size_type col, const bound_t val,
-      const clock_name_to_index_t *cs)
+  DBM(const size_type row, const size_type col, const bound_t& val,
+      const clock_name_to_index_t* cs)
       : DBM(cs)
   {
     operatorWrite(row, col) = val;
@@ -239,7 +239,7 @@ public:
    * @param col The second clock, or the column clock,
    * with 0 being the first column.
    * @return The value of the upper bound constraint on row - col. */
-  bound_t operator()(const size_type row, const size_type col) const
+  const bound_t& operator()(const size_type row, const size_type col) const
   {
     // Indexes are zero based
     /* Give out of bounds check for public method */
@@ -263,7 +263,7 @@ public:
    * @param val The new 13-bit value for the upper bound of row - col.
    * @return None*/
   void addConstraint(const size_type row, const size_type col,
-                     const bound_t val)
+                     const bound_t& val)
   {
     /* Give out of bounds check for public method */
     if (row >= clocks_size() || col >= clocks_size()) {
@@ -519,13 +519,13 @@ public:
      * then return the emptyset.
      * Assumption made: for single clocks, there is never a negative
      * constant used*/
-    const bound_t bound_0_x = at(0, x);
+    const bound_t& bound_0_x = at(0, x);
     if (bound_0_x.value() < 0 || bound_0_x == zero_less) {
       makeEmpty();
       return *this;
     }
 
-    const bound_t bound_x_0 = at(x, 0);
+    const bound_t& bound_x_0 = at(x, 0);
     if (bound_x_0.value() ||
         bound_0_x == zero_less) { // FIXME: this cannot be correct as it is
       makeEmpty();
@@ -571,7 +571,7 @@ public:
             /* Note that if we are here for constraint (i,j),
              * we will get here in constraint (j,i) */
 
-            const bound_t bound_i_j = at(i, j);
+            const bound_t& bound_i_j = at(i, j);
             if (bound_i_j.value() < 0 || bound_i_j == zero_less) {
               makeEmpty();
               return *this;
@@ -592,7 +592,7 @@ public:
     /* Handle Single clock constraints last. */
     for (size_type i = 1; i < clocks_size(); ++i) {
       if (prs.get(i)) {
-        const bound_t bound_0_i = at(0, i);
+        const bound_t& bound_0_i = at(0, i);
         // For upper bound constraints, only invalidate if strictly
         // less than 0
         if (bound_0_i.value() < 0) {
@@ -600,7 +600,7 @@ public:
           makeEmpty();
           return *this;
         }
-        const bound_t bound_i_0 = at(i, 0);
+        const bound_t& bound_i_0 = at(i, 0);
         if (bound_i_0.value() < 0) {
           makeEmpty();
           return *this;
@@ -678,7 +678,7 @@ public:
     // Is this method correct (?) Should it also be loosening
     // clock differences based on single clock constraints?
     for (size_type i = 1; i < clocks_size(); ++i) {
-      const bound_t bound_i_0 = at(i, 0);
+      const bound_t& bound_i_0 = at(i, 0);
       /* Sets any individual upper bound clock constraint
        * that exceeds the const maxc
        * to infinity, and sets all clock differences involving
@@ -696,11 +696,11 @@ public:
        * has a max value less than -maxc) to maxc (if not
        * already loosened by an upper-bound constraint) and
        * loosens the relevant clock-difference constraints */
-      const bound_t bound_0_i = at(0, i);
+      const bound_t& bound_0_i = at(0, i);
       if (-bound_0_i.value() > maxc) {
         for (size_type j = 0; j < clocks_size(); ++j) {
           if (j != i) {
-            const bound_t bound_j_0 = at(j, 0);
+            const bound_t& bound_j_0 = at(j, 0);
             operatorWrite(j, i)     = (bound_j_0 == infinity)
                                       ? infinity
                                       : bound_t(bound_j_0.value() - maxc, true);
@@ -717,7 +717,7 @@ public:
      * relaxing the bounds. */
     for (size_type i = 1; i < clocks_size(); ++i) {
       for (size_type j = 1; j < clocks_size(); ++j) {
-        const bound_t bound_i_j = at(i, j);
+        const bound_t& bound_i_j = at(i, j);
         if (i != j && bound_i_j != infinity) {
           const clock_value_t value_i_j = at(i, j).value();
           if (value_i_j > maxc) {
@@ -762,7 +762,7 @@ public:
         }
         for (size_type i = 0; i < clocks_size(); ++i) {
           for (size_type j = 0; j < clocks_size(); ++j) {
-            const bound_t bound_i_k_j = at(i, k) + at(k, j);
+            const bound_t& bound_i_k_j = at(i, k) + at(k, j);
             if (bound_i_k_j < at(i, j)) {
               operatorWrite(i, j) = bound_i_k_j;
             }
@@ -807,7 +807,7 @@ public:
      * an O(n^2) version was previously used to handle overflow possibilities
      * from a model with different semantics. */
     for (size_type i = 0; i < clocks_size(); ++i) {
-      const bound_t bound_i_i = at(i, i);
+      const bound_t& bound_i_i = at(i, i);
       if (bound_i_i == zero_less || bound_i_i.value() < 0) {
         return true;
       }
@@ -838,7 +838,7 @@ public:
   void closure() {
     for (size_type i = 0; i < clocks_size(); ++i) {
       for (size_type j = 0; j < clocks_size(); ++j) {
-        const bound_t bound_i_j = at(i, j);
+        const bound_t& bound_i_j = at(i, j);
         if (i != j && bound_i_j != infinity) {
           operatorWrite(i, j) = bound_i_j.get_weak();
         }
@@ -854,7 +854,7 @@ public:
   void closureRev() {
     for (size_type i = 0; i < clocks_size(); ++i) {
       for (size_type j = 0; j < clocks_size(); ++j) {
-        const bound_t bound_i_j = at(i, j);
+        const bound_t& bound_i_j = at(i, j);
         if (i != j && bound_i_j != infinity) {
           operatorWrite(i, j) = bound_i_j.get_strict();
         }
@@ -870,7 +870,7 @@ public:
   void predClosureRev() {
     for (size_type i = 1; i < clocks_size(); ++i) { // difference with predClosure: start at 1
       for (size_type j = 0; j < clocks_size(); ++j) {
-        const bound_t bound_i_j = at(i, j);
+        const bound_t& bound_i_j = at(i, j);
         if (i != j && bound_i_j != infinity) {
           operatorWrite(i, j) = bound_i_j.get_strict();
         }
@@ -893,11 +893,11 @@ public:
         if (i == j) {
           continue;
         }
-        bound_t val = at(i, j);
-        if (val == infinity) {
+        const bound_t& bound_i_j = at(i, j);
+        if (bound_i_j == infinity) {
           continue;
         }
-        if (i == 0 && val == zero_le) {
+        if (i == 0 && bound_i_j == zero_le) {
           continue;
         }
         isAllImplicit = false;
@@ -912,20 +912,20 @@ public:
           os << m_declared_clocks->reverse_at(j);
         } else if (i == 0) {
           os << m_declared_clocks->reverse_at(j);
-          if (!val.is_strict())
-            os << ">=" << -val.value();
+          if (!bound_i_j.is_strict())
+            os << ">=" << -bound_i_j.value();
           else
-            os << ">" << -val.value();
+            os << ">" << -bound_i_j.value();
           end = true;
           continue;
         } else if (j == 0) {
           os << m_declared_clocks->reverse_at(i);
         }
 
-        if (!val.is_strict()) {
-          os << "<=" << val.value();
+        if (!bound_i_j.is_strict()) {
+          os << "<=" << bound_i_j.value();
         } else {
-          os << "<" << val.value();
+          os << "<" << bound_i_j.value();
         }
         end = true;
       }
