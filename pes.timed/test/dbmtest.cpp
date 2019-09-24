@@ -1,11 +1,11 @@
 /**
-  * Unit tests for DBM.
-  *
-  *
-  * @author Peter Fontana
-  * @author Jeroen Keiren
-  * @copyright MIT Licence, see the accompanying LICENCE.txt.
-  */
+ * Unit tests for DBM.
+ *
+ *
+ * @author Peter Fontana
+ * @author Jeroen Keiren
+ * @copyright MIT Licence, see the accompanying LICENCE.txt.
+ */
 
 #include <climits>
 #include "DBM.h"
@@ -14,8 +14,8 @@
 
 TEST(DBMTest, ClockZero)
 {
-  EXPECT_EQ(bound_t(0x0000), zero_less);
-  EXPECT_EQ(bound_t(0x0001), zero_le);
+  EXPECT_EQ(bound_t(0x0), zero_less);
+  EXPECT_EQ(bound_t(0x1), zero_le);
   EXPECT_EQ(zero_less, bound_t(0, true));
   EXPECT_EQ(zero_le, bound_t(0, false));
 }
@@ -28,33 +28,30 @@ TEST(DBMTest, ClockInfty)
 TEST(DBMTest, ClockPositive)
 {
   bound_t one_strict = bound_t(1, true);
-  EXPECT_EQ(bound_t(static_cast<bound_t::raw_value_type>(0x0002)), one_strict);
+  EXPECT_EQ(bound_t(static_cast<bound_t::raw_value_type>(2)), one_strict);
   bound_t one_nonstrict = bound_t(1, false);
-  EXPECT_EQ(bound_t(static_cast<bound_t::raw_value_type>(0x0003)),
-            one_nonstrict);
+  EXPECT_EQ(bound_t(static_cast<bound_t::raw_value_type>(3)), one_nonstrict);
 
   bound_t three_strict = bound_t(3, true);
-  EXPECT_EQ(bound_t(static_cast<bound_t::raw_value_type>(0x0006)),
-            three_strict);
+  EXPECT_EQ(bound_t(static_cast<bound_t::raw_value_type>(6)), three_strict);
   bound_t three_nonstrict = bound_t(3, false);
-  EXPECT_EQ(bound_t(static_cast<bound_t::raw_value_type>(0x0007)),
-            three_nonstrict);
+  EXPECT_EQ(bound_t(static_cast<bound_t::raw_value_type>(7)), three_nonstrict);
 }
 
 TEST(DBMTest, ClockNegative)
 {
   bound_t neg_one_strict = bound_t(-1, true);
-  EXPECT_EQ(bound_t(static_cast<bound_t::raw_value_type>(0xFFFE)),
+  EXPECT_EQ(bound_t(static_cast<bound_t::raw_value_type>(-2)),
             neg_one_strict); // 2's complement repr. of -2
   bound_t neg_one_nonstrict = bound_t(-1, false);
-  EXPECT_EQ(bound_t(static_cast<bound_t::raw_value_type>(0xFFFF)),
+  EXPECT_EQ(bound_t(static_cast<bound_t::raw_value_type>(-1)),
             neg_one_nonstrict); // 2's complement repr. of -1
 
   bound_t neg_three_strict = bound_t(-3, true);
-  EXPECT_EQ(bound_t(static_cast<bound_t::raw_value_type>(0xFFFA)),
+  EXPECT_EQ(bound_t(static_cast<bound_t::raw_value_type>(-6)),
             neg_three_strict); // 2's complement repr. of -6
   bound_t neg_three_nonstrict = bound_t(-3, false);
-  EXPECT_EQ(bound_t(static_cast<bound_t::raw_value_type>(0xFFFB)),
+  EXPECT_EQ(bound_t(static_cast<bound_t::raw_value_type>(-5)),
             neg_three_nonstrict); // 2's complement repr. of -5
 }
 
@@ -71,13 +68,13 @@ DBM testDBM3()
     DBM testDBM3(make_c2());
     testDBM3.addConstraint(0, 0, bound_t(0, false));
     testDBM3.addConstraint(0, 1, bound_t(-3, false));
-    testDBM3.addConstraint(0,2, infinity);
-    testDBM3.addConstraint(1,0, infinity);
-    testDBM3.addConstraint(1,1, zero_le);
+    testDBM3.addConstraint(0, 2, infinity);
+    testDBM3.addConstraint(1, 0, infinity);
+    testDBM3.addConstraint(1, 1, zero_le);
     testDBM3.addConstraint(1, 2, bound_t(-5, false));
-    testDBM3.addConstraint(2,0, infinity);
+    testDBM3.addConstraint(2, 0, infinity);
     testDBM3.addConstraint(2, 1, bound_t(7, false));
-    testDBM3.addConstraint(2,2,  zero_le);
+    testDBM3.addConstraint(2, 2, zero_le);
     return testDBM3;
 }
 
@@ -522,7 +519,7 @@ TEST(DBMTest, IntersectDBM8DBM6reference)
 TEST(DBMTest, ccrepA)
 {
   DBM ccrepA(make_c4());
-  for (int i=0; i<5; i++) {
+  for (size_t i = 0; i < 5; i++) {
     ccrepA.addConstraint(i,0, zero_le);
   }
 
