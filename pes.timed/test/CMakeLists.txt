@@ -30,11 +30,10 @@ add_subdirectory(${CMAKE_BINARY_DIR}/googletest-src
 include(GoogleTest)
 
 # Add all .cc files in this directory as tests.
-file(GLOB_RECURSE TEST_SRC_FILES . *.cc)
+file(GLOB_RECURSE TEST_SRC_FILES . *.cpp)
 foreach(file ${TEST_SRC_FILES})
   get_filename_component(TESTNAME ${file} NAME)
   add_executable(${TESTNAME} ${file})
   target_link_libraries(${TESTNAME} gtest_main parse ExprNode cpplogger)
   gtest_discover_tests(${TESTNAME})
 endforeach()
-

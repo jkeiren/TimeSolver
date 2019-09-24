@@ -8,8 +8,8 @@
   */
 
 #include <climits>
-#include "DBMList.hh"
-#include "testdbms.hh"
+#include "DBMList.h"
+#include "testdbms.h"
 #include "gtest/gtest.h"
 
 /** Use this function only for testing! */
@@ -20,16 +20,16 @@ bool strictly_equal(const DBMList& xs, const DBMList& ys) {
 // l1b
 DBM testDBM3()
 {
-    DBM testDBM3(0, 1, bound_to_constraint(-1, weak), make_c2());
-    return testDBM3;
+  DBM testDBM3(0, 1, bound_t(-1, false), make_c2());
+  return testDBM3;
 }
 
 // l3a
 DBM testDBM4()
 {
     DBM testDBM4(make_c2());
-    testDBM4.addConstraint(1,0, bound_to_constraint(3, weak));
-    testDBM4.addConstraint(2,0, bound_to_constraint(3, weak));
+    testDBM4.addConstraint(1, 0, bound_t(3, false));
+    testDBM4.addConstraint(2, 0, bound_t(3, false));
     return testDBM4;
 }
 
@@ -37,10 +37,10 @@ DBM testDBM4()
 DBM testDBM5()
 {
     DBM testDBM5(make_c2());
-    testDBM5.addConstraint(1,0, bound_to_constraint(4, strict));
-    testDBM5.addConstraint(2,0, bound_to_constraint(4, strict));
-    testDBM5.addConstraint(0,1, bound_to_constraint(-2, weak));
-    testDBM5.addConstraint(0,2, bound_to_constraint(-2, weak));
+    testDBM5.addConstraint(1, 0, bound_t(4, true));
+    testDBM5.addConstraint(2, 0, bound_t(4, true));
+    testDBM5.addConstraint(0, 1, bound_t(-2, false));
+    testDBM5.addConstraint(0, 2, bound_t(-2, false));
     return testDBM5;
 }
 
@@ -56,8 +56,8 @@ DBM testDBM6()
 DBM testDBM7()
 {
     DBM testDBM7(make_c2());
-    testDBM7.addConstraint(1,0, bound_to_constraint(1, strict));
-    testDBM7.addConstraint(0,1, bound_to_constraint(-2, weak));
+    testDBM7.addConstraint(1, 0, bound_t(1, true));
+    testDBM7.addConstraint(0, 1, bound_t(-2, false));
     return testDBM7;
 }
 
@@ -65,7 +65,7 @@ DBM testDBM7()
 DBM testDBM8()
 {
     DBM testDBM8(make_c2());
-    testDBM8.addConstraint(0,1, bound_to_constraint(-1, weak));
+    testDBM8.addConstraint(0, 1, bound_t(-1, false));
     testDBM8.cf();
     return testDBM8;
 }
@@ -74,7 +74,7 @@ DBM testDBM8()
 DBM testDBM9()
 {
     DBM testDBM9(make_c2());
-    testDBM9.addConstraint(1,0, bound_to_constraint(1, strict));
+    testDBM9.addConstraint(1, 0, bound_t(1, true));
     testDBM9.cf();
     return testDBM9;
 }
@@ -188,21 +188,21 @@ TEST(DBMListTest, CanonicalDBMList5)
     testDBM4cf.addConstraint(0,0, zero_le);
     testDBM4cf.addConstraint(0,1, zero_le);
     testDBM4cf.addConstraint(0,2, zero_le);
-    testDBM4cf.addConstraint(1,0, bound_to_constraint(3, weak));
+    testDBM4cf.addConstraint(1, 0, bound_t(3, false));
     testDBM4cf.addConstraint(1,1, zero_le);
-    testDBM4cf.addConstraint(1,2, bound_to_constraint(3, weak));
-    testDBM4cf.addConstraint(2,0, bound_to_constraint(3, weak));
-    testDBM4cf.addConstraint(2,1, bound_to_constraint(3, weak));
+    testDBM4cf.addConstraint(1, 2, bound_t(3, false));
+    testDBM4cf.addConstraint(2, 0, bound_t(3, false));
+    testDBM4cf.addConstraint(2, 1, bound_t(3, false));
     testDBM4cf.addConstraint(2,2, zero_le);
     DBM testDBM5cf(make_c2());
     testDBM5cf.addConstraint(0,0, zero_le);
-    testDBM5cf.addConstraint(0,1, bound_to_constraint(-2, weak));
-    testDBM5cf.addConstraint(0,2, bound_to_constraint(-2, weak));
-    testDBM5cf.addConstraint(1,0, bound_to_constraint(4, weak));
+    testDBM5cf.addConstraint(0, 1, bound_t(-2, false));
+    testDBM5cf.addConstraint(0, 2, bound_t(-2, false));
+    testDBM5cf.addConstraint(1, 0, bound_t(4, false));
     testDBM5cf.addConstraint(1,1, zero_le);
-    testDBM5cf.addConstraint(1,2, bound_to_constraint(2, weak));
-    testDBM5cf.addConstraint(2,0, bound_to_constraint(4, strict));
-    testDBM5cf.addConstraint(2,1, bound_to_constraint(2, strict));
+    testDBM5cf.addConstraint(1, 2, bound_t(2, false));
+    testDBM5cf.addConstraint(2, 0, bound_t(4, true));
+    testDBM5cf.addConstraint(2, 1, bound_t(2, true));
     testDBM5cf.addConstraint(2,2, zero_le);
     DBM testDBM6cf(make_c2());
     testDBM6cf.addConstraint(0,0, zero_le);

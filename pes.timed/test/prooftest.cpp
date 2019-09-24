@@ -7,8 +7,8 @@
 
 #include <limits>
 #include <string>
-#include "proof.hh"
-#include "parse.hh"
+#include "proof.h"
+#include "parse.h"
 #include "gtest/gtest.h"
 
 static
@@ -100,17 +100,17 @@ TEST(ProofTest, ExistsRelTestFalse)
   placeholder.cf();
 
   DBM minimum_region(p.clocks());
-  minimum_region.addConstraint(1,0, bound_to_constraint(2, weak));
-  minimum_region.addConstraint(2,0, bound_to_constraint(1, weak));
-  minimum_region.addConstraint(1,2, bound_to_constraint(0, weak));
+  minimum_region.addConstraint(1, 0, bound_t(2, false));
+  minimum_region.addConstraint(2, 0, bound_t(1, false));
+  minimum_region.addConstraint(1, 2, bound_t(0, false));
 
   DBM maximum_region1(p.clocks());
-  maximum_region1.addConstraint(2,0, bound_to_constraint(3, weak));
-  maximum_region1.addConstraint(1,2, bound_to_constraint(0, weak));
+  maximum_region1.addConstraint(2, 0, bound_t(3, false));
+  maximum_region1.addConstraint(1, 2, bound_t(0, false));
 
   DBM maximum_region2(p.clocks());
-  maximum_region2.addConstraint(2,0, bound_to_constraint(3, weak));
-  maximum_region2.addConstraint(2,1, bound_to_constraint(-2, weak));
+  maximum_region2.addConstraint(2, 0, bound_t(3, false));
+  maximum_region2.addConstraint(2, 1, bound_t(-2, false));
 
   DBMList minimum_placeholder(minimum_region);
   minimum_placeholder.cf();
@@ -160,12 +160,12 @@ TEST(ProofTest, ExistsRelTestTrue)
   placeholder.cf();
 
   DBM minimum_region(p.clocks());
-  minimum_region.addConstraint(1,0, bound_to_constraint(2, weak));
-  minimum_region.addConstraint(2,0, bound_to_constraint(1, weak));
-  minimum_region.addConstraint(1,2, bound_to_constraint(0, weak));
+  minimum_region.addConstraint(1, 0, bound_t(2, false));
+  minimum_region.addConstraint(2, 0, bound_t(1, false));
+  minimum_region.addConstraint(1, 2, bound_t(0, false));
 
   DBM maximum_region(p.clocks());
-  maximum_region.addConstraint(2,0, bound_to_constraint(3, weak));
+  maximum_region.addConstraint(2, 0, bound_t(3, false));
 
   DBMList minimum_placeholder(minimum_region);
   minimum_placeholder.cf();

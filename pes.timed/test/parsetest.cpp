@@ -7,7 +7,7 @@
 
 #include <limits>
 #include <string>
-#include "parse.hh"
+#include "parse.h"
 #include "gtest/gtest.h"
 
 #define QUOTE(name) #name
