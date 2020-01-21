@@ -61,8 +61,10 @@ void printUsage() {
   std::cerr << "\t option: --help/-h   this help info" << std::endl;
   std::cerr << "\t option: --version   print the version of the tool" << std::endl;
   std::cerr << "\t option: --no-caching/-n disables performance-optimizing "
-               "known true and known false caches. Circularity stack caching "
-               "still used."
+               "known true and known false caches. Circularity stack caching " << "still used." << std::endl;
+  std::cerr << "\t option: --checking-vacuity/-C enables simple vacuity checking "
+            << std::endl;
+  std::cerr << "\t option: --vacuity-full/-V enables full vacuity checking "
             << std::endl;
 }
 
@@ -73,7 +75,7 @@ void printVersion() {
 /** Parsers the command line */
 void parse_command_line(int argc, char** argv, prover_options& opt) {
   /* Sets parameters and looks for inputs from the command line. */
-  const char* const short_opts = "dDhntH:";
+  const char* const short_opts = "dDhntHCV:";
   const option long_opts[] {
     {"debug", 0, nullptr, 'd'},
     {"full-debug", 0, nullptr, 'D'},
@@ -82,6 +84,8 @@ void parse_command_line(int argc, char** argv, prover_options& opt) {
     {"tabled-output", 0, nullptr, 't'},
     {"hash", 1, nullptr, 'H'},
     {"version", 0, nullptr, 'v'},
+    {"simple-vacuity", 0, nullptr, 'C'},
+    {"full-vacuity", 0, nullptr, 'V'},
     {nullptr, 0, nullptr, 0}
   };
 
@@ -117,6 +121,12 @@ void parse_command_line(int argc, char** argv, prover_options& opt) {
         break;
       case 'n':
         opt.useCaching = false;
+        break;
+      case 'C':
+        opt.simple_vacuity = true;
+        break;
+      case 'V':
+        opt.full_vacuity = true;
         break;
       case 'v':
         printVersion();
