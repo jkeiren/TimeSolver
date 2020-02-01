@@ -94,7 +94,7 @@ public:
    * the destination (state change) of the transition.
    * @return The ExprNode describing the destination (state change) of the
    * transition. */
-  const ExprNode* getRightExpr() const { return rightExpr; }
+  ExprNode* getRightExpr() const { return rightExpr; }
 
   /** Retrieve the list of clock assignments stored by this transition.
    * @return the vector containing the ordered list of clock assignments

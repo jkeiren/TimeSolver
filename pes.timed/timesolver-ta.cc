@@ -47,6 +47,7 @@
 #endif
 
 #define DEBUG_PLACEHOLDER_PROVER false
+#define HIDE_VACUITY_OUTPUT false
 
 /** Prints out the "help" info for the user or
  * the information that is displayed when the
@@ -62,10 +63,8 @@ void printUsage() {
   std::cerr << "\t option: --version   print the version of the tool" << std::endl;
   std::cerr << "\t option: --no-caching/-n disables performance-optimizing "
                "known true and known false caches. Circularity stack caching " << "still used." << std::endl;
-  std::cerr << "\t option: --checking-vacuity/-C enables simple vacuity checking "
-            << std::endl;
-  std::cerr << "\t option: --vacuity-full/-V enables full vacuity checking "
-            << std::endl;
+  std::cerr << "\t option: --full-vacuity/-f enables full vacuity checking. "
+  << " Simple Vacuity is enabled by default" << std::endl;
 }
 
 void printVersion() {
@@ -75,7 +74,7 @@ void printVersion() {
 /** Parsers the command line */
 void parse_command_line(int argc, char** argv, prover_options& opt) {
   /* Sets parameters and looks for inputs from the command line. */
-  const char* const short_opts = "dDhntHCV:";
+  const char* const short_opts = "dDhntHf:";
   const option long_opts[] {
     {"debug", 0, nullptr, 'd'},
     {"full-debug", 0, nullptr, 'D'},
@@ -84,8 +83,7 @@ void parse_command_line(int argc, char** argv, prover_options& opt) {
     {"tabled-output", 0, nullptr, 't'},
     {"hash", 1, nullptr, 'H'},
     {"version", 0, nullptr, 'v'},
-    {"simple-vacuity", 0, nullptr, 'C'},
-    {"full-vacuity", 0, nullptr, 'V'},
+    {"allVacuity", 0, nullptr, 'f'},
     {nullptr, 0, nullptr, 0}
   };
 
@@ -122,11 +120,8 @@ void parse_command_line(int argc, char** argv, prover_options& opt) {
       case 'n':
         opt.useCaching = false;
         break;
-      case 'C':
-        opt.simple_vacuity = true;
-        break;
-      case 'V':
-        opt.full_vacuity = true;
+      case 'f':
+        opt.allVacuity = true;
         break;
       case 'v':
         printVersion();
@@ -309,7 +304,48 @@ int main(int argc, char** argv) {
   if (cpplogEnabled(cpplogging::debug) && opt.tabled) {
     p.printTabledSequents(std::cerr);
   }
-
+  
+  // Print Vacuity output.
+  // First, print which formulas were checked
+  if(!HIDE_VACUITY_OUTPUT){
+    std::cout << "Checking with Full Vacuity is " << opt.allVacuity << std::endl;
+    std::cout << "\n====Equation Expressions (**u** expressions unchecked):" << std::endl;
+     for(std::map<std::string, ExprNode *>::const_iterator it = input_pes.equations().begin();
+         it != input_pes.equations().end(); ++it) {
+       ExprNode *ls = (*it).second;
+    
+       std::cout << (*it).first;
+       if(ls->get_Parity()) {
+         std::cout << " :nu= ";
+       }
+       else {
+         std::cout << " :mu= ";
+       }
+       ls->printExamined(std::cout);
+       std::cout << std::endl;
+     }
+  }
+  
+  // Now print what formulas are vacuous or not
+  if(!HIDE_VACUITY_OUTPUT) {
+    // Do Extra Work to delete Dynamically Allocated Elements
+    std::cout << "\n====Equation Expressions (*--v--* expressions vacuous):" << std::endl;
+    for(std::map<std::string, ExprNode *>::const_iterator it = input_pes.equations().begin();
+        it != input_pes.equations().end(); ++it) {
+      ExprNode *ls = (*it).second;
+   
+      std::cout << (*it).first;
+      if(ls->get_Parity()) {
+        std::cout << " :nu= ";
+      }
+      else {
+        std::cout << " :mu= ";
+      }
+      ls->printDetectVacuous(std::cout, suc);
+      std::cout << std::endl;
+    }
+  }
+  
   cpplog(cpplogging::info)
       << "==--End of Program Execution-----------------------==" << std::endl;
 
