@@ -784,6 +784,9 @@ inline bool prover::do_proof_and(const SubstList& discrete_state,
   if (retVal) {
     retVal = do_proof(discrete_state, zone, *formula.getRight());
   }
+  else if(!options.allVacuity){
+    formula.getRight()->setBypassedDuringProof(true);
+  }
   return retVal;
 }
 
@@ -813,6 +816,9 @@ inline bool prover::do_proof_or(const SubstList& discrete_state,
     retVal = do_proof(discrete_state, zone, *formula.getRight());
   } else if (placeholder1 >= zone) {
     retVal = true;
+    if(!options.allVacuity) {
+      formula.getRight()->setBypassedDuringProof(true);
+    }
   } else {
     /* Here we get the corner case where we have to use the
      * OR Split rule, so we try to establish whether part of zone is covered by
@@ -839,6 +845,9 @@ inline bool prover::do_proof_or_simple(const SubstList& discrete_state,
   bool retVal = do_proof(discrete_state, zone, *formula.getLeft());
   if (!retVal) {
     retVal = do_proof(discrete_state, zone, *formula.getRight());
+  }
+  else if(!options.allVacuity) {
+    formula.getRight()->setBypassedDuringProof(true);
   }
   return retVal;
 }
@@ -1671,6 +1680,9 @@ inline void prover::do_proof_place_and(const SubstList& discrete_state,
       //place->intersect(currPlace);
     }
     do_proof_place(discrete_state, zone, place, *formula.getRight());
+  }
+  else if(!options.allVacuity){
+    formula.getRight()->setBypassedDuringProof(true);
   }
   // delete currPlace;
 }
