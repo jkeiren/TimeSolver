@@ -899,7 +899,7 @@ public:
   /** Records whether this expression was examined by
    * the PES prover.
    * @param newVal the boolean value to record. */
-  void setExaminedDuringProof(bool newVal) {
+  void setExaminedDuringProof(bool newVal){
    examinedDuringProof = newVal;
   }
   

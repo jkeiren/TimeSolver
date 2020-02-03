@@ -328,7 +328,6 @@ int main(int argc, char** argv) {
   
   // Now print what formulas are vacuous or not
   if(!HIDE_VACUITY_OUTPUT) {
-    // Do Extra Work to delete Dynamically Allocated Elements
     std::cout << "\n====Equation Expressions (*--v--* expressions vacuous):" << std::endl;
     for(std::map<std::string, ExprNode *>::const_iterator it = input_pes.equations().begin();
         it != input_pes.equations().end(); ++it) {
