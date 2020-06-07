@@ -58,3 +58,4 @@ pes.timed/test/dbmtest[1]_include.cmake
 pes.timed/test/parsetest[1]_include.cmake
 pes.timed/test/prooftest[1]_include.cmake
 Doxyfile.doxygen
+.DS_Store

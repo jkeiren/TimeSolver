@@ -397,3 +397,571 @@ void print_ExprNodeTrans(const ExprNode* const e, std::ostream& os) {
     }
   }
 }
+
+/** Prints out the expression to the desired output stream, labeling
+ * the expression with its opType. The typical output stream is cout.
+ * @param e (*) The expression to print out.
+ * @param os (&) The type of output stream to print the output to.
+ * @return None */
+void ExprNode::printExamined(std::ostream& os)
+{
+ 
+  if(!(getExaminedDuringProof())) {
+    cout << "**u**";
+    // Note: mark this formula as being bypassed
+    //e->setBypassedDuringProof(true);
+  }
+  switch (getOpType()){
+    case PREDICATE:
+      os << getPredicate() ;
+      break;
+    case FORALL:
+      os << "FORALL.[";
+      getQuant()->printExamined(os);
+      os << "]";
+      break;
+    case EXISTS:
+      os << "EXISTS.[";
+      getQuant()->printExamined(os);
+      os << "]";
+      break;
+    case FORALL_REL:
+      os << "FORALLREL.(";
+      getLeft()->printExamined(os);
+      os << ")[";
+      getRight()->printExamined(os);
+      os << "]";
+      break;
+    case EXISTS_REL:
+      os << "EXISTSREL.(";
+      getLeft()->printExamined(os);
+      os << ")[";
+      getRight()->printExamined(os);
+      os << "]";
+      break;
+    case ALLACT:
+      os << "ALLACT.[";
+      getQuant()->printExamined(os);
+      os << "]";
+      break;
+    case EXISTACT:
+      os << "EXISTACT.[";
+      getQuant()->printExamined(os);
+      os << "]";
+      break;
+    case AND:
+      os << "(";
+      getLeft()->printExamined(os);
+      os << " AND ";
+      getRight()->printExamined(os);
+      os << ")";
+      break;
+    case OR:
+      cout << "(";
+      getLeft()->printExamined(os);
+      os << " OR ";
+      getRight()->printExamined(os);
+      cout << ")";
+      break;
+    case OR_SIMPLE:
+      cout << "(";
+      getLeft()->printExamined(os);
+      os << " OR_S ";
+      getRight()->printExamined(os);
+      cout << ")";
+      break;
+    case IMPLY:
+      os << "-(-";
+      getLeft()->printExamined(os);
+      os << " IMPLY ";
+      getRight()->printExamined(os);
+      os << "-)-";
+      break;
+    case RESET:
+      getExpr()->printExamined(os);
+      getClockSet()->print(os);
+      break;
+    case REPLACE:
+      getExpr()->printExamined(os);
+      os << "p" << (getAtomic());
+      os << ":=";
+      os << getIntVal();
+      break;
+    case CONSTRAINT:
+      dbm()->print_constraint(os);
+      break;
+    case ATOMIC:
+      os << "p" << (getAtomic());
+      os << "==";
+      os << getIntVal();
+      break;
+    case ATOMIC_NOT:
+      os << "p" << (getAtomic());
+      os << "!=";
+      os << getIntVal();
+      break;
+    case ATOMIC_LT:
+      os << "p" << (getAtomic());
+      os << "<";
+      os << getIntVal();
+      break;
+    case ATOMIC_GT:
+      os << "p" << (getAtomic());
+      os << ">";
+      os << getIntVal();
+      break;
+    case ATOMIC_LE:
+      os << "p" << (getAtomic());
+      os << "<=";
+      os << getIntVal();
+      break;
+    case ATOMIC_GE:
+      os << "p" << (getAtomic());
+      os << ">=";
+      os << getIntVal();
+      break;
+    case BOOL:
+      os << ((getBool())? "TRUE" : "FALSE");
+      break;
+    case SUBLIST:
+      getExpr()->printExamined(os);
+      getSublist()->print(os);
+      break;
+    case ASSIGN:
+      getExpr()->printExamined(os);
+      os << "[";
+      os << "x" << (getcX());
+      os << "==";
+      os << "x" << (getcY());
+      os << "]";
+      break;
+    case ABLEWAITINF:
+      os << "AbleWaitInf";
+      break;
+    case UNABLEWAITINF:
+      os << "UnableWaitInf";
+      break;
+  }
+  if(!(getExaminedDuringProof())) {
+    cout << "**u**";
+  }
+  
+
+}
+
+/** Prints out the expression to the desired output stream, labeling
+  * the expression with its opType. The typical output stream is cout.
+  * @param e (*) The expression to print out.
+  * @param os (&) The type of output stream to print the output to.
+  * param proovVal true if the sequent was proven valid; false otherwise.
+  * @return None */
+ void ExprNode::printDetectVacuous(std::ostream& os, bool proofVal)
+ {
+   if(!(getExaminedDuringProof())) {
+     cout << "*--v--*";
+   }
+   switch (getOpType()){
+     case PREDICATE:
+       os << getPredicate() ;
+       break;
+     case FORALL:
+       os << "FORALL.[";
+       getQuant()->printDetectVacuous(os, proofVal);
+       os << "]";
+       break;
+     case EXISTS:
+       os << "EXISTS.[";
+       getQuant()->printDetectVacuous(os, proofVal);
+       os << "]";
+       break;
+     case FORALL_REL:
+       os << "FORALLREL.(";
+       getLeft()->printDetectVacuous(os, proofVal);
+       os << ")[";
+       getRight()->printDetectVacuous(os, proofVal);
+       os << "]";
+       break;
+     case EXISTS_REL:
+       os << "EXISTSREL.(";
+       getLeft()->printDetectVacuous(os, proofVal);
+       os << ")[";
+       getRight()->printDetectVacuous(os, proofVal);
+       os << "]";
+       break;
+     case ALLACT:
+       os << "ALLACT.[";
+       getQuant()->printDetectVacuous(os, proofVal);
+       os << "]";
+       break;
+     case EXISTACT:
+       os << "EXISTACT.[";
+       getQuant()->printDetectVacuous(os, proofVal);
+       os << "]";
+       break;
+     case AND:
+       cout << "(";
+       if(proofVal) {
+         getLeft()->printDetectVacuous(os, proofVal);
+         os << " AND ";
+         getRight()->printDetectVacuous(os, proofVal);
+       }
+       else {
+         if(getLeft()->getExaminedDuringProof() &&
+            !(getRight()->getBypassedDuringProof()) && !(getRight()->getValidDuringProof()) ) {
+           cout << "*--v--*";
+         }
+         getLeft()->printDetectVacuous(os, proofVal);
+         if(getLeft()->getExaminedDuringProof() &&
+            !(getRight()->getBypassedDuringProof()) && !(getRight()->getValidDuringProof()) ) {
+           cout << "*--v--*";
+         }
+         os << " AND ";
+         if(getRight()->getExaminedDuringProof() &&
+            !(getLeft()->getBypassedDuringProof()) && !(getLeft()->getValidDuringProof()) ) {
+           cout << "*--v--*";
+         }
+         getRight()->printDetectVacuous(os, proofVal);
+         if(getRight()->getExaminedDuringProof() &&
+            !(getLeft()->getBypassedDuringProof()) && !(getLeft()->getValidDuringProof()) ) {
+           cout << "*--v--*";
+         }
+       }
+       cout << ")";
+       break;
+     case OR:
+       cout << "(";
+       if(proofVal) {
+         if(getLeft()->getExaminedDuringProof() &&
+            !(getRight()->getBypassedDuringProof()) && !(getRight()->getInvalidDuringProof()) ) {
+           cout << "*--v--*";
+         }
+         getLeft()->printDetectVacuous(os, proofVal);
+         if(getLeft()->getExaminedDuringProof() &&
+            !(getRight()->getBypassedDuringProof()) &&  !(getRight()->getInvalidDuringProof()) ) {
+           cout << "*--v--*";
+         }
+         os << " OR ";
+         if(getRight()->getExaminedDuringProof() &&
+            !(getLeft()->getBypassedDuringProof()) &&  !(getLeft()->getInvalidDuringProof()) ) {
+           cout << "*--v--*";
+         }
+         getRight()->printDetectVacuous(os, proofVal);
+         if(getRight()->getExaminedDuringProof() &&
+            !(getLeft()->getBypassedDuringProof()) &&  !(getLeft()->getInvalidDuringProof()) ) {
+           cout << "*--v--*";
+         }
+       }
+       else {
+         getLeft()->printDetectVacuous(os, proofVal);
+         os << " OR ";
+         getRight()->printDetectVacuous(os, proofVal);
+       }
+       cout << ")";
+       break;
+     case OR_SIMPLE:
+       cout << "(";
+       if(proofVal) {
+         if(getLeft()->getExaminedDuringProof() &&
+            !(getRight()->getBypassedDuringProof()) && !(getRight()->getInvalidDuringProof()) ) {
+           cout << "*--v--*";
+         }
+         getLeft()->printDetectVacuous(os, proofVal);
+         if(getLeft()->getExaminedDuringProof() &&
+            !(getRight()->getBypassedDuringProof()) && !(getRight()->getInvalidDuringProof()) ) {
+           cout << "*--v--*";
+         }
+         os << " OR_S ";
+         if(getRight()->getExaminedDuringProof() &&
+            !(getLeft()->getBypassedDuringProof()) && !(getLeft()->getInvalidDuringProof()) ) {
+           cout << "*--v--*";
+         }
+         getRight()->printDetectVacuous(os, proofVal);
+         if(getRight()->getExaminedDuringProof() &&
+            !(getLeft()->getBypassedDuringProof()) && !(getLeft()->getInvalidDuringProof()) ) {
+           cout << "*--v--*";
+         }
+       }
+       else {
+         getLeft()->printDetectVacuous(os, proofVal);
+         os << " OR_S ";
+         getRight()->printDetectVacuous(os, proofVal);
+       }
+       cout << ")";
+       break;
+     case IMPLY:
+       os << "-(-";
+       getLeft()->printDetectVacuous(os, proofVal);
+       os << " IMPLY ";
+       getRight()->printDetectVacuous(os, proofVal);
+       os << "-)-";
+       break;
+     case RESET:
+       getExpr()->printDetectVacuous(os, proofVal);
+       getClockSet()->print(os);
+       break;
+     case REPLACE:
+       getExpr()->printDetectVacuous(os, proofVal);
+       os << "p" << (getAtomic());
+       os << ":=";
+       os << getIntVal();
+       break;
+     case CONSTRAINT:
+       dbm()->print_constraint(os);
+       break;
+     case ATOMIC:
+       os << "p" << (getAtomic());
+       os << "==";
+       os << getIntVal();
+       break;
+     case ATOMIC_NOT:
+       os << "p" << (getAtomic());
+       os << "!=";
+       os << getIntVal();
+       break;
+     case ATOMIC_LT:
+       os << "p" << (getAtomic());
+       os << "<";
+       os << getIntVal();
+       break;
+     case ATOMIC_GT:
+       os << "p" << (getAtomic());
+       os << ">";
+       os << getIntVal();
+       break;
+     case ATOMIC_LE:
+       os << "p" << (getAtomic());
+       os << "<=";
+       os << getIntVal();
+       break;
+     case ATOMIC_GE:
+       os << "p" << (getAtomic());
+       os << ">=";
+       os << getIntVal();
+       break;
+     case BOOL:
+       os << ((getBool())? "TRUE" : "FALSE");
+       break;
+     case SUBLIST:
+       getExpr()->printDetectVacuous(os, proofVal);
+       getSublist()->print(os);
+       break;
+     case ASSIGN:
+       getExpr()->printDetectVacuous(os, proofVal);
+       os << "[";
+       os << "x" << (getcX());
+       os << "==";
+       os << "x" << (getcY());
+       os << "]";
+       break;
+     case ABLEWAITINF:
+       os << "AbleWaitInf";
+       break;
+     case UNABLEWAITINF:
+       os << "UnableWaitInf";
+       break;
+   }
+   if(!(getExaminedDuringProof())) {
+     cout << "*--v--*";
+   }
+
+ }
+
+/** Prints out the expression to the desired output stream, labeling
+ * the expression with its opType. The typical output stream is cout.
+ * @param e (*) The expression to print out.
+ * @param os (&) The type of output stream to print the output to.
+ * param proovVal true if the sequent was proven valid; false otherwise.
+ * @return None */
+//void ExprNode::printDetectVacuousV1(std::ostream& os, bool proofVal)
+//{
+//  switch (getOpType()){
+//    case PREDICATE:
+//      os << getPredicate() ;
+//      break;
+//    case FORALL:
+//      os << "FORALL.[";
+//      getQuant()->printDetectVacuous(os, proofVal);
+//      os << "]";
+//      break;
+//    case EXISTS:
+//      os << "EXISTS.[";
+//       getQuant()->printDetectVacuous(os, proofVal);
+//      os << "]";
+//      break;
+//    case FORALL_REL:
+//      os << "FORALLREL.(";
+//      getLeft()->printDetectVacuous(os, proofVal);
+//      os << ")[";
+//      getRight()->printDetectVacuous(os, proofVal);
+//      os << "]";
+//      break;
+//    case EXISTS_REL:
+//      os << "EXISTSREL.(";
+//      getLeft()->printDetectVacuous(os, proofVal);
+//      os << ")[";
+//      getRight()->printDetectVacuous(os, proofVal);
+//      os << "]";
+//      break;
+//    case ALLACT:
+//      os << "ALLACT.[";
+//       getQuant()->printDetectVacuous(os, proofVal);
+//      os << "]";
+//      break;
+//    case EXISTACT:
+//      os << "EXISTACT.[";
+//       getQuant()->printDetectVacuous(os, proofVal);
+//      os << "]";
+//      break;
+//    case AND:
+//      cout << "(";
+//      if(proofVal) {
+//        getLeft()->printDetectVacuous(os, proofVal);
+//        os << " AND ";
+//        getRight()->printDetectVacuous(os, proofVal);
+//      }
+//      else {
+//        if(!getRight()->getBypassedDuringProof() && !(getRight()->getValidDuringProof()) ) {
+//          cout << "*--v--*";
+//        }
+//        getLeft()->printDetectVacuous(os, proofVal);
+//        if(!getRight()->getBypassedDuringProof() && !(getRight()->getValidDuringProof()) ) {
+//          cout << "*--v--*";
+//        }
+//        os << " AND ";
+//        if(!getLeft()->getBypassedDuringProof() && !(getLeft()->getValidDuringProof()) ) {
+//          cout << "*--v--*";
+//        }
+//        getRight()->printDetectVacuous(os, proofVal);
+//        if(!getLeft()->getBypassedDuringProof() && !(getLeft()->getValidDuringProof()) ) {
+//          cout << "*--v--*";
+//        }
+//      }
+//      cout << ")";
+//      break;
+//    case OR:
+//      cout << "(";
+//      if(proofVal) {
+//        if(!getRight()->getBypassedDuringProof() && !(getRight()->getInvalidDuringProof()) ) {
+//          cout << "*--v--*";
+//        }
+//        getLeft()->printDetectVacuous(os, proofVal);
+//        if(!getRight()->getBypassedDuringProof() && !(getRight()->getInvalidDuringProof()) ) {
+//          cout << "*--v--*";
+//        }
+//        os << " OR ";
+//        if(!getLeft()->getBypassedDuringProof() && !(getLeft()->getInvalidDuringProof()) ) {
+//          cout << "*--v--*";
+//        }
+//        getRight()->printDetectVacuous(os, proofVal);
+//        if(!getLeft()->getBypassedDuringProof() && !(getLeft()->getInvalidDuringProof()) ) {
+//          cout << "*--v--*";
+//        }
+//      }
+//      else {
+//        getLeft()->printDetectVacuous(os, proofVal);
+//        os << " OR ";
+//        getRight()->printDetectVacuous(os, proofVal);
+//      }
+//      cout << ")";
+//      break;
+//    case OR_SIMPLE:
+//      cout << "(";
+//      if(proofVal) {
+//        if(!getRight()->getBypassedDuringProof() && !(getRight()->getInvalidDuringProof()) ) {
+//          cout << "*--v--*";
+//        }
+//        getLeft()->printDetectVacuous(os, proofVal);
+//        if(!getRight()->getBypassedDuringProof() && !(getRight()->getInvalidDuringProof()) ) {
+//          cout << "*--v--*";
+//        }
+//        os << " OR_S ";
+//        if(!getLeft()->getBypassedDuringProof() && !(getLeft()->getInvalidDuringProof()) ) {
+//          cout << "*--v--*";
+//        }
+//        getRight()->printDetectVacuous(os, proofVal);
+//        if(!getLeft()->getBypassedDuringProof() && !(getLeft()->getInvalidDuringProof()) ) {
+//          cout << "*--v--*";
+//        }
+//      }
+//      else {
+//        getLeft()->printDetectVacuous(os, proofVal);
+//        os << " OR_S ";
+//        getRight()->printDetectVacuous(os, proofVal);
+//      }
+//      cout << ")";
+//      break;
+//    case IMPLY:
+//      os << "-(-";
+//      getLeft()->printDetectVacuous(os, proofVal);
+//      os << " IMPLY ";
+//      getRight()->printDetectVacuous(os, proofVal);
+//      os << "-)-";
+//      break;
+//    case RESET:
+//      getExpr()->printDetectVacuous(os, proofVal);
+//      getClockSet()->print(os);
+//      break;
+//    case REPLACE:
+//      getExpr()->printDetectVacuous(os, proofVal);
+//      os << "p" << (getAtomic());
+//      os << ":=";
+//      os << getIntVal();
+//      break;
+//    case CONSTRAINT:
+//      dbm()->print_constraint(os);
+//      break;
+//    case ATOMIC:
+//      os << "p" << (getAtomic());
+//      os << "==";
+//      os << getIntVal();
+//      break;
+//    case ATOMIC_NOT:
+//      os << "p" << (getAtomic());
+//      os << "!=";
+//      os << getIntVal();
+//      break;
+//    case ATOMIC_LT:
+//      os << "p" << (getAtomic());
+//      os << "<";
+//      os << getIntVal();
+//      break;
+//    case ATOMIC_GT:
+//      os << "p" << (getAtomic());
+//      os << ">";
+//      os << getIntVal();
+//      break;
+//    case ATOMIC_LE:
+//      os << "p" << (getAtomic());
+//      os << "<=";
+//      os << getIntVal();
+//      break;
+//    case ATOMIC_GE:
+//      os << "p" << (getAtomic());
+//      os << ">=";
+//      os << getIntVal();
+//      break;
+//    case BOOL:
+//      os << ((getBool())? "TRUE" : "FALSE");
+//      break;
+//    case SUBLIST:
+//      getExpr()->printDetectVacuous(os, proofVal);
+//      getSublist()->print(os);
+//      break;
+//    case ASSIGN:
+//      getExpr()->printDetectVacuous(os, proofVal);
+//      os << "[";
+//      os << "x" << (getcX());
+//      os << "==";
+//      os << "x" << (getcY());
+//      os << "]";
+//      break;
+//    case ABLEWAITINF:
+//      os << "AbleWaitInf";
+//      break;
+//    case UNABLEWAITINF:
+//      os << "UnableWaitInf";
+//      break;
+//  }
+//
+//
+//}

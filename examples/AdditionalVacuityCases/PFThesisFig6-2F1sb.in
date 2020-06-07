@@ -1,0 +1,17 @@
+CLOCKS :{x1}
+CONTROL :{p1(5), p(2), q(2)}
+PREDICATE: {X1, X2, X3}
+START: X1
+EQUATIONS: {
+1: nu X1 = \AllAct(X2)
+2: mu X2 = (p == 1) |s| \AllAct(X2)
+	}
+INVARIANT:
+  	p1 == 0 -> x1 >= 0
+TRANSITIONS:
+	(p1==0)->(p1=1, p=1, q=0);
+  (p1==0)->(p1=2, q=1, p=0);
+	(p1==1)->(p1=3, q=1, p=0);
+  (p1==3)->(p1=3, q=1, p=0);
+  (p1==2)->(p1=4, p=1, q=0);
+  (p1==4)->(p1=4, p=1, q=0);
