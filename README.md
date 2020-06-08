@@ -89,7 +89,17 @@ The executable program is named `timesolver-ta`.
 
 To run, use `timesolver-ta <exampleFile>`
 
-Example files are included in the `example` directory 
+Example files are included in the `example` directory.
+
+### Program Outputs
+
+The program will output whetehr the formula is vaild or invalid, with the running time. Furthermore, a simple
+vacuity is implemented. This program will also identify any unchecked subformulas. This provides a sound
+but incomplete vacuity checking for the formula. We know that any subformula not examined during the proof does not 
+affect the truth of the formula (soundness), however it may check subformula it does not need to check (incompleteness).
+The prover checks subformula from left to right.
+
+To see the entire proof, enable the `-d` option.
 
 ## Generating Examples
 
