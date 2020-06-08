@@ -63,8 +63,8 @@ void printUsage() {
   std::cerr << "\t option: --version   print the version of the tool" << std::endl;
   std::cerr << "\t option: --no-caching/-n disables performance-optimizing "
                "known true and known false caches. Circularity stack caching " << "still used." << std::endl;
-  std::cerr << "\t option: --full-vacuity/-f enables full vacuity checking. "
-  << " Simple Vacuity is enabled by default" << std::endl;
+  // std::cerr << "\t option: --full-vacuity/-f enables full vacuity checking. "
+  // << " Simple Vacuity is enabled by default" << std::endl;
 }
 
 void printVersion() {
@@ -121,7 +121,8 @@ void parse_command_line(int argc, char** argv, prover_options& opt) {
         opt.useCaching = false;
         break;
       case 'f':
-        opt.allVacuity = true;
+        // Enable once full vacuity checking is implemented
+        // opt.allVacuity = true;
         break;
       case 'v':
         printVersion();
@@ -308,7 +309,6 @@ int main(int argc, char** argv) {
   // Print Vacuity output.
   // First, print which formulas were checked
   if(!HIDE_VACUITY_OUTPUT){
-    std::cout << "Checking with Full Vacuity is " << opt.allVacuity << std::endl;
     std::cout << "\n====Equation Expressions (**u** expressions unchecked):" << std::endl;
      for(std::map<std::string, ExprNode *>::const_iterator it = input_pes.equations().begin();
          it != input_pes.equations().end(); ++it) {
@@ -326,27 +326,9 @@ int main(int argc, char** argv) {
      }
   }
   
-  // Now print what formulas are vacuous or not
-  if(!HIDE_VACUITY_OUTPUT) {
-    std::cout << "\n====Equation Expressions (*--v--* expressions vacuous):" << std::endl;
-    for(std::map<std::string, ExprNode *>::const_iterator it = input_pes.equations().begin();
-        it != input_pes.equations().end(); ++it) {
-      ExprNode *ls = (*it).second;
-   
-      std::cout << (*it).first;
-      if(ls->get_Parity()) {
-        std::cout << " :nu= ";
-      }
-      else {
-        std::cout << " :mu= ";
-      }
-      ls->printDetectVacuous(std::cout, suc);
-      std::cout << std::endl;
-    }
-  }
-  
   cpplog(cpplogging::info)
       << "==--End of Program Execution-----------------------==" << std::endl;
 
   return 0;
 }
+  

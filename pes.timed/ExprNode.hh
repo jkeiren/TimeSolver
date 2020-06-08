@@ -232,10 +232,6 @@ public:
     bypassedDuringProof = false;
     validDuringProof = false;
     invalidDuringProof = false;
-    validReqDuringProof = false;
-    invalidReqDuringProof = false;
-    justRequiredValid = false;
-    justRequiredInvalid = false;
   }
 
   /** Constructor for two-children expressions with
@@ -260,10 +256,6 @@ public:
     bypassedDuringProof = false;
     validDuringProof = false;
     invalidDuringProof = false;
-    validReqDuringProof = false;
-    invalidReqDuringProof = false;
-    justRequiredValid = false;
-    justRequiredInvalid = false;
   }
 
   /** Constructor for a clock constraint expression with optype = {CONSTRAINT}.
@@ -288,10 +280,6 @@ public:
     bypassedDuringProof = false;
     validDuringProof = false;
     invalidDuringProof = false;
-    validReqDuringProof = false;
-    invalidReqDuringProof = false;
-    justRequiredValid = false;
-    justRequiredInvalid = false;
   }
 
   /** Constructor for a boolean expression of true or false
@@ -318,10 +306,6 @@ public:
     bypassedDuringProof = false;
     validDuringProof = false;
     invalidDuringProof = false;
-    validReqDuringProof = false;
-    invalidReqDuringProof = false;
-    justRequiredValid = false;
-    justRequiredInvalid = false;
   }
 
   /** Constructor for atomic (state value) expressions with
@@ -353,10 +337,6 @@ public:
     bypassedDuringProof = false;
     validDuringProof = false;
     invalidDuringProof = false;
-    validReqDuringProof = false;
-    invalidReqDuringProof = false;
-    justRequiredValid = false;
-    justRequiredInvalid = false;
   }
 
   /** Constructor for invariant sub-expressions with opType = {ATOMIC}.
@@ -394,10 +374,6 @@ public:
     bypassedDuringProof = false;
     validDuringProof = false;
     invalidDuringProof = false;
-    validReqDuringProof = false;
-    invalidReqDuringProof = false;
-    justRequiredValid = false;
-    justRequiredInvalid = false;
   }
 
   /** Constructor for predicate variable expressions with opType = {PREDICATE}.
@@ -424,10 +400,6 @@ public:
     bypassedDuringProof = false;
     validDuringProof = false;
     invalidDuringProof = false;
-    validReqDuringProof = false;
-    invalidReqDuringProof = false;
-    justRequiredValid = false;
-    justRequiredInvalid = false;
   }
 
   /** Constructor for clock set expressions with opType = {RESET}. These
@@ -451,10 +423,6 @@ public:
     bypassedDuringProof = false;
     validDuringProof = false;
     invalidDuringProof = false;
-    validReqDuringProof = false;
-    invalidReqDuringProof = false;
-    justRequiredValid = false;
-    justRequiredInvalid = false;
   }
 
   /** Constructor for sublist expressions, representing a change of
@@ -481,10 +449,6 @@ public:
     bypassedDuringProof = false;
     validDuringProof = false;
     invalidDuringProof = false;
-    validReqDuringProof = false;
-    invalidReqDuringProof = false;
-    justRequiredValid = false;
-    justRequiredInvalid = false;
   }
 
   /** Constructor for assignment and replacement expressions with
@@ -520,10 +484,6 @@ public:
     bypassedDuringProof = false;
     validDuringProof = false;
     invalidDuringProof = false;
-    validReqDuringProof = false;
-    invalidReqDuringProof = false;
-    justRequiredValid = false;
-    justRequiredInvalid = false;
   }
 
   /** Copy Constructor. This is used when an expression needs to be duplicated
@@ -603,34 +563,6 @@ public:
     delete m_clock_set;
     /* Note: since predicates are shallow-copied, they are not deleted
      * here. */
-  }
-  
-  /* Note: subformulas are trickier since in circularity */
-  void clearValidReq() {
-    if(validReqDuringProof && justRequiredValid) {
-      //validReqDuringProof = false;
-      //justRequiredValid = false;
-    }
-    if(left != NULL){
-      left->clearValidReq();
-    }
-    if(right != NULL){
-      right->clearValidReq();
-    }
-  }
-  
-  /* Note: subformulas are trickier since in circularity */
-  void clearInvalidReq() {
-    if(invalidReqDuringProof && justRequiredInvalid) {
-      //invalidReqDuringProof = false;
-      //justRequiredInvalid = false;
-    }
-    if(left != NULL){
-      left->clearInvalidReq();
-    }
-    if(right != NULL){
-      right->clearInvalidReq();
-    }
   }
 
   /** Returns the opType of the expression, which labels/categorizes
@@ -869,33 +801,6 @@ public:
    return invalidDuringProof;
   }
   
-  /** This returns the value of the boolean
-   * indicating whether this expression was shown valid by the prover
-   * and was needed for any left hand sequent.
-   * @return true: if the expression is valid for some state;
-   * false: otherwise */
-  bool getValidReqDuringProof() {
-   return validReqDuringProof;
-  }
-  
-  /** This returns the value of the boolean
-   * indicating whether this expression was shown invalid by the prover
-   * and was needed for any left hand sequent.
-   * @return true: if the expression is invalid for some state;
-   * false: otherwise */
-  bool getInvalidReqDuringProof() {
-   return invalidReqDuringProof;
-  }
-  
-  bool getJustRequiredValid() {
-   return justRequiredValid;
-  }
-  
-  bool getJustRequiredInvalid() {
-   return justRequiredInvalid;
-  }
-  
-  
   /** Records whether this expression was examined by
    * the PES prover.
    * @param newVal the boolean value to record. */
@@ -924,28 +829,6 @@ public:
    invalidDuringProof = newVal;
   }
   
-  /** Records whether this expression was shown valid
-   * and needed for that branch for some left hand sequent.
-   * @param newVal the boolean value to record. */
-  void setValidReqDuringProof(bool newVal) {
-   validReqDuringProof = newVal;
-  }
-  
-  /** Records whether this expression was shown invalid
-   * and needed for that branch for some left hand sequent.
-   * @param newVal the boolean value to record. */
-  void setInvalidReqDuringProof(bool newVal) {
-   invalidReqDuringProof = newVal;
-  }
-  
-  void setJustRequiredValid(bool newVal) {
-   justRequiredValid = newVal;
-  }
-  
-  void setJustRequiredInvalid(bool newVal) {
-   justRequiredInvalid = newVal;
-  }
-
 protected:
   /* Note: The data variables here are used as a "quasi-union",
    * where the same variable can have different uses for different
@@ -994,16 +877,6 @@ protected:
   /** This boolean is true if the PES prover bypassed this subformula
    * (expression) for some left hand sequent. */
   bool bypassedDuringProof;
-  
-  /** This boolean is true if the PES prover found this expression
-   * valid and requierd as valid for any left hand sequent. */
-  bool validReqDuringProof;
-  /** This boolean is true if the PES prover found this expression
-   * invalid and required invalid for any left hand sequent.*/
-  bool invalidReqDuringProof;
-  
-  bool justRequiredValid;
-  bool justRequiredInvalid;
 
   /** The "opcode" or Type ID of the Expression Node.
    * This type determines
