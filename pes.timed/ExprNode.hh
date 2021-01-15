@@ -228,6 +228,10 @@ public:
     predicate = nullptr;
     subst = nullptr;
     assert(q != nullptr);
+    examinedDuringProof = false;
+    bypassedDuringProof = false;
+    validDuringProof = false;
+    invalidDuringProof = false;
   }
 
   /** Constructor for two-children expressions with
@@ -248,6 +252,10 @@ public:
     subst = nullptr;
     assert(l != nullptr);
     assert(r != nullptr);
+    examinedDuringProof = false;
+    bypassedDuringProof = false;
+    validDuringProof = false;
+    invalidDuringProof = false;
   }
 
   /** Constructor for a clock constraint expression with optype = {CONSTRAINT}.
@@ -268,6 +276,10 @@ public:
     constraint = c;
     m_clock_set = nullptr;
     subst = nullptr;
+    examinedDuringProof = false;
+    bypassedDuringProof = false;
+    validDuringProof = false;
+    invalidDuringProof = false;
   }
 
   /** Constructor for a boolean expression of true or false
@@ -290,6 +302,10 @@ public:
     constraint = nullptr;
     m_clock_set = nullptr;
     subst = nullptr;
+    examinedDuringProof = false;
+    bypassedDuringProof = false;
+    validDuringProof = false;
+    invalidDuringProof = false;
   }
 
   /** Constructor for atomic (state value) expressions with
@@ -317,6 +333,10 @@ public:
     subst = nullptr;
     m_clock_set = nullptr;
     constraint = nullptr;
+    examinedDuringProof = false;
+    bypassedDuringProof = false;
+    validDuringProof = false;
+    invalidDuringProof = false;
   }
 
   /** Constructor for invariant sub-expressions with opType = {ATOMIC}.
@@ -350,6 +370,10 @@ public:
     predicate = nullptr;
     m_clock_set = nullptr;
     subst = nullptr;
+    examinedDuringProof = false;
+    bypassedDuringProof = false;
+    validDuringProof = false;
+    invalidDuringProof = false;
   }
 
   /** Constructor for predicate variable expressions with opType = {PREDICATE}.
@@ -372,6 +396,10 @@ public:
     m_clock_set = nullptr;
     subst = nullptr;
     constraint = nullptr;
+    examinedDuringProof = false;
+    bypassedDuringProof = false;
+    validDuringProof = false;
+    invalidDuringProof = false;
   }
 
   /** Constructor for clock set expressions with opType = {RESET}. These
@@ -391,6 +419,10 @@ public:
     predicate = nullptr;
     constraint = nullptr;
     subst = nullptr;
+    examinedDuringProof = false;
+    bypassedDuringProof = false;
+    validDuringProof = false;
+    invalidDuringProof = false;
   }
 
   /** Constructor for sublist expressions, representing a change of
@@ -413,6 +445,10 @@ public:
     predicate = nullptr;
     m_clock_set = nullptr;
     constraint = nullptr;
+    examinedDuringProof = false;
+    bypassedDuringProof = false;
+    validDuringProof = false;
+    invalidDuringProof = false;
   }
 
   /** Constructor for assignment and replacement expressions with
@@ -444,6 +480,10 @@ public:
     m_clock_set = nullptr;
     constraint = nullptr;
     subst = nullptr;
+    examinedDuringProof = false;
+    bypassedDuringProof = false;
+    validDuringProof = false;
+    invalidDuringProof = false;
   }
 
   /** Copy Constructor. This is used when an expression needs to be duplicated
@@ -539,16 +579,18 @@ public:
   ExprNode* getQuant() const { return left; }
 
   /** Returns the left child of the ExprNode.
+   * This is non constant so the prover can mark vacuity variables.
    * @note This does the same thing as getQuant(), but tends to be used
    * for expressions with two (left and right) children.
    * @return The reference to the left (or single) child of that expression.
    * @see The Constructor(s) comments for more information. */
-  const ExprNode* getLeft() const { return left; }
+  ExprNode* getLeft() const { return left; }
 
   /** Returns the right (or second) child of the expression.
+   * This is non constant so the prover can mark vacuity variables.
    * @return The reference to the right (or second) child of that expression.
    * @see The Constructor(s) comments for more information. */
-  const ExprNode* getRight() const { return right; }
+  ExprNode* getRight() const { return right; }
 
   /** Returns the clock constraint (DBM representation) of the expression.
    * @return The reference to the DBM representing the clock constraints.
@@ -639,6 +681,13 @@ public:
    * @note This does the same thing as getBool(). It is used differently.
    * @see The Constructor(s) comments for more information. */
   bool is_gfp() const { return b; }
+  
+  /** Returns the parity of the expression: true = gfp, false = lfp.
+   * @return The parity (as a boolean) of the
+   * expression: true = gfp, false = lfp.
+   * @note This does the same thing as getBool(). It is used differently.
+   * @see The Constructor(s) comments for more information. */
+  bool get_Parity() const {return b;}
 
   /** Returns the integer representing the block number of the expression.
    * This function is used for PREDICATE expressions.
@@ -719,7 +768,67 @@ public:
    * @param destR (*) the (right) child expression
    * @return None. */
   void setExprDestRight(ExprNode* destR) { right = destR; }
-
+  
+  /** This returns the value of the boolean
+   * indicating whether this expression was examined by the prover.
+   * @return true: if the expression was examined; false: otherwise */
+  bool getExaminedDuringProof() {
+   return examinedDuringProof;
+  }
+  
+   /** This returns the value of the boolean
+   * indicating whether this expression was bypassed by the prover.
+   * @return true: if the expression was examined; false: otherwise */
+  bool getBypassedDuringProof() {
+   return bypassedDuringProof;
+  }
+  
+  /** This returns the value of the boolean
+   * indicating whether this expression was shown valid by the prover
+   * for any left hand sequent.
+   * @return true: if the expression is valid for some state;
+   * false: otherwise */
+  bool getValidDuringProof() {
+   return validDuringProof;
+  }
+  
+  /** This returns the value of the boolean
+   * indicating whether this expression was shown invalid by the prover
+   * for any left hand sequent.
+   * @return true: if the expression is invalid for some state;
+   * false: otherwise */
+  bool getInvalidDuringProof() {
+   return invalidDuringProof;
+  }
+  
+  /** Records whether this expression was examined by
+   * the PES prover.
+   * @param newVal the boolean value to record. */
+  void setExaminedDuringProof(bool newVal){
+   examinedDuringProof = newVal;
+  }
+  
+  /** Records whether this expression was bypassed by
+   * the PES prover.
+   * @param newVal the boolean value to record. */
+  void setBypassedDuringProof(bool newVal) {
+   bypassedDuringProof = newVal;
+  }
+  
+  /** Records whether this expression was shown valid
+   * for some left hand sequent.
+   * @param newVal the boolean value to record. */
+  void setValidDuringProof(bool newVal) {
+   validDuringProof = newVal;
+  }
+  
+  /** Records whether this expression was shown invalid
+   * for some left hand sequent.
+   * @param newVal the boolean value to record. */
+  void setInvalidDuringProof(bool newVal) {
+   invalidDuringProof = newVal;
+  }
+  
 protected:
   /* Note: The data variables here are used as a "quasi-union",
    * where the same variable can have different uses for different
@@ -753,6 +862,21 @@ protected:
    * child expression. The SubstList is often the "state",
    * giving values to propositions (or control values).  Possibly empty. */
   SubstList* subst;
+  
+  /** This boolean is true if the PES prover examined this subformula
+   * (expression) for some left hand sequent. */
+  bool examinedDuringProof;
+  /** This boolean is true if the PES prover found this expression
+   * valid for any left hand sequent. */
+  bool validDuringProof;
+  /** This boolean is true if the PES prover found this expression
+   * invalid for any left hand sequent. This is also true
+   * when a split or is used, since the subformula is only
+   * true for some of the states in the sequent. */
+  bool invalidDuringProof;
+  /** This boolean is true if the PES prover bypassed this subformula
+   * (expression) for some left hand sequent. */
+  bool bypassedDuringProof;
 
   /** The "opcode" or Type ID of the Expression Node.
    * This type determines
@@ -798,6 +922,21 @@ public:
    * @param os (&) The type of output stream to print the output to.
    * @return None */
   void print(std::ostream& os) const;
+  
+  /** Prints out the expression to the desired output stream, labeling
+   * the expression with its opType. The typical output stream is cout.
+   * @param e (*) The expression to print out.
+   * @param os (&) The type of output stream to print the output to.
+   * @return None */
+  void printExamined(std::ostream& os);
+  
+  /** Prints out the expression to the desired output stream, labeling
+   * the expression with its opType. The typical output stream is cout.
+   * @param e (*) The expression to print out.
+   * @param os (&) The type of output stream to print the output to.
+   * param proovVal true if the sequent was proven valid; false otherwise.
+   * @return None */
+  void printDetectVacuous(std::ostream& os, bool proofVal);
 };
 
 /** Overload for streaming ExprNode to output stream */

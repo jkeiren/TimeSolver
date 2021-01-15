@@ -397,3 +397,154 @@ void print_ExprNodeTrans(const ExprNode* const e, std::ostream& os) {
     }
   }
 }
+
+/** Prints out the expression to the desired output stream, labeling
+ * the expression with its opType. The typical output stream is cout.
+ * @param e (*) The expression to print out.
+ * @param os (&) The type of output stream to print the output to.
+ * @return None */
+void ExprNode::printExamined(std::ostream& os)
+{
+ 
+  if(!(getExaminedDuringProof())) {
+    cout << "**u**";
+    // Note: mark this formula as being bypassed
+    //e->setBypassedDuringProof(true);
+  }
+  switch (getOpType()){
+    case PREDICATE:
+      os << getPredicate() ;
+      break;
+    case FORALL:
+      os << "FORALL.[";
+      getQuant()->printExamined(os);
+      os << "]";
+      break;
+    case EXISTS:
+      os << "EXISTS.[";
+      getQuant()->printExamined(os);
+      os << "]";
+      break;
+    case FORALL_REL:
+      os << "FORALLREL.(";
+      getLeft()->printExamined(os);
+      os << ")[";
+      getRight()->printExamined(os);
+      os << "]";
+      break;
+    case EXISTS_REL:
+      os << "EXISTSREL.(";
+      getLeft()->printExamined(os);
+      os << ")[";
+      getRight()->printExamined(os);
+      os << "]";
+      break;
+    case ALLACT:
+      os << "ALLACT.[";
+      getQuant()->printExamined(os);
+      os << "]";
+      break;
+    case EXISTACT:
+      os << "EXISTACT.[";
+      getQuant()->printExamined(os);
+      os << "]";
+      break;
+    case AND:
+      os << "(";
+      getLeft()->printExamined(os);
+      os << " AND ";
+      getRight()->printExamined(os);
+      os << ")";
+      break;
+    case OR:
+      cout << "(";
+      getLeft()->printExamined(os);
+      os << " OR ";
+      getRight()->printExamined(os);
+      cout << ")";
+      break;
+    case OR_SIMPLE:
+      cout << "(";
+      getLeft()->printExamined(os);
+      os << " OR_S ";
+      getRight()->printExamined(os);
+      cout << ")";
+      break;
+    case IMPLY:
+      os << "-(-";
+      getLeft()->printExamined(os);
+      os << " IMPLY ";
+      getRight()->printExamined(os);
+      os << "-)-";
+      break;
+    case RESET:
+      getExpr()->printExamined(os);
+      getClockSet()->print(os);
+      break;
+    case REPLACE:
+      getExpr()->printExamined(os);
+      os << "p" << (getAtomic());
+      os << ":=";
+      os << getIntVal();
+      break;
+    case CONSTRAINT:
+      dbm()->print_constraint(os);
+      break;
+    case ATOMIC:
+      os << "p" << (getAtomic());
+      os << "==";
+      os << getIntVal();
+      break;
+    case ATOMIC_NOT:
+      os << "p" << (getAtomic());
+      os << "!=";
+      os << getIntVal();
+      break;
+    case ATOMIC_LT:
+      os << "p" << (getAtomic());
+      os << "<";
+      os << getIntVal();
+      break;
+    case ATOMIC_GT:
+      os << "p" << (getAtomic());
+      os << ">";
+      os << getIntVal();
+      break;
+    case ATOMIC_LE:
+      os << "p" << (getAtomic());
+      os << "<=";
+      os << getIntVal();
+      break;
+    case ATOMIC_GE:
+      os << "p" << (getAtomic());
+      os << ">=";
+      os << getIntVal();
+      break;
+    case BOOL:
+      os << ((getBool())? "TRUE" : "FALSE");
+      break;
+    case SUBLIST:
+      getExpr()->printExamined(os);
+      getSublist()->print(os);
+      break;
+    case ASSIGN:
+      getExpr()->printExamined(os);
+      os << "[";
+      os << "x" << (getcX());
+      os << "==";
+      os << "x" << (getcY());
+      os << "]";
+      break;
+    case ABLEWAITINF:
+      os << "AbleWaitInf";
+      break;
+    case UNABLEWAITINF:
+      os << "UnableWaitInf";
+      break;
+  }
+  if(!(getExaminedDuringProof())) {
+    cout << "**u**";
+  }
+  
+
+}

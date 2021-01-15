@@ -23,6 +23,10 @@ struct prover_options {
   /** If True, use tables in the output.  Else (False),
    * print regular output. */
   bool tabled;
+  
+  /* If True, enable full vacuity. Else, run
+   * with simple vacuity. */
+  bool allVacuity;
 
   /** The size of the Hash table of Sequents: nBits + 1 */
   unsigned long nHash;
